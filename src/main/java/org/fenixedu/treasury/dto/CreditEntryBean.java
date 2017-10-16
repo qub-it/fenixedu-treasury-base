@@ -31,8 +31,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -41,16 +39,16 @@ import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.CreditNote;
 import org.fenixedu.treasury.domain.tariff.Tariff;
 
-public class CreditEntryBean implements IBean {
+public class CreditEntryBean implements ITreasuryBean {
 
     private Vat vat;
-    private List<TupleDataSourceBean> vatDataSource;
+    private List<TreasuryTupleDataSourceBean> vatDataSource;
     private Product product;
-    private List<TupleDataSourceBean> productDataSource;
+    private List<TreasuryTupleDataSourceBean> productDataSource;
     private DebtAccount debtAccount;
-    private List<TupleDataSourceBean> debtAccountDataSource;
+    private List<TreasuryTupleDataSourceBean> debtAccountDataSource;
     private Currency currency;
-    private List<TupleDataSourceBean> currencyDataSource;
+    private List<TreasuryTupleDataSourceBean> currencyDataSource;
     private CreditNote finantialDocument;
     private boolean eventAnnuled;
     private String description;
@@ -67,13 +65,13 @@ public class CreditEntryBean implements IBean {
         vat = value;
     }
 
-    public List<TupleDataSourceBean> getVatDataSource() {
+    public List<TreasuryTupleDataSourceBean> getVatDataSource() {
         return vatDataSource;
     }
 
     public void setVatDataSource(List<Vat> value) {
         this.vatDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;
@@ -88,13 +86,13 @@ public class CreditEntryBean implements IBean {
         product = value;
     }
 
-    public List<TupleDataSourceBean> getProductDataSource() {
+    public List<TreasuryTupleDataSourceBean> getProductDataSource() {
         return productDataSource;
     }
 
     public void setProductDataSource(List<Product> value) {
         this.productDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.getName().getContent());
             return tuple;
@@ -109,13 +107,13 @@ public class CreditEntryBean implements IBean {
         debtAccount = value;
     }
 
-    public List<TupleDataSourceBean> getDebtAccountDataSource() {
+    public List<TreasuryTupleDataSourceBean> getDebtAccountDataSource() {
         return debtAccountDataSource;
     }
 
     public void setDebtAccountDataSource(List<DebtAccount> value) {
         this.debtAccountDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;
@@ -130,13 +128,13 @@ public class CreditEntryBean implements IBean {
         currency = value;
     }
 
-    public List<TupleDataSourceBean> getCurrencyDataSource() {
+    public List<TreasuryTupleDataSourceBean> getCurrencyDataSource() {
         return currencyDataSource;
     }
 
     public void setCurrencyDataSource(List<Currency> value) {
         this.currencyDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;

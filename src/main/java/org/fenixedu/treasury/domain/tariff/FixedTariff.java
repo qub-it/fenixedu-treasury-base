@@ -43,7 +43,7 @@ import org.fenixedu.treasury.dto.FixedTariffInterestRateBean;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class FixedTariff extends FixedTariff_Base {
 
@@ -84,7 +84,7 @@ public class FixedTariff extends FixedTariff_Base {
 
     protected FixedTariff() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected void init(final Product product, final InterestRate interestRate, final FinantialEntity finantialEntity,
@@ -187,7 +187,7 @@ public class FixedTariff extends FixedTariff_Base {
 
     public static Stream<FixedTariff> findAll(FinantialInstitution institution) {
         Set<FixedTariff> result = new HashSet<FixedTariff>();
-        Bennu.getInstance().getFinantialInstitutionsSet()
+        pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialInstitutionsSet()
                 .forEach(x -> x.getFinantialEntitiesSet().stream().forEach(y -> result.addAll(y.getFixedTariffSet())));
         return result.stream();
     }

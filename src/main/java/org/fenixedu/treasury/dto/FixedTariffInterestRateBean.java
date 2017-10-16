@@ -31,15 +31,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.tariff.InterestType;
 
-public class FixedTariffInterestRateBean implements IBean {
+public class FixedTariffInterestRateBean implements ITreasuryBean {
 
     private org.fenixedu.treasury.domain.tariff.InterestType interestType;
-    private List<TupleDataSourceBean> interestTypeDataSource;
+    private List<TreasuryTupleDataSourceBean> interestTypeDataSource;
     private int numberOfDaysAfterDueDate;
     private boolean applyInFirstWorkday;
     private int maximumDaysToApplyPenalty;
@@ -55,13 +53,13 @@ public class FixedTariffInterestRateBean implements IBean {
         interestType = value;
     }
 
-    public List<TupleDataSourceBean> getInterestTypeDataSource() {
+    public List<TreasuryTupleDataSourceBean> getInterestTypeDataSource() {
         return interestTypeDataSource;
     }
 
     public void setInterestTypeDataSource(List<org.fenixedu.treasury.domain.tariff.InterestType> value) {
         this.interestTypeDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.toString());
             tuple.setText(x.getDescriptionI18N().getContent());
             return tuple;
@@ -117,9 +115,9 @@ public class FixedTariffInterestRateBean implements IBean {
     }
 
     public FixedTariffInterestRateBean() {
-        this.interestTypeDataSource = new ArrayList<TupleDataSourceBean>();
+        this.interestTypeDataSource = new ArrayList<TreasuryTupleDataSourceBean>();
         for (InterestType type : InterestType.findAll()) {
-            TupleDataSourceBean typeBean = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean typeBean = new TreasuryTupleDataSourceBean();
             typeBean.setId(type.toString());
             typeBean.setText(type.getDescriptionI18N().getContent());
             this.interestTypeDataSource.add(typeBean);

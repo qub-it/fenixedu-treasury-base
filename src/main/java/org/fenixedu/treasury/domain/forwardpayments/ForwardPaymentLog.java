@@ -19,7 +19,7 @@ public class ForwardPaymentLog extends ForwardPaymentLog_Base {
     
     private ForwardPaymentLog() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
     
     ForwardPaymentLog(final ForwardPayment forwardPayment, final ForwardPaymentStateType type, final DateTime whenOccured) {

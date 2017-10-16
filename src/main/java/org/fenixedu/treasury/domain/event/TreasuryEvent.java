@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.Product;
@@ -60,7 +60,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
@@ -68,7 +68,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         EXECUTION_YEAR, EXECUTION_SEMESTER, DEGREE_CODE;
 
         public LocalizedString getDescriptionI18N() {
-            return BundleUtil.getLocalizedString(Constants.BUNDLE, "label." + TreasuryEvent.class.getSimpleName() + "." + name());
+            return Constants.bundleI18N("label." + TreasuryEvent.class.getSimpleName() + "." + name());
         }
 
     }
@@ -77,7 +77,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     protected TreasuryEvent() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected void init(final Product product, final LocalizedString description) {
@@ -235,7 +235,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         setDebtAccount(null);
         setProduct(null);
-        setBennu(null);
+        setDomainRoot(null);
 
         super.deleteDomainObject();
     }
@@ -335,7 +335,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     // @formatter: on
 
     public static Stream<? extends TreasuryEvent> findAll() {
-        return Bennu.getInstance().getTreasuryEventsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryEventsSet().stream();
     }
     
     public static Stream<? extends TreasuryEvent> find(final Customer customer) {

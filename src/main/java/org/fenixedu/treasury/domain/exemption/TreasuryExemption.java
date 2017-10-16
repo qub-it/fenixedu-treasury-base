@@ -1,9 +1,10 @@
 package org.fenixedu.treasury.domain.exemption;
 
+import static org.fenixedu.treasury.util.Constants.isGreaterThan;
+
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.CreditEntry;
@@ -12,17 +13,15 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
 
-import pt.ist.fenixframework.Atomic;
-
 import com.google.common.base.Strings;
 
-import static org.fenixedu.treasury.util.Constants.isGreaterThan;
+import pt.ist.fenixframework.Atomic;
 
 public class TreasuryExemption extends TreasuryExemption_Base {
 
     protected TreasuryExemption() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected TreasuryExemption(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
@@ -159,7 +158,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 
         revertExemptionIfPossible();
 
-        super.setBennu(null);
+        super.setDomainRoot(null);
 
         super.setTreasuryExemptionType(null);
         super.setTreasuryEvent(null);
@@ -176,16 +175,16 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     // @formatter: on
 
     public static Stream<TreasuryExemption> findAll() {
-        return Bennu.getInstance().getTreasuryExemptionsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream();
     }
 
     public static Stream<TreasuryExemption> find(final TreasuryExemptionType treasuryExemptionType) {
-        return Bennu.getInstance().getTreasuryExemptionsSet().stream()
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream()
                 .filter(t -> t.getTreasuryExemptionType() == treasuryExemptionType);
     }
 
     public static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent) {
-        return Bennu.getInstance().getTreasuryExemptionsSet().stream().filter(t -> t.getTreasuryEvent() == treasuryEvent);
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream().filter(t -> t.getTreasuryEvent() == treasuryEvent);
     }
 
     protected static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent, final Product product) {
@@ -197,7 +196,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     public static Stream<TreasuryExemption> findByDebtAccount(final DebtAccount debtAccount) {
-        return Bennu.getInstance().getTreasuryExemptionsSet().stream()
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream()
                 .filter(t -> t.getDebitEntry().getDebtAccount() == debtAccount);
     }
 

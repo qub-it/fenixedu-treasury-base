@@ -36,13 +36,13 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class VatExemptionReason extends VatExemptionReason_Base {
 
     protected VatExemptionReason() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     @Atomic
@@ -133,13 +133,13 @@ public class VatExemptionReason extends VatExemptionReason_Base {
             throw new TreasuryDomainException("error.VatExemptionReason.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
 
     public static Stream<VatExemptionReason> findAll() {
-        return Bennu.getInstance().getVatExemptionReasonsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getVatExemptionReasonsSet().stream();
     }
 
     public static VatExemptionReason findByCode(final String code) {

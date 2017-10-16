@@ -1,12 +1,12 @@
 package org.fenixedu.treasury.services.payments.sibs;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -19,7 +19,10 @@ import javax.ws.rs.core.Response;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsReportFile;
 import org.fenixedu.treasury.domain.paymentcodes.SibsTransactionDetail;
+import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.services.payments.sibs.SIBSPaymentsImporter.ProcessResult;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFileDetailLine;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFileFooter;
@@ -210,4 +213,57 @@ Cartaxo         - A030 (Localidade do terminal)
         private List<SibsPaymentEntry> data;
     }
 
+    
+    // @formatter:off
+    /* ********
+     * SERVICES
+     * ********
+     */
+    
+    public void ProcessSibsPaymentsFromBroker(final PrintWriter writer) throws IOException {
+        
+        for(final FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
+            
+            if(!finantialInstitution.getSibsConfiguration().isPaymentsBrokerActive()) {
+                continue;
+            }
+            
+            for(final PaymentCodePool paymentCodePool : finantialInstitution.getPaymentCodePoolsSet()) {
+                try {
+                    if(paymentCodePool.getActive() == null || !paymentCodePool.getActive()) {
+                        continue;
+                    }
+                    
+                    LocalDate now = new LocalDate();
+                    
+                    final SibsIncommingPaymentFile sibsFile =
+                            SibsPaymentsBrokerService.readPaymentsFromBroker(paymentCodePool.getFinantialInstitution(), now.minusDays(1), now,
+                                    true, true);
+                    
+                    if(sibsFile.getDetailLines().isEmpty()) {
+                        continue;
+                    }
+                    
+                    SIBSPaymentsImporter importer = new SIBSPaymentsImporter();
+                    SibsReportFile reportFile = null;
+                    
+                    final ProcessResult result = importer.processSIBSPaymentFiles(sibsFile, paymentCodePool.getFinantialInstitution());
+                    reportFile = result.getReportFile();
+                    if (result.getReportFile() != null) {
+                        reportFile.updateLogMessages(result);
+                    }
+                } catch(final TreasuryDomainException e) {
+                    if(SibsPaymentsBrokerService.ERROR_SIBS_PAYMENTS_BROKER_SERVICE_NO_PAYMENTS_TO_IMPORT.equals(e.getMessage())) {
+                        writer.format("No payments to register");
+                        continue;
+                    }
+                    
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    	
+    }
+    // @formatter:on
+    
 }

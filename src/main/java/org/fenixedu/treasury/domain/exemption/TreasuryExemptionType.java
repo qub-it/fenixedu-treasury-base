@@ -37,7 +37,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class TreasuryExemptionType extends TreasuryExemptionType_Base {
 
@@ -51,7 +51,7 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
 
     protected TreasuryExemptionType() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected TreasuryExemptionType(final String code, final LocalizedString name, final BigDecimal defaultExemptionPercentage,
@@ -98,7 +98,7 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.TreasuryExemptionType.cannot.delete");
         }
-        setBennu(null);
+        setDomainRoot(null);
         deleteDomainObject();
     }
 
@@ -109,7 +109,7 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
     }
 
     public static Stream<TreasuryExemptionType> findAll() {
-        return Bennu.getInstance().getTreasuryExemptionTypesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryExemptionTypesSet().stream();
     }
 
     public static Stream<TreasuryExemptionType> findByCode(final String code) {

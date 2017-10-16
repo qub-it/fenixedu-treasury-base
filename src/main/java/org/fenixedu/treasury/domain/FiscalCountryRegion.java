@@ -27,15 +27,11 @@
  */
 package org.fenixedu.treasury.domain;
 
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.Constants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
 import pt.ist.fenixframework.Atomic;
@@ -44,7 +40,7 @@ public class FiscalCountryRegion extends FiscalCountryRegion_Base {
 
     protected FiscalCountryRegion() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected FiscalCountryRegion(final String fiscalCode, final LocalizedString name) {
@@ -60,16 +56,13 @@ public class FiscalCountryRegion extends FiscalCountryRegion_Base {
         if (FiscalCountryRegion.findAll().count() == 0) {
             FiscalCountryRegion.create(
                     "PT",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FiscalCountryRegion.PT")));
+                    org.fenixedu.treasury.util.Constants.bundleI18N("label.FiscalCountryRegion.PT"));
             FiscalCountryRegion.create(
                     "PT_MA",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FiscalCountryRegion.PT_MA")));
+                    org.fenixedu.treasury.util.Constants.bundleI18N("label.FiscalCountryRegion.PT_MA"));
             FiscalCountryRegion.create(
                     "PT_AZ",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FiscalCountryRegion.PT_AZ")));
+                    org.fenixedu.treasury.util.Constants.bundleI18N("label.FiscalCountryRegion.PT_AZ"));
         }
     }
 
@@ -105,7 +98,7 @@ public class FiscalCountryRegion extends FiscalCountryRegion_Base {
             throw new TreasuryDomainException("error.FiscalCountryRegion.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
@@ -117,7 +110,7 @@ public class FiscalCountryRegion extends FiscalCountryRegion_Base {
     // @formatter: on
 
     public static Stream<FiscalCountryRegion> findAll() {
-        return Bennu.getInstance().getFiscalCountryRegionsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFiscalCountryRegionsSet().stream();
     }
 
     public static FiscalCountryRegion findByRegionCode(final String fiscalCode) {

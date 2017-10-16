@@ -2,7 +2,6 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -12,7 +11,7 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
 
@@ -78,7 +77,7 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
             }
         } else {
             throw new TreasuryDomainException(
-                    BundleUtil.getString(Constants.BUNDLE, "error.FinantialDocumentState.invalid.state.change.request"));
+            		org.fenixedu.treasury.util.Constants.bundle("error.FinantialDocumentState.invalid.state.change.request"));
         }
 
         checkRules();

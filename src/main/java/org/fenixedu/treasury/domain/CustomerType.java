@@ -30,8 +30,7 @@ package org.fenixedu.treasury.domain;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
@@ -43,7 +42,7 @@ public class CustomerType extends CustomerType_Base {
 
     protected CustomerType() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected CustomerType(final String code, final LocalizedString name) {
@@ -88,13 +87,13 @@ public class CustomerType extends CustomerType_Base {
             throw new TreasuryDomainException("error.CustomerType.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
 
     public static Stream<CustomerType> findAll() {
-        return Bennu.getInstance().getCustomerTypesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getCustomerTypesSet().stream();
     }
 
     public static Stream<CustomerType> findByCode(final String code) {
@@ -116,14 +115,14 @@ public class CustomerType extends CustomerType_Base {
         if (CustomerType.findAll().count() == 0) {
             CustomerType.create(
                     "CANDIDATE",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.CustomerType.CANDIDATE")));
+                    org.fenixedu.treasury.util.Constants.bundleI18N(
+                            "label.CustomerType.CANDIDATE"));
             CustomerType
                     .create("STUDENT",
-                            new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                                    "label.CustomerType.STUDENT")));
+                    		org.fenixedu.treasury.util.Constants.bundleI18N(
+                                    "label.CustomerType.STUDENT"));
             CustomerType.create("ADHOC",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.CustomerType.ADHOC")));
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.CustomerType.ADHOC"));
         }
     }
 

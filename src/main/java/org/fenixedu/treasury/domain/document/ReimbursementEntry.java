@@ -35,13 +35,13 @@ import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class ReimbursementEntry extends ReimbursementEntry_Base {
 
     protected ReimbursementEntry() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected ReimbursementEntry(final SettlementNote settlementNote, final PaymentMethod paymentMethod,
@@ -112,7 +112,7 @@ public class ReimbursementEntry extends ReimbursementEntry_Base {
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.ReimbursementEntry.cannot.delete");
         }
-        setBennu(null);
+        setDomainRoot(null);
         setPaymentMethod(null);
         setSettlementNote(null);
 
@@ -132,7 +132,7 @@ public class ReimbursementEntry extends ReimbursementEntry_Base {
     // @formatter: on
 
     public static Stream<ReimbursementEntry> findAll() {
-        return Bennu.getInstance().getReimbursementEntriesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getReimbursementEntriesSet().stream();
     }
 
     public static Stream<ReimbursementEntry> findBySettlementNote(final SettlementNote settlementNote) {

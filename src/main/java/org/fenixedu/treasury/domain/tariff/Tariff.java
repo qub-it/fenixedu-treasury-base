@@ -39,13 +39,13 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public abstract class Tariff extends Tariff_Base {
 
     protected Tariff() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     public abstract LocalizedString getUiTariffDescription();
@@ -175,7 +175,7 @@ public abstract class Tariff extends Tariff_Base {
             throw new TreasuryDomainException("error.Tariff.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setProduct(null);
         setFinantialEntity(null);
 
@@ -234,7 +234,7 @@ public abstract class Tariff extends Tariff_Base {
     // @formatter: on
 
     public static Stream<? extends Tariff> findAll() {
-        return Bennu.getInstance().getTariffsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTariffsSet().stream();
     }
 
     public static Stream<? extends Tariff> find(final Product product) {

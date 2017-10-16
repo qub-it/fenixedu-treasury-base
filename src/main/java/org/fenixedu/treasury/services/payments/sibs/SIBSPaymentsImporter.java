@@ -23,11 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.bennu.core.domain.User;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -37,14 +35,13 @@ import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsInputFile;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReportFile;
 import org.fenixedu.treasury.domain.paymentcodes.SibsTransactionDetail;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFileDetailLine;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.YearMonthDay;
 
 import pt.ist.fenixframework.Atomic;
-
-import com.google.common.collect.Maps;
 
 public class SIBSPaymentsImporter {
 
@@ -68,11 +65,11 @@ public class SIBSPaymentsImporter {
         private boolean processFailed = false;
 
         public void addMessage(String message, String... args) {
-            actionMessages.add(BundleUtil.getString(Constants.BUNDLE, message, args));
+            actionMessages.add(org.fenixedu.treasury.util.Constants.bundle(message, args));
         }
 
         public void addError(String message, String... args) {
-            errorMessages.add(BundleUtil.getString(Constants.BUNDLE, message, args));
+            errorMessages.add(org.fenixedu.treasury.util.Constants.bundle(message, args));
             reportFailure();
         }
 
@@ -139,7 +136,8 @@ public class SIBSPaymentsImporter {
         InputStream fileInputStream = null;
         try {
             fileInputStream = inputFile.getStream();
-            final User person = Authenticate.getUser();
+
+            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             final SibsIncommingPaymentFile sibsFile = SibsIncommingPaymentFile.parse(inputFile.getFilename(), fileInputStream);
 
             processResult.addMessage("label.manager.SIBS.linesFound", String.valueOf(sibsFile.getDetailLines().size()));
@@ -169,7 +167,7 @@ public class SIBSPaymentsImporter {
 
                 try {
                     final SettlementNote settlementNote =
-                            processCode(detailLine, person, processResult, inputFile.getFinantialInstitution(),
+                            processCode(detailLine, loggedUsername, processResult, inputFile.getFinantialInstitution(),
                                     inputFile.getFilename().replace("\\.inp", ""), sibsFile.getWhenProcessedBySibs(), reportFile);
 
                     if (settlementNote != null) {
@@ -224,7 +222,7 @@ public class SIBSPaymentsImporter {
 
     private void processFile(SibsIncommingPaymentFile sibsFile, final FinantialInstitution finantialInstitution,
             ProcessResult processResult) {
-        final User person = Authenticate.getUser();
+        final String responsibleUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
 
         processResult.addMessage("label.manager.SIBS.linesFound", String.valueOf(sibsFile.getDetailLines().size()));
         processResult.addMessage("label.manager.SIBS.startingProcess");
@@ -251,7 +249,7 @@ public class SIBSPaymentsImporter {
         for (final SibsIncommingPaymentFileDetailLine detailLine : sibsFile.getDetailLines()) {
 
             try {
-                final SettlementNote settlementNote = processCode(detailLine, person, processResult, finantialInstitution,
+                final SettlementNote settlementNote = processCode(detailLine, responsibleUsername, processResult, finantialInstitution,
                         sibsFile.getFilename().replace("\\.inp", ""), sibsFile.getWhenProcessedBySibs(), reportFile);
 
                 if (settlementNote != null) {
@@ -278,7 +276,7 @@ public class SIBSPaymentsImporter {
     }
 
     @Atomic
-    protected SettlementNote processCode(SibsIncommingPaymentFileDetailLine detailLine, User person, ProcessResult result,
+    protected SettlementNote processCode(SibsIncommingPaymentFileDetailLine detailLine, final String responsibleUsername, ProcessResult result,
             FinantialInstitution finantialInstitution, final String sibsImportationFile, YearMonthDay whenProcessedBySibs,
             final SibsReportFile reportFile) throws Exception {
 
@@ -316,7 +314,7 @@ public class SIBSPaymentsImporter {
             result.addMessage("warning.manager.SIBS.referenced.multiple.payor.entities", codeToProcess.getReferenceCode());
         }
 
-        final SettlementNote settlementNote = codeToProcess.processPayment(person, detailLine.getAmount(),
+        final SettlementNote settlementNote = codeToProcess.processPayment(responsibleUsername, detailLine.getAmount(),
                 detailLine.getWhenOccuredTransaction(), detailLine.getSibsTransactionId(), sibsImportationFile,
                 whenProcessedBySibs.toLocalDate().toDateTimeAtStartOfDay(), reportFile);
 

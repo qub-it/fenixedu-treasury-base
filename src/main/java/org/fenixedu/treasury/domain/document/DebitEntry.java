@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -67,7 +67,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class DebitEntry extends DebitEntry_Base {
 
@@ -161,7 +161,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         getInterestDebitEntriesSet().stream().forEach(ide -> ide.checkForDeletionBlockers(blockers));
         if (!getCreditEntriesSet().isEmpty()) {
-            blockers.add(BundleUtil.getString(Constants.BUNDLE, "error.DebitEntry.cannot.delete.has.creditentries"));
+            blockers.add(org.fenixedu.treasury.util.Constants.bundle("error.DebitEntry.cannot.delete.has.creditentries"));
         }
 
     }
@@ -394,7 +394,7 @@ public class DebitEntry extends DebitEntry_Base {
 
             final DateTime now = new DateTime();
 
-            final String reason = Constants.bundle("label.TreasuryExemption.credit.entry.exemption.description", getDescription(),
+            final String reason = org.fenixedu.treasury.util.Constants.bundle("label.TreasuryExemption.credit.entry.exemption.description", getDescription(),
                     treasuryExemption.getTreasuryExemptionType().getName().getContent());
 
             final CreditEntry creditEntryFromExemption =

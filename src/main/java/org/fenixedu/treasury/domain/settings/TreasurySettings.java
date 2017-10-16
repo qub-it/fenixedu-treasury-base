@@ -6,13 +6,13 @@ import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class TreasurySettings extends TreasurySettings_Base {
 
     protected TreasurySettings() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     @Atomic
@@ -23,7 +23,7 @@ public class TreasurySettings extends TreasurySettings_Base {
     }
 
     protected static Optional<TreasurySettings> findUnique() {
-        return Bennu.getInstance().getTreasurySettingsSet().stream().findFirst();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasurySettingsSet().stream().findFirst();
     }
 
     @Atomic

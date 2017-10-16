@@ -41,7 +41,7 @@ public class SibsConfiguration extends SibsConfiguration_Base {
 
     protected SibsConfiguration() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected void init(final FinantialInstitution finantialInstitution, final String entityReferenceCode,
@@ -84,7 +84,7 @@ public class SibsConfiguration extends SibsConfiguration_Base {
     @Atomic
     public void delete() {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
-        setBennu(null);
+        setDomainRoot(null);
         setFinantialInstitution(null);
         deleteDomainObject();
     }

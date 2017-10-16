@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.treasury.domain.bennu.signals.BennuSignalsServices;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.CreditEntryBean;
@@ -41,7 +40,7 @@ import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class SettlementEntry extends SettlementEntry_Base {
 
@@ -58,7 +57,7 @@ public class SettlementEntry extends SettlementEntry_Base {
 
     protected SettlementEntry() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
         setCloseDate(new DateTime());
     }
 
@@ -86,7 +85,8 @@ public class SettlementEntry extends SettlementEntry_Base {
             }
         }
 
-        BennuSignalsServices.emitSignalForSettlement(finantialDocument);
+        // TODO ANIL : Handle asynchronous events 
+        // BennuSignalsServices.emitSignalForSettlement(finantialDocument);
     }
 
     @Override

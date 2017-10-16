@@ -25,7 +25,7 @@ public class ReimbursementProcessStatusType extends ReimbursementProcessStatusTy
 
     public ReimbursementProcessStatusType() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected ReimbursementProcessStatusType(final String code, final String description, final int orderNumber,
@@ -43,7 +43,7 @@ public class ReimbursementProcessStatusType extends ReimbursementProcessStatusTy
 
     private void checkRules() {
 
-        if (getBennu() == null) {
+        if (getDomainRoot() == null) {
             throw new TreasuryDomainException("error.ReimbursementProcessStatusType.bennu.required");
         }
 
@@ -93,7 +93,7 @@ public class ReimbursementProcessStatusType extends ReimbursementProcessStatusTy
     // @formatter:on
 
     public static Stream<ReimbursementProcessStatusType> findAll() {
-        return Bennu.getInstance().getReimbursementProcessStatusTypesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getReimbursementProcessStatusTypesSet().stream();
     }
 
     public static Stream<ReimbursementProcessStatusType> findByCode(final String code) {

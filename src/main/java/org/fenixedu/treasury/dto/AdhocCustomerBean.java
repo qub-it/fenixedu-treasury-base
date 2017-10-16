@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
@@ -43,7 +41,7 @@ import com.google.common.collect.Lists;
 import pt.ist.standards.geographic.Country;
 import pt.ist.standards.geographic.Planet;
 
-public class AdhocCustomerBean implements IBean {
+public class AdhocCustomerBean implements ITreasuryBean {
 
     private CustomerType customerType;
     private String code;
@@ -57,9 +55,9 @@ public class AdhocCustomerBean implements IBean {
     private String countryCode;
     private List<FinantialInstitution> finantialInstitutions;
 
-    private List<TupleDataSourceBean> finantialInstitutionsDataSource;
-    private List<TupleDataSourceBean> customerTypesDataSource;
-    private List<TupleDataSourceBean> countryCodesDataSource;
+    private List<TreasuryTupleDataSourceBean> finantialInstitutionsDataSource;
+    private List<TreasuryTupleDataSourceBean> customerTypesDataSource;
+    private List<TreasuryTupleDataSourceBean> countryCodesDataSource;
     
     public String getCode() {
         return code;
@@ -167,39 +165,39 @@ public class AdhocCustomerBean implements IBean {
         this.finantialInstitutions = finantialInstitutions;
     }
 
-    public List<TupleDataSourceBean> getFinantialInstitutionsDataSource() {
+    public List<TreasuryTupleDataSourceBean> getFinantialInstitutionsDataSource() {
         return finantialInstitutionsDataSource;
     }
 
     public void setFinantialInstitutionsDataSource(List<FinantialInstitution> finantialInstitutionsDataSource) {
         this.finantialInstitutionsDataSource = finantialInstitutionsDataSource.stream().map(x -> {
-            TupleDataSourceBean inst = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean inst = new TreasuryTupleDataSourceBean();
             inst.setId(x.getExternalId());
             inst.setText(x.getName());
             return inst;
         }).collect(Collectors.toList());
     }
 
-    public List<TupleDataSourceBean> getCustomerTypesDataSource() {
+    public List<TreasuryTupleDataSourceBean> getCustomerTypesDataSource() {
         return customerTypesDataSource;
     }
 
     public void setCustomerTypesDataSource(List<CustomerType> customerTypesDataSource) {
         this.customerTypesDataSource = customerTypesDataSource.stream().map(customerType -> {
-            TupleDataSourceBean customerTypeDataSource = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean customerTypeDataSource = new TreasuryTupleDataSourceBean();
             customerTypeDataSource.setId(customerType.getExternalId());
             customerTypeDataSource.setText(customerType.getName().getContent());
             return customerTypeDataSource;
         }).collect(Collectors.toList());
     }
     
-    public List<TupleDataSourceBean> getCountryCodesDataSource() {
+    public List<TreasuryTupleDataSourceBean> getCountryCodesDataSource() {
         return countryCodesDataSource;
     }
     
     public void setCountryCodesDataSource(final List<Country> countries) {
-        this.countryCodesDataSource = countries.stream().map(c -> new TupleDataSourceBean(c.alpha2, c.getLocalizedName(I18N.getLocale()))).collect(Collectors.toList());
+        this.countryCodesDataSource = countries.stream().map(c -> new TreasuryTupleDataSourceBean(c.alpha2, c.getLocalizedName(I18N.getLocale()))).collect(Collectors.toList());
         
-        Collections.sort(this.countryCodesDataSource, TupleDataSourceBean.COMPARE_BY_TEXT);
+        Collections.sort(this.countryCodesDataSource, TreasuryTupleDataSourceBean.COMPARE_BY_TEXT);
     }
 }

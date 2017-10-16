@@ -27,7 +27,7 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.util.Constants;
 
@@ -51,7 +51,7 @@ public enum PaymentReferenceCodeStateType {
     }
 
     public LocalizedString getDescriptionI18N() {
-        return BundleUtil.getLocalizedString(Constants.BUNDLE, getClass().getSimpleName() + "." + name());
+        return Constants.bundleI18N(getClass().getSimpleName() + "." + name());
     }
 
 }

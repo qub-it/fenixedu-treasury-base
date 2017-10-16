@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -40,10 +38,10 @@ import org.fenixedu.treasury.domain.FiscalCountryRegion;
 
 import pt.ist.standards.geographic.Country;
 import pt.ist.standards.geographic.District;
-import pt.ist.standards.geographic.GeographicInfoLoader;
 import pt.ist.standards.geographic.Municipality;
+import pt.ist.standards.geographic.TreasuryGeographicInfoLoader;
 
-public class FinantialInstitutionBean implements IBean, Serializable {
+public class FinantialInstitutionBean implements ITreasuryBean, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -57,14 +55,14 @@ public class FinantialInstitutionBean implements IBean, Serializable {
 
     private FiscalCountryRegion fiscalcountryregion;
 
-    private List<TupleDataSourceBean> countries;
+    private List<TreasuryTupleDataSourceBean> countries;
 
-    private List<TupleDataSourceBean> districts;
+    private List<TreasuryTupleDataSourceBean> districts;
 
-    private List<TupleDataSourceBean> municipalities;
+    private List<TreasuryTupleDataSourceBean> municipalities;
 
-    private List<TupleDataSourceBean> fiscalcountryregions;
-    private List<TupleDataSourceBean> currenciesDataSource;
+    private List<TreasuryTupleDataSourceBean> fiscalcountryregions;
+    private List<TreasuryTupleDataSourceBean> currenciesDataSource;
 
     private Currency currency;
 
@@ -131,13 +129,13 @@ public class FinantialInstitutionBean implements IBean, Serializable {
         this.municipality = municipality;
     }
 
-    public List<TupleDataSourceBean> getCountries() {
+    public List<TreasuryTupleDataSourceBean> getCountries() {
         return countries;
     }
 
     public void setCountries(List<Country> countries) {
         this.countries = countries.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
 
             tuple.setId(x.exportAsString());
             tuple.setText(x.getLocalizedName(I18N.getLocale()));
@@ -145,13 +143,13 @@ public class FinantialInstitutionBean implements IBean, Serializable {
         }).collect(Collectors.toList());
     }
 
-    public List<TupleDataSourceBean> getDistricts() {
+    public List<TreasuryTupleDataSourceBean> getDistricts() {
         return districts;
     }
 
     public void setDistricts(List<District> districts) {
         this.districts = districts.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
 
             tuple.setId(x.exportAsString());
             tuple.setText(x.getLocalizedName(I18N.getLocale()));
@@ -159,13 +157,13 @@ public class FinantialInstitutionBean implements IBean, Serializable {
         }).collect(Collectors.toList());
     }
 
-    public List<TupleDataSourceBean> getMunicipalities() {
+    public List<TreasuryTupleDataSourceBean> getMunicipalities() {
         return municipalities;
     }
 
     public void setMunicipalities(List<Municipality> municipalities) {
         this.municipalities = municipalities.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
 
             tuple.setId(x.exportAsString());
             tuple.setText(x.getLocalizedName(I18N.getLocale()));
@@ -181,13 +179,13 @@ public class FinantialInstitutionBean implements IBean, Serializable {
         this.fiscalNumber = fiscalNumber;
     }
 
-    public List<TupleDataSourceBean> getFiscalcountryregions() {
+    public List<TreasuryTupleDataSourceBean> getFiscalcountryregions() {
         return fiscalcountryregions;
     }
 
     public void setFiscalcountryregions(List<FiscalCountryRegion> fiscalcountryregions) {
         this.fiscalcountryregions = fiscalcountryregions.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
 
             tuple.setId(x.getExternalId());
             tuple.setText(x.getName().getContent());
@@ -261,7 +259,7 @@ public class FinantialInstitutionBean implements IBean, Serializable {
 
     public void updateModelLists() {
 
-        this.setCountries(GeographicInfoLoader.getInstance().findAllCountries().sorted((s1, s2) -> {
+        this.setCountries(TreasuryGeographicInfoLoader.getInstance().findAllCountries().sorted((s1, s2) -> {
             return s1.getLocalizedName(I18N.getLocale()).compareTo(s2.getLocalizedName(I18N.getLocale()));
         }).collect(Collectors.toList()));
 
@@ -279,13 +277,13 @@ public class FinantialInstitutionBean implements IBean, Serializable {
 
     }
 
-    public List<TupleDataSourceBean> getCurrenciesDataSource() {
+    public List<TreasuryTupleDataSourceBean> getCurrenciesDataSource() {
         return currenciesDataSource;
     }
 
     public void setCurrenciesDataSource(List<Currency> currencies) {
         this.currenciesDataSource = currencies.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setText(x.getIsoCode() + " - " + x.getSymbol());
             tuple.setId(x.getExternalId());
             return tuple;

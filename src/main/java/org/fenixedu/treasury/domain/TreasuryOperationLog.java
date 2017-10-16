@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class TreasuryOperationLog extends TreasuryOperationLog_Base {
 
@@ -54,7 +54,7 @@ public class TreasuryOperationLog extends TreasuryOperationLog_Base {
 
     protected TreasuryOperationLog() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected TreasuryOperationLog(final String log, final String oid, final String type) {
@@ -101,7 +101,7 @@ public class TreasuryOperationLog extends TreasuryOperationLog_Base {
     public void delete() {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
@@ -112,7 +112,7 @@ public class TreasuryOperationLog extends TreasuryOperationLog_Base {
     }
 
     public static Stream<TreasuryOperationLog> findAll() {
-        return Bennu.getInstance().getTreasuryOperationLogsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryOperationLogsSet().stream();
     }
 
     public static Stream<TreasuryOperationLog> findByLog(final String log) {

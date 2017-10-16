@@ -54,13 +54,13 @@ import org.joda.time.DateTime;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class SettlementNote extends SettlementNote_Base {
 
     protected SettlementNote() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected SettlementNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
@@ -668,7 +668,7 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     public static Stream<SettlementNote> findAll() {
-        return Bennu.getInstance().getFinantialDocumentsSet().stream().filter(x -> x instanceof SettlementNote)
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialDocumentsSet().stream().filter(x -> x instanceof SettlementNote)
                 .map(SettlementNote.class::cast);
     }
 

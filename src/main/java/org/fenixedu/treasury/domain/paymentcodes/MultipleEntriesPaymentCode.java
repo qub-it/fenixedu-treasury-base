@@ -2,15 +2,12 @@ package org.fenixedu.treasury.domain.paymentcodes;
 
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -28,7 +25,7 @@ import org.joda.time.LocalDate;
 
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base {
 
@@ -37,7 +34,7 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, final PaymentReferenceCode paymentReferenceCode,
             final boolean valid) {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
         init(debitNoteEntries, paymentReferenceCode, valid);
     }
 
@@ -123,9 +120,9 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     }
 
     @Override
-    public SettlementNote processPayment(final User person, final BigDecimal amountToPay, final DateTime whenRegistered,
+    public SettlementNote processPayment(final String username, final BigDecimal amountToPay, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments) {
-        return internalProcessPayment(person, amountToPay, whenRegistered, sibsTransactionId, comments, getInvoiceEntriesSet());
+        return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, getInvoiceEntriesSet());
     }
 
     public TreeSet<DebitEntry> getOrderedInvoiceEntries() {
@@ -155,12 +152,6 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     @Override
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
-
-        //add more logical tests for checking deletion rules
-        //if (getXPTORelation() != null)
-        //{
-        //    blockers.add(BundleUtil.getString(Bundle.APPLICATION, "error.MultipleEntriesPaymentCode.cannot.be.deleted"));
-        //}
     }
 
     @Atomic

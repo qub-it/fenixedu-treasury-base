@@ -27,26 +27,28 @@
  */
 package org.fenixedu.treasury.domain.integration;
 
-import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 
 import pt.ist.fenixframework.Atomic;
 
-public class OperationFile extends OperationFile_Base {
+public class OperationFile extends OperationFile_Base implements IGenericFile {
 
     public OperationFile() {
         super();
-        // this.setBennu(Bennu.getInstance());
+        // this.setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     public OperationFile(String fileName, byte[] content) {
         this();
-        this.init(fileName, fileName, content);
+        
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, fileName, content);
     }
 
     @Override
     // TODO: Implement
-    public boolean isAccessible(User arg0) {
+    public boolean isAccessible(final String username) {
         throw new RuntimeException("not implemented");
     }
 
@@ -77,21 +79,26 @@ public class OperationFile extends OperationFile_Base {
         this.setLogIntegrationOperation(null);
         this.setIntegrationOperation(null);
 
-        super.delete();
+        TreasuryPlataformDependentServicesFactory.implementation().deleteFile(this);
+        deleteDomainObject();
     }
 
     @Atomic
     public static OperationFile create(String fileName, byte[] bytes, IntegrationOperation operation) {
+    	
         OperationFile operationFile = new OperationFile();
-        operationFile.init(fileName, fileName, bytes);
-        operationFile.setIntegrationOperation(operation);
+        
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(operationFile, fileName, fileName, bytes);
+
         return operationFile;
     }
 
     @Atomic
     public static OperationFile createLog(final String fileName, final byte[] bytes, final IntegrationOperation operation) {
         OperationFile operationFile = new OperationFile();
-        operationFile.init(fileName, fileName, bytes);
+        
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(operationFile, fileName, fileName, bytes);
+        
         operationFile.setLogIntegrationOperation(operation);
         return operationFile;
     }

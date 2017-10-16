@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -31,7 +30,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
 
@@ -39,7 +38,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
         super();
     }
 
-    public abstract SettlementNote processPayment(final User person, final BigDecimal amountToPay, DateTime whenRegistered,
+    public abstract SettlementNote processPayment(final String username, final BigDecimal amountToPay, DateTime whenRegistered,
             String sibsTransactionId, String comments);
 
     public abstract String getDescription();
@@ -62,7 +61,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
     }
 
     @Atomic
-    protected SettlementNote internalProcessPayment(final User user, final BigDecimal amount, final DateTime whenRegistered,
+    protected SettlementNote internalProcessPayment(final String username, final BigDecimal amount, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments, Set<InvoiceEntry> invoiceEntriesToPay) {
 
         final TreeSet<InvoiceEntry> sortedInvoiceEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);

@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -46,7 +46,7 @@ import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
@@ -96,11 +96,11 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
             blockers.add(
-                    BundleUtil.getString(Constants.BUNDLE, "error.invoiceentry.cannot.be.deleted.document.is.not.preparing"));
+            		Constants.bundle("error.invoiceentry.cannot.be.deleted.document.is.not.preparing"));
         }
 
         if (!getSettlementEntriesSet().isEmpty()) {
-            blockers.add(BundleUtil.getString(Constants.BUNDLE,
+            blockers.add(Constants.bundle(
                     "error.invoiceentry.cannot.be.deleted.settlemententries.is.not.empty"));
         }
 

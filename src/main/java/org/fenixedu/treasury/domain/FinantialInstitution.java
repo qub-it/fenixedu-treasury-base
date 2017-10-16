@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -51,7 +50,7 @@ public class FinantialInstitution extends FinantialInstitution_Base implements I
 
     protected FinantialInstitution() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected FinantialInstitution(final FiscalCountryRegion fiscalCountryRegion, final Currency currency, final String code,
@@ -146,7 +145,7 @@ public class FinantialInstitution extends FinantialInstitution_Base implements I
             throw new TreasuryDomainException("error.FinantialInstitution.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setCurrency(null);
         setCountry(null);
         setDistrict(null);
@@ -189,7 +188,7 @@ public class FinantialInstitution extends FinantialInstitution_Base implements I
     }
 
     public static Stream<FinantialInstitution> findAll() {
-        return Bennu.getInstance().getFinantialInstitutionsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialInstitutionsSet().stream();
     }
 
     public static Stream<FinantialInstitution> findByCode(final String code) {

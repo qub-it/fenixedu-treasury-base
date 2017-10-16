@@ -48,7 +48,7 @@ import org.joda.time.Months;
 
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class InterestRate extends InterestRate_Base {
 
@@ -56,7 +56,7 @@ public class InterestRate extends InterestRate_Base {
 
     protected InterestRate() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected InterestRate(final Tariff tariff, final DebitEntry debitEntry, final InterestType interestType,
@@ -464,7 +464,7 @@ public class InterestRate extends InterestRate_Base {
             throw new TreasuryDomainException("error.InterestRate.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setTariff(null);
         setDebitEntry(null);
         deleteDomainObject();
@@ -485,7 +485,7 @@ public class InterestRate extends InterestRate_Base {
     // @formatter: on
 
     public static Stream<InterestRate> findAll() {
-        return Bennu.getInstance().getInterestRatesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getInterestRatesSet().stream();
     }
 
     @Atomic

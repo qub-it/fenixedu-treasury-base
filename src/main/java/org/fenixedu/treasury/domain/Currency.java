@@ -33,8 +33,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
@@ -50,14 +49,14 @@ public class Currency extends Currency_Base {
     public static void initializeCurrency() {
         if (Currency.findAll().count() == 0) {
             Currency.create("EUR",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.Currency.EUR")),
-                    BundleUtil.getString(Constants.BUNDLE, "label.Currency.EUR"), "€");
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.Currency.EUR"),
+            		org.fenixedu.treasury.util.Constants.bundle("label.Currency.EUR"), "€");
         }
     }
 
     protected Currency() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected Currency(final String code, final LocalizedString name, final String isoCode, final String symbol) {
@@ -113,13 +112,13 @@ public class Currency extends Currency_Base {
             throw new TreasuryDomainException("error.Currency.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
 
     public static Stream<Currency> findAll() {
-        return Bennu.getInstance().getCurrenciesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getCurrenciesSet().stream();
     }
 
     public static Currency findByCode(final String code) {

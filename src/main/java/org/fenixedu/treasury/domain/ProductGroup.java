@@ -34,13 +34,13 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class ProductGroup extends ProductGroup_Base {
 
     protected ProductGroup() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected ProductGroup(final String code, final LocalizedString name) {
@@ -82,13 +82,13 @@ public class ProductGroup extends ProductGroup_Base {
             throw new TreasuryDomainException("error.ProductGroup.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
 
     public static Set<ProductGroup> readAll() {
-        return Bennu.getInstance().getProductGroupsSet();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getProductGroupsSet();
     }
 
     public static ProductGroup findByCode(final String code) {

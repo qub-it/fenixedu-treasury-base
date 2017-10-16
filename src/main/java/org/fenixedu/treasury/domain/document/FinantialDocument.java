@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -51,7 +51,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public abstract class FinantialDocument extends FinantialDocument_Base {
 
@@ -86,7 +86,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
 
     protected FinantialDocument() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
         setState(FinantialDocumentStateType.PREPARING);
     }
 
@@ -269,7 +269,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         } else {
             throw new TreasuryDomainException(
-                    BundleUtil.getString(Constants.BUNDLE, "error.FinantialDocumentState.invalid.state.change.request"));
+            		org.fenixedu.treasury.util.Constants.bundle("error.FinantialDocumentState.invalid.state.change.request"));
 
         }
 
@@ -294,7 +294,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         }
 
         if (getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration().getActive()) {
-            ERPExporterManager.scheduleSingleDocument(this);
+            ERPExporterManager.getInstance().scheduleSingleDocument(this);
         }
     }
 
@@ -344,7 +344,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             throw new TreasuryDomainException("error.FinantialDocument.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setDocumentNumberSeries(null);
         setCurrency(null);
         setDebtAccount(null);
@@ -469,7 +469,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
     // @formatter:on
 
     public static Stream<? extends FinantialDocument> findAll() {
-        return Bennu.getInstance().getFinantialDocumentsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialDocumentsSet().stream();
     }
 
     public static Stream<? extends FinantialDocument> find(final FinantialDocumentType finantialDocumentType) {

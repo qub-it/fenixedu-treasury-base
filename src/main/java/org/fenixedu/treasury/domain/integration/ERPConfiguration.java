@@ -33,10 +33,9 @@ import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
-
-import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceClientConfiguration;
-import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceConfiguration;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -44,7 +43,7 @@ public class ERPConfiguration extends ERPConfiguration_Base {
 
     protected ERPConfiguration() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected void init(final Series paymentsIntegrationSeries, final FinantialInstitution finantialInstitution,
@@ -118,7 +117,7 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.ERPConfiguration.cannot.delete");
         }
-        setBennu(null);
+        setDomainRoot(null);
         setFinantialInstitution(null);
         setPaymentsIntegrationSeries(null);
         deleteDomainObject();
@@ -135,20 +134,7 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     }
 
     public IERPExternalService getERPExternalServiceImplementation() {
-        String className = this.getImplementationClassName();
-        try {
-
-            //force the "invocation" of class name
-            Class cl = Class.forName(className);
-            WebServiceClientConfiguration clientConfiguration = WebServiceConfiguration.readByImplementationClass(className);
-
-            IERPExternalService client = clientConfiguration.getClient();
-
-            return client;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new TreasuryDomainException("error.ERPConfiguration.invalid.external.service");
-        }
+    	return TreasuryPlataformDependentServicesFactory.implementation().getERPExternalServiceImplementation(this);
     }
 
 }

@@ -48,7 +48,7 @@ import org.joda.time.LocalDate;
 
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class DebtAccount extends DebtAccount_Base {
 
@@ -62,7 +62,7 @@ public class DebtAccount extends DebtAccount_Base {
 
     public DebtAccount() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected DebtAccount(final FinantialInstitution finantialInstitution, final Customer customer) {
@@ -109,7 +109,7 @@ public class DebtAccount extends DebtAccount_Base {
     // @formatter:on
 
     public static Stream<DebtAccount> findAll() {
-        return Bennu.getInstance().getDebtAccountsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getDebtAccountsSet().stream();
     }
 
     public static Stream<DebtAccount> find(final FinantialInstitution finantialInstitution) {
@@ -208,7 +208,7 @@ public class DebtAccount extends DebtAccount_Base {
             throw new TreasuryDomainException("error.DebtAccount.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setCustomer(null);
         setFinantialInstitution(null);
 

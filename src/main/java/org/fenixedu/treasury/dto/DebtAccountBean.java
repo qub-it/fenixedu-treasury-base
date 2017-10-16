@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -40,19 +38,19 @@ import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 
-public class DebtAccountBean implements IBean {
+public class DebtAccountBean implements ITreasuryBean {
 
     private FinantialInstitution finantialInstitution;
-    private List<TupleDataSourceBean> finantialInstitutionDataSource;
+    private List<TreasuryTupleDataSourceBean> finantialInstitutionDataSource;
     private Customer customer;
-    private List<TupleDataSourceBean> customerDataSource;
+    private List<TreasuryTupleDataSourceBean> customerDataSource;
 
     private Set<FinantialDocument> finantialDocuments;
-    private List<TupleDataSourceBean> finantialDocumentsDataSource;
+    private List<TreasuryTupleDataSourceBean> finantialDocumentsDataSource;
     private List<Invoice> invoice;
-    private List<TupleDataSourceBean> invoiceDataSource;
+    private List<TreasuryTupleDataSourceBean> invoiceDataSource;
     private List<InvoiceEntry> invoiceEntry;
-    private List<TupleDataSourceBean> invoiceEntryDataSource;
+    private List<TreasuryTupleDataSourceBean> invoiceEntryDataSource;
 
     public FinantialInstitution getFinantialInstitution() {
         return finantialInstitution;
@@ -62,13 +60,13 @@ public class DebtAccountBean implements IBean {
         finantialInstitution = value;
     }
 
-    public List<TupleDataSourceBean> getFinantialInstitutionDataSource() {
+    public List<TreasuryTupleDataSourceBean> getFinantialInstitutionDataSource() {
         return finantialInstitutionDataSource;
     }
 
     public void setFinantialInstitutionDataSource(List<FinantialInstitution> value) {
         this.finantialInstitutionDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;
@@ -83,13 +81,13 @@ public class DebtAccountBean implements IBean {
         customer = value;
     }
 
-    public List<TupleDataSourceBean> getCustomerDataSource() {
+    public List<TreasuryTupleDataSourceBean> getCustomerDataSource() {
         return customerDataSource;
     }
 
     public void setCustomerDataSource(List<Customer> value) {
         this.customerDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;
@@ -104,13 +102,13 @@ public class DebtAccountBean implements IBean {
         finantialDocuments = value;
     }
 
-    public List<TupleDataSourceBean> getFinantialDocumentsDataSource() {
+    public List<TreasuryTupleDataSourceBean> getFinantialDocumentsDataSource() {
         return finantialDocumentsDataSource;
     }
 
     public void setFinantialDocumentsDataSource(List<FinantialDocument> value) {
         this.finantialDocumentsDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;
@@ -125,13 +123,13 @@ public class DebtAccountBean implements IBean {
         invoice = value;
     }
 
-    public List<TupleDataSourceBean> getInvoiceDataSource() {
+    public List<TreasuryTupleDataSourceBean> getInvoiceDataSource() {
         return invoiceDataSource;
     }
 
     public void setInvoiceDataSource(List<Invoice> value) {
         this.invoiceDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;
@@ -146,13 +144,13 @@ public class DebtAccountBean implements IBean {
         invoiceEntry = value;
     }
 
-    public List<TupleDataSourceBean> getInvoiceEntryDataSource() {
+    public List<TreasuryTupleDataSourceBean> getInvoiceEntryDataSource() {
         return invoiceEntryDataSource;
     }
 
     public void setInvoiceEntryDataSource(List<InvoiceEntry> value) {
         this.invoiceEntryDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.toString());
             return tuple;

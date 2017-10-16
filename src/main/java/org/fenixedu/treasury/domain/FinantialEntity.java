@@ -32,8 +32,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.TreasuryDocumentTemplate;
@@ -59,7 +57,7 @@ public class FinantialEntity extends FinantialEntity_Base {
 
     protected FinantialEntity() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected FinantialEntity(final FinantialInstitution finantialInstitution, final String code, final LocalizedString name) {
@@ -113,7 +111,7 @@ public class FinantialEntity extends FinantialEntity_Base {
             throw new TreasuryDomainException("error.FinantialEntity.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         this.setFinantialInstitution(null);
         for (Tariff t : this.getTariffSet()) {
             this.removeTariff(t);
@@ -137,7 +135,7 @@ public class FinantialEntity extends FinantialEntity_Base {
     }
 
     public static Stream<FinantialEntity> findAll() {
-        return Bennu.getInstance().getFinantialEntitiesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialEntitiesSet().stream();
     }
 
     public static Stream<FinantialEntity> find(final FinantialInstitution finantialInstitution) {
@@ -153,8 +151,8 @@ public class FinantialEntity extends FinantialEntity_Base {
         return findAll().filter(fe -> LocalizedStringUtil.isEqualToAnyLocaleIgnoreCase(fe.getName(), name));
     }
 
-    public static Stream<FinantialEntity> findWithBackOfficeAccessFor(final User user) {
-        return findAll().filter(l -> TreasuryAccessControlAPI.isBackOfficeMember(user, l));
+    public static Stream<FinantialEntity> findWithBackOfficeAccessFor(final String username) {
+        return findAll().filter(l -> TreasuryAccessControlAPI.isBackOfficeMember(username, l));
     }
 
     @Atomic

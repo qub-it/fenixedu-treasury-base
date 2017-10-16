@@ -5,21 +5,19 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 
-public class TreasuryExemptionBean implements IBean, Serializable {
+public class TreasuryExemptionBean implements ITreasuryBean, Serializable {
 
     private static final long serialVersionUID = 1L;
     private TreasuryEvent treasuryEvent;
 
-    private List<TupleDataSourceBean> treasuryExemptionTypes;
-    private List<TupleDataSourceBean> products;
-    private List<TupleDataSourceBean> debitEntries;
+    private List<TreasuryTupleDataSourceBean> treasuryExemptionTypes;
+    private List<TreasuryTupleDataSourceBean> products;
+    private List<TreasuryTupleDataSourceBean> debitEntries;
     private TreasuryExemptionType treasuryExemptionType;
     private DebitEntry debitEntry;
     private BigDecimal valuetoexempt;
@@ -34,11 +32,11 @@ public class TreasuryExemptionBean implements IBean, Serializable {
         this();
         this.treasuryEvent = treasuryEvent;
         this.setDebitEntries(DebitEntry.findActive(treasuryEvent)
-                .map(l -> new TupleDataSourceBean(l.getExternalId(), l.getDescription()))
-                .sorted(TupleDataSourceBean.COMPARE_BY_TEXT).collect(Collectors.toList()));
+                .map(l -> new TreasuryTupleDataSourceBean(l.getExternalId(), l.getDescription()))
+                .sorted(TreasuryTupleDataSourceBean.COMPARE_BY_TEXT).collect(Collectors.toList()));
     }
 
-    public List<TupleDataSourceBean> getTreasuryExemptionTypes() {
+    public List<TreasuryTupleDataSourceBean> getTreasuryExemptionTypes() {
         return treasuryExemptionTypes;
     }
 
@@ -52,20 +50,20 @@ public class TreasuryExemptionBean implements IBean, Serializable {
 
     public void setTreasuryExemptionTypes(List<TreasuryExemptionType> treasuryExemptionTypes) {
         this.treasuryExemptionTypes = treasuryExemptionTypes.stream().map(treasuryExemptionType -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setText(treasuryExemptionType.getName().getContent());
             tuple.setId(treasuryExemptionType.getExternalId());
             return tuple;
         }).collect(Collectors.toList());
     }
 
-    public List<TupleDataSourceBean> getProducts() {
+    public List<TreasuryTupleDataSourceBean> getProducts() {
         return products;
     }
 
     public void setProducts(List<Product> products) {
         this.products = products.stream().map(product -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setText(product.getName().getContent());
             tuple.setId(product.getExternalId());
             return tuple;
@@ -80,11 +78,11 @@ public class TreasuryExemptionBean implements IBean, Serializable {
         this.treasuryExemptionType = treasuryExemptionType;
     }
 
-    public List<TupleDataSourceBean> getDebitEntries() {
+    public List<TreasuryTupleDataSourceBean> getDebitEntries() {
         return debitEntries;
     }
 
-    public void setDebitEntries(List<TupleDataSourceBean> debitEntries) {
+    public void setDebitEntries(List<TreasuryTupleDataSourceBean> debitEntries) {
         this.debitEntries = debitEntries;
     }
 

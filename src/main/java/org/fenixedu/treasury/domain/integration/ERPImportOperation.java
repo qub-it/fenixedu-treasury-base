@@ -14,7 +14,7 @@ import org.joda.time.DateTime;
 
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class ERPImportOperation extends ERPImportOperation_Base {
 
@@ -78,7 +78,7 @@ public class ERPImportOperation extends ERPImportOperation_Base {
 
     public static Stream<ERPImportOperation> findAll() {
         Set<ERPImportOperation> results = new HashSet<ERPImportOperation>();
-        for (FinantialInstitution fi : Bennu.getInstance().getFinantialInstitutionsSet()) {
+        for (FinantialInstitution fi : pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialInstitutionsSet()) {
             results.addAll(fi.getIntegrationOperationsSet().stream().filter(x -> x instanceof ERPImportOperation)
                     .map(ERPImportOperation.class::cast).collect(Collectors.toList()));
         }

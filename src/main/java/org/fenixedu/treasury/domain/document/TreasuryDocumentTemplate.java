@@ -37,13 +37,13 @@ import org.joda.time.DateTime;
 import com.qubit.terra.docs.core.IDocumentTemplate;
 import com.qubit.terra.docs.core.IDocumentTemplateVersion;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base implements IDocumentTemplate {
 
     protected TreasuryDocumentTemplate() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected TreasuryDocumentTemplate(final FinantialDocumentType finantialDocumentTypes,
@@ -91,7 +91,7 @@ public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base impl
             file.delete();
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setFinantialDocumentType(null);
         setFinantialEntity(null);
         deleteDomainObject();
@@ -131,7 +131,7 @@ public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base impl
     }
 
     public static Stream<TreasuryDocumentTemplate> findAll() {
-        return Bennu.getInstance().getTreasuryDocumentTemplatesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getTreasuryDocumentTemplatesSet().stream();
     }
 
     public static Stream<TreasuryDocumentTemplate> findByFinantialDocumentType(

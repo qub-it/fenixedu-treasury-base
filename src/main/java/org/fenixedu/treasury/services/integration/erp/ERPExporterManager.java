@@ -3,13 +3,10 @@ package org.fenixedu.treasury.services.integration.erp;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.scheduler.TaskRunner;
-import org.fenixedu.bennu.scheduler.domain.SchedulerSystem;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -19,19 +16,27 @@ import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessS
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.ERPExternalServiceImplementation.ReimbursementStateBean;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
-import org.fenixedu.treasury.services.integration.erp.tasks.ERPExportSingleDocumentsTask;
+import org.fenixedu.treasury.util.Constants;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class ERPExporterManager {
 
-    private static final int WAIT_TRANSACTION_TO_FINISH_MS = 500;
-
+	private static ERPExporterManager _INSTANCE = null;
+	
+	public static final ERPExporterManager getInstance() {
+		if(_INSTANCE == null) {
+			_INSTANCE = new ERPExporterManager();
+		}
+		
+		return _INSTANCE;
+	}
+	
     public static final Comparator<FinantialDocument> COMPARE_BY_DOCUMENT_TYPE = new Comparator<FinantialDocument>() {
         @Override
         public int compare(FinantialDocument o1, FinantialDocument o2) {
@@ -50,7 +55,7 @@ public class ERPExporterManager {
         }
     };
 
-    public static String saftEncoding(final FinantialInstitution finantialInstitution) {
+    public String saftEncoding(final FinantialInstitution finantialInstitution) {
         final IERPExporter erpExporter =
                 finantialInstitution.getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
 
@@ -58,7 +63,7 @@ public class ERPExporterManager {
     }
 
     @Atomic
-    public static String exportFinantialDocumentToXML(final FinantialDocument finantialDocument) {
+    public String exportFinantialDocumentToXML(final FinantialDocument finantialDocument) {
         final FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
         final IERPExporter erpExporter = finantialDocument.getDebtAccount().getFinantialInstitution()
                 .getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
@@ -66,7 +71,7 @@ public class ERPExporterManager {
         return erpExporter.exportFinantialDocumentToXML(finantialInstitution, Lists.newArrayList(finantialDocument));
     }
 
-    public static List<ERPExportOperation> exportPendingDocumentsForFinantialInstitution(
+    public List<ERPExportOperation> exportPendingDocumentsForFinantialInstitution(
             final FinantialInstitution finantialInstitution) {
 
         final IERPExporter erpExporter =
@@ -105,7 +110,7 @@ public class ERPExporterManager {
 
     private static final int LIMIT = 200;
     
-    public static List<ERPExportOperation> exportPendingDocumentsForDebtAccount(final DebtAccount debtAccount) {
+    public List<ERPExportOperation> exportPendingDocumentsForDebtAccount(final DebtAccount debtAccount) {
         final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
         final List<FinantialDocument> sortedDocuments = filterDocumentsToExport(debtAccount.getFinantialDocumentsSet().stream());
@@ -143,33 +148,11 @@ public class ERPExporterManager {
         return Lists.newArrayList();
     }
 
-    public static void scheduleSingleDocument(final FinantialDocument finantialDocument) {
-        final List<FinantialDocument> documentsToExport =
-                filterDocumentsToExport(Collections.singletonList(finantialDocument).stream());
-
-        if (documentsToExport.isEmpty()) {
-            return;
-        }
-
-        final String externalId = documentsToExport.iterator().next().getExternalId();
-
-        new Thread() {
-
-            @Override
-            @Atomic
-            public void run() {
-                try {
-                    Thread.sleep(WAIT_TRANSACTION_TO_FINISH_MS);
-                } catch (InterruptedException e) {
-                }
-
-                SchedulerSystem.queue(new TaskRunner(new ERPExportSingleDocumentsTask(externalId)));
-            };
-
-        }.start();
+    public void scheduleSingleDocument(final FinantialDocument finantialDocument) {
+    	TreasuryPlataformDependentServicesFactory.implementation().scheduleSingleDocument(finantialDocument);
     }
 
-    public static ERPExportOperation exportSingleDocument(final FinantialDocument finantialDocument) {
+    public ERPExportOperation exportSingleDocument(final FinantialDocument finantialDocument) {
         final List<FinantialDocument> documentsToExport =
                 filterDocumentsToExport(Collections.singletonList(finantialDocument).stream());
 
@@ -185,7 +168,7 @@ public class ERPExporterManager {
         return erpExporter.exportFinantialDocumentToIntegration(finantialInstitution, documentsToExport);
     }
 
-    public static ERPExportOperation exportSettlementNote(final SettlementNote settlementNote) {
+    public ERPExportOperation exportSettlementNote(final SettlementNote settlementNote) {
         List<FinantialDocument> documentsToExport = filterDocumentsToExport(Collections.singletonList(settlementNote).stream());
         
         if (documentsToExport.isEmpty()) {
@@ -228,19 +211,19 @@ public class ERPExporterManager {
         }
     }
 
-    public static void requestPendingDocumentStatus(FinantialInstitution finantialInstitution) {
+    public void requestPendingDocumentStatus(FinantialInstitution finantialInstitution) {
         final IERPExporter erpExporter =
                 finantialInstitution.getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
         erpExporter.requestPendingDocumentStatus(finantialInstitution);
     }
 
-    public static ERPExportOperation retryExportToIntegration(final ERPExportOperation eRPExportOperation) {
+    public ERPExportOperation retryExportToIntegration(final ERPExportOperation eRPExportOperation) {
         final List<FinantialDocument> documentsToExport = filterDocumentsToExport(eRPExportOperation.getFinantialDocumentsSet().stream());
 
         return exportSingleDocument(documentsToExport.iterator().next());
     }
 
-    public static byte[] downloadCertifiedDocumentPrint(final FinantialDocument finantialDocument) {
+    public byte[] downloadCertifiedDocumentPrint(final FinantialDocument finantialDocument) {
         final FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
 
         final IERPExporter erpExporter =
@@ -253,7 +236,7 @@ public class ERPExporterManager {
         return erpExporter.downloadCertifiedDocumentPrint(finantialDocument);
     }
 
-    public static void updateReimbursementState(final SettlementNote reimbursementNote) {
+    public void updateReimbursementState(final SettlementNote reimbursementNote) {
         final FinantialInstitution finantialInstitution = reimbursementNote.getDebtAccount().getFinantialInstitution();
 
         final IERPExporter erpExporter =

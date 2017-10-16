@@ -32,19 +32,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class PaymentMethod extends PaymentMethod_Base {
 
     protected PaymentMethod() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected PaymentMethod(final String code, final LocalizedString name, final boolean availableForPaymentInApplication) {
@@ -93,7 +93,7 @@ public class PaymentMethod extends PaymentMethod_Base {
             throw new TreasuryDomainException("error.PaymentMethod.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
@@ -102,20 +102,20 @@ public class PaymentMethod extends PaymentMethod_Base {
     public static void initializePaymentMethod() {
         if (PaymentMethod.findAll().count() == 0) {
             PaymentMethod.create("NU",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.PaymentMethod.MON")), true);
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.PaymentMethod.MON"), true);
             PaymentMethod.create("TB",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.PaymentMethod.WTR")), true);
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.PaymentMethod.WTR"), true);
             PaymentMethod.create("MB",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.PaymentMethod.ELE")), true);
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.PaymentMethod.ELE"), true);
             PaymentMethod.create("CD",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.PaymentMethod.CCR")), true);
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.PaymentMethod.CCR"), true);
             PaymentMethod.create("CH",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.PaymentMethod.CH")), true);
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.PaymentMethod.CH"), true);
         }
     }
 
     public static Stream<PaymentMethod> findAll() {
-        return Bennu.getInstance().getPaymentMethodsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getPaymentMethodsSet().stream();
     }
     
     public static Stream<PaymentMethod> findAvailableForPaymentInApplication() {

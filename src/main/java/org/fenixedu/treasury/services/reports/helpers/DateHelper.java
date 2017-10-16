@@ -29,9 +29,10 @@ package org.fenixedu.treasury.services.reports.helpers;
 
 import java.util.Locale;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.Partial;
@@ -63,8 +64,9 @@ public class DateHelper implements IDocumentHelper {
                 month = month.toLowerCase(); // Java does not follow the Portuguese Language Orthographic Agreement of 1990
             }
             String message =
-                    BundleUtil.getString("resources.FenixeduQubdocsReportsResources", locale, "message.DateHelper.extendedDate",
-                            localDate.toString("dd", locale), month, localDate.toString("yyyy", locale));
+                    Constants.bundleI18N("message.DateHelper.extendedDate",
+                            localDate.toString("dd", locale), month, localDate.toString("yyyy", locale)).getContent(locale);
+            
             i18NString = i18NString.with(locale, message);
         }
         return i18NString;

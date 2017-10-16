@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -42,20 +40,20 @@ import org.fenixedu.treasury.domain.tariff.FixedTariff;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.joda.time.LocalDate;
 
-public class FixedTariffBean implements IBean {
+public class FixedTariffBean implements ITreasuryBean {
 
     private FinantialInstitution finantialInstitution;
     private Product product;
-    private List<TupleDataSourceBean> productDataSource;
+    private List<TreasuryTupleDataSourceBean> productDataSource;
     private VatType vatType;
-    private List<TupleDataSourceBean> vatTypeDataSource;
+    private List<TreasuryTupleDataSourceBean> vatTypeDataSource;
     private FinantialEntity finantialEntity;
-    private List<TupleDataSourceBean> finantialEntityDataSource;
+    private List<TreasuryTupleDataSourceBean> finantialEntityDataSource;
     private java.math.BigDecimal amount;
     private org.joda.time.LocalDate beginDate;
     private org.joda.time.LocalDate endDate;
     private org.fenixedu.treasury.domain.tariff.DueDateCalculationType dueDateCalculationType;
-    private List<TupleDataSourceBean> dueDateCalculationTypeDataSource;
+    private List<TreasuryTupleDataSourceBean> dueDateCalculationTypeDataSource;
     private org.joda.time.LocalDate fixedDueDate;
     private int numberOfDaysAfterCreationForDueDate;
     private boolean applyInterests;
@@ -69,13 +67,13 @@ public class FixedTariffBean implements IBean {
         product = value;
     }
 
-    public List<TupleDataSourceBean> getProductDataSource() {
+    public List<TreasuryTupleDataSourceBean> getProductDataSource() {
         return productDataSource;
     }
 
     public void setProductDataSource(List<Product> value) {
         this.productDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.getName().getContent());
             return tuple;
@@ -98,13 +96,13 @@ public class FixedTariffBean implements IBean {
         finantialEntity = value;
     }
 
-    public List<TupleDataSourceBean> getFinantialEntityDataSource() {
+    public List<TreasuryTupleDataSourceBean> getFinantialEntityDataSource() {
         return finantialEntityDataSource;
     }
 
     public void setFinantialEntityDataSource(List<FinantialEntity> value) {
         this.finantialEntityDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.getExternalId());
             tuple.setText(x.getName().getContent());
             return tuple;
@@ -171,13 +169,13 @@ public class FixedTariffBean implements IBean {
         applyInterests = value;
     }
 
-    public List<TupleDataSourceBean> getDueDateCalculationTypeDataSource() {
+    public List<TreasuryTupleDataSourceBean> getDueDateCalculationTypeDataSource() {
         return dueDateCalculationTypeDataSource;
     }
 
     public void setDueDateCalculationTypeDataSource(List<org.fenixedu.treasury.domain.tariff.DueDateCalculationType> value) {
         this.dueDateCalculationTypeDataSource = value.stream().map(x -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.toString());
             tuple.setText(x.getDescriptionI18N().getContent());
             return tuple;

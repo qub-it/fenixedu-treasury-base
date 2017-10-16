@@ -3,25 +3,18 @@ package org.fenixedu.treasury.domain.forwardpayments;
 import java.util.Optional;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.domain.User;
-import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.PaymentMethod;
-import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentImplementation;
-import org.fenixedu.treasury.domain.forwardpayments.implementations.PaylineImplementation;
-import org.fenixedu.treasury.domain.forwardpayments.implementations.TPAVirtualImplementation;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentConfigurationBean;
-import org.fenixedu.treasury.ui.document.forwardpayments.IForwardPaymentController;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Base {
 
     private ForwardPaymentConfiguration() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     private ForwardPaymentConfiguration(final FinantialInstitution finantialInstitution,
@@ -103,10 +96,6 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
 
     public String formattedAmount(final ForwardPayment forwardPayment) {
         return implementation().getFormattedAmount(forwardPayment);
-    }
-
-    public IForwardPaymentController getForwardPaymentController(final ForwardPayment forwardPayment) {
-        return implementation().getForwardPaymentController(forwardPayment);
     }
 
     public IForwardPaymentImplementation implementation() {

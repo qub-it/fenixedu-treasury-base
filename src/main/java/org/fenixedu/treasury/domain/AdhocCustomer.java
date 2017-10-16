@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -46,7 +45,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
     protected AdhocCustomer() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     @Override
@@ -140,7 +139,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             throw new TreasuryDomainException("error.AdhocCustomer.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setCustomerType(null);
 
         for (DebtAccount deb : getDebtAccountsSet()) {
@@ -219,7 +218,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     }
 
     public static Stream<AdhocCustomer> findAll() {
-        return Bennu.getInstance().getCustomersSet().stream().filter(x -> x instanceof AdhocCustomer)
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getCustomersSet().stream().filter(x -> x instanceof AdhocCustomer)
                 .map(AdhocCustomer.class::cast);
     }
     

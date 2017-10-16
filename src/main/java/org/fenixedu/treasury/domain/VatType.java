@@ -32,19 +32,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class VatType extends VatType_Base {
 
     protected VatType() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected VatType(final String code, final LocalizedString name) {
@@ -86,7 +86,7 @@ public class VatType extends VatType_Base {
             throw new TreasuryDomainException("error.VatType.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
@@ -101,19 +101,19 @@ public class VatType extends VatType_Base {
 
         if (VatType.findAll().count() == 0) {
             VatType.create("RED",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.VatType.RED")));
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.VatType.RED"));
 
             VatType.create("INT",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.VatType.INT")));
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.VatType.INT"));
             VatType.create("NOR",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.VatType.NOR")));
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.VatType.NOR"));
             VatType.create("ISE",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE, "label.VatType.ISE")));
+            		org.fenixedu.treasury.util.Constants.bundleI18N("label.VatType.ISE"));
         }
     }
 
     public static Stream<VatType> findAll() {
-        return Bennu.getInstance().getVatTypesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getVatTypesSet().stream();
     }
 
     public static VatType findByCode(final String code) {

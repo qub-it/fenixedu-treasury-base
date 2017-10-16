@@ -1,9 +1,10 @@
 package org.fenixedu.treasury.domain.forwardpayments;
 
-import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.io.domain.IGenericFile;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
-public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base {
+public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements IGenericFile {
 
     private ForwardPaymentLogFile() {
         super();
@@ -11,11 +12,12 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base {
 
     private ForwardPaymentLogFile(final String fileName, final byte[] content) {
         this();
-        this.init(fileName, fileName, content);
+        
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, fileName, content);
     }
 
     @Override
-    public boolean isAccessible(final User user) {
+    public boolean isAccessible(final String username) {
         throw new RuntimeException("not implemented");
     }
     
@@ -25,6 +27,13 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base {
         }
         
         return null;
+    }
+
+    @Override
+    public void delete() {
+        TreasuryPlataformDependentServicesFactory.implementation().deleteFile(this);
+        
+        deleteDomainObject();
     }
 
     // @formatter:off

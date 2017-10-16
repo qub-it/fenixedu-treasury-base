@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -46,7 +46,7 @@ import org.fenixedu.treasury.util.Constants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.DateTime;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class Product extends Product_Base {
 
@@ -64,7 +64,7 @@ public class Product extends Product_Base {
 
     protected Product() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected Product(final ProductGroup productGroup, final String code, final LocalizedString name,
@@ -162,7 +162,7 @@ public class Product extends Product_Base {
             throw new TreasuryDomainException("error.Product.cannot.delete");
         }
         setProductGroup(null);
-        setBennu(null);
+        setDomainRoot(null);
         setVatType(null);
         for (FinantialInstitution inst : getFinantialInstitutionsSet()) {
             for (Tariff t : this.getTariffsSet(inst)) {
@@ -182,11 +182,11 @@ public class Product extends Product_Base {
     // @formatter: on
 
     public static Stream<Product> findAll() {
-        return Bennu.getInstance().getProductsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getProductsSet().stream();
     }
 
     public static Stream<Product> findAllActive() {
-        return Bennu.getInstance().getProductsSet().stream().filter(x -> x.getActive() == true);
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getProductsSet().stream().filter(x -> x.getActive() == true);
     }
 
     public static Stream<Product> findByCode(final String code) {
@@ -202,7 +202,7 @@ public class Product extends Product_Base {
     }
 
     public static LocalizedString defaultUnitOfMeasure() {
-        return BundleUtil.getLocalizedString(Constants.BUNDLE, "label.unitOfMeasure.default");
+        return Constants.bundleI18N("label.unitOfMeasure.default");
     }
     
     public static Stream<Product> findAllLegacy() {

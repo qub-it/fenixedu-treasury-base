@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -48,7 +47,7 @@ import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     private static final int LENGTH_REFERENCE_CODE = 9;
@@ -241,7 +240,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     }
 
     @Atomic
-    public SettlementNote processPayment(User responsibleUser, BigDecimal amountToPay, DateTime whenRegistered,
+    public SettlementNote processPayment(final String responsibleUsername, BigDecimal amountToPay, DateTime whenRegistered,
             String sibsTransactionId, String comments, final DateTime whenProcessedBySibs, final SibsReportFile sibsReportFile) {
 
         if (!isNew() && SibsTransactionDetail.isReferenceProcessingDuplicate(this.getReferenceCode(),
@@ -250,7 +249,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
         }
 
         SettlementNote note =
-                this.getTargetPayment().processPayment(responsibleUser, amountToPay, whenRegistered, sibsTransactionId, comments);
+                this.getTargetPayment().processPayment(responsibleUsername, amountToPay, whenRegistered, sibsTransactionId, comments);
 
         final DebtAccount referenceDebtAccount = this.getTargetPayment().getDebtAccount();
 

@@ -8,19 +8,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibs.outgoing.SibsOutgoingPaymentFile;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
-import pt.ist.fenixframework.FenixFramework;
 
-public class SibsOutputFile extends SibsOutputFile_Base {
+public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile {
 
     public SibsOutputFile() {
         super();
@@ -33,7 +33,9 @@ public class SibsOutputFile extends SibsOutputFile_Base {
             StringBuilder errorsBuilder = new StringBuilder();
             byte[] paymentFileContents =
                     file.createPaymentFile(finantialInstitution, lastSuccessfulSentDateTime, errorsBuilder).getBytes("ASCII");
-            file.init(file.outgoingFilename(), file.outgoingFilename(), paymentFileContents);
+            
+            TreasuryPlataformDependentServicesFactory.implementation().createFile(file, file.outgoingFilename(), file.outgoingFilename(), paymentFileContents);
+
             file.setFinantialInstitution(finantialInstitution);
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);
             file.setErrorLog(errorsBuilder.toString());
@@ -43,7 +45,9 @@ public class SibsOutputFile extends SibsOutputFile_Base {
             for (StackTraceElement el : e.getStackTrace()) {
                 builder.append(el.toString()).append("\n");
             }
-            file.init(file.outgoingFilename(), file.outgoingFilename(), new byte[0]);
+            
+            TreasuryPlataformDependentServicesFactory.implementation().createFile(file, file.outgoingFilename(), file.outgoingFilename(), new byte[0]);
+
             file.setFinantialInstitution(finantialInstitution);
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);
             file.setErrorLog(builder.toString());
@@ -148,7 +152,7 @@ public class SibsOutputFile extends SibsOutputFile_Base {
 
         @Atomic
         private void txDo() {
-            PaymentReferenceCode referenceCode = FenixFramework.getDomainObject(paymentReferenceCodeId);
+            PaymentReferenceCode referenceCode = pt.ist.fenixframework.FenixFramework.getDomainObject(paymentReferenceCodeId);
 
             this.sibsFile.addAssociatedPaymentCode(referenceCode);
             sibsFile.addLine(referenceCode.getReferenceCode(), referenceCode.getMinAmount(), referenceCode.getMaxAmount(),
@@ -157,7 +161,7 @@ public class SibsOutputFile extends SibsOutputFile_Base {
     }
 
     @Override
-    public boolean isAccessible(User arg0) {
+    public boolean isAccessible(final String username) {
         return true;
     }
 
@@ -197,7 +201,9 @@ public class SibsOutputFile extends SibsOutputFile_Base {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
         setFinantialInstitution(null);
-        super.delete();
+        
+        TreasuryPlataformDependentServicesFactory.implementation().deleteFile(this);
+        deleteDomainObject();
     }
 
     @Atomic

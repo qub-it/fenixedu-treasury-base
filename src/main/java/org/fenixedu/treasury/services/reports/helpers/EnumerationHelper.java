@@ -27,7 +27,7 @@
 
 package org.fenixedu.treasury.services.reports.helpers;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.util.Constants;
 
@@ -36,6 +36,6 @@ import com.qubit.terra.docs.util.helpers.IDocumentHelper;
 public class EnumerationHelper implements IDocumentHelper {
 
     public LocalizedString desc(final String value) {
-        return BundleUtil.getLocalizedString(Constants.BUNDLE, value);
+        return Constants.bundleI18N(value);
     }
 }

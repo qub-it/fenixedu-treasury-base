@@ -14,8 +14,6 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import org.fenixedu.bennu.IBean;
-import org.fenixedu.bennu.TupleDataSourceBean;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.VatType;
@@ -32,13 +30,37 @@ import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
-import org.fenixedu.treasury.ui.document.managepayments.SettlementNoteController;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Sets;
 
-public class SettlementNoteBean implements IBean, Serializable {
+public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
+    public static final String CONTROLLER_URL = "/treasury/document/managepayments/settlementnote";
+    public static final String SEARCH_URI = "/";
+    public static final String SEARCH_URL = CONTROLLER_URL + SEARCH_URI;
+    public static final String UPDATE_URI = "/update/";
+    public static final String UPDATE_URL = CONTROLLER_URL + UPDATE_URI;
+    public static final String CREATE_URI = "/create";
+    public static final String CREATE_URL = CONTROLLER_URL + CREATE_URI;
+    public static final String READ_URI = "/read/";
+    public static final String READ_URL = CONTROLLER_URL + READ_URI;
+    public static final String DELETE_URI = "/delete/";
+    public static final String DELETE_URL = CONTROLLER_URL + DELETE_URI;
+    public static final String CHOOSE_INVOICE_ENTRIES_URI = "/chooseInvoiceEntries/";
+    public static final String CHOOSE_INVOICE_ENTRIES_URL = CONTROLLER_URL + CHOOSE_INVOICE_ENTRIES_URI;
+    public static final String CALCULATE_INTEREST_URI = "/calculateInterest/";
+    public static final String CALCULATE_INTEREST_URL = CONTROLLER_URL + CALCULATE_INTEREST_URI;
+    public static final String CREATE_DEBIT_NOTE_URI = "/createDebitNote/";
+    public static final String CREATE_DEBIT_NOTE_URL = CONTROLLER_URL + CREATE_DEBIT_NOTE_URI;
+    public static final String INSERT_PAYMENT_URI = "/insertpayment/";
+    public static final String INSERT_PAYMENT_URL = CONTROLLER_URL + INSERT_PAYMENT_URI;
+    public static final String SUMMARY_URI = "/summary/";
+    public static final String SUMMARY_URL = CONTROLLER_URL + SUMMARY_URI;
+    public static final String TRANSACTIONS_SUMMARY_URI = "/transactions/summary/";
+    public static final String TRANSACTIONS_SUMMARY_URL = CONTROLLER_URL + TRANSACTIONS_SUMMARY_URI;
+	
+	
     private static final long serialVersionUID = 1L;
 
     private boolean reimbursementNote;
@@ -59,9 +81,9 @@ public class SettlementNoteBean implements IBean, Serializable {
 
     private List<PaymentEntryBean> paymentEntries;
 
-    private List<TupleDataSourceBean> paymentMethods;
+    private List<TreasuryTupleDataSourceBean> paymentMethods;
 
-    private List<TupleDataSourceBean> documentNumberSeries;
+    private List<TreasuryTupleDataSourceBean> documentNumberSeries;
 
     private List<String> settlementNoteStateUrls;
 
@@ -123,13 +145,16 @@ public class SettlementNoteBean implements IBean, Serializable {
 
         setDocumentNumberSeries(debtAccount, reimbursementNote);
 
+        // @formatter:off
         settlementNoteStateUrls =
                 Arrays.asList(
-                        SettlementNoteController.CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/"
-                                + reimbursementNote,
-                                SettlementNoteController.CHOOSE_INVOICE_ENTRIES_URL, SettlementNoteController.CALCULATE_INTEREST_URL,
-                                SettlementNoteController.CREATE_DEBIT_NOTE_URL, SettlementNoteController.INSERT_PAYMENT_URL,
-                                SettlementNoteController.SUMMARY_URL);
+                        CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote,
+                                CHOOSE_INVOICE_ENTRIES_URL, 
+                                CALCULATE_INTEREST_URL,
+                                CREATE_DEBIT_NOTE_URL, 
+                                INSERT_PAYMENT_URL,
+                                SUMMARY_URL);
+        // @formatter:on
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
@@ -382,13 +407,13 @@ public class SettlementNoteBean implements IBean, Serializable {
         this.paymentEntries = paymentEntries;
     }
 
-    public List<TupleDataSourceBean> getPaymentMethods() {
+    public List<TreasuryTupleDataSourceBean> getPaymentMethods() {
         return paymentMethods;
     }
 
     public void setPaymentMethods(List<PaymentMethod> paymentMethods) {
         this.paymentMethods = paymentMethods.stream().map(paymentMethod -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setText(paymentMethod.getName().getContent());
             tuple.setId(paymentMethod.getExternalId());
             return tuple;
@@ -411,13 +436,13 @@ public class SettlementNoteBean implements IBean, Serializable {
         this.docNumSeries = docNumSeries;
     }
 
-    public List<TupleDataSourceBean> getDocumentNumberSeries() {
+    public List<TreasuryTupleDataSourceBean> getDocumentNumberSeries() {
         return documentNumberSeries;
     }
 
     public void setDocumentNumberSeries(List<DocumentNumberSeries> documentNumberSeries) {
         this.documentNumberSeries = documentNumberSeries.stream().map(docNumSeries -> {
-            TupleDataSourceBean tuple = new TupleDataSourceBean();
+            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setText(docNumSeries.getSeries().getCode() + " - " + docNumSeries.getSeries().getName().getContent());
             tuple.setId(docNumSeries.getExternalId());
             return tuple;
@@ -484,7 +509,7 @@ public class SettlementNoteBean implements IBean, Serializable {
      */
     // @formatter:on
 
-    public class DebitEntryBean implements IBean, Serializable {
+    public class DebitEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -560,7 +585,7 @@ public class SettlementNoteBean implements IBean, Serializable {
         }
     }
 
-    public class CreditEntryBean implements IBean, Serializable {
+    public class CreditEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -636,7 +661,7 @@ public class SettlementNoteBean implements IBean, Serializable {
         }
     }
 
-    public static class InterestEntryBean implements IBean, Serializable {
+    public static class InterestEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -687,7 +712,7 @@ public class SettlementNoteBean implements IBean, Serializable {
 
     }
 
-    public class PaymentEntryBean implements IBean, Serializable {
+    public class PaymentEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -732,7 +757,7 @@ public class SettlementNoteBean implements IBean, Serializable {
 
     }
 
-    public class VatAmountBean implements IBean, Serializable {
+    public class VatAmountBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 

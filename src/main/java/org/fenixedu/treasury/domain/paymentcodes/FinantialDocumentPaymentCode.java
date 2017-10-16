@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
@@ -26,20 +24,20 @@ import org.joda.time.LocalDate;
 
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_Base {
 
     @Override
     // Check: The only invocation is PaymentReferenceCode::processPayment which is already Atomic
     // @Atomic
-    public SettlementNote processPayment(final User person, final BigDecimal amountToPay, final DateTime whenRegistered,
+    public SettlementNote processPayment(final String username, final BigDecimal amountToPay, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments) {
 
         final Set<InvoiceEntry> invoiceEntriesToPay = getInvoiceEntries().stream()
                 .sorted((x, y) -> y.getOpenAmount().compareTo(x.getOpenAmount())).collect(Collectors.toSet());
 
-        return internalProcessPayment(person, amountToPay, whenRegistered, sibsTransactionId, comments, invoiceEntriesToPay);
+        return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, invoiceEntriesToPay);
     }
 
     @Override
@@ -68,7 +66,7 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
 
     protected FinantialDocumentPaymentCode() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected void init(final FinantialDocument finantialDocument, final PaymentReferenceCode paymentReferenceCode,
@@ -146,12 +144,6 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     @Override
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
-
-        //add more logical tests for checking deletion rules
-        //if (getXPTORelation() != null)
-        //{
-        //    blockers.add(BundleUtil.getString(Bundle.APPLICATION, "error.FinantialDocumentPaymentCode.cannot.be.deleted"));
-        //}
     }
 
     @Atomic

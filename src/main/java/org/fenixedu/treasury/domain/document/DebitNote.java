@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -465,7 +465,7 @@ public class DebitNote extends DebitNote_Base {
 
         if (Constants.isEqual(interestDebitNote.getTotalAmount(), BigDecimal.ZERO)) {
             interestDebitNote.delete(true);
-            throw new TreasuryDomainException(BundleUtil.getString(Constants.BUNDLE, "error.DebitNote.no.interest.to.generate"));
+            throw new TreasuryDomainException(org.fenixedu.treasury.util.Constants.bundle("error.DebitNote.no.interest.to.generate"));
         }
         return interestDebitNote;
     }

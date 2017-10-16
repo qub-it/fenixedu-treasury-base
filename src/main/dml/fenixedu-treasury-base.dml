@@ -7,17 +7,6 @@ enum org.fenixedu.treasury.domain.tariff.DueDateCalculationType                 
 enum org.fenixedu.treasury.domain.tariff.InterestType                                               as InterestType; 
 enum org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType						as PaymentReferenceCodeStateType;
 enum org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType                           as ForwardPaymentStateType;
-//enum org.fenixedu.treasury.domain.accesscontrol.TreasuryOperationType                             as TreasuryOperationType;
-//enum org.fenixedu.treasury.domain.accesscontrol.TreasuryOperationType.Scope                       as TreasuryOperationTypeScope;
-
-//valueType org.fenixedu.treasury.domain.accesscontrol.rules.TreasuryAccessOperation as TreasuryAccessOperation {
-//    externalizeWith {
-//        String exportAsString();
-//    }
-//    internalizeWith importFromString();
-//}
-
-external class .org.fenixedu.bennu.io.domain.GenericFile;
 
 valueType java.math.BigDecimal as BigDecimalT
 {
@@ -28,26 +17,34 @@ valueType java.math.BigDecimal as BigDecimalT
 
 valueType pt.ist.standards.geographic.Municipality as Municipality {
     externalizeWith {
-        String pt.ist.standards.geographic.GeographicInfoLoader.externalizePlace();
+        String pt.ist.standards.geographic.TreasuryGeographicInfoLoader.externalizePlace();
     }
 
-    internalizeWith pt.ist.standards.geographic.GeographicInfoLoader.internalizePlace();
+    internalizeWith pt.ist.standards.geographic.TreasuryGeographicInfoLoader.internalizePlace();
 }
 
 valueType pt.ist.standards.geographic.District as District {
     externalizeWith {
-        String pt.ist.standards.geographic.GeographicInfoLoader.externalizePlace();
+        String pt.ist.standards.geographic.TreasuryGeographicInfoLoader.externalizePlace();
     }
 
-    internalizeWith pt.ist.standards.geographic.GeographicInfoLoader.internalizePlace();
+    internalizeWith pt.ist.standards.geographic.TreasuryGeographicInfoLoader.internalizePlace();
 }
 
 valueType pt.ist.standards.geographic.Country as Country {
     externalizeWith {
-        String pt.ist.standards.geographic.GeographicInfoLoader.externalizePlace();
+        String pt.ist.standards.geographic.TreasuryGeographicInfoLoader.externalizePlace();
     }
 
-    internalizeWith pt.ist.standards.geographic.GeographicInfoLoader.internalizePlace();
+    internalizeWith pt.ist.standards.geographic.TreasuryGeographicInfoLoader.internalizePlace();
+}
+
+valueType org.fenixedu.commons.i18n.LocalizedString as TreasuryLocalizedString {
+    externalizeWith {
+        String org.fenixedu.commons.i18n.LocalizedStringSerializer.externalize();
+    }
+    
+    internalizeWith org.fenixedu.commons.i18n.LocalizedStringSerializer.internalize();
 }
 
 /************
@@ -60,17 +57,17 @@ valueType pt.ist.standards.geographic.Country as Country {
 
 class FiscalCountryRegion {
 	String fiscalCode;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 }
 
 class CustomerType {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	TreasuryLocalizedString name (REQUIRED);
 }
 
 class VatType {
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 }
 
 class Vat {
@@ -82,18 +79,18 @@ class Vat {
 class VatExemptionReason
 {
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 }
 
 class ProductGroup {
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 }
 
 class Product {
 	String code;
-	LocalizedString name;
-	LocalizedString unitOfMeasure;
+	TreasuryLocalizedString name;
+	TreasuryLocalizedString unitOfMeasure;
 	boolean active;
 	boolean legacy;
 	int tuitionInstallmentOrder;
@@ -101,14 +98,14 @@ class Product {
 
 class Currency {
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 	String isoCode;
 	String symbol;
 }
 
 class PaymentMethod {
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 	boolean availableForPaymentInApplication;
 }
 
@@ -150,7 +147,7 @@ class FinantialInstitution {
 
 class FinantialEntity {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	TreasuryLocalizedString name (REQUIRED);
 } 
 
 
@@ -179,7 +176,7 @@ class debt.DebtAccount {
 class document.TreasuryDocumentTemplate {
 }
 
-class document.TreasuryDocumentTemplateFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+class document.TreasuryDocumentTemplateFile {
     boolean active;
 }
 
@@ -190,7 +187,7 @@ class document.TreasuryDocumentTemplateFile extends .org.fenixedu.bennu.io.domai
 class document.FinantialDocumentType {
 	FinantialDocumentTypeEnum type;
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 	String documentNumberSeriesPrefix;
 	boolean invoice;
 	
@@ -198,7 +195,7 @@ class document.FinantialDocumentType {
 
 class document.Series {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	TreasuryLocalizedString name (REQUIRED);
 	boolean active;
 	boolean externSeries;
 	boolean certificated;
@@ -224,7 +221,7 @@ class document.DocumentNumberSeries {
 }
 
 class event.TreasuryEvent {
-	LocalizedString description;
+	TreasuryLocalizedString description;
 	String propertiesJsonMap;
 }
 
@@ -323,41 +320,6 @@ class debt.DebitEntrySuspensionRequestEntry {
 }
 */
 
-/*************
-* ACCESS CONTROL
-****************/
-//
-//public class accesscontrol.academicAdministration.TreasuryAccessRule {
-//    protected DateTime created (REQUIRED);
-//    protected DateTime revoked;
-//    protected TreasuryAccessOperation operation (REQUIRED);
-//}
-//class accesscontrol.PersistentTreasuryOperationGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
-//    public TreasuryOperationType operation;
-//    public TreasuryOperationTypeScope scope;
-//}
-//
-//
-//relation TreasuryAuthorizationGroupFinantialInstitution {
-//    public accesscontrol.PersistentTreasuryOperationGroup playsRole treasuryAuthorizationGroup {
-//        multiplicity *;
-//    }
-//    public FinantialInstitution playsRole finantialInstitution {
-//        multiplicity *;
-//    }
-//}
-//
-//relation TreasuryAuthorizationGroupFinantialEntity {
-//    public accesscontrol.PersistentTreasuryOperationGroup playsRole treasuryAuthorizationGroup {
-//        multiplicity *;
-//    }
-//    public FinantialEntity playsRole finantialEntity {
-//        multiplicity *;
-//    }
-//}
-
-
-
 /*-----------
  * Exemptions 
  * ----------*/
@@ -365,13 +327,13 @@ class debt.DebitEntrySuspensionRequestEntry {
 
 class exemption.TreasuryExemptionType {
 	String code;
-	LocalizedString name;
+	TreasuryLocalizedString name;
 	BigDecimalT defaultExemptionPercentage;
 	boolean active;
 }
 
 relation TreasuryExemptionTypeBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -387,7 +349,7 @@ class exemption.TreasuryExemption {
 }
 
 	relation TreasuryExemptionBennu {
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
 		}
 		
@@ -467,7 +429,7 @@ class tariff.InterestRate {
 
 class tariff.GlobalInterestRate {
     int year;
-    LocalizedString description;
+    TreasuryLocalizedString description;
     BigDecimalT rate;
     boolean applyPaymentMonth;
     boolean applyInFirstWorkday;
@@ -597,7 +559,7 @@ class paymentcodes.PaymentReferenceCode
             multiplicity *;
         }
     
-	    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 	        multiplicity 1..1;
 	    }
     }
@@ -643,7 +605,7 @@ class paymentcodes.PaymentReferenceCode
 		}
 	}
 	
-	class paymentcodes.SibsReportFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+	class paymentcodes.SibsReportFile {
 	  DateTime whenProcessedBySibs;
 	  BigDecimalT transactionsTotalAmount;
 	  BigDecimalT totalCost;
@@ -651,8 +613,9 @@ class paymentcodes.PaymentReferenceCode
 	  String infoLog;
 	}
 	
-	class paymentcodes.SibsInputFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+	class paymentcodes.SibsInputFile {
 	DateTime whenProcessedBySibs;
+	String uploader;
 	}
 
 
@@ -684,7 +647,7 @@ class paymentcodes.PaymentReferenceCode
             }
         }
         
-        class paymentcodes.SibsOutputFile extends .org.fenixedu.bennu.io.domain.GenericFile
+        class paymentcodes.SibsOutputFile
         {
 		      String errorLog;
 		      String infoLog;
@@ -692,7 +655,7 @@ class paymentcodes.PaymentReferenceCode
 		      DateTime lastSuccessfulExportation;
         }
         
-class integration.OperationFile extends .org.fenixedu.bennu.io.domain.GenericFile 
+class integration.OperationFile 
 {
 }
 
@@ -784,7 +747,7 @@ relation ConfigurationBennu {
         multiplicity *;
     }
     
-    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
     }
 }
@@ -828,7 +791,7 @@ class settings.TreasurySettings {
 }
 
 relation TreasurySettingsBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -910,7 +873,7 @@ relation FinantialInstitutionCurrency{
 }
 
 relation FiscalCountryRegionBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -920,7 +883,7 @@ relation FiscalCountryRegionBennu {
 }
 
 relation CustomerTypeBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -941,7 +904,7 @@ relation CustomerCustomerType {
 
 
 relation VatTypeBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -951,7 +914,7 @@ relation VatTypeBennu {
 }
 
 relation VatBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -981,7 +944,7 @@ relation VatFinantialInstitution {
 }
 
 relation VatExemptionReasonBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1002,7 +965,7 @@ relation ProductVatExemptionReason {
 
 
 relation ProductGroupBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1012,7 +975,7 @@ relation ProductGroupBennu {
 }
 
 relation ProductBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1032,7 +995,7 @@ relation ProductProductGroup {
 }
 
 relation CurrencyBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1042,7 +1005,7 @@ relation CurrencyBennu {
 }
 
 relation PaymentMethodBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1052,7 +1015,7 @@ relation PaymentMethodBennu {
 }
 
 relation TreasuryOperationLogBennu {
-    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
     }
 
@@ -1066,7 +1029,7 @@ relation TreasuryOperationLogBennu {
  * ----------*/
 
 relation FinantialInstitutionBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1086,7 +1049,7 @@ relation ProductFinantialInstitution {
 }
 
 relation FinantialEntityBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1106,7 +1069,7 @@ relation FinantialInstitutionFinantialEntity {
 }
 
 relation CustomerBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1116,7 +1079,7 @@ relation CustomerBennu {
 }
 
 relation DebtAccountBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1148,7 +1111,7 @@ relation DebtAccountFinantialInstitution {
 /* --- Document Template --- */
 
 relation TreasuryDocumentTemplateBennu {
-    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
     }
     
@@ -1190,7 +1153,7 @@ relation TreasuryDocumentTemplateDocumentTemplateFile {
 /* --- Document Template File --- */
 
 relation TreasuryDocumentTemplateFileBennu {
-    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
     }
     
@@ -1206,7 +1169,7 @@ relation TreasuryDocumentTemplateFileBennu {
 /* --- FinantialDocumentType --- */
 
 relation FinantialDocumentTypeBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1218,7 +1181,7 @@ relation FinantialDocumentTypeBennu {
 /* --- Series --- */
 
 relation SeriesBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1240,7 +1203,7 @@ relation SeriesFinantialInstitution {
 /* --- DocumentNumberSeries --- */
 
 relation DocumentNumberSeriesBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1272,7 +1235,7 @@ relation DocumentNumberSeriesFinantialDocumentType {
 /* --- TreasuryEvent --- */
 
 relation TreasuryEventBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 
@@ -1305,7 +1268,7 @@ relation TreasuryEventDebtAccount {
 /* --- FinantialDocument --- */
 
 relation FinantialDocumentBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 
@@ -1381,7 +1344,7 @@ relation CreditNoteDebitNote {
 /* --- FinantialDocumentEntry --- */
 
 relation FinantialDocumentEntryBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1537,7 +1500,7 @@ relation SettlementNoteAdvancedPaymentCreditNote{
 /* --- PaymentEntry --- */
 
 relation PaymentEntryBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1570,7 +1533,7 @@ relation PaymentEntryPaymentMode {
 /* --- ReimbursementEntry --- */
 
 relation ReimbursementEntryBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1609,7 +1572,7 @@ class document.reimbursement.ReimbursementProcessStatusType {
 }
 
 	relation ReimbursementProcessStatusTypeBennu {
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
 		}
 		
@@ -1636,7 +1599,7 @@ class document.reimbursement.ReimbursementProcessStateLog {
 }
 
 	relation ReimbursementProcessStateLogBennu {
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
 		}
 		
@@ -1680,7 +1643,7 @@ relation FinantialDocumentPendingForExportationFinantialInstitution {
 /* --- Tariff --- */
 
 relation TariffBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1720,7 +1683,7 @@ relation TariffFinantialEntity {
 }
 
 relation GlobalInterestRateBennu {
-    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
     }
     
@@ -1733,7 +1696,7 @@ relation GlobalInterestRateBennu {
 /* --- InterestRate --- */
 
 relation InterestRateBennu {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 		multiplicity 1..1;
 	}
 	
@@ -1769,7 +1732,7 @@ relation InterestRateTariff {
 
 
 relation SibsReportFileBennu {
-	  .org.fenixedu.bennu.core.domain.Bennu  playsRole bennu {
+	  .pt.ist.fenixframework.DomainRoot  playsRole domainRoot {
 	    multiplicity 1..1;
 	  }
 	  
@@ -1791,18 +1754,6 @@ relation SibsReportFileBennu {
       
     }
 
-	
-	relation SibsInputFileUser {
-	  paymentcodes.SibsInputFile playsRole sibsInputFiles {
-	    multiplicity *;
-	  }
-	  
-	  .org.fenixedu.bennu.core.domain.User playsRole uploader {
-	    multiplicity 1..1;
-	  }
-	  
-	}
-	
 	    relation SibsOutputFileFinantialInstitution {
       paymentcodes.SibsOutputFile playsRole sibsOutputFiles {
         multiplicity *;
@@ -1813,50 +1764,6 @@ relation SibsReportFileBennu {
       }
       
     }
-
-/* **************
- * ACCESS CONTROL
- * **************
- */
- 
-class accesscontrol.PersistentTreasuryFrontOfficeGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
-}
-
-class accesscontrol.PersistentTreasuryBackOfficeGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
-}
-
-class accesscontrol.PersistentTreasuryManagersGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
-}
-
-	relation PersistentTreasuryFrontOfficeGroupBennu {
-	    accesscontrol.PersistentTreasuryFrontOfficeGroup playsRole persistentTreasuryFrontOfficeGroup {
-	        multiplicity 0..1;
-	    }
-	    
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennuForPersistentTreasuryFrontOfficeGroup {
-	        multiplicity 0..1;
-	    }
-	}
-
-	relation PersistentTreasuryBackOfficeGroupBennu {
-	    accesscontrol.PersistentTreasuryBackOfficeGroup playsRole persistentTreasuryBackOfficeGroup {
-	        multiplicity 0..1;
-	    }
-	    
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennuForPersistentTreasuryBackOfficeGroup {
-	        multiplicity 0..1;
-	    }
-	}
-	
-	relation PersistentTreasuryManagersGroupBennu {
-	    accesscontrol.PersistentTreasuryManagersGroup playsRole persistentTreasuryManagersGroup {
-	        multiplicity 0..1;
-	    }
-	    
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennuForPersistentTreasuryManagersGroup {
-	        multiplicity 0..1;
-	    }
-	}
 
 /* ****************
  * FORWARD PAYMENTS
@@ -1885,7 +1792,7 @@ class forwardpayments.ForwardPaymentConfiguration {
 			multiplicity *;
 		}
 		
-		.org.fenixedu.bennu.core.domain.Bennu  playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot  playsRole domainRoot {
 			multiplicity 1..1;
 		}
 	}
@@ -1920,7 +1827,7 @@ class forwardpayments.ForwardPaymentConfiguration {
        }
 	}
 
-class forwardpayments.ForwardPaymentConfigurationFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+class forwardpayments.ForwardPaymentConfigurationFile {
 }
 
 	relation ForwardPaymentConfigurationFileBennu {
@@ -1928,7 +1835,7 @@ class forwardpayments.ForwardPaymentConfigurationFile extends .org.fenixedu.benn
            multiplicity *;
        }
 		
-		.org.fenixedu.bennu.core.domain.Bennu  playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot  playsRole domainRoot {
 			multiplicity 1..1;
 		}
 	}
@@ -1964,7 +1871,7 @@ class forwardpayments.ForwardPayment {
 }
 
 	relation ForwardPaymentBennu {
-		.org.fenixedu.bennu.core.domain.Bennu  playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot  playsRole domainRoot {
 			multiplicity 1..1;
 		}
 
@@ -2013,7 +1920,7 @@ class forwardpayments.ForwardPayment {
         }
 	}
 
-class forwardpayments.ForwardPaymentLogFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+class forwardpayments.ForwardPaymentLogFile {
 }
 
 class forwardpayments.ForwardPaymentLog {
@@ -2025,7 +1932,7 @@ class forwardpayments.ForwardPaymentLog {
 }
 
 	relation ForwardPaymentLogBennu {
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
 		}
 
@@ -2065,14 +1972,14 @@ class forwardpayments.ForwardPaymentLog {
 		}
 	}
 
-class forwardpayments.PostForwardPaymentsReportFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+class forwardpayments.PostForwardPaymentsReportFile {
 	DateTime postForwardPaymentsExecutionDate;
 	DateTime beginDate;
 	DateTime endDate;
 }
 
 	relation PostForwardPaymentsReportFileBennu {
-		.org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
 		}
 

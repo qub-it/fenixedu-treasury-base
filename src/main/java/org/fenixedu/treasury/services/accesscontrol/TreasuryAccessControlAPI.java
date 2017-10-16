@@ -2,7 +2,6 @@ package org.fenixedu.treasury.services.accesscontrol;
 
 import java.util.Set;
 
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.accesscontrol.TreasuryAccessControl;
@@ -18,48 +17,36 @@ public class TreasuryAccessControlAPI {
         TreasuryAccessControl.getInstance().unregisterExtension(extension);
     }
 
-    public static boolean isAllowToModifyInvoices(final User user, final FinantialInstitution finantialInstitution) {
-        return TreasuryAccessControl.getInstance().isAllowToModifyInvoices(user, finantialInstitution);
+    public static boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution) {
+        return TreasuryAccessControl.getInstance().isAllowToModifyInvoices(username, finantialInstitution);
     }
 
-    public static boolean isAllowToModifySettlements(final User user, final FinantialInstitution finantialInstitution) {
-        return TreasuryAccessControl.getInstance().isAllowToModifySettlements(user, finantialInstitution);
+    public static boolean isAllowToModifySettlements(final String username, final FinantialInstitution finantialInstitution) {
+        return TreasuryAccessControl.getInstance().isAllowToModifySettlements(username, finantialInstitution);
     }
 
-    public static boolean isFrontOfficeMember(final User user) {
-        return TreasuryAccessControl.getInstance().isFrontOfficeMember(user);
+    public static boolean isFrontOfficeMember(final String username) {
+        return TreasuryAccessControl.getInstance().isFrontOfficeMember(username);
     }
 
-    public static boolean isFrontOfficeMember(final User user, final FinantialInstitution finantialInstitution) {
-        return TreasuryAccessControl.getInstance().isFrontOfficeMember(user, finantialInstitution);
+    public static boolean isFrontOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
+        return TreasuryAccessControl.getInstance().isFrontOfficeMember(username, finantialInstitution);
     }
 
-    public static boolean isBackOfficeMember(final User user) {
-        return TreasuryAccessControl.getInstance().isBackOfficeMember(user);
+    public static boolean isBackOfficeMember(final String username) {
+        return TreasuryAccessControl.getInstance().isBackOfficeMember(username);
     }
 
-    public static boolean isBackOfficeMember(final User user, final FinantialInstitution finantialInstitution) {
-        return TreasuryAccessControl.getInstance().isBackOfficeMember(user, finantialInstitution);
+    public static boolean isBackOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
+        return TreasuryAccessControl.getInstance().isBackOfficeMember(username, finantialInstitution);
     }
 
-    public static boolean isBackOfficeMember(final User user, final FinantialEntity finantialEntity) {
-        return TreasuryAccessControl.getInstance().isBackOfficeMember(user, finantialEntity);
+    public static boolean isBackOfficeMember(final String username, final FinantialEntity finantialEntity) {
+        return TreasuryAccessControl.getInstance().isBackOfficeMember(username, finantialEntity);
     }
 
-    public static boolean isManager(final User user) {
-        return TreasuryAccessControl.getInstance().isManager(user);
-    }
-
-    public static Set<User> getFrontOfficeMembers() {
-        return TreasuryAccessControl.getInstance().getFrontOfficeMembers();
-    }
-
-    public static Set<User> getBackOfficeMembers() {
-        return TreasuryAccessControl.getInstance().getBackOfficeMembers();
-    }
-
-    public static Set<User> getTreasuryManagerMembers() {
-        return TreasuryAccessControl.getInstance().getTreasuryManagerMembers();
+    public static boolean isManager(final String username) {
+        return TreasuryAccessControl.getInstance().isManager(username);
     }
 
 }

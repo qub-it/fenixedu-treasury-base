@@ -2,33 +2,43 @@ package org.fenixedu.treasury.domain.forwardpayments;
 
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
-public class PostForwardPaymentsReportFile extends PostForwardPaymentsReportFile_Base {
+public class PostForwardPaymentsReportFile extends PostForwardPaymentsReportFile_Base implements IGenericFile {
     
     private PostForwardPaymentsReportFile(final DateTime postForwardPaymentsExecutionDate, 
             final DateTime beginDate, final DateTime endDate,
             final String filename, final byte[] content) {
         super();
 
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
         setPostForwardPaymentsExecutionDate(postForwardPaymentsExecutionDate);
         setBeginDate(beginDate);
         setEndDate(endDate);
         
-        init(filename, filename, content);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, filename, content);
     }
 
     @Override
-    public boolean isAccessible(final User user) {
-        return TreasuryAccessControlAPI.isBackOfficeMember(user);
+    public boolean isAccessible(final String username) {
+        return TreasuryAccessControlAPI.isBackOfficeMember(username);
     }
 
+    @Override
+    public void delete() {
+        setDomainRoot(null);
+        
+    	TreasuryPlataformDependentServicesFactory.implementation().deleteFile(this);
+        
+        deleteDomainObject();
+    }
+
+    
     // @formatter:off
     /* ********
      * SERVICES
@@ -37,7 +47,7 @@ public class PostForwardPaymentsReportFile extends PostForwardPaymentsReportFile
     // @formatter:on
     
     public static Stream<PostForwardPaymentsReportFile> findAll() {
-        return Bennu.getInstance().getPostForwardPaymentsReportFilesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getPostForwardPaymentsReportFilesSet().stream();
     }
 
     @Atomic

@@ -33,12 +33,12 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base {
 
@@ -46,7 +46,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
 
     protected FinantialDocumentEntry() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected void init(final FinantialDocument finantialDocument, final FinantialEntryType finantialEntryType,
@@ -92,7 +92,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
-            blockers.add(BundleUtil.getString(Constants.BUNDLE,
+            blockers.add(org.fenixedu.treasury.util.Constants.bundle(
                     "error.finantialdocumententry.cannot.be.deleted.document.is.not.preparing"));
         }
     }
@@ -101,7 +101,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     public void delete() {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
-        setBennu(null);
+        setDomainRoot(null);
         if (getFinantialDocument() != null) {
             getFinantialDocument().removeFinantialDocumentEntries(this);
         }
@@ -129,7 +129,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     public static Stream<? extends FinantialDocumentEntry> findAll() {
-        return Bennu.getInstance().getFinantialDocumentEntriesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialDocumentEntriesSet().stream();
     }
 
     public static Optional<? extends FinantialDocumentEntry> findUniqueByEntryOrder(final FinantialDocument finantialDocument,

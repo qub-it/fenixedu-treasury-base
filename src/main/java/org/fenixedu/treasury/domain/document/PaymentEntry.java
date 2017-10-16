@@ -36,13 +36,13 @@ import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class PaymentEntry extends PaymentEntry_Base {
 
     protected PaymentEntry() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected PaymentEntry(final PaymentMethod paymentMethod, final SettlementNote settlementNote, 
@@ -114,7 +114,7 @@ public class PaymentEntry extends PaymentEntry_Base {
             throw new TreasuryDomainException("error.PaymentEntry.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         this.setPaymentMethod(null);
 
         deleteDomainObject();
@@ -133,7 +133,7 @@ public class PaymentEntry extends PaymentEntry_Base {
     // @formatter: on
 
     public static Stream<PaymentEntry> findAll() {
-        return Bennu.getInstance().getPaymentEntriesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getPaymentEntriesSet().stream();
     }
 
     public static Stream<PaymentEntry> findByPaymentMethod(final PaymentMethod paymentMethod) {

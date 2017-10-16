@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.poi.ss.usermodel.Row;
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -46,7 +45,6 @@ import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
-import pt.ist.fenixframework.FenixFramework;
 
 public class ForwardPayment extends ForwardPayment_Base {
 
@@ -60,7 +58,7 @@ public class ForwardPayment extends ForwardPayment_Base {
 
     private ForwardPayment() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     public ForwardPayment(final ForwardPaymentConfiguration forwardPaymentConfiguration, final DebtAccount debtAccount,
@@ -392,7 +390,7 @@ public class ForwardPayment extends ForwardPayment_Base {
     // @formatter: on
 
     public static Stream<ForwardPayment> findAll() {
-        return Bennu.getInstance().getForwardPaymentsSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getForwardPaymentsSet().stream();
     }
     
     public static Stream<ForwardPayment> findAllByStateType(final ForwardPaymentStateType ... stateTypes) {
@@ -406,7 +404,7 @@ public class ForwardPayment extends ForwardPayment_Base {
     }
 
     private static Optional<ForwardPayment> lastForwardPayment() {
-        return Bennu.getInstance().getForwardPaymentsSet().stream().max(ORDER_COMPARATOR);
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getForwardPaymentsSet().stream().max(ORDER_COMPARATOR);
     }
 
     
@@ -536,12 +534,12 @@ public class ForwardPayment extends ForwardPayment_Base {
 
         try {
             PostForwardPaymentReportBean reportBean =
-                    FenixFramework.getTransactionManager().withTransaction(new Callable<PostForwardPaymentReportBean>() {
+                    pt.ist.fenixframework.FenixFramework.getTransactionManager().withTransaction(new Callable<PostForwardPaymentReportBean>() {
 
                         @Override
                         public PostForwardPaymentReportBean call() throws Exception {
 
-                            final ForwardPayment forwardPayment = FenixFramework.getDomainObject(forwardPaymentId);
+                            final ForwardPayment forwardPayment = pt.ist.fenixframework.FenixFramework.getDomainObject(forwardPaymentId);
                             final IForwardPaymentImplementation implementation =
                                     forwardPayment.getForwardPaymentConfiguration().implementation();
                             final String justification =

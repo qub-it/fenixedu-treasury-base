@@ -39,7 +39,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 
 import com.google.common.base.Strings;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class DocumentNumberSeries extends DocumentNumberSeries_Base {
 
@@ -56,7 +56,7 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
 
     protected DocumentNumberSeries() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected DocumentNumberSeries(final FinantialDocumentType finantialDocumentType, final Series series) {
@@ -130,14 +130,14 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
             throw new TreasuryDomainException("error.DocumentNumberSeries.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
         setFinantialDocumentType(null);
         setSeries(null);
         deleteDomainObject();
     }
 
     public static Stream<DocumentNumberSeries> findAll() {
-        return Bennu.getInstance().getDocumentNumberSeriesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getDocumentNumberSeriesSet().stream();
     }
 
     public static DocumentNumberSeries find(final FinantialDocumentType finantialDocumentType, final Series series) {

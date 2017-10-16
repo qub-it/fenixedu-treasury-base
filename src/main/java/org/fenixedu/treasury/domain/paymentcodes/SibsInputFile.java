@@ -32,14 +32,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 
-public class SibsInputFile extends SibsInputFile_Base {
+public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     public static final String CONTENT_TYPE = "text/plain";
 
@@ -48,15 +49,17 @@ public class SibsInputFile extends SibsInputFile_Base {
     }
 
     protected SibsInputFile(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS, String displayName,
-            String filename, byte[] content, User uploader) {
+            String filename, byte[] content, final String uploader) {
         this();
         init(finantialInstitution, whenProcessedBySIBS, displayName, filename, content, uploader);
     }
 
     protected void init(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS, String displayName,
-            String filename, byte[] content, User uploader) {
-        super.init(displayName, filename, content);
-        setWhenProcessedBySibs(whenProcessedBySIBS);
+            String filename, byte[] content, String uploader) {
+        
+    	TreasuryPlataformDependentServicesFactory.implementation().createFile(this, displayName, filename, content);
+
+    	setWhenProcessedBySibs(whenProcessedBySIBS);
         setUploader(uploader);
         setFinantialInstitution(finantialInstitution);
         checkRules();
@@ -83,12 +86,13 @@ public class SibsInputFile extends SibsInputFile_Base {
 
         setFinantialInstitution(null);
         setUploader(null);
-        super.delete();
+        
+        TreasuryPlataformDependentServicesFactory.implementation().deleteFile(this);
     }
 
     @Atomic
     public static SibsInputFile create(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS,
-            String displayName, String filename, byte[] content, User uploader) {
+            String displayName, String filename, byte[] content, final String uploader) {
         return new SibsInputFile(finantialInstitution, whenProcessedBySIBS, displayName, filename, content, uploader);
 
     }
@@ -101,12 +105,12 @@ public class SibsInputFile extends SibsInputFile_Base {
         return result.stream();
     }
 
-    public static Stream<SibsInputFile> findByUploader(final User uploader) {
-        return uploader.getSibsInputFilesSet().stream();
+    public static Stream<SibsInputFile> findByUploader(final String uploader) {
+        return SibsInputFile.findAll().filter(f -> f.getUploader().equals(uploader));
     }
 
     @Override
-    public boolean isAccessible(User arg0) {
+    public boolean isAccessible(final String username) {
         return true;
     }
 }

@@ -24,28 +24,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with FenixEdu Treasury.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.fenixedu.treasury.ui.tld;
+package org.fenixedu.treasury.dto;
 
-import java.io.IOException;
+public interface ITreasuryBean {
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.SimpleTagSupport;
-
-import pt.ist.standards.geographic.Place;
-
-public class PlaceCodeTag extends SimpleTagSupport {
-    //stores the value of the attribute of the custom tag
-    private Place place;
-
-    @Override
-    public void doTag() throws JspException, IOException {
-        //this is the method that is called when the custom tag is called from a JSP page 
-        String name = (place != null) ? place.exportAsString() : new String();
-        getJspContext().getOut().write(name);
-    }
-
-    public void setPlace(Place place) {
-        //the method name must match the attribute name defined in the TLD file
-        this.place = place;
-    }
 }

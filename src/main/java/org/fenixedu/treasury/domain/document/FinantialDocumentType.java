@@ -33,19 +33,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.Constants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
-import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic;;
 
 public class FinantialDocumentType extends FinantialDocumentType_Base {
 
     protected FinantialDocumentType() {
         super();
-        setBennu(Bennu.getInstance());
+        setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
     }
 
     protected FinantialDocumentType(final FinantialDocumentTypeEnum type, final String code, final LocalizedString name,
@@ -104,7 +104,7 @@ public class FinantialDocumentType extends FinantialDocumentType_Base {
             throw new TreasuryDomainException("error.FinantialDocumentType.cannot.delete");
         }
 
-        setBennu(null);
+        setDomainRoot(null);
 
         deleteDomainObject();
     }
@@ -116,7 +116,7 @@ public class FinantialDocumentType extends FinantialDocumentType_Base {
     // @formatter: on
 
     public static Stream<FinantialDocumentType> findAll() {
-        return Bennu.getInstance().getFinantialDocumentTypesSet().stream();
+        return pt.ist.fenixframework.FenixFramework.getDomainRoot().getFinantialDocumentTypesSet().stream();
     }
 
     public static FinantialDocumentType findByCode(final String code) {
@@ -233,21 +233,21 @@ public class FinantialDocumentType extends FinantialDocumentType_Base {
         if (FinantialDocumentType.findAll().count() == 0) {
             FinantialDocumentType.createForCreditNote(
                     "NA",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FinantialDocumentType.CreditNote")), "NA", true);
+                    org.fenixedu.treasury.util.Constants.bundleI18N(
+                            "label.FinantialDocumentType.CreditNote"), "NA", true);
             FinantialDocumentType.createForDebitNote(
                     "ND",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FinantialDocumentType.DebitNote")), "ND", true);
+                    org.fenixedu.treasury.util.Constants.bundleI18N(
+                            "label.FinantialDocumentType.DebitNote"), "ND", true);
             FinantialDocumentType.createForSettlementNote(
                     "NP",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FinantialDocumentType.SettlementNote")), "NP", true);
+                    org.fenixedu.treasury.util.Constants.bundleI18N(
+                            "label.FinantialDocumentType.SettlementNote"), "NP", true);
 
             FinantialDocumentType.createForReimbursementNote(
                     "NR",
-                    new LocalizedString(Locale.getDefault(), BundleUtil.getString(Constants.BUNDLE,
-                            "label.FinantialDocumentType.ReimbursementNote")), "NR", true);
+                    org.fenixedu.treasury.util.Constants.bundleI18N(
+                            "label.FinantialDocumentType.ReimbursementNote"), "NR", true);
 
         }
 
