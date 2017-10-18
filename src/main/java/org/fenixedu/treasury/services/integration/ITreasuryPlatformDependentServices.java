@@ -27,15 +27,20 @@ public interface ITreasuryPlatformDependentServices {
 
 	public DateTime getFileCreationDate(IGenericFile genericFile);
 
+	public String getFileContentType(IGenericFile iGenericFile);
+
 	public void createFile(final IGenericFile genericFile, final String displayName, final String fileName, final byte[] content);
 
 	public void deleteFile(final IGenericFile genericFile);
-	
+
 	public String getLoggedUsername();
+	
+	/* Bundles */
 	
     public String bundle(final String key, final String... args);
 
     public LocalizedString bundleI18N(final String key, final String... args);
+
 
 	
 }

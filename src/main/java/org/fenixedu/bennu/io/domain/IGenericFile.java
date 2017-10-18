@@ -33,4 +33,8 @@ public interface IGenericFile extends DomainObject {
 		return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
 	}
 
+	default public String getContentType() {
+		return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
+	}
+	
 }

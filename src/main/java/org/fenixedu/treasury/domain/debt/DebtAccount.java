@@ -255,4 +255,15 @@ public class DebtAccount extends DebtAccount_Base {
                 .anyMatch(se -> se.getFinantialDocument() != null && se.getFinantialDocument().isPreparing()));
     }
 
+    // @formatter:off
+    /* *****************
+     * GETTERS & SETTERS
+     * *****************
+     */
+    // @formatter:on
+    
+    public boolean isClosed() {
+    	return getClosed();
+    }
+    
 }
