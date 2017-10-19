@@ -76,6 +76,10 @@ public class GlobalInterestRate extends GlobalInterestRate_Base {
     public boolean isApplyPaymentMonth() {
         return super.getApplyPaymentMonth();
     }
+    
+    public boolean isApplyInFirstWorkday() {
+        return super.getApplyInFirstWorkday();
+    }
 
     public boolean isDeletable() {
         return true;
