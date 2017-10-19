@@ -63,7 +63,15 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         setCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled(false);
         checkRules();
     }
-
+    
+    public boolean isExportOnlyRelatedDocumentsPerExport() {
+    	return super.getExportOnlyRelatedDocumentsPerExport();
+    }
+    
+    public boolean isExportAnnulledRelatedDocuments() {
+    	return super.getExportAnnulledRelatedDocuments();
+    }
+    
     private void checkRules() {
         if (getPaymentsIntegrationSeries() == null) {
             throw new TreasuryDomainException("error.ERPConfiguration.paymentsIntegrationSeries.required");

@@ -72,6 +72,18 @@ public abstract class IntegrationOperation extends IntegrationOperation_Base {
             this.setSuccess(false);
         }
     }
+    
+	public boolean isProcessed() {
+		return getProcessed();
+	}
+	
+	public boolean isSuccess() {
+		return getSuccess();
+	}
+	
+	public boolean isCorrected() {
+		return getCorrected();
+	}
 
     @Atomic
     public void appendLog(String errorLog, String integrationLog, String soapInboundMessage, String soapOutboundMessage) {

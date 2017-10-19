@@ -32,5 +32,9 @@ public class Configuration extends Configuration_Base {
     public Configuration() {
         super();
     }
+
+    public boolean isActive() {
+    	return super.getActive();
+    }
     
 }

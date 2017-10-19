@@ -71,6 +71,10 @@ public class TreasuryDocumentTemplateFile extends TreasuryDocumentTemplateFile_B
 
         checkRules();
     }
+    
+    public boolean isActive() {
+    	return super.getActive();
+    }
 
     public boolean isDeletable() {
         return true;

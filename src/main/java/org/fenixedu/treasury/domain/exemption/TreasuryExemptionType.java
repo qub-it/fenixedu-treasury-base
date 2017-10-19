@@ -64,6 +64,10 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
 
         checkRules();
     }
+    
+    public boolean isActive() {
+    	return super.getActive();
+    }
 
     private void checkRules() {
         if (LocalizedStringUtil.isTrimmedEmpty(getCode())) {

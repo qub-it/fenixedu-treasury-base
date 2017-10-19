@@ -37,9 +37,9 @@ public interface ITreasuryPlatformDependentServices {
 	
 	/* Bundles */
 	
-    public String bundle(final String key, final String... args);
+    public String bundle(final String bundleName, final String key, final String... args);
 
-    public LocalizedString bundleI18N(final String key, final String... args);
+    public LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
 
 	
