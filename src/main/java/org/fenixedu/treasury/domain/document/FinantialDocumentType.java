@@ -108,6 +108,11 @@ public class FinantialDocumentType extends FinantialDocumentType_Base {
 
         deleteDomainObject();
     }
+    
+    public boolean isInvoice() {
+        return super.getInvoice();
+        
+    }
 
     // @formatter: off
     /************
