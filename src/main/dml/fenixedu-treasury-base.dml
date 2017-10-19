@@ -41,10 +41,9 @@ valueType pt.ist.standards.geographic.Country as Country {
 
 valueType org.fenixedu.commons.i18n.LocalizedString as TreasuryLocalizedString {
     externalizeWith {
-        String org.fenixedu.commons.i18n.LocalizedStringSerializer.externalize();
+        JsonElement json();
     }
-    
-    internalizeWith org.fenixedu.commons.i18n.LocalizedStringSerializer.internalize();
+    internalizeWith fromJson();
 }
 
 /************
