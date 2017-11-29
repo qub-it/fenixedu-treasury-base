@@ -175,7 +175,8 @@ class debt.DebtAccount {
 class document.TreasuryDocumentTemplate {
 }
 
-class document.TreasuryDocumentTemplateFile {
+class document.TreasuryDocumentTemplateFile /* implements IGenericFile */ {
+	String fileId;
     boolean active;
 }
 
@@ -604,17 +605,19 @@ class paymentcodes.PaymentReferenceCode
 		}
 	}
 	
-	class paymentcodes.SibsReportFile {
-	  DateTime whenProcessedBySibs;
-	  BigDecimalT transactionsTotalAmount;
-	  BigDecimalT totalCost;
-	  String errorLog;
-	  String infoLog;
+	class paymentcodes.SibsReportFile /* implements IGenericFile */ {
+		String fileId;	
+		DateTime whenProcessedBySibs;
+		BigDecimalT transactionsTotalAmount;
+		BigDecimalT totalCost;
+		String errorLog;
+		String infoLog;
 	}
 	
-	class paymentcodes.SibsInputFile {
-	DateTime whenProcessedBySibs;
-	String uploader;
+	class paymentcodes.SibsInputFile /* implements IGenericFile */ {
+		String fileId;
+		DateTime whenProcessedBySibs;
+		String uploader;
 	}
 
 
@@ -646,20 +649,19 @@ class paymentcodes.PaymentReferenceCode
             }
         }
         
-        class paymentcodes.SibsOutputFile
-        {
-		      String errorLog;
-		      String infoLog;
-		      String printedPaymentCodes;
-		      DateTime lastSuccessfulExportation;
-        }
+		class paymentcodes.SibsOutputFile /* implements IGenericFile */ {
+			String fileId;
+			String errorLog;
+			String infoLog;
+			String printedPaymentCodes;
+			DateTime lastSuccessfulExportation;
+		}
         
-class integration.OperationFile 
-{
+class integration.OperationFile /* implements IGenericFile */ {
+	String fileId;
 }
 
-class integration.IntegrationOperation
-{
+class integration.IntegrationOperation {
 	DateTime executionDate;
 	boolean processed;
 	boolean success;
@@ -1826,7 +1828,8 @@ class forwardpayments.ForwardPaymentConfiguration {
        }
 	}
 
-class forwardpayments.ForwardPaymentConfigurationFile {
+class forwardpayments.ForwardPaymentConfigurationFile /* implements IGenericFile */ {
+	String fileId;
 }
 
 	relation ForwardPaymentConfigurationFileBennu {
@@ -1919,7 +1922,8 @@ class forwardpayments.ForwardPayment {
         }
 	}
 
-class forwardpayments.ForwardPaymentLogFile {
+class forwardpayments.ForwardPaymentLogFile /* implements IGenericFile */ {
+	String fileId;
 }
 
 class forwardpayments.ForwardPaymentLog {
@@ -1971,7 +1975,8 @@ class forwardpayments.ForwardPaymentLog {
 		}
 	}
 
-class forwardpayments.PostForwardPaymentsReportFile {
+class forwardpayments.PostForwardPaymentsReportFile /* implements IGenericFile */ {
+	String fileId;
 	DateTime postForwardPaymentsExecutionDate;
 	DateTime beginDate;
 	DateTime endDate;

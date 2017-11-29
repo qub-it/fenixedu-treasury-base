@@ -28,50 +28,20 @@
 package org.fenixedu.treasury.services.integration.erp.sap;
 
 import java.io.InputStream;
-import java.io.StringWriter;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
-import org.fenixedu.treasury.domain.document.FinantialDocument;
-import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.document.Invoice;
-import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.domain.document.PaymentEntry;
-import org.fenixedu.treasury.domain.document.ReimbursementEntry;
-import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.domain.integration.ERPImportOperation;
 import org.fenixedu.treasury.domain.integration.IntegrationOperationLogBean;
 import org.fenixedu.treasury.generated.sources.saft.sap.AuditFile;
-import org.fenixedu.treasury.generated.sources.saft.sap.PaymentMethod;
-import org.fenixedu.treasury.generated.sources.saft.sap.SAFTPTSettlementType;
 import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.Line;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument;
 import org.fenixedu.treasury.services.integration.erp.IERPImporter;
-import org.fenixedu.treasury.services.integration.erp.dto.DocumentStatusWS;
-import org.fenixedu.treasury.services.integration.erp.dto.DocumentStatusWS.StatusType;
 import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationOutput;
-import org.fenixedu.treasury.util.Constants;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Strings;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;

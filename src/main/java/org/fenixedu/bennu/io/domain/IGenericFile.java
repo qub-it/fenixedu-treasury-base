@@ -13,6 +13,10 @@ public interface IGenericFile extends DomainObject {
 
 	public void delete();
 	
+	public String getFileId();
+	
+	public void setFileId(final String id);
+	
 	default public byte[] getContent() {
 		return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
 	}

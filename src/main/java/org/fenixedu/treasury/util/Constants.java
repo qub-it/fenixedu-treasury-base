@@ -208,6 +208,10 @@ public class Constants {
     public static String bundle(final String key, final String... args) {
     	return TreasuryPlataformDependentServicesFactory.implementation().bundle(BUNDLE, key, args);
     }
+    
+    public static String bundle(final Locale locale, final String key, final String ... args) {
+    	return TreasuryPlataformDependentServicesFactory.implementation().bundle(locale, BUNDLE, key, args);
+    }
 
     public static LocalizedString bundleI18N(final String key, final String... args) {
     	return TreasuryPlataformDependentServicesFactory.implementation().bundleI18N(BUNDLE, key, args);

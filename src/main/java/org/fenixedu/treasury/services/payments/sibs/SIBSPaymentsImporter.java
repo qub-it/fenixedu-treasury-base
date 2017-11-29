@@ -26,7 +26,6 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -38,7 +37,6 @@ import org.fenixedu.treasury.domain.paymentcodes.SibsTransactionDetail;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFileDetailLine;
-import org.fenixedu.treasury.util.Constants;
 import org.joda.time.YearMonthDay;
 
 import pt.ist.fenixframework.Atomic;

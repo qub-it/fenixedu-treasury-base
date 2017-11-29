@@ -41,7 +41,6 @@ import java.util.TreeSet;
 import java.util.stream.Stream;
 
 
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -54,10 +53,10 @@ import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.springframework.util.StringUtils;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -477,10 +476,12 @@ public class DebitEntry extends DebitEntry_Base {
 
         creditEntry.getFinantialDocument().closeDocument();
 
+    	final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
         final SettlementNote settlementNote =
                 SettlementNote.create(this.getDebtAccount(), documentNumberSeriesSettlementNote, now, now, "", null);
         settlementNote.setDocumentObservations(
-                reason + " - [" + Authenticate.getUser().getUsername() + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
+                reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
 
         SettlementEntry.create(creditEntry, settlementNote, creditEntry.getOpenAmount(),
                 reason + ": " + creditEntry.getDescription(), now, false);

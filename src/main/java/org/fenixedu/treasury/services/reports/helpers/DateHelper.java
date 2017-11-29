@@ -30,8 +30,8 @@ package org.fenixedu.treasury.services.reports.helpers;
 import java.util.Locale;
 
 
-import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -57,8 +57,9 @@ public class DateHelper implements IDocumentHelper {
     }
 
     public LocalizedString extendedDate(final LocalDate localDate) {
+    	
         LocalizedString i18NString = new LocalizedString();
-        for (Locale locale : CoreConfiguration.supportedLocales()) {
+        for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
             String month = localDate.toString("MMMM", locale);
             if (locale.getLanguage().equals("pt")) {
                 month = month.toLowerCase(); // Java does not follow the Portuguese Language Orthographic Agreement of 1990

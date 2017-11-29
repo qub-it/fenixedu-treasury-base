@@ -37,18 +37,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -327,8 +325,10 @@ public class DebitNote extends DebitNote_Base {
 
             this.setState(FinantialDocumentStateType.ANNULED);
 
-            if (Authenticate.getUser() != null) {
-                setAnnulledReason(reason + " - [" + Authenticate.getUser().getUsername() + "]"
+        	final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+            if (!Strings.isNullOrEmpty(loggedUsername)) {
+                setAnnulledReason(reason + " - [" + loggedUsername + "]"
                         + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
             } else {
                 setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));

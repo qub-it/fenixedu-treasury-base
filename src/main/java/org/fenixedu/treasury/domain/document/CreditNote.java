@@ -33,13 +33,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 
@@ -305,8 +305,10 @@ public class CreditNote extends CreditNote_Base {
 
             setState(FinantialDocumentStateType.ANNULED);
 
-            if (Authenticate.getUser() != null) {
-                setAnnulledReason(reason + " - [" + Authenticate.getUser().getUsername() + "] "
+        	final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+            if (!Strings.isNullOrEmpty(loggedUsername)) {
+                setAnnulledReason(reason + " - [" + loggedUsername + "] "
                         + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
             } else {
                 setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));

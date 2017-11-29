@@ -2,14 +2,16 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
+
+import com.google.common.base.Strings;
 
 import pt.ist.fenixframework.Atomic;;
 
@@ -69,8 +71,10 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
 
             setState(FinantialDocumentStateType.ANNULED);
 
-            if (Authenticate.getUser() != null) {
-                setAnnulledReason(reason + " - [" + Authenticate.getUser().getUsername() + "]"
+        	final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+            if (!Strings.isNullOrEmpty(loggedUsername)) {
+                setAnnulledReason(reason + " - [" + loggedUsername + "]"
                         + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
             } else {
                 setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
