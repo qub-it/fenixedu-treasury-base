@@ -51,17 +51,12 @@ import pt.ist.fenixframework.Atomic;;
 public class Product extends Product_Base {
 
     public static final int MAX_CODE_LENGTH = 20;
-    public static final Comparator<Product> COMPARE_BY_NAME = new Comparator<Product>() {
+    public static final Comparator<Product> COMPARE_BY_NAME = (o1, o2) -> {
+	    int c = o1.getName().getContent().compareTo(o2.getName().getContent());
 
-        @Override
-        public int compare(Product o1, Product o2) {
-            int c = o1.getName().getContent().compareTo(o2.getName().getContent());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
-
-    };
-
+	    return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+	};
+	
     protected Product() {
         super();
         setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());

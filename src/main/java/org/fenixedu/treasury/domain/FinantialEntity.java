@@ -69,7 +69,7 @@ public class FinantialEntity extends FinantialEntity_Base {
         checkRules();
     }
 
-    private void checkRules() {
+    public void checkRules() {
         if (getFinantialInstitution() == null) {
             throw new TreasuryDomainException("error.FinantialEntity.finantialInstitution.required");
         }
