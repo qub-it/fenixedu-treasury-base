@@ -35,7 +35,6 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.balancetransfer.BalanceTransferService;
@@ -43,6 +42,9 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentcodes.FinantialDocumentPaymentCode;
+import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
+import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -136,6 +138,27 @@ public class DebtAccount extends DebtAccount_Base {
         return result;
     }
 
+    public Set<PaymentCodeTarget> getUsedPaymentCodeTargetOfPendingInvoiceEntries() {
+        final Set<PaymentCodeTarget> result = Sets.newHashSet();
+        for (final InvoiceEntry invoiceEntry : getPendingInvoiceEntriesSet()) {
+            if (!invoiceEntry.isDebitNoteEntry()) {
+                continue;
+            }
+
+            result.addAll(
+                    MultipleEntriesPaymentCode.findUsedByDebitEntry((DebitEntry) invoiceEntry).collect(Collectors.toSet()));
+
+            if (invoiceEntry.getFinantialDocument() != null) {
+                result
+                        .addAll(FinantialDocumentPaymentCode.findUsedByFinantialDocument(invoiceEntry.getFinantialDocument())
+                                .collect(Collectors.<PaymentCodeTarget> toSet()));
+            }
+        }
+        
+        return result;
+    }
+    
+    
     @Atomic
     public static DebtAccount create(final FinantialInstitution finantialInstitution, final Customer customer) {
         //Find if already exists

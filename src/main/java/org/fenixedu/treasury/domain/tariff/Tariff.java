@@ -71,6 +71,10 @@ public abstract class Tariff extends Tariff_Base {
     }
 
     protected void checkRules() {
+        if(getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.Tariff.finantialEntity.required");
+        }
+        
         if (getProduct() == null) {
             throw new TreasuryDomainException("error.Tariff.product.required");
         }
