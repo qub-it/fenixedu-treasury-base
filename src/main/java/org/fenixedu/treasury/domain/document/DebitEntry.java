@@ -240,6 +240,11 @@ public class DebitEntry extends DebitEntry_Base {
 
         InterestRateBean calculateInterest = getInterestRate().calculateInterest(amountInDebtMap(whenToCalculate),
                 createdInterestEntriesMap(), getDueDate(), whenToCalculate);
+        
+        final Product product = TreasurySettings.getInstance().getInterestProduct();
+        final String entryDescription = product.getName().getContent() + "-" + this.getDescription();
+        calculateInterest.setDescription(entryDescription);
+        
         return calculateInterest;
     }
 

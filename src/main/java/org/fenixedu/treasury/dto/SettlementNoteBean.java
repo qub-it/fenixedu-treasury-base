@@ -30,6 +30,7 @@ import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.util.Constants;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Sets;
@@ -234,6 +235,22 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 .findFirst();
         
         return lastAdvancedCreditSettlementNote;
+    }
+
+    public void calculateInterestDebitEntries() {
+        setInterestEntries(new ArrayList<InterestEntryBean>());
+        for (DebitEntryBean debitEntryBean : getDebitEntries()) {
+            if (debitEntryBean.isIncluded()
+                    && Constants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(), debitEntryBean.getDebtAmount())) {
+
+                //Calculate interest only if we are making a FullPayment
+                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
+                if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
+                    InterestEntryBean interestEntryBean = new InterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
+                    getInterestEntries().add(interestEntryBean);
+                }
+            }
+        }
     }
 
     // @formatter:off
