@@ -729,7 +729,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     }
 
-    public class PaymentEntryBean implements ITreasuryBean, Serializable {
+    public static class PaymentEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -743,9 +743,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             this.paymentAmount = BigDecimal.ZERO;
         }
 
-        public PaymentEntryBean(BigDecimal paymentAmount, PaymentMethod paymentMethod) {
+        public PaymentEntryBean(BigDecimal paymentAmount, PaymentMethod paymentMethod, String paymentMethodId) {
             this.paymentAmount = paymentAmount;
             this.paymentMethod = paymentMethod;
+            this.paymentMethodId = paymentMethodId;
         }
 
         public BigDecimal getPaymentAmount() {

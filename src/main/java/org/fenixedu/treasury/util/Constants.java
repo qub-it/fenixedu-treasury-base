@@ -35,13 +35,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.springframework.util.StringUtils;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -254,7 +252,7 @@ public class Constants {
     }
 
     public static Map<String, String> propertiesJsonToMap(final String propertiesMapJson) {
-        if (StringUtils.isEmpty(propertiesMapJson)) {
+        if (Strings.isNullOrEmpty(propertiesMapJson)) {
             return new HashMap<String, String>();
         }
         

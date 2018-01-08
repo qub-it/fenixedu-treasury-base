@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -51,10 +50,11 @@ import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
 import org.fenixedu.treasury.util.Constants;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import pt.ist.fenixframework.Atomic;;
+import pt.ist.fenixframework.Atomic;
 
 public class SettlementNote extends SettlementNote_Base {
 
@@ -664,6 +664,21 @@ public class SettlementNote extends SettlementNote_Base {
         SettlementNote settlementNote = new SettlementNote(debtAccount, documentNumberSeries, documentDate, paymentDate,
                 originDocumentNumber, finantialTransactionReference);
 
+        return settlementNote;
+    }
+
+    @Atomic
+    public static SettlementNote createSettlementNote(SettlementNoteBean bean) {
+        DateTime documentDate = new DateTime();
+
+        SettlementNote settlementNote = SettlementNote.create(bean.getDebtAccount(), bean.getDocNumSeries(), documentDate,
+                bean.getDate().toDateTimeAtStartOfDay(), bean.getOriginDocumentNumber(),
+                !Strings.isNullOrEmpty(bean.getFinantialTransactionReference()) ? bean.getFinantialTransactionReferenceYear()
+                        + "/" + bean.getFinantialTransactionReference() : "");
+
+        settlementNote.processSettlementNoteCreation(bean);
+        settlementNote.closeDocument();
+        
         return settlementNote;
     }
 
