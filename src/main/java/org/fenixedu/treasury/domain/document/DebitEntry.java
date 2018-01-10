@@ -305,6 +305,10 @@ public class DebitEntry extends DebitEntry_Base {
     public boolean isEventAnnuled() {
         return isAnnulled() || getEventAnnuled();
     }
+    
+    public boolean isIncludedInEvent() {
+        return !isEventAnnuled();
+    }
 
     public BigDecimal getPendingInterestAmount() {
         return getPendingInterestAmount(new LocalDate());
