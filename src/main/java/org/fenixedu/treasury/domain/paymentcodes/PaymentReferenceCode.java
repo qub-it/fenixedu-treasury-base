@@ -41,11 +41,13 @@ import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;;
 
@@ -345,4 +347,20 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
 
         return value;
     }
+    
+    @Atomic
+    public static PaymentReferenceCode createPaymentReferenceCodeForMultipleDebitEntries(final PaymentReferenceCodeBean bean) {
+        final PaymentReferenceCode paymentReferenceCode =
+                bean.getPaymentCodePool()
+                        .getReferenceCodeGenerator()
+                        .generateNewCodeFor(
+                                bean.getPaymentAmount(), bean.getBeginDate(), bean.getEndDate(),
+                                bean.getPaymentCodePool().getIsFixedAmount());
+
+        paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()), bean.getPaymentAmount());
+
+        return paymentReferenceCode;
+    }
+
+    
 }
