@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -38,6 +39,7 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFileDetailLine;
 import org.joda.time.YearMonthDay;
+import org.springframework.web.multipart.MultipartFile;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -134,9 +136,10 @@ public class SIBSPaymentsImporter {
         InputStream fileInputStream = null;
         try {
             fileInputStream = inputFile.getStream();
+            byte[] contents = getContent(fileInputStream);
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-            final SibsIncommingPaymentFile sibsFile = SibsIncommingPaymentFile.parse(inputFile.getFilename(), fileInputStream);
+            final SibsIncommingPaymentFile sibsFile = SibsIncommingPaymentFile.parse(inputFile.getFilename(), contents);
 
             processResult.addMessage("label.manager.SIBS.linesFound", String.valueOf(sibsFile.getDetailLines().size()));
             processResult.addMessage("label.manager.SIBS.startingProcess");
@@ -197,6 +200,14 @@ public class SIBSPaymentsImporter {
         }
     }
 
+    private byte[] getContent(final InputStream stream) {
+        try {
+            return IOUtils.toByteArray(stream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     public ProcessResult processSIBSPaymentFiles(final SibsIncommingPaymentFile sibsFile,
             final FinantialInstitution finantialInstitution) throws IOException {
         // HACK:    Avoid concurrent and duplicated processing file

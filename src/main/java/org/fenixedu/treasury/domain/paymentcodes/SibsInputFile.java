@@ -27,6 +27,7 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,7 +36,9 @@ import java.util.stream.Stream;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
@@ -97,6 +100,41 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     }
 
+    @Atomic
+    public static SibsInputFile createSibsInputFile(DateTime whenProcessedBySibs, final String originalSibsFilename, 
+            final String sibsName, final byte[] sibsContent) {
+
+        PaymentCodePool pool = null;
+
+        try {
+
+            final SibsIncommingPaymentFile file = SibsIncommingPaymentFile.parse(originalSibsFilename, sibsContent);
+            if (file.getHeader().getWhenProcessedBySibs().toDateTimeAtMidnight().compareTo(whenProcessedBySibs) != 0) {
+                whenProcessedBySibs = file.getHeader().getWhenProcessedBySibs().toDateTimeAtMidnight();
+            }
+
+            String entityCode = file.getHeader().getEntityCode();
+
+            pool = PaymentCodePool.findByEntityCode(entityCode).findFirst().orElse(null);
+
+            if (pool == null) {
+                throw new TreasuryDomainException(
+                        "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile.poolNull");
+            }
+            
+            SibsInputFile sibsInputFile =
+                    SibsInputFile.create(pool.getFinantialInstitution(), whenProcessedBySibs, sibsName,
+                            originalSibsFilename, sibsContent, 
+                            TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+            return sibsInputFile;
+        } catch (RuntimeException ex) {
+            throw new TreasuryDomainException(
+                    "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile",
+                    ex.getLocalizedMessage());
+        }
+        
+    }
+    
     public static Stream<SibsInputFile> findAll() {
         Set<SibsInputFile> result = new HashSet<SibsInputFile>();
         for (FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toList())) {

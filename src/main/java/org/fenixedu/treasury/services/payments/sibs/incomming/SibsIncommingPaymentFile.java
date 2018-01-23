@@ -19,8 +19,8 @@
 package org.fenixedu.treasury.services.payments.sibs.incomming;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -68,12 +68,12 @@ public class SibsIncommingPaymentFile {
 
     }
 
-    public static SibsIncommingPaymentFile parse(String filename, InputStream stream) {
+    public static SibsIncommingPaymentFile parse(final String filename, byte[] content) {
 
         SibsIncommingPaymentFileHeader header = null;
         SibsIncommingPaymentFileFooter footer = null;
         final List<SibsIncommingPaymentFileDetailLine> detailLines = new ArrayList<SibsIncommingPaymentFileDetailLine>();
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(content)));
 
         try {
             String line = reader.readLine();
