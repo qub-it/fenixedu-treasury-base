@@ -26,6 +26,7 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         super();
     }
 
+    @Atomic
     public static SibsOutputFile create(FinantialInstitution finantialInstitution, DateTime lastSuccessfulSentDateTime) {
         SibsOutputFile file = new SibsOutputFile();
 
