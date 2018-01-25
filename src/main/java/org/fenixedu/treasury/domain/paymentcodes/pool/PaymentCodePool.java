@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
@@ -335,6 +334,20 @@ public class PaymentCodePool extends PaymentCodePool_Base {
 
     }
 
+    @Atomic
+    public void update(final FinantialInstitution finantialInstitution, final String name, final String entityReferenceCode,
+            final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount, final LocalDate validFrom,
+            final LocalDate validTo, final Boolean active, final Boolean useCheckDigit, final DocumentNumberSeries seriesToUseInPayments,
+            final PaymentMethod paymentMethod) {
+
+        edit(name, active, seriesToUseInPayments, paymentMethod);
+        setNewValidPeriod(validFrom, validTo);
+        changeFinantialInstitution(finantialInstitution);
+        changePooltype(useCheckDigit);
+        changeReferenceCode(entityReferenceCode, minReferenceCode, maxReferenceCode);
+        changeAmount(minAmount, maxAmount);
+    }
+    
     public static Stream<PaymentCodePool> findByEntityCode(String entityCode) {
         return findAll().filter(x -> x.getEntityReferenceCode().equals(entityCode));
     }
