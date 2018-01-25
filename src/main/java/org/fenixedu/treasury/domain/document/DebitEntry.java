@@ -225,8 +225,14 @@ public class DebitEntry extends DebitEntry_Base {
             return new InterestRateBean();
         }
 
-        return this.getInterestRate().calculateInterest(amountInDebtMap(whenToCalculate),
+        final InterestRateBean calculateInterest = this.getInterestRate().calculateInterest(amountInDebtMap(whenToCalculate),
                 Maps.<LocalDate, BigDecimal> newHashMap(), getDueDate(), whenToCalculate);
+
+        final Product product = TreasurySettings.getInstance().getInterestProduct();
+        final String entryDescription = product.getName().getContent() + "-" + this.getDescription();
+        calculateInterest.setDescription(entryDescription);
+
+        return calculateInterest;
     }
 
     public InterestRateBean calculateUndebitedInterestValue(final LocalDate whenToCalculate) {

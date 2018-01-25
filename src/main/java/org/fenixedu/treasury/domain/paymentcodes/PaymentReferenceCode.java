@@ -357,8 +357,14 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
                                 bean.getPaymentAmount(), bean.getBeginDate(), bean.getEndDate(),
                                 bean.getPaymentCodePool().getIsFixedAmount());
 
-        paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()), bean.getPaymentAmount());
+        BigDecimal amount = BigDecimal.ZERO;
+        for(DebitEntry entry : bean.getSelectedDebitEntries()) {
+            amount = amount.add(entry.getOpenAmount());
+        }
+        
+        bean.setPaymentAmount(amount);
 
+        paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()), bean.getPaymentAmount());
         return paymentReferenceCode;
     }
 
