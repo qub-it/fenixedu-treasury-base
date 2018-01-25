@@ -350,19 +350,19 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     
     @Atomic
     public static PaymentReferenceCode createPaymentReferenceCodeForMultipleDebitEntries(final PaymentReferenceCodeBean bean) {
-        final PaymentReferenceCode paymentReferenceCode =
-                bean.getPaymentCodePool()
-                        .getReferenceCodeGenerator()
-                        .generateNewCodeFor(
-                                bean.getPaymentAmount(), bean.getBeginDate(), bean.getEndDate(),
-                                bean.getPaymentCodePool().getIsFixedAmount());
-
         BigDecimal amount = BigDecimal.ZERO;
         for(DebitEntry entry : bean.getSelectedDebitEntries()) {
             amount = amount.add(entry.getOpenAmount());
         }
         
         bean.setPaymentAmount(amount);
+
+        final PaymentReferenceCode paymentReferenceCode =
+                bean.getPaymentCodePool()
+                        .getReferenceCodeGenerator()
+                        .generateNewCodeFor(
+                                bean.getPaymentAmount(), bean.getBeginDate(), bean.getEndDate(),
+                                bean.getPaymentCodePool().getIsFixedAmount());
 
         paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()), bean.getPaymentAmount());
         return paymentReferenceCode;
