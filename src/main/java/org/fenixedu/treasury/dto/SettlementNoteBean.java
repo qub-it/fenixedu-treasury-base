@@ -252,7 +252,36 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
     }
-
+    
+    public BigDecimal getTotalAmountToPay() {
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        
+        for (final DebitEntryBean debitEntryBean : getDebitEntries()) {
+            if(!debitEntryBean.isIncluded()) {
+                continue;
+            }
+            totalAmount = totalAmount.add(debitEntryBean.getDebtAmountWithVat());
+        }
+        
+        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+            if(!interestEntryBean.isIncluded()) {
+                continue;
+            }
+            
+            totalAmount = totalAmount.add(interestEntryBean.getInterest().getInterestAmount());
+        }
+        
+        for (CreditEntryBean creditEntryBean : getCreditEntries()) {
+            if(!creditEntryBean.isIncluded()) {
+                continue;
+            }
+            
+            totalAmount = totalAmount.subtract(creditEntryBean.getCreditAmountWithVat());
+        }
+        
+        return totalAmount;
+    }
+    
     // @formatter:off
     /* *****************
      * GETTERS & SETTERS
