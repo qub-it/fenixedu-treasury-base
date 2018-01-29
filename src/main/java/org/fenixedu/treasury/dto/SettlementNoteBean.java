@@ -260,7 +260,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             if(!debitEntryBean.isIncluded()) {
                 continue;
             }
-            totalAmount = totalAmount.add(debitEntryBean.getDebtAmountWithVat());
+            
+            if(isReimbursementNote()) {
+                totalAmount = totalAmount.subtract(debitEntryBean.getDebtAmountWithVat());
+            } else {
+                totalAmount = totalAmount.add(debitEntryBean.getDebtAmountWithVat());
+            }
         }
         
         for (InterestEntryBean interestEntryBean : getInterestEntries()) {
@@ -268,7 +273,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 continue;
             }
             
-            totalAmount = totalAmount.add(interestEntryBean.getInterest().getInterestAmount());
+            if(isReimbursementNote()) {
+                totalAmount = totalAmount.subtract(interestEntryBean.getInterest().getInterestAmount());
+            } else {
+                totalAmount = totalAmount.add(interestEntryBean.getInterest().getInterestAmount());
+            }
         }
         
         for (CreditEntryBean creditEntryBean : getCreditEntries()) {
@@ -276,7 +285,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 continue;
             }
             
-            totalAmount = totalAmount.subtract(creditEntryBean.getCreditAmountWithVat());
+            if(isReimbursementNote()) {
+                totalAmount = totalAmount.add(creditEntryBean.getCreditAmountWithVat());
+            } else {
+                totalAmount = totalAmount.subtract(creditEntryBean.getCreditAmountWithVat());
+            }
         }
         
         return totalAmount;
