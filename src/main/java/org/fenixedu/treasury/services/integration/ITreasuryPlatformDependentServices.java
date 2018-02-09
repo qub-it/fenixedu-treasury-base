@@ -52,4 +52,15 @@ public interface ITreasuryPlatformDependentServices {
 
 	public LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
+	
+	/* Versioning Information */
+	
+	public <T> String versioningCreatorUsername(final T obj);
+	
+	public <T> DateTime versioningCreationDate(final T obj);
+	
+    public <T> String versioningUpdatorUsername(final T obj);
+    
+    public <T> DateTime versioningUpdateDate(final T obj);
+	
 }
