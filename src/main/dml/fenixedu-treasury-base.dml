@@ -31,7 +31,7 @@ valueType pt.ist.standards.geographic.District as District {
     internalizeWith pt.ist.standards.geographic.TreasuryGeographicInfoLoader.internalizePlace();
 }
 
-valueType pt.ist.standards.geographic.Country as Country {
+valueType pt.ist.standards.geographic.Country as GeographicCountry {
     externalizeWith {
         String pt.ist.standards.geographic.TreasuryGeographicInfoLoader.externalizePlace();
     }
@@ -134,7 +134,7 @@ class FinantialInstitution {
 	String name (REQUIRED);
 	String companyName;
 	String address;
-	Country country;
+	GeographicCountry country;
 	District district;
 	Municipality municipality;
 	String email;
