@@ -194,6 +194,14 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
+        if(!isPreparing()) {
+            throw new TreasuryDomainException("error.DebitNote.cannot.add.debit.entries.on.not.preparing.document");
+        }
+        
+        if(debitEntries.isEmpty()) {
+            throw new TreasuryDomainException("error.DebitNote.add.debit.entries.empty");
+        }
+        
         debitEntries.forEach(x -> this.addFinantialDocumentEntries(x));
         checkRules();
     }
