@@ -55,6 +55,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import pt.ist.fenixframework.Atomic;
+
+import static org.fenixedu.treasury.util.Constants.bundle;
 import static org.fenixedu.treasury.util.Constants.isPositive;
 import static org.fenixedu.treasury.util.Constants.rationalRatRate;
 
@@ -458,6 +460,17 @@ public class DebitNote extends DebitNote_Base {
 
         return newDebitNote;
     }
+    
+    @Atomic
+    public static DebitNote createInterestDebitNoteForDebitNote(final DebitNote debitNote, LocalDate paymentDate,
+            DocumentNumberSeries documentNumberSeries, String documentObservations) {
+        DebitNote interestDebitNote =
+                createInterestDebitNoteForDebitNote(debitNote, documentNumberSeries, new DateTime(), paymentDate);
+
+        interestDebitNote.setDocumentObservations(documentObservations);
+
+        return interestDebitNote;
+    }
 
     public static DebitNote createInterestDebitNoteForDebitNote(DebitNote debitNote, DocumentNumberSeries documentNumberSeries,
             DateTime documentDate, LocalDate paymentDate) {
@@ -473,7 +486,7 @@ public class DebitNote extends DebitNote_Base {
 
         if (Constants.isEqual(interestDebitNote.getTotalAmount(), BigDecimal.ZERO)) {
             interestDebitNote.delete(true);
-            throw new TreasuryDomainException(org.fenixedu.treasury.util.Constants.bundle("error.DebitNote.no.interest.to.generate"));
+            throw new TreasuryDomainException(bundle("error.DebitNote.no.interest.to.generate"));
         }
         return interestDebitNote;
     }

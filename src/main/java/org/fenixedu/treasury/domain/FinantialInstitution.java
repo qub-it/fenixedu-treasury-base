@@ -122,6 +122,13 @@ public class FinantialInstitution extends FinantialInstitution_Base implements I
 
         checkRules();
     }
+    
+    @Atomic
+    public void editContacts(final String email, final String telephoneContact, final String webAddress) {
+        setEmail(email);
+        setTelephoneContact(telephoneContact);
+        setWebAddress(webAddress);
+    }
 
     public boolean isDeletable() {
         if (this.getFinantialEntitiesSet().stream().anyMatch(x -> x.isDeletable() == false)) {
