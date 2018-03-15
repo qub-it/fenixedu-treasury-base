@@ -49,7 +49,7 @@ public class TreasuryDocumentTemplateFile extends TreasuryDocumentTemplateFile_B
             final String displayName, final String fileName, final byte[] content) {
         this();
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, displayName, fileName, content);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, CONTENT_TYPE, content);
         setTreasuryDocumentTemplate(documentTemplate);
         setActive(active);
 

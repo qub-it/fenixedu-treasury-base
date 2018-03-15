@@ -35,6 +35,8 @@ import pt.ist.fenixframework.Atomic;
 
 public class OperationFile extends OperationFile_Base implements IGenericFile {
 
+    public static final String CONTENT_TYPE = "application/octet-stream";
+    
     public OperationFile() {
         super();
         // this.setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
@@ -43,7 +45,7 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
     public OperationFile(String fileName, byte[] content) {
         this();
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, fileName, content);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, CONTENT_TYPE, content);
     }
 
     @Override
@@ -88,7 +90,7 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
     	
         OperationFile operationFile = new OperationFile();
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(operationFile, fileName, fileName, bytes);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(operationFile, fileName, CONTENT_TYPE, bytes);
 
         return operationFile;
     }
@@ -97,7 +99,7 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
     public static OperationFile createLog(final String fileName, final byte[] bytes, final IntegrationOperation operation) {
         OperationFile operationFile = new OperationFile();
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(operationFile, fileName, fileName, bytes);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(operationFile, fileName, CONTENT_TYPE, bytes);
         
         operationFile.setLogIntegrationOperation(operation);
         return operationFile;

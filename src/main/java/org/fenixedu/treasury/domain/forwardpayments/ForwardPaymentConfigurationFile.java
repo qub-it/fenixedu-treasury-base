@@ -6,6 +6,8 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 
 public class ForwardPaymentConfigurationFile extends ForwardPaymentConfigurationFile_Base implements IGenericFile {
     
+    public static final String CONTENT_TYPE = "application/octet-stream";
+    
     protected ForwardPaymentConfigurationFile() {
         super();
         setDomainRoot(pt.ist.fenixframework.FenixFramework.getDomainRoot());
@@ -19,7 +21,7 @@ public class ForwardPaymentConfigurationFile extends ForwardPaymentConfiguration
     public static ForwardPaymentConfigurationFile create(final String filename, final byte[] contents) {
         final ForwardPaymentConfigurationFile file = new ForwardPaymentConfigurationFile();
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(file, filename, filename, contents);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(file, filename, CONTENT_TYPE, contents);
         
         return file;
     }

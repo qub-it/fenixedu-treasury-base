@@ -6,6 +6,8 @@ import org.joda.time.DateTime;
 
 public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements IGenericFile {
 
+    public static final String CONTENT_TYPE = "text/plain";
+    
     private ForwardPaymentLogFile() {
         super();
     }
@@ -13,7 +15,7 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
     private ForwardPaymentLogFile(final String fileName, final byte[] content) {
         this();
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, fileName, content);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, CONTENT_TYPE, content);
     }
 
     @Override

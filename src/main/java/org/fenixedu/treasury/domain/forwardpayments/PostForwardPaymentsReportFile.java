@@ -11,6 +11,8 @@ import pt.ist.fenixframework.Atomic;;
 
 public class PostForwardPaymentsReportFile extends PostForwardPaymentsReportFile_Base implements IGenericFile {
     
+    public static final String CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    
     private PostForwardPaymentsReportFile(final DateTime postForwardPaymentsExecutionDate, 
             final DateTime beginDate, final DateTime endDate,
             final String filename, final byte[] content) {
@@ -21,7 +23,7 @@ public class PostForwardPaymentsReportFile extends PostForwardPaymentsReportFile
         setBeginDate(beginDate);
         setEndDate(endDate);
         
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, filename, content);
+        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, CONTENT_TYPE, content);
     }
 
     @Override

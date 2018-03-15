@@ -22,6 +22,8 @@ import pt.ist.fenixframework.Atomic.TxMode;
 
 public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile {
 
+    public static final String CONTENT_TYPE = "text/plain";
+    
     public SibsOutputFile() {
         super();
     }
@@ -35,7 +37,7 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
             byte[] paymentFileContents =
                     file.createPaymentFile(finantialInstitution, lastSuccessfulSentDateTime, errorsBuilder).getBytes("ASCII");
             
-            TreasuryPlataformDependentServicesFactory.implementation().createFile(file, file.outgoingFilename(), file.outgoingFilename(), paymentFileContents);
+            TreasuryPlataformDependentServicesFactory.implementation().createFile(file, file.outgoingFilename(), CONTENT_TYPE, paymentFileContents);
 
             file.setFinantialInstitution(finantialInstitution);
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);
@@ -47,7 +49,7 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
                 builder.append(el.toString()).append("\n");
             }
             
-            TreasuryPlataformDependentServicesFactory.implementation().createFile(file, file.outgoingFilename(), file.outgoingFilename(), new byte[0]);
+            TreasuryPlataformDependentServicesFactory.implementation().createFile(file, file.outgoingFilename(), CONTENT_TYPE, new byte[0]);
 
             file.setFinantialInstitution(finantialInstitution);
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);

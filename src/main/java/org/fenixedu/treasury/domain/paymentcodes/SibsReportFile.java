@@ -45,7 +45,7 @@ import pt.ist.fenixframework.Atomic;
 
 public class SibsReportFile extends SibsReportFile_Base implements IGenericFile {
 
-    public static final String CONTENT_TYPE = "text/plain";
+    public static final String CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     public static final String FILE_EXTENSION = ".idm";
 
     protected SibsReportFile() {
@@ -64,7 +64,7 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
     protected void init(final DateTime whenProcessedBySibs, final BigDecimal transactionsTotalAmount, final BigDecimal totalCost,
             final String displayName, final String fileName, final byte[] content) {
 
-    	TreasuryPlataformDependentServicesFactory.implementation().createFile(this, displayName, fileName, content);
+    	TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, CONTENT_TYPE, content);
     	
         setWhenProcessedBySibs(whenProcessedBySibs);
         setTransactionsTotalAmount(transactionsTotalAmount);

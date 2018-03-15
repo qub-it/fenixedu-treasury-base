@@ -60,7 +60,7 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
     protected void init(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS, String displayName,
             String filename, byte[] content, String uploader) {
         
-    	TreasuryPlataformDependentServicesFactory.implementation().createFile(this, displayName, filename, content);
+    	TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, CONTENT_TYPE, content);
 
     	setWhenProcessedBySibs(whenProcessedBySIBS);
         setUploader(uploader);
