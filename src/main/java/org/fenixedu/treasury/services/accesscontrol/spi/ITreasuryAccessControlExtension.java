@@ -3,22 +3,54 @@ package org.fenixedu.treasury.services.accesscontrol.spi;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 
-public interface ITreasuryAccessControlExtension {
+import com.google.common.reflect.TypeToken;
 
-    public boolean isFrontOfficeMember(final String username);
+public interface ITreasuryAccessControlExtension<T> {
 
-    public boolean isFrontOfficeMember(final String username, final FinantialInstitution finantialInstitution);
     
-    public boolean isBackOfficeMember(final String username);
-
-    public boolean isBackOfficeMember(final String username, final FinantialInstitution finantialInstitution);
-
-    public boolean isBackOfficeMember(final String username, final FinantialEntity finantialEntity);
     
-    public boolean isManager(final String username);
+    default public boolean isFrontOfficeMember(final String username) {
+        return false;
+    }
 
-    public boolean isAllowToModifySettlements(final String username, final FinantialInstitution finantialInstitution);
+    default public boolean isFrontOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
+        return false;
+    }
+    
+    default public boolean isFrontOfficeMemberWithinContext(final String username, final T context) {
+        return false;
+    }
 
-    public boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution);
+    default public boolean isBackOfficeMember(final String username) {
+        return false;
+    }
 
+    default public boolean isBackOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
+        return false;
+    }
+
+    default public boolean isBackOfficeMember(final String username, final FinantialEntity finantialEntity) {
+        return false;
+    }
+    
+    default public boolean isBackOfficeMemberWithinContext(final String username, final T context) {
+        return false;
+    }
+
+    default public boolean isManager(final String username) {
+        return false;
+    }
+    
+    default public boolean isAllowToModifySettlements(final String username, final FinantialInstitution finantialInstitution) {
+        return false;
+    }
+
+    default public boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution) {
+        return false;
+    }
+    
+    default public boolean isContextObjectApplied(final Object context) {
+        final TypeToken<T> typeToken = new TypeToken<T>(getClass()){};
+        return context.getClass().isAssignableFrom(typeToken.getRawType());
+    }
 }

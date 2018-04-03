@@ -72,6 +72,20 @@ public class TreasuryAccessControl {
         return false;
     }
 
+    public <T> boolean isFrontOfficeMemberWithinContext(final String username, final T context) {
+        for (ITreasuryAccessControlExtension<T> iTreasuryAccessControlExtension : extensions) {
+            if(!iTreasuryAccessControlExtension.isContextObjectApplied(context)) {
+                continue;
+            }
+            
+            if (iTreasuryAccessControlExtension.isFrontOfficeMemberWithinContext(username, context)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     public boolean isBackOfficeMember(final String username) {
         for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
             if (iTreasuryAccessControlExtension.isBackOfficeMember(username)) {
@@ -99,6 +113,20 @@ public class TreasuryAccessControl {
             }
         }
 
+        return false;
+    }
+    
+    public <T> boolean isBackOfficeMemberWithinContext(final String username, final T context) {
+        for (ITreasuryAccessControlExtension<T> iTreasuryAccessControlExtension : extensions) {
+            if(!iTreasuryAccessControlExtension.isContextObjectApplied(context)) {
+                continue;
+            }
+            
+            if (iTreasuryAccessControlExtension.isBackOfficeMemberWithinContext(username, context)) {
+                return true;
+            }
+        }
+        
         return false;
     }
 
