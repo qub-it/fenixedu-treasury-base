@@ -9,7 +9,7 @@ import org.fenixedu.treasury.services.accesscontrol.spi.TreasuryUIAccessControlE
 import org.fenixedu.treasury.util.TreasuryBootstrapUtil;
 
 @WebListener
-public class FenixeduTreasuryInitializer implements ServletContextListener {
+public class FenixeduTreasuryBaseInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent event) {

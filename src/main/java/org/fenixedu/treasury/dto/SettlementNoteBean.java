@@ -35,7 +35,6 @@ import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
-import org.fenixedu.treasury.ui.document.managepayments.SettlementNoteController;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
 
@@ -43,7 +42,19 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class SettlementNoteBean implements ITreasuryBean, Serializable {
+    public static final String CONTROLLER_URL = "/treasury/document/managepayments/settlementnote";
 
+    public static final String CHOOSE_INVOICE_ENTRIES_URI = "/chooseInvoiceEntries/";
+    public static final String CHOOSE_INVOICE_ENTRIES_URL = CONTROLLER_URL + CHOOSE_INVOICE_ENTRIES_URI;
+    public static final String CALCULATE_INTEREST_URI = "/calculateInterest/";
+    public static final String CALCULATE_INTEREST_URL = CONTROLLER_URL + CALCULATE_INTEREST_URI;
+    public static final String CREATE_DEBIT_NOTE_URI = "/createDebitNote/";
+    public static final String CREATE_DEBIT_NOTE_URL = CONTROLLER_URL + CREATE_DEBIT_NOTE_URI;
+    public static final String INSERT_PAYMENT_URI = "/insertpayment/";
+    public static final String INSERT_PAYMENT_URL = CONTROLLER_URL + INSERT_PAYMENT_URI;
+    public static final String SUMMARY_URI = "/summary/";
+    public static final String SUMMARY_URL = CONTROLLER_URL + SUMMARY_URI;
+    
     private static final long serialVersionUID = 1L;
 
     private boolean reimbursementNote;
@@ -130,11 +141,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         settlementNoteStateUrls =
                 Arrays.asList(
-                        SettlementNoteController.CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/"
-                                + reimbursementNote,
-                                SettlementNoteController.CHOOSE_INVOICE_ENTRIES_URL, SettlementNoteController.CALCULATE_INTEREST_URL,
-                                SettlementNoteController.CREATE_DEBIT_NOTE_URL, SettlementNoteController.INSERT_PAYMENT_URL,
-                                SettlementNoteController.SUMMARY_URL);
+                        CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote,
+                        CHOOSE_INVOICE_ENTRIES_URL, 
+                        CALCULATE_INTEREST_URL,
+                        CREATE_DEBIT_NOTE_URL, 
+                        INSERT_PAYMENT_URL,
+                        SUMMARY_URL);
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());

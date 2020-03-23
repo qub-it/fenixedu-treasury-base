@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.fenixedu.bennu.FenixeduTreasurySpringConfiguration;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -57,7 +56,7 @@ public class TreasuryConstants {
 
     public static final BigDecimal HUNDRED_PERCENT = new BigDecimal("100.00");
 
-    public static final String BUNDLE = FenixeduTreasurySpringConfiguration.BUNDLE.replace('/', '.');
+    public static final String BUNDLE = "resources.FenixeduTreasuryResources";
 
     // HACK: org.joda.time.Interval does not allow open end dates so use this date in the future
     public static final DateTime INFINITY_DATE = new DateTime().plusYears(500);

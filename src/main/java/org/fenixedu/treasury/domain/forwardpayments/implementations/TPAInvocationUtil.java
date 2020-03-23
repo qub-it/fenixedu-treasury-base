@@ -38,6 +38,8 @@ import org.bouncycastle.util.encoders.Hex;
 import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentConfiguration;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -318,13 +320,13 @@ public class TPAInvocationUtil {
     }
 
     private SSLSocketFactory getFactory() throws Exception {
-        final GenericFile pKeyFile = forwardPayment.getForwardPaymentConfiguration().getVirtualTPACertificate().getTreasuryFile();
+        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
         final String pKeyPassword = forwardPayment.getForwardPaymentConfiguration().getVirtualTPACertificatePassword();
 
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
 
-        InputStream keyInput = pKeyFile.getStream();
+        InputStream keyInput = services.getFileStream(forwardPayment.getForwardPaymentConfiguration().getVirtualTPACertificate());
         keyStore.load(keyInput, pKeyPassword.toCharArray());
         keyInput.close();
 

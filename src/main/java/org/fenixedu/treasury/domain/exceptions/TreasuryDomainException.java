@@ -27,12 +27,12 @@
  */
 package org.fenixedu.treasury.domain.exceptions;
 
+
 import java.util.Collection;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response.Status;
 
-import org.fenixedu.bennu.FenixeduTreasurySpringConfiguration;
 import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
