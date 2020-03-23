@@ -109,7 +109,6 @@ import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingD
 import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.Line.Metadata;
 import org.fenixedu.treasury.generated.sources.saft.sap.Tax;
 import org.fenixedu.treasury.generated.sources.saft.sap.TaxTableEntry;
-import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.IERPExporter;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
