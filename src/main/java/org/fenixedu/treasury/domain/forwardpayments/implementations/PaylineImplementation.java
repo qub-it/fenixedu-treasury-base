@@ -96,7 +96,7 @@ public class PaylineImplementation extends BennuWebServiceClient<WebPaymentAPI> 
     public String getFormattedAmount(final ForwardPayment forwardPayment) {
         return forwardPayment.getAmount().multiply(new BigDecimal(100)).setScale(0, RoundingMode.HALF_EVEN).toString();
     }
-
+    
     @Override
     public IForwardPaymentController getForwardPaymentController(final ForwardPayment forwardPayment) {
         return IForwardPaymentController.getForwardPaymentController(forwardPayment);
