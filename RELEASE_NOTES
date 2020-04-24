@@ -1,3 +1,4 @@
+5.0.0 (24-04-2020)
 - Refactor: Move URL of Forward Payment processing to interface to avoid dependencies of Spring controllers
 - Refactor: Remove web files, spring controllers and bennu specific classes leaving domain classes
 
