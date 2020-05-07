@@ -51,6 +51,10 @@ public class FinantialEntity extends FinantialEntity_Base {
 
         @Override
         public int compare(FinantialEntity o1, FinantialEntity o2) {
+            if(FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution()) != 0) {
+                return FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
+            }
+            
             int c = o1.getName().getContent().compareTo(o2.getName().getContent());
 
             return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
