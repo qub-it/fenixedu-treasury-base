@@ -108,7 +108,7 @@ public class FinantialEntity extends FinantialEntity_Base {
     }
 
     public boolean isDeletable() {
-        return true;
+        return getTariffSet().isEmpty() && getFixedTariffSet().isEmpty();
     }
 
     @Atomic
@@ -117,26 +117,23 @@ public class FinantialEntity extends FinantialEntity_Base {
             throw new TreasuryDomainException("error.FinantialEntity.cannot.delete");
         }
 
-        setDomainRoot(null);
+        this.setDomainRoot(null);
         this.setFinantialInstitution(null);
-        for (Tariff t : this.getTariffSet()) {
-            this.removeTariff(t);
-            t.delete();
-        }
+
         for (TreasuryDocumentTemplate template : this.getTreasuryDocumentTemplatesSet()) {
-            this.removeTreasuryDocumentTemplates(template);
             template.delete();
         }
 
-        deleteDomainObject();
+        super.deleteDomainObject();
     }
 
-    public TreasuryDocumentTemplate hasDocumentTemplate(FinantialDocumentType type) {
+    public TreasuryDocumentTemplate getDocumentTemplate(FinantialDocumentType type) {
         for (TreasuryDocumentTemplate documentTemplate : getTreasuryDocumentTemplatesSet()) {
             if (documentTemplate.getFinantialDocumentType().getType().equals(type.getType())) {
                 return documentTemplate;
             }
         }
+        
         return null;
     }
 

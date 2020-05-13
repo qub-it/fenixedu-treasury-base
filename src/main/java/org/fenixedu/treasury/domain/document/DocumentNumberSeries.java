@@ -115,10 +115,15 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     public void editReplacingPrefix(final boolean replacePrefix, final String replacingPrefix) {
+        if(!getFinantialDocumentsSet().isEmpty()) {
+            throw new RuntimeException("edit replacing prefix not possible. documentNumberSeries with finantial documents");
+        }
+        
         setReplacePrefix(replacePrefix);
-
         if (isReplacePrefix()) {
             setReplacingPrefix(replacingPrefix);
+        } else {
+            setReplacingPrefix(null);
         }
 
         checkRules();
