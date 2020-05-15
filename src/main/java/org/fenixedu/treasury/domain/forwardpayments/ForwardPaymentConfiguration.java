@@ -3,11 +3,13 @@ package org.fenixedu.treasury.domain.forwardpayments;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentController;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentImplementation;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentConfigurationBean;
+import org.fenixedu.treasury.servlet.FenixeduTreasuryBaseInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +67,14 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
         if (findActive(getFinantialInstitution()).count() > 1) {
             throw new TreasuryDomainException("error.ForwardPaymentConfiguration.finantialInstitution.only.one.active.allowed");
         }
+        
+        if(!StringUtils.isEmpty(getImplementation())) {
+            try {
+                implementation();
+            }catch(Exception e) {
+                throw new TreasuryDomainException("error.ForwardPaymentConfiguration.unknown.implementation");
+            }
+        }
     }
 
     @Atomic
@@ -105,6 +115,26 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
         
         ForwardPaymentConfigurationFile file = ForwardPaymentConfigurationFile.create(filename, contents);
         setVirtualTPACertificate(file);
+    }
+    
+    public void delete() {
+        if(!getForwardPaymentsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.ForwardPaymentConfiguration.cannot.delete");
+        }
+        
+        if(getSibsOnlinePaymentsGateway() != null) {
+            throw new TreasuryDomainException("error.ForwardPaymentConfiguration.remove.sibs.oppwa.configuration.first");
+        }
+        
+        this.setDomainRoot(null);
+        this.setFinantialInstitution(null);
+        this.setPaymentMethod(null);
+        this.setSeries(null);
+        if(this.getVirtualTPACertificate() != null) {
+            this.getVirtualTPACertificate().delete();
+        }
+        
+        super.deleteDomainObject();
     }
 
     public boolean isActive() {
