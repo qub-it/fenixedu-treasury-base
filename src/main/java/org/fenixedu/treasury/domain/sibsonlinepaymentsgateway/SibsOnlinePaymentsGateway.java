@@ -120,6 +120,24 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
         setNumberOfMonthsToExpirePaymentReferenceCode(numberOfMonthsToExpirePaymentReferenceCode);
     }
     
+    public void delete() {
+        if(!getMbwayPaymentRequestsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.delete.not.possible.due.to.existing.requests");
+        }
+        
+        if(!getSibsOnlinePaymentsGatewayLogsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.delete.not.possible.due.to.existing.requests");
+        }
+        
+        super.setDomainRoot(null);
+        super.setForwardPaymentConfiguration(null);
+        super.setMbwayDocumentSeries(null);
+        super.setMbwayPaymentMethod(null);
+        super.setPaymentCodePool(null);
+        
+        super.deleteDomainObject();
+    }
+    
     public boolean isSendBillingDataInOnlinePayment() {
         return getSendBillingDataInOnlinePayment();
     }

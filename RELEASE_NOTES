@@ -1,3 +1,6 @@
+- Improvement: Translate error messages
+- Bug Fix: In deletion of payment code pools
+
 5.0.2 (18-05-2020)
 - Bug Fix: Editing and deleting Forward Payment Configuration
 

@@ -1,5 +1,6 @@
 package org.fenixedu.treasury.domain.forwardpayments;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -9,7 +10,6 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentController;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentImplementation;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentConfigurationBean;
-import org.fenixedu.treasury.servlet.FenixeduTreasuryBaseInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +21,21 @@ import pt.ist.fenixframework.FenixFramework;
 public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Base {
 
     private static final Logger logger = LoggerFactory.getLogger(ForwardPaymentConfiguration.class);
+
+    public static Comparator<ForwardPaymentConfiguration> COMPARATOR_BY_FINANTIAL_INSTITUTION_AND_NAME = (o1, o2) -> {
+        int c = FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
+        if(c != 0) {
+            return c;
+        }
+        
+        c = o1.getName().compareTo(o2.getName());
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
+    
+    public static Comparator<ForwardPaymentConfiguration> COMPARATOR_BY_NAME = (o1, o2) -> {
+        int c = o1.getName().compareTo(o2.getName());
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
     
     private ForwardPaymentConfiguration() {
         super();

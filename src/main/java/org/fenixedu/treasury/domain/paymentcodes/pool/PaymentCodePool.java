@@ -27,9 +27,9 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes.pool;
 
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,8 +43,6 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.services.payments.paymentscodegenerator.IPaymentCodeGenerator;
-import org.fenixedu.treasury.services.payments.paymentscodegenerator.SequentialPaymentCodeGenerator;
-import org.fenixedu.treasury.services.payments.paymentscodegenerator.SequentialPaymentWithCheckDigitCodeGenerator;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.LocalDate;
 
@@ -55,6 +53,21 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentCodePool extends PaymentCodePool_Base {
 
+    public static Comparator<PaymentCodePool> COMPARATOR_BY_FINANTIAL_INSTITUTION_AND_NAME = (o1, o2) -> {
+        int c = FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
+        if(c != 0) {
+            return c;
+        }
+        
+        c = o1.getName().compareTo(o2.getName());
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
+    
+    public static Comparator<PaymentCodePool> COMPARATOR_BY_NAME = (o1, o2) -> {
+        int c = o1.getName().compareTo(o2.getName());
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
+    
     protected PaymentCodePool() {
         super();
     }
@@ -195,8 +208,14 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.PaymentCodePool.cannot.delete");
         }
+        
+        if(getSibsOnlinePaymentsGateway() != null) {
+            throw new TreasuryDomainException("error.PaymentCodePool.remove.sibs.oppwa.configuration.first");
+        }
 
-//		setDomainRoot(null);
+        setDocumentSeriesForPayments(null);
+        setFinantialInstitution(null);
+        setPaymentCodeGeneratorInstance(null);
 
         deleteDomainObject();
     }
