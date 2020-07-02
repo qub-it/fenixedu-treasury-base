@@ -80,11 +80,6 @@ public class CreditEntry extends CreditEntry_Base {
         recalculateAmountValues();
 
         checkRules();
-
-        // Ensure this credit entry is only one in credit note
-        if (getFinantialDocument().getFinantialDocumentEntriesSet().size() != 1) {
-            throw new TreasuryDomainException("error.CreditEntry.finantialDocument.with.unexpected.entries");
-        }
     }
 
     @Override

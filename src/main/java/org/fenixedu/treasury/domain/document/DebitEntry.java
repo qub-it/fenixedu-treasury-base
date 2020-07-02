@@ -86,7 +86,6 @@ public class DebitEntry extends DebitEntry_Base {
     };
 
     public static final Comparator<DebitEntry> COMPARE_BY_DUE_DATE = new Comparator<DebitEntry>() {
-
         @Override
         public int compare(DebitEntry o1, DebitEntry o2) {
             int c = o1.getDueDate().compareTo(o2.getDueDate());
@@ -734,10 +733,10 @@ public class DebitEntry extends DebitEntry_Base {
         return findActive(treasuryEvent).map(d -> d.getOpenAmount()).reduce((x, y) -> x.add(y)).orElse(BigDecimal.ZERO);
     }
 
-    public static DebitEntry create(final Optional<DebitNote> debitNote, final DebtAccount debtAccount,
-            final TreasuryEvent treasuryEvent, final Vat vat, final BigDecimal amount, final LocalDate dueDate,
-            final Map<String, String> propertiesMap, final Product product, final String description, final BigDecimal quantity,
-            final InterestRate interestRate, final DateTime entryDateTime) {
+    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount,
+            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate,
+            Map<String, String> propertiesMap, Product product, String description, BigDecimal quantity,
+            InterestRate interestRate, DateTime entryDateTime) {
 
         if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
             throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
@@ -747,16 +746,21 @@ public class DebitEntry extends DebitEntry_Base {
                 interestRate, entryDateTime);
     }
 
+    public static DebitEntry createForImportationPurpose(Optional<DebitNote> debitNote, DebtAccount debtAccount,
+            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate,
+            Map<String, String> propertiesMap, Product product, String description, BigDecimal quantity,
+            InterestRate interestRate, DateTime entryDateTime) {
+        
+        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
+                interestRate, entryDateTime);
+    }
+    
     private static boolean isDebitEntryCreationAllowed(final DebtAccount debtAccount, Optional<DebitNote> debitNote,
             Product product) {
         if (debtAccount.getCustomer().isActive()) {
             return true;
         }
 
-//        if(product == TreasurySettings.getInstance().getInterestProduct()) {
-//            return true;
-//        }
-//        
         if (debitNote.isPresent() && debitNote.get().getDocumentNumberSeries().getSeries().isRegulationSeries()) {
             return true;
         }
@@ -886,7 +890,7 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     @Atomic
-    public void creditDebitEntry(final BigDecimal amountToCreditWithVat, final String reason) {
+    public void creditDebitEntry(BigDecimal amountToCreditWithVat, String reason, boolean closeWithOtherDebitEntriesOfDebitNote) {
 
         if (isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.credit.is.already.annuled");
@@ -918,28 +922,30 @@ public class DebitEntry extends DebitEntry_Base {
         // Close creditEntry with debitEntry if it is possible
         closeCreditEntryIfPossible(reason, now, creditEntry);
 
-        // With the remaining credit amount, close with other debit entries of same debit note
-        final Supplier<Boolean> openCreditEntriesExistsFunc =
-                () -> getCreditEntriesSet().stream().filter(c -> TreasuryConstants.isPositive(c.getOpenAmount())).count() > 0;
-        final Supplier<Boolean> openDebitEntriesExistsFunc = () -> getDebitNote().getDebitEntriesSet().stream()
-                .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())).count() > 0;
+        if (closeWithOtherDebitEntriesOfDebitNote) {
+            // With the remaining credit amount, close with other debit entries of same debit note
+            final Supplier<Boolean> openCreditEntriesExistsFunc =
+                    () -> getCreditEntriesSet().stream().filter(c -> TreasuryConstants.isPositive(c.getOpenAmount())).count() > 0;
+            final Supplier<Boolean> openDebitEntriesExistsFunc = () -> getDebitNote().getDebitEntriesSet().stream()
+                    .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())).count() > 0;
 
-        while (openCreditEntriesExistsFunc.get() && openDebitEntriesExistsFunc.get()) {
-            final CreditEntry openCreditEntry =
-                    getCreditEntriesSet().stream().filter(c -> TreasuryConstants.isPositive(c.getOpenAmount())).findFirst().get();
+            while (openCreditEntriesExistsFunc.get() && openDebitEntriesExistsFunc.get()) {
+                final CreditEntry openCreditEntry = getCreditEntriesSet().stream()
+                        .filter(c -> TreasuryConstants.isPositive(c.getOpenAmount())).findFirst().get();
 
-            // Find debit entry with open amount equal or higher than the open credit 
-            DebitEntry openDebitEntry = getDebitNote().getDebitEntriesSet().stream()
-                    .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount()))
-                    .filter(d -> TreasuryConstants.isGreaterOrEqualThan(d.getOpenAmount(), openCreditEntry.getOpenAmount()))
-                    .findFirst().orElse(null);
+                // Find debit entry with open amount equal or higher than the open credit 
+                DebitEntry openDebitEntry = getDebitNote().getDebitEntriesSet().stream()
+                        .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount()))
+                        .filter(d -> TreasuryConstants.isGreaterOrEqualThan(d.getOpenAmount(), openCreditEntry.getOpenAmount()))
+                        .findFirst().orElse(null);
 
-            if (openDebitEntry == null) {
-                openDebitEntry = getDebitNote().getDebitEntriesSet().stream()
-                        .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())).findFirst().orElse(null);
+                if (openDebitEntry == null) {
+                    openDebitEntry = getDebitNote().getDebitEntriesSet().stream()
+                            .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())).findFirst().orElse(null);
+                }
+
+                openDebitEntry.closeCreditEntryIfPossible(reason, now, openCreditEntry);
             }
-
-            openDebitEntry.closeCreditEntryIfPossible(reason, now, openCreditEntry);
         }
     }
 

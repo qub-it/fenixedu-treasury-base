@@ -217,31 +217,7 @@ public class DebtAccount extends DebtAccount_Base {
 
     @Atomic
     public void closeDebtAccount() {
-        if (this.getFinantialDocumentsSet().size() > 0) {
-//      Ricardo 29-06-2015: conta corrente pode ser fechada com documentos pendentes
-//            for (Invoice invoice : getInvoiceSet()) {
-//                if (invoice.isPreparing()) {
-//                    throw new TreasuryDomainException("label.customer.error.debtaccountwith.preparing.documents");
-//                } else if (invoice.isClosed() && invoice.getOpenAmount().compareTo(BigDecimal.ZERO) > 0) {
-//                    throw new TreasuryDomainException("label.customer.error.debtaccountwith.pending.documents");
-//                }
-//            }
-//
-//            for (SettlementNote settlementNote : getSettlementNoteSet()) {
-//                if (settlementNote.getAdvancedPaymentCreditNote() != null) {
-//
-//                    if (settlementNote.getAdvancedPaymentCreditNote().isClosed()
-//                            && settlementNote.getAdvancedPaymentCreditNote().getOpenAmount().compareTo(BigDecimal.ZERO) > 0) {
-//                        throw new TreasuryDomainException("label.customer.error.debtaccountwith.pending.documents");
-//                    } else if (settlementNote.isPreparing()) {
-//                        throw new TreasuryDomainException("label.customer.error.debtaccountwith.preparing.documents");
-//                    }
-//                }
-//            }
-            this.setClosed(true);
-        } else {
-            this.setClosed(true);
-        }
+        this.setClosed(true);
     }
 
     @Atomic

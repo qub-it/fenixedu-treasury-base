@@ -73,10 +73,6 @@ public class CreditNote extends CreditNote_Base {
         if (debitNote != null) {
             this.setPayorDebtAccount(debitNote.getPayorDebtAccount());
         }
-
-        if (!getCreditEntriesSet().isEmpty() && getCreditEntriesSet().size() > 1) {
-            throw new TreasuryDomainException("error.CreditNote.with.unexpected.credit.entries");
-        }
     }
 
     @Override
@@ -142,15 +138,6 @@ public class CreditNote extends CreditNote_Base {
                 (SettlementNote) getRelatedSettlementEntries().iterator().next().getFinantialDocument();
 
         return settlementNote.isReimbursement();
-    }
-
-    @Override
-    public void closeDocument(boolean markDocumentToExport) {
-        super.closeDocument(markDocumentToExport);
-
-        if (!getCreditEntriesSet().isEmpty() && getCreditEntriesSet().size() > 1) {
-            throw new TreasuryDomainException("error.CreditNote.with.unexpected.credit.entries");
-        }
     }
 
     @Override
