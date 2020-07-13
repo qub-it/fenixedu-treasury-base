@@ -66,6 +66,9 @@ public class TreasuryConstants {
     @Deprecated
     // TODO: Replace with a solution provided by the platform
     public static final Locale DEFAULT_LANGUAGE = new Locale("PT");
+
+    @Deprecated
+    // TODO: Replace with a solution provided by the platform
     public static final String DEFAULT_COUNTRY = "PT";
 
     private static final int ORIGIN_DOCUMENT_LIMIT = 100;
