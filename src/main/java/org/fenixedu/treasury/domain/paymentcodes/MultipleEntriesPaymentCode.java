@@ -151,11 +151,6 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     }
 
     @Override
-    protected Set<InvoiceEntry> getInvoiceEntries() {
-        return this.getInvoiceEntriesSet();
-    }
-
-    @Override
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
 
@@ -194,7 +189,7 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     @Override
     public Set<Product> getReferencedProducts() {
-        return getInvoiceEntries().stream().map(d -> d.getProduct()).collect(Collectors.toSet());
+        return getInvoiceEntriesSet().stream().map(d -> d.getProduct()).collect(Collectors.toSet());
     }
 
     // @formatter: off
@@ -202,6 +197,16 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
      * SERVICES *
      ************/
     // @formatter: on
+    
+    public static Stream<MultipleEntriesPaymentCode> findAll() {
+        Set<MultipleEntriesPaymentCode> entries = new HashSet<MultipleEntriesPaymentCode>();
+        
+        for(FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
+            findAll(finantialInstitution).collect(Collectors.toCollection(() -> entries));
+        }
+        
+        return entries.stream();
+    }
 
     public static Stream<MultipleEntriesPaymentCode> findAll(FinantialInstitution finantialInstitution) {
         Set<MultipleEntriesPaymentCode> entries = new HashSet<MultipleEntriesPaymentCode>();

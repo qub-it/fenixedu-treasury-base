@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -20,7 +21,6 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
@@ -33,21 +33,43 @@ import com.google.common.collect.Sets;
 public interface IPaymentProcessorForInvoiceEntries {
 
     public DebtAccount getDebtAccount();
-    
+
     public DocumentNumberSeries getDocumentSeriesForPayments();
-    
+
     public DocumentNumberSeries getDocumentSeriesInterestDebits();
-    
-    public Map<String, String> fillPaymentEntryPropertiesMap(final String sibsTransactionId);
-    
+
     public Set<Customer> getReferencedCustomers();
+
+    public BigDecimal getPayableAmount();
+    
+    public DateTime getPaymentRequestDate();
+    
+    public String getPaymentRequestStateDescription();
+    
+    public String getPaymentTypeDescription();
     
     public PaymentMethod getPaymentMethod();
     
+    public Set<InvoiceEntry> getInvoiceEntriesSet();
+    
     public String fillPaymentEntryMethodId();
     
-    default public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(final String username, final BigDecimal amount, final DateTime paymentDate,
-            final String sibsTransactionId, final String comments, Set<InvoiceEntry> invoiceEntriesToPay) {
+    default public boolean isMbwayRequest() {
+        return false;
+    }
+    
+    default public boolean isPaymentCodeTarget() {
+        return false;
+    }
+    
+    default public boolean isForwardPayment() {
+        return false;
+    }
+    
+    default public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(String username,
+            BigDecimal amount, DateTime paymentDate, String originDocumentNumber, String comments,
+            Set<InvoiceEntry> invoiceEntriesToPay,
+            Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction) {
 
         final TreeSet<InvoiceEntry> sortedInvoiceEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
         sortedInvoiceEntriesToPay.addAll(invoiceEntriesToPay);
@@ -75,35 +97,36 @@ public interface IPaymentProcessorForInvoiceEntries {
         //1. Find the InvoiceEntries
         //2. Create the SEttlementEntries and the SEttlementNote
         //######################################
-        
-        if(getReferencedCustomers().size() == 1) {
+
+        if (getReferencedCustomers().size() == 1) {
             for (InvoiceEntry entry : sortedInvoiceEntriesToPay) {
                 if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     break;
                 }
-    
+
                 BigDecimal amountToPay = entry.getOpenAmount();
                 if (amountToPay.compareTo(BigDecimal.ZERO) > 0) {
                     if (entry.isDebitNoteEntry()) {
                         DebitEntry debitEntry = (DebitEntry) entry;
-    
+
                         if (debitEntry.getFinantialDocument() == null) {
                             final DocumentNumberSeries documentNumberSeries =
                                     DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
                                             getDebtAccount().getFinantialInstitution()).get();
-                            final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
+                            final DebitNote debitNote =
+                                    DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
                             debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
                         }
-    
+
                         if (debitEntry.getFinantialDocument().isPreparing()) {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
-    
+
                         //check if the amount to pay in the Debit Entry 
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
-    
+
                         if (debitEntry.getOpenAmount().equals(amountToPay)) {
                             //######################################
                             //2.1 create the "InterestRate entries"
@@ -116,16 +139,15 @@ public interface IPaymentProcessorForInvoiceEntries {
                                 interestRateEntries.add(interestDebitEntry);
                             }
                         }
-    
-                        SettlementEntry newSettlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay,
-                                entry.getDescription(), paymentDate, true);
-    
+
+                        SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
+
                         //Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
-    
+
                     } else if (entry.isCreditNoteEntry()) {
-                        SettlementEntry newSettlementEntry = SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(),
-                                entry.getDescription(), paymentDate, true);
+                        SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate,
+                                true);
                         //update the amount to Pay
                         availableAmount = availableAmount.add(amountToPay);
                     }
@@ -133,7 +155,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                     //Ignore since the "open amount" is ZERO
                 }
             }
-    
+
             //######################################
             //2.2 if there is pending amount, pay the interest rate
             //######################################
@@ -146,7 +168,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                     interestEntry.setFinantialDocument(interestNote);
                 }
                 interestNote.closeDocument();
-    
+
                 //if "availableAmount" still exists, then we must check if there is any InterestRate to pay
                 if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
                     for (DebitEntry interestEntry : interestRateEntries) {
@@ -154,13 +176,13 @@ public interface IPaymentProcessorForInvoiceEntries {
                         if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
                             break;
                         }
-    
+
                         BigDecimal amountToPay = interestEntry.getOpenAmount();
                         //check if the amount to pay in the Debit Entry 
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
-    
+
                         SettlementEntry newSettlementEntry = SettlementEntry.create(interestEntry, settlementNote, amountToPay,
                                 interestEntry.getDescription(), paymentDate, true);
                         //Update the amount to Pay
@@ -178,38 +200,40 @@ public interface IPaymentProcessorForInvoiceEntries {
         //if "availableAmount" still exists, then we must create a "pending Payment" or "CreditNote"
         if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
             settlementNote.createAdvancedPaymentCreditNote(availableAmount,
-                    treasuryBundle("label.PaymentCodeTarget.advancedpayment") + comments + "-"
-                            + sibsTransactionId,
-                    sibsTransactionId);
+                    treasuryBundle("label.PaymentCodeTarget.advancedpayment") + comments + "-" + originDocumentNumber,
+                    originDocumentNumber);
         }
 
         //######################################
         //5. Close the SettlementNote
         //######################################
 
-        final Map<String, String> paymentEntryPropertiesMap = fillPaymentEntryPropertiesMap(sibsTransactionId);
-        
-        PaymentEntry paymentEntry = PaymentEntry.create(getPaymentMethod(),
-                settlementNote, amount, fillPaymentEntryMethodId(), paymentEntryPropertiesMap);
+        final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
+
+        PaymentEntry.create(getPaymentMethod(), settlementNote, amount, fillPaymentEntryMethodId(), paymentEntryPropertiesMap);
         settlementNote.closeDocument();
 
         return Sets.newHashSet(settlementNote);
     }
 
-    default public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username, final BigDecimal amount,
-            final DateTime paymentDate, final String sibsTransactionId, final String comments, final Set<InvoiceEntry> invoiceEntriesToPay) {
-        if(!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+    default public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
+            final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
+            final Set<InvoiceEntry> invoiceEntriesToPay,
+            Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction) {
+        if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             throw new RuntimeException("invalid call");
         }
-        
+
         // Check if invoiceEntriesToPay have mixed invoice entries of certified in legacy erp and not
         SettlementNote.checkMixingOfInvoiceEntriesExportedInLegacyERP(invoiceEntriesToPay);
-        
+
         // If all invoice entries are not exported in legacy ERP then invoke the internalProcessPaymentInNormalPaymentMixingLegacyInvoices
-        if(invoiceEntriesToPay.stream().allMatch(e -> e.getFinantialDocument() == null || !e.getFinantialDocument().isExportedInLegacyERP())) {
-            return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay);
+        if (invoiceEntriesToPay.stream()
+                .allMatch(e -> e.getFinantialDocument() == null || !e.getFinantialDocument().isExportedInLegacyERP())) {
+            return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
+                    comments, invoiceEntriesToPay, additionalPropertiesMapFunction);
         }
-        
+
         final TreeSet<InvoiceEntry> sortedInvoiceEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
         sortedInvoiceEntriesToPay.addAll(invoiceEntriesToPay);
 
@@ -231,27 +255,27 @@ public interface IPaymentProcessorForInvoiceEntries {
         //1. Find the InvoiceEntries
         //2. Create the SEttlementEntries and the SEttlementNote
         //######################################
-        
-        if(getReferencedCustomers().size() == 1) {
+
+        if (getReferencedCustomers().size() == 1) {
             for (final InvoiceEntry entry : sortedInvoiceEntriesToPay) {
                 if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     break;
                 }
-    
+
                 BigDecimal amountToPay = entry.getOpenAmount();
                 if (amountToPay.compareTo(BigDecimal.ZERO) > 0) {
                     if (entry.isDebitNoteEntry()) {
                         DebitEntry debitEntry = (DebitEntry) entry;
-    
+
                         if (debitEntry.getFinantialDocument().isPreparing()) {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
-    
+
                         //check if the amount to pay in the Debit Entry 
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
-    
+
                         if (debitEntry.getOpenAmount().equals(amountToPay)) {
                             //######################################
                             //2.1 create the "InterestRate entries"
@@ -259,18 +283,19 @@ public interface IPaymentProcessorForInvoiceEntries {
                             InterestRateBean calculateUndebitedInterestValue =
                                     debitEntry.calculateUndebitedInterestValue(paymentDate.toLocalDate());
                             if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
-                                debitEntry.createInterestRateDebitEntry(
-                                        calculateUndebitedInterestValue, paymentDate, Optional.<DebitNote> empty());
+                                debitEntry.createInterestRateDebitEntry(calculateUndebitedInterestValue, paymentDate,
+                                        Optional.<DebitNote> empty());
                             }
                         }
-    
+
                         SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
-    
+
                         //Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
-    
+
                     } else if (entry.isCreditNoteEntry()) {
-                        SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate, true);
+                        SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate,
+                                true);
                         //update the amount to Pay
                         availableAmount = availableAmount.add(amountToPay);
                     }
@@ -283,19 +308,19 @@ public interface IPaymentProcessorForInvoiceEntries {
         if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
             availableAmount = BigDecimal.ZERO;
         }
-        
+
         //######################################
         //3. Close the SettlementNote
         //######################################
 
-        final Map<String, String> paymentEntryPropertiesMap = fillPaymentEntryPropertiesMap(sibsTransactionId);
-        
-        PaymentEntry.create(getPaymentMethod(),
-                settlementNote, amount.subtract(availableAmount), fillPaymentEntryMethodId(), paymentEntryPropertiesMap);
+        final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
+
+        PaymentEntry.create(getPaymentMethod(), settlementNote, amount.subtract(availableAmount), fillPaymentEntryMethodId(),
+                paymentEntryPropertiesMap);
         settlementNote.closeDocument();
-        
+
         final Set<SettlementNote> result = Sets.newHashSet(settlementNote);
-        
+
         //###########################################################################################
         //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
         // which must be settled in different SettlementNote so the advancepayment can be integrated and
@@ -308,26 +333,27 @@ public interface IPaymentProcessorForInvoiceEntries {
                     SettlementNote.create(referenceDebtAccount, docNumberSeries, new DateTime(), paymentDate, comments, null);
 
             advancedPaymentSettlementNote.createAdvancedPaymentCreditNote(availableAmount,
-                    treasuryBundle("label.PaymentCodeTarget.advancedpayment") + comments + "-" + sibsTransactionId, 
+                    treasuryBundle("label.PaymentCodeTarget.advancedpayment") + comments + "-" + sibsTransactionId,
                     sibsTransactionId);
 
-            PaymentEntry.create(getPaymentMethod(),
-                    advancedPaymentSettlementNote, availableAmount, fillPaymentEntryMethodId(), paymentEntryPropertiesMap);
+            PaymentEntry.create(getPaymentMethod(), advancedPaymentSettlementNote, availableAmount, fillPaymentEntryMethodId(),
+                    paymentEntryPropertiesMap);
             advancedPaymentSettlementNote.closeDocument();
-            
+
             // Mark both documents as alread exported in legacy ERP
             advancedPaymentSettlementNote.setExportedInLegacyERP(true);
             advancedPaymentSettlementNote.setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
             advancedPaymentSettlementNote.getAdvancedPaymentCreditNote().setExportedInLegacyERP(true);
-            advancedPaymentSettlementNote.getAdvancedPaymentCreditNote().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
-            
+            advancedPaymentSettlementNote.getAdvancedPaymentCreditNote()
+                    .setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
+
             result.add(advancedPaymentSettlementNote);
         }
 
         return result;
 
     }
-    
+
     public static Set<Customer> getReferencedCustomers(final Set<InvoiceEntry> invoiceEntrySet) {
         final Set<Customer> result = Sets.newHashSet();
         for (final InvoiceEntry entry : invoiceEntrySet) {
@@ -341,5 +367,5 @@ public interface IPaymentProcessorForInvoiceEntries {
 
         return result;
     }
-    
+
 }

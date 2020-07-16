@@ -36,7 +36,7 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     public Set<SettlementNote> processPayment(final String username, final BigDecimal amountToPay, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments) {
 
-        final Set<InvoiceEntry> invoiceEntriesToPay = getInvoiceEntries().stream()
+        final Set<InvoiceEntry> invoiceEntriesToPay = getInvoiceEntriesSet().stream()
                 .sorted((x, y) -> y.getOpenAmount().compareTo(x.getOpenAmount())).collect(Collectors.toSet());
 
         return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, invoiceEntriesToPay);
@@ -184,6 +184,15 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
      ************/
     // @formatter: on
 
+    public static Stream<FinantialDocumentPaymentCode> findAll() {
+        Set<FinantialDocumentPaymentCode> entries = new HashSet<FinantialDocumentPaymentCode>();
+        for(FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
+            findAll(finantialInstitution).collect(Collectors.toCollection(() -> entries));
+        }
+        
+        return entries.stream();
+    }
+    
     public static Stream<FinantialDocumentPaymentCode> findAll(final FinantialInstitution finantialInstitution) {
         Set<FinantialDocumentPaymentCode> entries = new HashSet<FinantialDocumentPaymentCode>();
         for (PaymentCodePool pool : finantialInstitution.getPaymentCodePoolsSet()) {
@@ -234,7 +243,7 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     }
 
     @Override
-    protected Set<InvoiceEntry> getInvoiceEntries() {
+    public Set<InvoiceEntry> getInvoiceEntriesSet() {
         final Set<InvoiceEntry> result = Sets.newHashSet();
 
         for (final FinantialDocumentEntry entry : getFinantialDocument().getFinantialDocumentEntriesSet()) {

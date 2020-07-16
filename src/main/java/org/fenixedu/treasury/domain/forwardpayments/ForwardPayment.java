@@ -20,6 +20,8 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.IPaymentProcessorForInvoiceEntries;
+import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -27,6 +29,7 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
+import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -55,7 +58,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
-public class ForwardPayment extends ForwardPayment_Base {
+public class ForwardPayment extends ForwardPayment_Base implements IPaymentProcessorForInvoiceEntries {
 
     private static final Comparator<ForwardPayment> ORDER_COMPARATOR = new Comparator<ForwardPayment>() {
 
@@ -206,14 +209,12 @@ public class ForwardPayment extends ForwardPayment_Base {
         final List<DebitEntry> orderedEntries = Lists.newArrayList(getDebitEntriesSet());
         Collections.sort(orderedEntries, COMPARE_DEBIT_ENTRIES);
 
-        final Map<String, String> paymentEntryPropertiesMap = fillPaymentEntryPropertiesMap(statusCode);
+        final Map<String, String> additionalPropertiesMap = fillPaymentEntryPropertiesMap(statusCode);
 
         PaymentEntry.create(getForwardPaymentConfiguration().getPaymentMethod(), getSettlementNote(), amountToConsume, null,
-                paymentEntryPropertiesMap);
+                additionalPropertiesMap);
 
         if (referencedCustomers(orderedEntries).size() == 1) {
-            final Set<DebitEntry> settledDebitEntries = new HashSet<>();
-            
             for (final DebitEntry debitEntry : orderedEntries) {
 
                 if (debitEntry.isAnnulled()) {
@@ -233,7 +234,7 @@ public class ForwardPayment extends ForwardPayment_Base {
                     debitEntry.getFinantialDocument().closeDocument();
                 }
 
-                if (org.fenixedu.treasury.util.TreasuryConstants.isGreaterThan(debitEntry.getOpenAmount(), amountToConsume)) {
+                if (TreasuryConstants.isGreaterThan(debitEntry.getOpenAmount(), amountToConsume)) {
                     break;
                 }
 
@@ -257,15 +258,14 @@ public class ForwardPayment extends ForwardPayment_Base {
                     if (!interestDebitEntry.isInDebt()) {
                         continue;
                     }
-                    
-                    if(getSettlementNote().getSettlemetEntriesSet().stream()
+
+                    if (getSettlementNote().getSettlemetEntriesSet().stream()
                             .filter(se -> se.getInvoiceEntry() == interestDebitEntry).findAny().isPresent()) {
                         // Already settled above, which is interest debit entries created in the past
                         continue;
                     }
 
-                    if (org.fenixedu.treasury.util.TreasuryConstants.isGreaterThan(interestDebitEntry.getOpenAmount(),
-                            amountToConsume)) {
+                    if (TreasuryConstants.isGreaterThan(interestDebitEntry.getOpenAmount(), amountToConsume)) {
                         break;
                     }
 
@@ -282,7 +282,7 @@ public class ForwardPayment extends ForwardPayment_Base {
             }
         }
 
-        if (org.fenixedu.treasury.util.TreasuryConstants.isPositive(amountToConsume)) {
+        if (TreasuryConstants.isPositive(amountToConsume)) {
             getSettlementNote().createAdvancedPaymentCreditNote(amountToConsume,
                     treasuryBundle("label.ForwardPayment.advancedpayment", String.valueOf(getOrderNumber())),
                     String.valueOf(getOrderNumber()));
@@ -367,12 +367,13 @@ public class ForwardPayment extends ForwardPayment_Base {
             throw new TreasuryDomainException("error.ForwardPayment.settlementNote.required");
         }
 
-        if (referencedCustomers().size() > 1) {
+        if (getReferencedCustomers().size() > 1) {
             throw new TreasuryDomainException("error.ForwardPayment.referencedCustomers.only.one.allowed");
         }
     }
 
-    private Set<Customer> referencedCustomers() {
+    @Override
+    public Set<Customer> getReferencedCustomers() {
         final Set<Customer> result = Sets.newHashSet();
 
         for (final DebitEntry debitEntry : getDebitEntriesSet()) {
@@ -411,7 +412,7 @@ public class ForwardPayment extends ForwardPayment_Base {
         final ForwardPaymentLog log = log();
 
         log.setExceptionOccured(true);
-        
+
         if (!Strings.isNullOrEmpty(requestBody)) {
             ForwardPaymentLogFile.createForRequestBody(log, requestBody.getBytes());
         }
@@ -419,7 +420,7 @@ public class ForwardPayment extends ForwardPayment_Base {
         if (!Strings.isNullOrEmpty(responseBody)) {
             ForwardPaymentLogFile.createForResponseBody(log, responseBody.getBytes());
         }
-        
+
         ForwardPaymentLogFile.createForException(log, exceptionLog.getBytes());
 
         return log;
@@ -539,28 +540,20 @@ public class ForwardPayment extends ForwardPayment_Base {
                         reportBean = updateForwardPayment(f.getExternalId(), logger);
 
                         if (reportBean != null) {
-                    // @formatter:off
-                    logger.info(String.format("C\tPAYMENT REQUEST\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", 
-                            reportBean.executionDate,
-                            reportBean.forwardPaymentExternalId, 
-                            reportBean.forwardPaymentOrderNumber, 
-                            reportBean.customerCode,
-                            reportBean.customerName, 
-                            reportBean.previousStateDescription, 
-                            reportBean.nextStateDescription,
-                            reportBean.paymentRegisteredWithSuccess, 
-                            reportBean.settlementNote, 
-                            reportBean.advancedPaymentCreditNote, 
-                            reportBean.paymentDate,
-                            reportBean.paidAmount, 
-                            reportBean.advancedCreditAmount != null ? reportBean.advancedCreditAmount.toString() : "",
-                            reportBean.transactionId,
-                            reportBean.statusCode, 
-                            reportBean.statusMessage,
-                            reportBean.remarks));
-                    
-                    reportBeans.add(reportBean);
-                    // @formatter:on
+                            // @formatter:off
+                            logger.info(String.format(
+                                    "C\tPAYMENT REQUEST\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                                    reportBean.executionDate, reportBean.forwardPaymentExternalId,
+                                    reportBean.forwardPaymentOrderNumber, reportBean.customerCode, reportBean.customerName,
+                                    reportBean.previousStateDescription, reportBean.nextStateDescription,
+                                    reportBean.paymentRegisteredWithSuccess, reportBean.settlementNote,
+                                    reportBean.advancedPaymentCreditNote, reportBean.paymentDate, reportBean.paidAmount,
+                                    reportBean.advancedCreditAmount != null ? reportBean.advancedCreditAmount.toString() : "",
+                                    reportBean.transactionId, reportBean.statusCode, reportBean.statusMessage,
+                                    reportBean.remarks));
+
+                            reportBeans.add(reportBean);
+                            // @formatter:on
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -771,4 +764,61 @@ public class ForwardPayment extends ForwardPayment_Base {
         }
 
     }
+
+    /* IPaymentProcessorForInvoiceEntries */
+    
+    @Override
+    public DocumentNumberSeries getDocumentSeriesForPayments() {
+        return DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
+                getForwardPaymentConfiguration().getSeries());
+    }
+
+    @Override
+    public DocumentNumberSeries getDocumentSeriesInterestDebits() {
+        return DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), getForwardPaymentConfiguration().getSeries());
+    }
+
+    @Override
+    public PaymentMethod getPaymentMethod() {
+        return getForwardPaymentConfiguration().getPaymentMethod();
+    }
+
+    @Override
+    public String fillPaymentEntryMethodId() {
+        return null;
+    }
+    
+    @Override
+    public BigDecimal getPayableAmount() {
+        return getAmount();
+    }
+    
+    @Override
+    public DateTime getPaymentRequestDate() {
+        return getWhenOccured();
+    }
+    
+    @Override
+    public String getPaymentRequestStateDescription() {
+        return getCurrentState().getLocalizedName().getContent();
+    }
+    
+    @Override
+    public String getPaymentTypeDescription() {
+        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.forwardPayment");
+    }
+    
+    @Override
+    public Set<InvoiceEntry> getInvoiceEntriesSet() {
+        Set<InvoiceEntry> result = new HashSet<>();
+        result.addAll(getDebitEntriesSet());
+        
+        return result;
+    }
+    
+    @Override
+    public boolean isForwardPayment() {
+        return true;
+    }
+    
 }

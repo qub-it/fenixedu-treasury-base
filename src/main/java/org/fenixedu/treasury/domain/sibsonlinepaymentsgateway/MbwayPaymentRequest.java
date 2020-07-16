@@ -1,10 +1,13 @@
 package org.fenixedu.treasury.domain.sibsonlinepaymentsgateway;
 
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,7 +19,6 @@ import org.fenixedu.treasury.domain.IPaymentProcessorForInvoiceEntries;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -96,25 +98,27 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsReferenceId.required");
         }
 
-        if(findBySibsMerchantTransactionId(getSibsMerchantTransactionId()).count() > 1) {
+        if (findBySibsMerchantTransactionId(getSibsMerchantTransactionId()).count() > 1) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsMerchantTransactionId.not.unique");
         }
-        
-        if(findBySibsReferenceId(getSibsReferenceId()).count() > 1) {
+
+        if (findBySibsReferenceId(getSibsReferenceId()).count() > 1) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsReferenceId.not.unique");
         }
-        
+
         checkParametersAreValid(getDebtAccount(), getInvoiceEntriesSet());
     }
 
     @Override
     public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            Set<InvoiceEntry> invoiceEntriesToPay) {
+            Set<InvoiceEntry> invoiceEntriesToPay,
+            Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
 
         Set<SettlementNote> result =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay);
+                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay,
+                        fillPaymentEntryPropertiesMapFunction);
 
         this.setState(PaymentReferenceCodeStateType.PROCESSED);
 
@@ -124,11 +128,13 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     @Override
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            final Set<InvoiceEntry> invoiceEntriesToPay) {
+            final Set<InvoiceEntry> invoiceEntriesToPay,
+            Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
 
         Set<SettlementNote> result =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay);
+                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay,
+                        fillPaymentEntryPropertiesMapFunction);
 
         this.setState(PaymentReferenceCodeStateType.PROCESSED);
 
@@ -139,20 +145,23 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     @Atomic
     private Set<SettlementNote> processPayment(final String username, final BigDecimal amount, final DateTime paymentDate,
             final String sibsTransactionId, final String comments) {
+        Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction =
+                (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);
 
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet());
+                    comments, getInvoiceEntriesSet(), additionalPropertiesMapFunction);
         } else {
             return internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet());
+                    comments, getInvoiceEntriesSet(), additionalPropertiesMapFunction);
         }
     }
-    
-    @Atomic(mode=TxMode.READ)
+
+    @Atomic(mode = TxMode.READ)
     public void processMbwayTransaction(final SibsOnlinePaymentsGatewayLog log, PaymentStateBean bean) {
         if (!bean.getMerchantTransactionId().equals(getSibsMerchantTransactionId())) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.merchantTransactionId.not.equal");
+            throw new TreasuryDomainException(
+                    "error.MbwayPaymentRequest.processMbwayTransaction.merchantTransactionId.not.equal");
         }
 
         FenixFramework.atomic(() -> {
@@ -185,9 +194,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
 
             FenixFramework.atomic(() -> {
                 final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-                
-                final Set<SettlementNote> settlementNotes = processPayment(StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown", amount, paymentDate,
-                        bean.getTransactionId(), bean.getMerchantTransactionId());
+
+                final Set<SettlementNote> settlementNotes =
+                        processPayment(StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown", amount, paymentDate,
+                                bean.getTransactionId(), bean.getMerchantTransactionId());
                 MbwayTransaction.create(this, bean.getTransactionId(), amount, paymentDate, settlementNotes);
 
                 log.markSettlementNotesCreated(settlementNotes);
@@ -195,7 +205,6 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         }
     }
 
-    
     @Override
     public DocumentNumberSeries getDocumentSeriesForPayments() {
         return getSibsOnlinePaymentsGateway().getMbwayDocumentSeries();
@@ -206,8 +215,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         return DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), getDocumentSeriesForPayments().getSeries());
     }
 
-    @Override
-    public Map<String, String> fillPaymentEntryPropertiesMap(String sibsTransactionId) {
+    private Map<String, String> fillPaymentEntryPropertiesMap(String sibsTransactionId) {
         final Map<String, String> result = new HashMap<>();
 
         result.put("SibsTransactionId", sibsTransactionId);
@@ -219,6 +227,11 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     public Set<Customer> getReferencedCustomers() {
         return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet());
     }
+    
+    @Override
+    public DateTime getPaymentRequestDate() {
+        return getCreationDate();
+    }
 
     @Override
     public PaymentMethod getPaymentMethod() {
@@ -226,8 +239,23 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     }
 
     @Override
+    public String getPaymentRequestStateDescription() {
+        return getState().getDescriptionI18N().getContent();
+    }
+    
+    @Override
+    public String getPaymentTypeDescription() {
+        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.mbwayPaymentRequest");
+    }
+    
+    @Override
     public String fillPaymentEntryMethodId() {
         return "";
+    }
+    
+    @Override
+    public boolean isMbwayRequest() {
+        return true;
     }
 
     /* ************ */
@@ -236,32 +264,33 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
 
     @Atomic(mode = TxMode.READ)
     public static MbwayPaymentRequest create(final SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway,
-            final DebtAccount debtAccount, final Set<InvoiceEntry> invoiceEntries, final String countryPrefix, final String localPhoneNumber) {
+            final DebtAccount debtAccount, final Set<InvoiceEntry> invoiceEntries, final String countryPrefix,
+            final String localPhoneNumber) {
 
         if (!SibsOnlinePaymentsGateway.isMbwayServiceActive(debtAccount.getFinantialInstitution())) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.not.active");
         }
 
         checkParametersAreValid(debtAccount, invoiceEntries);
-        
-        if(StringUtils.isEmpty(countryPrefix)) {
+
+        if (StringUtils.isEmpty(countryPrefix)) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.required");
         }
-        
-        if(StringUtils.isEmpty(localPhoneNumber)) {
+
+        if (StringUtils.isEmpty(localPhoneNumber)) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.required");
         }
-        
-        if(!countryPrefix.matches("\\d+")) {
+
+        if (!countryPrefix.matches("\\d+")) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.number.format.required");
         }
-        
-        if(!localPhoneNumber.matches("\\d+")) {
+
+        if (!localPhoneNumber.matches("\\d+")) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.format.required");
         }
-        
+
         final String phoneNumber = String.format("%s#%s", countryPrefix, localPhoneNumber);
-        
+
         if (!Boolean.TRUE.equals(sibsOnlinePaymentsGateway.getForwardPaymentConfiguration().isActive())) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.forwardPaymentConfiguration.not.active");
         }
@@ -333,8 +362,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
 
             // Ensure debit entries have payable amount
             if (!TreasuryConstants.isGreaterThan(debitEntry.getOpenAmount(), BigDecimal.ZERO)) {
-                throw new TreasuryDomainException(
-                        "error.MbwayPaymentRequest.debit.entry.open.amount.must.be.greater.than.zero");
+                throw new TreasuryDomainException("error.MbwayPaymentRequest.debit.entry.open.amount.must.be.greater.than.zero");
             }
         }
 
@@ -342,7 +370,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
             throw new TreasuryDomainException("error.MbwayPaymentRequest.referencedCustomers.only.one.allowed");
         }
 
-        SettlementNote.checkMixingOfInvoiceEntriesExportedInLegacyERP(invoiceEntries);        
+        SettlementNote.checkMixingOfInvoiceEntriesExportedInLegacyERP(invoiceEntries);
     }
 
     @Atomic(mode = TxMode.WRITE)
@@ -362,15 +390,15 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     // ############
     // # SERVICES #
     // ############
-    
+
     public static Stream<MbwayPaymentRequest> findAll() {
         return FenixFramework.getDomainRoot().getMbwayPaymentRequestsSet().stream();
     }
-    
+
     public static Stream<MbwayPaymentRequest> findBySibsMerchantTransactionId(final String sibsMerchantTransactionId) {
         return findAll().filter(r -> r.getSibsMerchantTransactionId().equals(sibsMerchantTransactionId));
     }
-    
+
     public static Stream<MbwayPaymentRequest> findBySibsReferenceId(final String sibsReferenceId) {
         return findAll().filter(r -> r.getSibsReferenceId().equals(sibsReferenceId));
     }
@@ -378,11 +406,9 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     public static Optional<MbwayPaymentRequest> findUniqueBySibsReferenceId(final String sibsReferenceId) {
         return findBySibsReferenceId(sibsReferenceId).findFirst();
     }
-    
+
     public static Optional<MbwayPaymentRequest> findUniqueBySibsMerchantTransactionId(final String sibsMerchantTransactionId) {
         return findBySibsMerchantTransactionId(sibsMerchantTransactionId).findFirst();
     }
 
-    
-    
 }
