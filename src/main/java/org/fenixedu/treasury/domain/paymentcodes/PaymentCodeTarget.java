@@ -16,6 +16,7 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
@@ -171,4 +172,18 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
         return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.paymentReferenceCode");
     }
     
+    @Override
+    public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway() {
+        return getPaymentReferenceCode().getPaymentCodePool().getSibsOnlinePaymentsGateway();
+    }
+    
+    @Override
+    public String getSibsOppwaMerchantTransactionId() {
+        return getPaymentReferenceCode().getSibsMerchantTransactionId();
+    }
+    
+    @Override
+    public String getSibsOppwaTransactionId() {
+        return getPaymentReferenceCode().getSibsReferenceId();
+    }
 }

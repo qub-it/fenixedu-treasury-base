@@ -411,4 +411,14 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         return findBySibsMerchantTransactionId(sibsMerchantTransactionId).findFirst();
     }
 
+    @Override
+    public String getSibsOppwaMerchantTransactionId() {
+        return getSibsMerchantTransactionId();
+    }
+
+    @Override
+    public String getSibsOppwaTransactionId() {
+        return getSibsReferenceId();
+    }
+
 }

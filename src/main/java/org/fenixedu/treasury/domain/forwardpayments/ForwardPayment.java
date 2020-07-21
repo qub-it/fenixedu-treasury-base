@@ -38,6 +38,7 @@ import org.fenixedu.treasury.domain.forwardpayments.exceptions.ForwardPaymentAlr
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentImplementation;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessPaymentStatusBean;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -214,7 +215,7 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         PaymentEntry.create(getForwardPaymentConfiguration().getPaymentMethod(), getSettlementNote(), amountToConsume, null,
                 additionalPropertiesMap);
 
-        if (referencedCustomers(orderedEntries).size() == 1) {
+        if (getReferencedCustomers().size() == 1) {
             for (final DebitEntry debitEntry : orderedEntries) {
 
                 if (debitEntry.isAnnulled()) {
@@ -313,21 +314,6 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
             paymentEntryPropertiesMap.put("StatusCode", statusCode);
         }
         return paymentEntryPropertiesMap;
-    }
-
-    private Set<Customer> referencedCustomers(final List<DebitEntry> orderedEntries) {
-        final Set<Customer> result = Sets.newHashSet();
-        for (final DebitEntry debitEntry : orderedEntries) {
-            if (debitEntry.getFinantialDocument() != null
-                    && ((Invoice) debitEntry.getFinantialDocument()).isForPayorDebtAccount()) {
-                result.add(((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
-                continue;
-            }
-
-            result.add(debitEntry.getDebtAccount().getCustomer());
-        }
-
-        return result;
     }
 
     public boolean isActive() {
@@ -620,22 +606,18 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
 
         try {
             PostForwardPaymentReportBean reportBean =
-                    FenixFramework.getTransactionManager().withTransaction(new Callable<PostForwardPaymentReportBean>() {
+                    FenixFramework.getTransactionManager().withTransaction((Callable<PostForwardPaymentReportBean>) () -> {
 
-                        @Override
-                        public PostForwardPaymentReportBean call() throws Exception {
+                        final ForwardPayment forwardPayment = FenixFramework.getDomainObject(forwardPaymentId);
+                        final IForwardPaymentImplementation implementation =
+                                forwardPayment.getForwardPaymentConfiguration().implementation();
+                        final String justification =
+                                treasuryBundle("error.PostForwardPaymentsTask.post.payment.justification");
 
-                            final ForwardPayment forwardPayment = FenixFramework.getDomainObject(forwardPaymentId);
-                            final IForwardPaymentImplementation implementation =
-                                    forwardPayment.getForwardPaymentConfiguration().implementation();
-                            final String justification =
-                                    treasuryBundle("error.PostForwardPaymentsTask.post.payment.justification");
+                        final PostProcessPaymentStatusBean postProcessPaymentStatusBean =
+                                implementation.postProcessPayment(forwardPayment, justification, Optional.empty());
 
-                            final PostProcessPaymentStatusBean postProcessPaymentStatusBean =
-                                    implementation.postProcessPayment(forwardPayment, justification, Optional.empty());
-
-                            return new PostForwardPaymentReportBean(forwardPayment, postProcessPaymentStatusBean);
-                        }
+                        return new PostForwardPaymentReportBean(forwardPayment, postProcessPaymentStatusBean);
                     });
 
             return reportBean;
@@ -819,6 +801,21 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     @Override
     public boolean isForwardPayment() {
         return true;
+    }
+
+    @Override
+    public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway() {
+        return getForwardPaymentConfiguration().getSibsOnlinePaymentsGateway();
+    }
+
+    @Override
+    public String getSibsOppwaMerchantTransactionId() {
+        return getSibsMerchantTransactionId();
+    }
+
+    @Override
+    public String getSibsOppwaTransactionId() {
+        return getSibsTransactionId();
     }
     
 }

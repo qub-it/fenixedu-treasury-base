@@ -22,6 +22,7 @@ import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -53,6 +54,12 @@ public interface IPaymentProcessorForInvoiceEntries {
     public Set<InvoiceEntry> getInvoiceEntriesSet();
     
     public String fillPaymentEntryMethodId();
+    
+    public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway();
+    
+    public String getSibsOppwaMerchantTransactionId();
+    
+    public String getSibsOppwaTransactionId();
     
     default public boolean isMbwayRequest() {
         return false;
