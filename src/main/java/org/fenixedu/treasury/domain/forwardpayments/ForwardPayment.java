@@ -210,10 +210,10 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         final List<DebitEntry> orderedEntries = Lists.newArrayList(getDebitEntriesSet());
         Collections.sort(orderedEntries, COMPARE_DEBIT_ENTRIES);
 
-        final Map<String, String> additionalPropertiesMap = fillPaymentEntryPropertiesMap(statusCode);
+        final Map<String, String> propertiesMap = fillPaymentEntryPropertiesMap(statusCode);
 
         PaymentEntry.create(getForwardPaymentConfiguration().getPaymentMethod(), getSettlementNote(), amountToConsume, null,
-                additionalPropertiesMap);
+                propertiesMap);
 
         if (getReferencedCustomers().size() == 1) {
             for (final DebitEntry debitEntry : orderedEntries) {
