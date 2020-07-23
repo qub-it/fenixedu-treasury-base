@@ -139,6 +139,10 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
 
         return paymentEntryPropertiesMap;
     }
+    
+    public static String PAYMENT_TYPE_DESCRIPTION() {
+        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.paymentReferenceCode");
+    }
 
     public abstract DocumentNumberSeries getDocumentSeriesInterestDebits();
 
@@ -169,7 +173,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
     
     @Override
     public String getPaymentTypeDescription() {
-        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.paymentReferenceCode");
+        return PAYMENT_TYPE_DESCRIPTION();
     }
     
     @Override

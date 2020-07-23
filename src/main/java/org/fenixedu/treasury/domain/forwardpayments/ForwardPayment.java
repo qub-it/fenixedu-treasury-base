@@ -746,6 +746,10 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         }
 
     }
+    
+    public static String PAYMENT_TYPE_DESCRIPTION() {
+        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.forwardPayment");
+    }
 
     /* IPaymentProcessorForInvoiceEntries */
     
@@ -787,7 +791,7 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     
     @Override
     public String getPaymentTypeDescription() {
-        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.forwardPayment");
+        return PAYMENT_TYPE_DESCRIPTION();
     }
     
     @Override

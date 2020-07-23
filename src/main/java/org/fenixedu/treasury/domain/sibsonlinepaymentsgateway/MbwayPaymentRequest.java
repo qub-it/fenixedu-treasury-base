@@ -245,7 +245,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     
     @Override
     public String getPaymentTypeDescription() {
-        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.mbwayPaymentRequest");
+        return PAYMENT_TYPE_DESCRIPTION();
     }
     
     @Override
@@ -258,6 +258,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         return true;
     }
 
+    public static String PAYMENT_TYPE_DESCRIPTION() {
+        return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.mbwayPaymentRequest");
+    }
+    
     /* ************ */
     /* * SERVICES * */
     /* ************ */
