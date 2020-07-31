@@ -1,31 +1,23 @@
 package org.fenixedu.treasury.services.payments.sibs;
 
 import java.math.BigDecimal;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
-import org.fenixedu.treasury.domain.paymentcodes.SibsReportFile;
+import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFileDetailLine;
 import org.joda.time.DateTime;
 
 public class SIBSImportationLineDTO {
 
     protected SibsIncommingPaymentFileDetailLine line;
-    protected PaymentReferenceCode paymentCode;
-    protected SibsReportFile report;
+    protected SibsReferenceCode paymentCode;
     private SIBSImportationFileDTO sibsImportationFileDTO;
 
     public SIBSImportationLineDTO(final SIBSImportationFileDTO sibsImportationFileDTO,
             final SibsIncommingPaymentFileDetailLine line) {
         this.line = line;
-        this.paymentCode = SIBSPaymentsImporter.getPaymentCode(sibsImportationFileDTO.getSibsEntityCode(), line.getCode(),
-                sibsImportationFileDTO.getFinantialInstitution());
-        if (paymentCode != null) {
-            this.report = paymentCode.getReportOnDate(getTransactionWhenRegistered());
-        }
-        this.setSibsImportationFileDTO(sibsImportationFileDTO);
+        this.paymentCode = SIBSPaymentsImporter.getPaymentCode(sibsImportationFileDTO.getSibsEntityCode(), line.getCode());
+
+        setSibsImportationFileDTO(sibsImportationFileDTO);
     }
 
     public DateTime getWhenProcessedBySibs() {
@@ -64,69 +56,24 @@ public class SIBSImportationLineDTO {
         return line.getCode();
     }
 
-    public PaymentReferenceCode getPaymentCode() {
-        return paymentCode;
-    }
-
-    public boolean hasPaymentCode() {
-        return getPaymentCode() != null;
-    }
-
-    protected SibsReportFile getReport() {
-        return report;
-    }
-
-    public Integer getNumberOfTransactions() {
-        if (!hasPaymentCode()) {
-            return 0;
-        }
-
-        if (getReport() == null) {
-            return 0;
-        }
-        return getReport().getNumberOfTransactions();
-    }
-
-    public String getTransactionDescription(final Integer index) {
-        if (getReport() != null) {
-            return getReport().getTransactionDescription(index);
-        }
-        return "";
-    }
-
-    public BigDecimal getTransactionAmount(final Integer index) {
-        if (getReport() != null) {
-            return getReport().getTransactionAmount(index);
-        }
-        return BigDecimal.ZERO;
-    }
-
     public String getPersonName() {
-        if (!hasPaymentCode() || getPaymentCode().getTargetPayment() == null) {
+        if (this.paymentCode == null || this.paymentCode.getSibsPaymentRequest() == null) {
             return null;
         }
 
-        if (getPaymentCode().getTargetPayment().getDebtAccount() == null) {
-            return "----";
-        }
-
-        return getPaymentCode().getTargetPayment().getDebtAccount().getCustomer().getName();
+        return this.paymentCode.getSibsPaymentRequest().getDebtAccount().getCustomer().getName();
     }
 
     public String getStudentNumber() {
-        if (!hasPaymentCode() || getPaymentCode().getTargetPayment() == null) {
+        if (this.paymentCode == null || this.paymentCode.getSibsPaymentRequest() == null) {
             return null;
         }
 
-        if (getPaymentCode().getTargetPayment().getDebtAccount() == null) {
-            return "----";
-        }
-
-        return getPaymentCode().getTargetPayment().getDebtAccount().getCustomer().getBusinessIdentification();
+        return this.paymentCode.getSibsPaymentRequest().getDebtAccount().getCustomer().getBusinessIdentification();
     }
 
     public String getDescription() {
-        if (!hasPaymentCode() || getPaymentCode().getTargetPayment() == null) {
+        if (this.paymentCode == null || this.paymentCode.getSibsPaymentRequest() == null) {
             return null;
         }
 

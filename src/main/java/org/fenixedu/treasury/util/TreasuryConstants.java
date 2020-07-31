@@ -41,11 +41,15 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.util.StringUtils;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -210,6 +214,18 @@ public class TreasuryConstants {
                 endDate != null ? endDate.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1) : INFINITY_DATE).contains(when);
     }
 
+    public static DateTime parseDateTime(String strValue, String pattern) {
+        DateTimeFormatter dateTimePattern = DateTimeFormat.forPattern(pattern);
+        
+        return dateTimePattern.parseDateTime(strValue);
+    }
+    
+    public static LocalDate parseLocalDate(String strValue, String pattern) {
+        DateTimeFormatter dateTimePattern = DateTimeFormat.forPattern(pattern);
+        
+        return dateTimePattern.parseLocalDate(strValue);
+    }
+    
     
     // @formatter:off
     /****************
@@ -254,7 +270,29 @@ public class TreasuryConstants {
         
         return wordsList.get(0) + " " + wordsList.get(wordsList.size() - 1);
     }
+    
+    public static String json(final Object obj) {
+        GsonBuilder builder = new GsonBuilder();
+        builder.addSerializationExclusionStrategy(new ExclusionStrategy() {
 
+            @Override
+            public boolean shouldSkipField(FieldAttributes arg0) {
+                return false;
+            }
+
+            @Override
+            public boolean shouldSkipClass(final Class<?> clazz) {
+                if (clazz == Class.class) {
+                    return true;
+                }
+
+                return false;
+            }
+        });
+
+        return builder.create().toJson(obj);
+    }
+    
     // @formatter:off
     /**********
      * BUNDLE *

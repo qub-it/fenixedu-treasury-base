@@ -5,6 +5,7 @@ import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 
+@Deprecated
 public interface IPaymentCodeGenerator {
 
     default public boolean canGenerateNewCode(boolean forceGeneration) {

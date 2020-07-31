@@ -7,85 +7,93 @@ import java.util.Set;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
+import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.joda.time.DateTime;
 
 public interface ITreasuryPlatformDependentServices {
 
-	public void scheduleSingleDocument(final FinantialDocument finantialDocument);
+	void scheduleSingleDocument(final FinantialDocument finantialDocument);
 
-	public IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
+	IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
 
 	/* File */
 
-	public byte[] getFileContent(IGenericFile genericFile);
+	byte[] getFileContent(IGenericFile genericFile);
 
-	public long getFileSize(IGenericFile genericFile);
+	long getFileSize(IGenericFile genericFile);
 
-	public String getFilename(IGenericFile genericFile);
+	String getFilename(IGenericFile genericFile);
 
-	public InputStream getFileStream(IGenericFile genericFile);
+	InputStream getFileStream(IGenericFile genericFile);
 
-	public DateTime getFileCreationDate(IGenericFile genericFile);
+	DateTime getFileCreationDate(IGenericFile genericFile);
 
-	public String getFileContentType(IGenericFile iGenericFile);
+	String getFileContentType(IGenericFile iGenericFile);
 
-	public void createFile(final IGenericFile genericFile, final String fileName, final String contentType,
+	void createFile(final IGenericFile genericFile, final String fileName, final String contentType,
 			final byte[] content);
 
-	public void deleteFile(final IGenericFile genericFile);
+	void deleteFile(final IGenericFile genericFile);
 	
     /* File */
 
-	public byte[] getFileContent(String fileId);
+	byte[] getFileContent(String fileId);
 
-    public long getFileSize(String fileId);
+    long getFileSize(String fileId);
 
-    public String getFilename(String fileId);
+    String getFilename(String fileId);
 
-    public InputStream getFileStream(String fileId);
+    InputStream getFileStream(String fileId);
 
-    public DateTime getFileCreationDate(String fileId);
+    DateTime getFileCreationDate(String fileId);
 
-    public String getFileContentType(String fileId);
+    String getFileContentType(String fileId);
 
-    public String createFile(final String fileName, final String contentType,
+    String createFile(final String fileName, final String contentType,
             final byte[] content);
 
-    public void deleteFile(String fileId);
+    void deleteFile(String fileId);
 	
 	/* User */
 
-	public String getLoggedUsername();
+	String getLoggedUsername();
 
 	/* Locales */
 
 	// TODO: provide the default locale of the platform
-	public Locale defaultLocale();
+	Locale defaultLocale();
 	
-	public Set<Locale> availableLocales();
+	Set<Locale> availableLocales();
 
 	/* Bundles */
 
-	public String bundle(final String bundleName, final String key, final String... args);
+	String bundle(final String bundleName, final String key, final String... args);
 
-	public String bundle(final Locale locale, final String bundleName, final String key, final String... args);
+	String bundle(final Locale locale, final String bundleName, final String key, final String... args);
 
-	public LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
+	LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
 	
 	/* Versioning Information */
 	
-	public <T> String versioningCreatorUsername(final T obj);
+	<T> String versioningCreatorUsername(final T obj);
 	
-	public <T> DateTime versioningCreationDate(final T obj);
+	<T> DateTime versioningCreationDate(final T obj);
 	
-    public <T> String versioningUpdatorUsername(final T obj);
+    <T> String versioningUpdatorUsername(final T obj);
     
-    public <T> DateTime versioningUpdateDate(final T obj);
+    <T> DateTime versioningUpdateDate(final T obj);
 
     /* ERP Integration */
-    public void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
+    void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
 
+    
+    /* Web Services */
+    
+    PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
+    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
+    
 }
