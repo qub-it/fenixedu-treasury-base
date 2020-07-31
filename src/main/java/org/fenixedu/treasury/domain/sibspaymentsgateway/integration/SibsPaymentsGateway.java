@@ -1,6 +1,7 @@
 package org.fenixedu.treasury.domain.sibspaymentsgateway.integration;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -119,9 +120,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public IForwardPaymentController getForwardPaymentController(ForwardPaymentRequest request) {
-        // TODO: just to compile
-//        return IForwardPaymentController.getForwardPaymentController(request);
-        return null;
+        return IForwardPaymentController.getForwardPaymentController(request);
     }
 
     @Override
@@ -474,8 +473,54 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public List<ForwardPaymentStatusBean> verifyPaymentStatus(ForwardPaymentRequest request) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            List<ForwardPaymentStatusBean> result = new ArrayList<>();
+            List<PaymentStateBean> paymentStateBeanList =
+                    getPaymentTransactionsReportListByMerchantId(request.getMerchantTransactionId());
+
+            for (PaymentStateBean paymentStateBean : paymentStateBeanList) {
+                final String requestLog = paymentStateBean.getRequestLog();
+                final String responseLog = paymentStateBean.getResponseLog();
+
+                final ForwardPaymentStateType type =
+                        translateForwardPaymentStateType(paymentStateBean.getOperationResultType(), paymentStateBean.isPaid());
+
+                final ForwardPaymentStatusBean bean = new ForwardPaymentStatusBean(paymentStateBean.isOperationSuccess(), type,
+                        paymentStateBean.getPaymentGatewayResultCode(), paymentStateBean.getPaymentGatewayResultDescription(),
+                        requestLog, responseLog);
+
+                bean.editTransactionDetails(paymentStateBean.getTransactionId(), paymentStateBean.getPaymentDate(),
+                        paymentStateBean.getAmount());
+
+                result.add(bean);
+            }
+
+            return result;
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                PaymentRequestLog log = request.logException(e);
+                log.setOperationCode("paymentStatus");
+
+                if (!StringUtils.isEmpty(requestBody)) {
+                    log.saveRequest(requestBody);
+                }
+
+                if (!StringUtils.isEmpty(responseBody)) {
+                    log.saveResponse(responseBody);
+                }
+            });
+
+            throw new TreasuryDomainException(e,
+                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
+        }
     }
 
     /* ISibsPaymentCodePoolService */
@@ -731,8 +776,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public SibsPaymentsGatewayLog log(PaymentRequest paymentRequest) {
-        SibsPaymentsGatewayLog log =
-                SibsPaymentsGatewayLog.create(paymentRequest, paymentRequest.getMerchantTransactionId());
+        SibsPaymentsGatewayLog log = SibsPaymentsGatewayLog.create(paymentRequest, paymentRequest.getMerchantTransactionId());
         log.setStateCode(paymentRequest.getCurrentState().getCode());
         log.setStateDescription(paymentRequest.getCurrentState().getLocalizedName());
 

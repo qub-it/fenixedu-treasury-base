@@ -70,7 +70,8 @@ import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -385,10 +386,11 @@ public class DebitNote extends DebitNote_Base {
 
             //Clear the InterestRate for DebitEntry
             for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
+
                 // Annul payment reference codes
-                for (final MultipleEntriesPaymentCode paymentCode : debitEntry.getPaymentCodesSet()) {
-                    if (paymentCode.getPaymentReferenceCode().isNew() || paymentCode.getPaymentReferenceCode().isUsed()) {
-                        paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+                for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                    if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                        ((SibsPaymentRequest) paymentCode).anull();
                     }
                 }
 
@@ -424,9 +426,9 @@ public class DebitNote extends DebitNote_Base {
                     debitEntry.annulOnEvent();
                 }
 
-                for (final MultipleEntriesPaymentCode paymentCode : debitEntry.getPaymentCodesSet()) {
-                    if (paymentCode.getPaymentReferenceCode().isNew() || paymentCode.getPaymentReferenceCode().isUsed()) {
-                        paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+                for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                    if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                        ((SibsPaymentRequest) paymentCode).anull();
                     }
                 }
             }
@@ -534,9 +536,9 @@ public class DebitNote extends DebitNote_Base {
         updatingDebitNote.setPayorDebtAccount(payorDebtAccount);
 
         for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
-            for (final MultipleEntriesPaymentCode paymentCode : debitEntry.getPaymentCodesSet()) {
-                if (paymentCode.getPaymentReferenceCode().isNew() || paymentCode.getPaymentReferenceCode().isUsed()) {
-                    paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+            for (PaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                    ((SibsPaymentRequest) paymentCode).anull();
                 }
             }
         }

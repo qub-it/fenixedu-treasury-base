@@ -1,3 +1,5 @@
+- New Fixture: Digital Payment Platform
+
 6.2.0 (10-04-2021)
 - Improvement: Payment Plan now accept only one installment
 - Refactor: Digital Payment Platform domain model

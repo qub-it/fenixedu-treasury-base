@@ -7,6 +7,8 @@ import java.util.Set;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
+import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.joda.time.DateTime;
@@ -88,4 +90,10 @@ public interface ITreasuryPlatformDependentServices {
     /* ERP Integration */
     void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
 
+    
+    /* Web Services */
+    
+    PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
+    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
+    
 }

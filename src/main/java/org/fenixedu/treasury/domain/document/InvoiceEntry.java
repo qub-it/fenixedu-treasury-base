@@ -52,8 +52,6 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.divide;
-import static org.fenixedu.treasury.util.TreasuryConstants.isPositive;
 import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
@@ -61,15 +59,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.TreasuryConstants;
+import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
+import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.MbwayPaymentRequest;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -77,66 +76,49 @@ import pt.ist.fenixframework.Atomic;
 
 public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
-    public static final Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE = new Comparator<InvoiceEntry>() {
+    public static final Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE = (o1, o2) -> {
+        int c = o1.getDueDate().compareTo(o2.getDueDate());
 
-        @Override
-        public int compare(final InvoiceEntry o1, final InvoiceEntry o2) {
-            int c = o1.getDueDate().compareTo(o2.getDueDate());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
-    public static final Comparator<InvoiceEntry> COMPARE_BY_ENTRY_DATE = new Comparator<InvoiceEntry>() {
+    public static final Comparator<InvoiceEntry> COMPARE_BY_ENTRY_DATE = (o1, o2) -> {
+        int c = o1.getEntryDateTime().compareTo(o2.getEntryDateTime());
 
-        @Override
-        public int compare(final InvoiceEntry o1, final InvoiceEntry o2) {
-            int c = o1.getEntryDateTime().compareTo(o2.getEntryDateTime());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
-    public static final Comparator<InvoiceEntry> COMPARE_BY_AMOUNT_AND_DUE_DATE = new Comparator<InvoiceEntry>() {
+    public static final Comparator<InvoiceEntry> COMPARE_BY_AMOUNT_AND_DUE_DATE = (o1, o2) -> {
+        int c = -o1.getOpenAmount().compareTo(o2.getOpenAmount());
 
-        @Override
-        public int compare(final InvoiceEntry o1, final InvoiceEntry o2) {
-            int c = -o1.getOpenAmount().compareTo(o2.getOpenAmount());
-
-            if (c != 0) {
-                return c;
-            }
-
-            c = o1.getDueDate().compareTo(o2.getDueDate());
-
-            if (c != 0) {
-                return c;
-            }
-
-            return o1.getExternalId().compareTo(o2.getExternalId());
+        if (c != 0) {
+            return c;
         }
+
+        c = o1.getDueDate().compareTo(o2.getDueDate());
+
+        if (c != 0) {
+            return c;
+        }
+
+        return o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
-    public static final Comparator<InvoiceEntry> COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION = new Comparator<InvoiceEntry>() {
 
-        @Override
-        public int compare(InvoiceEntry o1, InvoiceEntry o2) {
-            if(o1.getProduct().getTuitionInstallmentOrder() != 0 && o2.getProduct().getTuitionInstallmentOrder() != 0) {
-                int c = Integer.compare(o1.getProduct().getTuitionInstallmentOrder(), o2.getProduct().getTuitionInstallmentOrder());
-                
-                return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-                
-            } else if(o1.getProduct().getTuitionInstallmentOrder() != 0 && o2.getProduct().getTuitionInstallmentOrder() == 0) {
-                return -1;
-            } else if(o1.getProduct().getTuitionInstallmentOrder() == 0 && o2.getProduct().getTuitionInstallmentOrder() != 0) {
-                return 1;
-            }
-            
-            final int c = o1.getDescription().compareTo(o2.getDescription());
-            
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    public static final Comparator<InvoiceEntry> COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION = (o1, o2) -> {
+        if (o1.getProduct().getTuitionInstallmentOrder() != 0 && o2.getProduct().getTuitionInstallmentOrder() != 0) {
+            int c1 = Integer.compare(o1.getProduct().getTuitionInstallmentOrder(), o2.getProduct().getTuitionInstallmentOrder());
+
+            return c1 != 0 ? c1 : o1.getExternalId().compareTo(o2.getExternalId());
+
+        } else if (o1.getProduct().getTuitionInstallmentOrder() != 0 && o2.getProduct().getTuitionInstallmentOrder() == 0) {
+            return -1;
+        } else if (o1.getProduct().getTuitionInstallmentOrder() == 0 && o2.getProduct().getTuitionInstallmentOrder() != 0) {
+            return 1;
         }
-        
+
+        final int c2 = o1.getDescription().compareTo(o2.getDescription());
+
+        return c2 != 0 ? c2 : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
     @Override
@@ -144,13 +126,11 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         super.checkForDeletionBlockers(blockers);
 
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
-            blockers.add(
-                    treasuryBundle("error.invoiceentry.cannot.be.deleted.document.is.not.preparing"));
+            blockers.add(treasuryBundle("error.invoiceentry.cannot.be.deleted.document.is.not.preparing"));
         }
 
         if (!getSettlementEntriesSet().isEmpty()) {
-            blockers.add(treasuryBundle(
-                    "error.invoiceentry.cannot.be.deleted.settlemententries.is.not.empty"));
+            blockers.add(treasuryBundle("error.invoiceentry.cannot.be.deleted.settlemententries.is.not.empty"));
         }
 
     }
@@ -275,7 +255,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         BigDecimal netAmount = getNetAmount();
         BigDecimal vatAmount = netAmount.multiply(rationalVatRate);
         BigDecimal amountWithVat = netAmount.multiply(BigDecimal.ONE.add(rationalVatRate));
-        
+
         setVatAmount(vatAmount.setScale(2, RoundingMode.HALF_UP));
         setAmountWithVat(amountWithVat.setScale(2, RoundingMode.HALF_UP));
     }
@@ -356,6 +336,47 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         }
 
         return amount;
+    }
+
+    @Deprecated
+    @Override
+    public void addPaymentCodes(MultipleEntriesPaymentCode paymentCodes) {
+        super.addPaymentCodes(paymentCodes);
+    }
+
+    @Deprecated
+    @Override
+    public void removePaymentCodes(MultipleEntriesPaymentCode paymentCodes) {
+        // TODO Auto-generated method stub
+        super.removePaymentCodes(paymentCodes);
+    }
+
+    @Deprecated
+    @Override
+    public Set<MultipleEntriesPaymentCode> getPaymentCodesSet() {
+        // TODO Auto-generated method stub
+        return super.getPaymentCodesSet();
+    }
+
+    @Deprecated
+    @Override
+    public void addMbwayPaymentRequests(MbwayPaymentRequest mbwayPaymentRequests) {
+        // TODO Auto-generated method stub
+        super.addMbwayPaymentRequests(mbwayPaymentRequests);
+    }
+
+    @Deprecated
+    @Override
+    public void removeMbwayPaymentRequests(MbwayPaymentRequest mbwayPaymentRequests) {
+        // TODO Auto-generated method stub
+        super.removeMbwayPaymentRequests(mbwayPaymentRequests);
+    }
+
+    @Deprecated
+    @Override
+    public Set<MbwayPaymentRequest> getMbwayPaymentRequestsSet() {
+        // TODO Auto-generated method stub
+        return super.getMbwayPaymentRequestsSet();
     }
 
 }

@@ -809,7 +809,6 @@ public class SettlementNote extends SettlementNote_Base {
      */
     // @formatter:on
 
-    @Atomic
     public static SettlementNote create(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
             final DateTime documentDate, final DateTime paymentDate, final String originDocumentNumber,
             final String finantialTransactionReference) {

@@ -3,7 +3,7 @@ package org.fenixedu.treasury.services.payments.sibs.outgoing;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
 
 public class PrintedPaymentCodes {
 
@@ -30,7 +30,7 @@ public class PrintedPaymentCodes {
         return paymentCodes;
     }
 
-    public void addPaymentCode(final PaymentReferenceCode paymentCode) {
+    public void addPaymentCode(final SibsReferenceCode paymentCode) {
         this.paymentCodes.add(paymentCode.getReferenceCode());
     }
 

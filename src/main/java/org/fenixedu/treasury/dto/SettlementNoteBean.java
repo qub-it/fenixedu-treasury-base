@@ -34,6 +34,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -89,27 +90,37 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     private String finantialTransactionReference;
 
     private boolean advancePayment;
-
+    
     private DigitalPaymentPlatform digitalPaymentPlatform;
 
     public SettlementNoteBean() {
-        creditEntries = new ArrayList<CreditEntryBean>();
-        debitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
-        interestEntries = new ArrayList<InterestEntryBean>();
-        paymentEntries = new ArrayList<PaymentEntryBean>();
-        date = new LocalDate();
-        previousStates = new Stack<Integer>();
-        this.setPaymentMethods(PaymentMethod.findAvailableForPaymentInApplication().collect(Collectors.toList()));
+        init();
+    }
+
+    public SettlementNoteBean(DebtAccount debtAccount, boolean isReimbursementNote, boolean excludeDebtsForPayorAccount) {
+        this();
+        init(debtAccount, isReimbursementNote, excludeDebtsForPayorAccount);
+    }
+
+    private void init() {
+        this.creditEntries = new ArrayList<CreditEntryBean>();
+        this.debitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
+        this.interestEntries = new ArrayList<InterestEntryBean>();
+        this.paymentEntries = new ArrayList<PaymentEntryBean>();
+        this.date = new LocalDate();
+        this.previousStates = new Stack<Integer>();
+        setPaymentMethods(PaymentMethod.findAvailableForPaymentInApplication().collect(Collectors.toList()));
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
     }
 
-    public SettlementNoteBean(DebtAccount debtAccount, final boolean reimbursementNote,
-            final boolean excludeDebtsForPayorAccount) {
-        this();
+    public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
+        init();
+        
         this.debtAccount = debtAccount;
         this.reimbursementNote = reimbursementNote;
+
         for (InvoiceEntry invoiceEntry : debtAccount.getPendingInvoiceEntriesSet().stream()
                 .filter(ie -> ie.hasPreparingSettlementEntries() == false)
                 .sorted((x, y) -> x.getDueDate().compareTo(y.getDueDate())).collect(Collectors.<InvoiceEntry> toList())) {
@@ -129,12 +140,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                         && ((Invoice) creditEntry.getFinantialDocument()).isForPayorDebtAccount()) {
                     continue;
                 }
-
-//                if (reimbursementNote
-//                        && !(invoiceEntry.getFinantialDocument() != null && (invoiceEntry.getFinantialDocument().isPreparing()
-//                                || ((CreditNote) invoiceEntry.getFinantialDocument()).isAdvancePayment()))) {
-//                    continue;
-//                }
 
                 creditEntries.add(new CreditEntryBean((CreditEntry) invoiceEntry));
             }
@@ -159,6 +164,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         Collections.sort(this.debitEntries, (o1, o2) -> o1.getDueDate().compareTo(o2.getDueDate()));
     }
 
+    public SettlementNoteBean(DebtAccount debtAccount, DigitalPaymentPlatform digitalPaymentPlatform, final boolean reimbursementNote, final boolean excludeDebtsForPayorAccount) {
+        init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount);
+        
+        setDigitalPaymentPlatform(digitalPaymentPlatform);
+    }
+    
     public Set<Customer> getReferencedCustomers() {
         final Set<Customer> result = Sets.newHashSet();
 
@@ -314,7 +325,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return false;
     }
 
-    public void includeAllInterestOfSelectedDebitEntries() {
+    public void 	includeAllInterestOfSelectedDebitEntries() {
         setInterestEntries(new ArrayList<InterestEntryBean>());
         List<DebitEntryBean> debitEntriesToIterate = Lists.newArrayList(getDebitEntriesByType(DebitEntryBean.class));
         for (DebitEntryBean debitEntryBean : debitEntriesToIterate) {
@@ -341,9 +352,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     }
 
                     if (interestDebitEntry.isInDebt()) {
-                        final DebitEntryBean interestDebitEntryBean = new DebitEntryBean(interestDebitEntry);
-                        interestDebitEntryBean.setIncluded(true);
-                        getDebitEntries().add(interestDebitEntryBean);
+                        getDebitEntries().stream().filter(e -> ((DebitEntryBean) e).getDebitEntry() == interestDebitEntry).findAny().get().setIncluded(true);
                     }
                 }
             }
@@ -625,7 +634,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public void setFinantialTransactionReferenceYear(String finantialTransactionReferenceYear) {
         this.finantialTransactionReferenceYear = finantialTransactionReferenceYear;
     }
-
+    
     public DigitalPaymentPlatform getDigitalPaymentPlatform() {
         return digitalPaymentPlatform;
     }

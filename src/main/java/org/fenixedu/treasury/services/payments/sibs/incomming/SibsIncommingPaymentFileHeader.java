@@ -21,7 +21,11 @@ package org.fenixedu.treasury.services.payments.sibs.incomming;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.joda.time.LocalDate;
 import org.joda.time.YearMonthDay;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 
 public class SibsIncommingPaymentFileHeader {
 
@@ -29,13 +33,13 @@ public class SibsIncommingPaymentFileHeader {
 
     private static final int[] FIELD_SIZES = new int[] { 1, 4, 8, 8, 9, 9, 5, 3, 2, 4, 47 };
 
-    private YearMonthDay whenProcessedBySibs;
+    private LocalDate whenProcessedBySibs;
 
     private Integer version;
 
     private String entityCode;
 
-    public SibsIncommingPaymentFileHeader(YearMonthDay whenProcessedBySibs, Integer version, String entityCode) {
+    public SibsIncommingPaymentFileHeader(LocalDate whenProcessedBySibs, Integer version, String entityCode) {
         this.whenProcessedBySibs = whenProcessedBySibs;
         this.version = version;
         this.entityCode = entityCode;
@@ -51,12 +55,9 @@ public class SibsIncommingPaymentFileHeader {
         return fields[6];
     }
 
-    private static YearMonthDay getWhenProcessedBySibsFrom(String[] fields) {
-        try {
-            return new YearMonthDay(new SimpleDateFormat(DATE_FORMAT).parse(fields[4].substring(0, DATE_FORMAT.length())));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    private static LocalDate getWhenProcessedBySibsFrom(String[] fields) {
+        String dateStringValue = fields[4].substring(0, DATE_FORMAT.length());
+        return DateTimeFormat.forPattern(DATE_FORMAT).parseLocalDate(dateStringValue);
     }
 
     private static Integer getVersionFrom(String[] fields) {
@@ -73,7 +74,7 @@ public class SibsIncommingPaymentFileHeader {
         return result;
     }
 
-    public YearMonthDay getWhenProcessedBySibs() {
+    public LocalDate getWhenProcessedBySibs() {
         return whenProcessedBySibs;
     }
 

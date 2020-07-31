@@ -27,6 +27,7 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes.pool;
 
+
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,9 +37,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.commons.i18n.I18N;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
+import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
@@ -369,6 +373,16 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         changeFinantialInstitution(finantialInstitution);
         changePooltype(useCheckDigit);
         changeReferenceCode(entityReferenceCode, minReferenceCode, maxReferenceCode);
+        changeAmount(minAmount, maxAmount);
+    }
+    
+    public void update(final String name,
+            final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount, final LocalDate validFrom,
+            final LocalDate validTo, final Boolean active) {
+
+        edit(name, active, getDocumentSeriesForPayments(), getPaymentMethod());
+        setNewValidPeriod(validFrom, validTo);
+        changeReferenceCode(getEntityReferenceCode(), minReferenceCode, maxReferenceCode);
         changeAmount(minAmount, maxAmount);
     }
     

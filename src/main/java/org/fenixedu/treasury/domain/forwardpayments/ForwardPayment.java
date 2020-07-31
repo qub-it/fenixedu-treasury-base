@@ -358,41 +358,12 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
 
     public static ForwardPayment create(final ForwardPaymentConfiguration forwardPaymentConfiguration,
             final DebtAccount debtAccount, final Set<DebitEntry> debitEntriesToPay, Set<Installment> installmentsToPay) {
-        return new ForwardPayment(forwardPaymentConfiguration, debtAccount, debitEntriesToPay, installmentsToPay);
+        throw new RuntimeException("not supported");
     }
 
-    @Atomic
     public static ForwardPayment create(final SettlementNoteBean bean, final Function<ForwardPayment, String> successUrlFunction,
             final Function<ForwardPayment, String> insuccessUrlFunction) {
-        final DebtAccount debtAccount = bean.getDebtAccount();
-        final ForwardPaymentConfiguration forwardPaymentConfiguration =
-                ForwardPaymentConfiguration.findUniqueActive(bean.getDebtAccount().getFinantialInstitution()).get();
-
-        final Set<DebitEntry> debitEntriesToPay = new HashSet<>();
-        for (final DebitEntryBean debitEntryBean : bean.getDebitEntriesByType(DebitEntryBean.class)) {
-            if (!debitEntryBean.isIncluded()) {
-                continue;
-            }
-
-            debitEntriesToPay.add(debitEntryBean.getDebitEntry());
-        }
-
-        final Set<Installment> installmentsToPay = new HashSet<>();
-        for (final InstallmentPaymenPlanBean installmentBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
-            if (!installmentBean.isIncluded()) {
-                continue;
-            }
-
-            installmentsToPay.add(installmentBean.getInstallment());
-        }
-
-        final ForwardPayment forwardPayment =
-                ForwardPayment.create(forwardPaymentConfiguration, debtAccount, debitEntriesToPay, installmentsToPay);
-
-        forwardPayment.setForwardPaymentSuccessUrl(successUrlFunction.apply(forwardPayment));
-        forwardPayment.setForwardPaymentInsuccessUrl(insuccessUrlFunction.apply(forwardPayment));
-
-        return forwardPayment;
+        throw new RuntimeException("not supported");
     }
 
     private static Optional<ForwardPayment> lastForwardPayment() {

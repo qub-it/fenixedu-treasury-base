@@ -90,8 +90,7 @@ public class TPAVirtualImplementationPlatform extends TPAVirtualImplementationPl
     
     @Override
     public IForwardPaymentController getForwardPaymentController(ForwardPaymentRequest forwardPayment) {
-        // TODO: Just to compile
-        return null; // IForwardPaymentController.getForwardPaymentController(forwardPayment);
+        return IForwardPaymentController.getForwardPaymentController(forwardPayment);
     }
 
     @Atomic(mode = TxMode.WRITE)

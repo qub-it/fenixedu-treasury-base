@@ -27,6 +27,7 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         this();
         
         setDigitalPaymentPlatform(sibsPaymentCodePool);
+        setEntityReferenceCode(sibsPaymentCodePool.castToSibsPaymentCodePoolService().getEntityReferenceCode());
         setReferenceCode(referenceCode);
         setValidFrom(validFrom);
         setValidTo(validTo);

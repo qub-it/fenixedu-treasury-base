@@ -1,11 +1,11 @@
 package org.fenixedu.treasury.services.reports.dataproviders;
 
+
 import java.math.BigDecimal;
 
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.joda.time.LocalDate;
 
 import com.qubit.terra.docs.util.IDocumentFieldsData;
@@ -15,9 +15,9 @@ public class PaymentReferenceCodeDataProvider extends AbstractDataProvider imple
 
     protected static final String PAYMENT_CODE_KEY = "paymentCode";
 
-    private PaymentReferenceCode paymentCode;
+    private SibsPaymentRequest paymentCode;
 
-    public PaymentReferenceCodeDataProvider(final PaymentReferenceCode paymentCode) {
+    public PaymentReferenceCodeDataProvider(final SibsPaymentRequest paymentCode) {
         this.setPaymentCode(paymentCode);
         registerKey(PAYMENT_CODE_KEY, PaymentReferenceCodeDataProvider::handlePaymentCodeKey);
     }
@@ -31,19 +31,18 @@ public class PaymentReferenceCodeDataProvider extends AbstractDataProvider imple
     public void registerFieldsAndImages(IDocumentFieldsData arg0) {
     }
 
-    public PaymentReferenceCode getPaymentCode() {
+    public SibsPaymentRequest getPaymentCode() {
         return paymentCode;
     }
 
-    public void setPaymentCode(PaymentReferenceCode paymentCode) {
+    public void setPaymentCode(SibsPaymentRequest paymentCode) {
         this.paymentCode = paymentCode;
     }
 
     public String getDescription() {
-        final MultipleEntriesPaymentCode targetPayment = (MultipleEntriesPaymentCode) paymentCode.getTargetPayment();
         final StringBuilder builder = new StringBuilder();
 
-        for (final FinantialDocumentEntry entry : targetPayment.getOrderedInvoiceEntries()) {
+        for (FinantialDocumentEntry entry : this.paymentCode.getOrderedDebitEntries()) {
             builder.append(((DebitEntry) entry).getProduct().getName().getContent()).append("\n");
         }
 
@@ -55,7 +54,7 @@ public class PaymentReferenceCodeDataProvider extends AbstractDataProvider imple
     }
 
     public LocalDate getDueDate() {
-        return ((MultipleEntriesPaymentCode) paymentCode.getTargetPayment()).getDueDate();
+        return this.paymentCode.getDueDate();
     }
 
 }

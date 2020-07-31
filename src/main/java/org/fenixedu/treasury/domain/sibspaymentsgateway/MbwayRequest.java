@@ -118,6 +118,11 @@ public class MbwayRequest extends MbwayRequest_Base {
                         processPayment(paidAmount, paymentDate, bean.getTransactionId(), bean.getMerchantTransactionId());
                 PaymentTransaction transaction =
                         PaymentTransaction.create(this, bean.getTransactionId(), paymentDate, paidAmount, settlementNotes);
+
+                if(transaction != null) {
+                    log.setPaymentTransaction(transaction);
+                }
+                
                 return transaction;
             });
         } catch (Exception e) {

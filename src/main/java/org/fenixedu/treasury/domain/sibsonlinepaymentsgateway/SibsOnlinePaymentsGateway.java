@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.CheckoutResultBean;
 import org.fenixedu.onlinepaymentsgateway.api.CustomerDataInputBean;
 import org.fenixedu.onlinepaymentsgateway.api.MbCheckoutResultBean;
@@ -24,6 +23,7 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
+import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentConfiguration;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
@@ -94,10 +94,6 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.sibsEndpointUrl.required");
         }
 
-        if (Strings.isNullOrEmpty(getMerchantTransactionIdPrefix())) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.merchantTransactionIdPrefix.required");
-        }
-
         if (getMbwayPaymentMethod() == null) {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.mbwayPaymentMethod.required");
         }
@@ -122,10 +118,6 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     }
     
     public void delete() {
-        if(!getMbwayPaymentRequestsSet().isEmpty()) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.delete.not.possible.due.to.existing.requests");
-        }
-        
         if(!getSibsOnlinePaymentsGatewayLogsSet().isEmpty()) {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.delete.not.possible.due.to.existing.requests");
         }
@@ -141,6 +133,12 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     
     public boolean isSendBillingDataInOnlinePayment() {
         return getSendBillingDataInOnlinePayment();
+    }
+    
+    @Override
+    @Deprecated
+    public String getMerchantTransactionIdPrefix() {
+        return super.getMerchantTransactionIdPrefix();
     }
 
     public String generateNewMerchantTransactionId() {
@@ -309,5 +307,4 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
         return optional.isPresent() && optional.get().getSibsOnlinePaymentsGateway() != null
                 && Boolean.TRUE.equals(optional.get().getSibsOnlinePaymentsGateway().getMbwayActive());
     }
-
 }

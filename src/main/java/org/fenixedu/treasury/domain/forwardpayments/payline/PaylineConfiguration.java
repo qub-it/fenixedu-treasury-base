@@ -61,9 +61,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
     @Override
     public IForwardPaymentController getForwardPaymentController(final ForwardPaymentRequest forwardPayment) {
-        // TODO: Just to compile
-//        return IForwardPaymentController.getForwardPaymentController(forwardPayment);
-        return null;
+        return IForwardPaymentController.getForwardPaymentController(forwardPayment);
     }
 
     @Override
@@ -88,8 +86,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         }
 
         ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-        // TODO: Just to compile
-        PaylineWebServiceResponse response = null; //implementation.paylineGetWebPaymentDetails(forwardPayment);
+        PaylineWebServiceResponse response = implementation.paylineGetWebPaymentDetails(forwardPayment);
         
         ForwardPaymentStateType type = null;
 
@@ -250,8 +247,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         saveReturnUrlChecksum(forwardPayment, returnControllerURL, session);
 
         ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-        // TODO: just to compile 
-        PaylineWebServiceResponse response = null; //implementation.paylineDoWebPayment(forwardPayment, returnControllerURL);
+        PaylineWebServiceResponse response = implementation.paylineDoWebPayment(forwardPayment, returnControllerURL);
 
         final boolean success = TRANSACTION_APPROVED_CODE.equals(response.getResultCode());
 
@@ -299,8 +295,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
         if (!isActionReturn(action)) {
             ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-            // TODO: Just to compile
-            PaylineWebServiceResponse response = null; // implementation.paylineGetWebPaymentDetails(forwardPayment);
+            PaylineWebServiceResponse response = implementation.paylineGetWebPaymentDetails(forwardPayment);
             String statusCode = response.getResultCode();
             String statusMessage =
                     treasuryBundle("label.PaylineImplementation.cancelled") + ": " + response.getResultLongMessage();
@@ -310,8 +305,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         }
 
         ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-        // TODO just to compile
-        PaylineWebServiceResponse response = null; // implementation.paylineGetWebPaymentDetails(forwardPayment);
+        PaylineWebServiceResponse response = implementation.paylineGetWebPaymentDetails(forwardPayment);
 
         String statusCode = response.getResultCode();
         String statusMessage = response.getResultLongMessage();

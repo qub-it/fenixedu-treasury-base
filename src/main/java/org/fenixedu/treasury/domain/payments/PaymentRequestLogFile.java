@@ -2,7 +2,8 @@ package org.fenixedu.treasury.domain.payments;
 
 import java.io.InputStream;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -48,56 +49,92 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     @Override
     public byte[] getContent() {
-        if(StringUtils.isNotEmpty(getFileId())) {
+        try {
+            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+
+            if(file != null) {
+                return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
+            }
+            
             return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(getFileId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        
-        return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
     }
 
     @Override
     public long getSize() {
-        if(StringUtils.isNotEmpty(getFileId())) {
+        try {
+            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+
+            if(file != null) {
+                return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
+            }
+            
             return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(getFileId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        
-        return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
     }
 
     @Override
     public DateTime getCreationDate() {
-        if(StringUtils.isNotEmpty(getFileId())) {
+        try {
+            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+
+            if(file != null) {
+                return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
+            }
+            
             return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(getFileId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        
-        return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
     }
 
     @Override
     public String getFilename() {
-        if(StringUtils.isNotEmpty(getFileId())) {
+        try {
+            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+
+            if(file != null) {
+                return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
+            }
+            
             return TreasuryPlataformDependentServicesFactory.implementation().getFilename(getFileId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        
-        return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
     }
 
     @Override
     public InputStream getStream() {
-        if(StringUtils.isNotEmpty(getFileId())) {
+        try {
+            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+
+            if(file != null) {
+                return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
+            }
+            
             return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(getFileId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        
-        return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
     }
 
     @Override
     public String getContentType() {
-        if(StringUtils.isNotEmpty(getFileId())) {
+        try {
+            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+
+            if(file != null) {
+                return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
+            }
+            
             return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(getFileId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        
-        return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
     }
     
     // @formatter:off

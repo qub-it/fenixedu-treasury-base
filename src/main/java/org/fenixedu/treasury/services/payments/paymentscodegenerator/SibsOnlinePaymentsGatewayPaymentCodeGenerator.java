@@ -46,11 +46,13 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
                         paymentCodePool.getSibsOnlinePaymentsGateway().getNumberOfMonthsToExpirePaymentReferenceCode()),
                 Sets.newHashSet(bean.getSelectedDebitEntries()), Sets.newHashSet(bean.getSelectedInstallments()));
 
+
         return paymentReferenceCode;
     }
 
     private PaymentReferenceCode generateNewCodeFor(final DebtAccount debtAccount, final BigDecimal amount, LocalDate validFrom,
             LocalDate validTo, Set<DebitEntry> selectedDebitEntries, Set<Installment> selectedInstallments) {
+
         if (!Boolean.TRUE.equals(this.paymentCodePool.getActive())) {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.paymentCodePool.not.active");
         }
@@ -58,7 +60,7 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
         for (DebitEntry debitEntry : selectedDebitEntries) {
             final long activePaymentCodesOnDebitEntryCount = MultipleEntriesPaymentCode.findNewByDebitEntry(debitEntry).count()
                     + MultipleEntriesPaymentCode.findUsedByDebitEntry(debitEntry).count();
-
+            
             if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
                 throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
                         debitEntry.getDescription());
@@ -74,22 +76,21 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
                         installment.getDescription().getContent());
             }
         }
-
+            
         final SibsOnlinePaymentsGateway sibsGateway = this.paymentCodePool.getSibsOnlinePaymentsGateway();
         final String merchantTransactionId = sibsGateway.generateNewMerchantTransactionId();
-
+            
         final SibsOnlinePaymentsGatewayLog log = createLog(sibsGateway, debtAccount);
-
         try {
+        FenixFramework.atomic(() -> {
+            log.saveMerchantTransactionId(merchantTransactionId);
+            log.logRequestSendDate();
+        });
+        
+        final MbCheckoutResultBean checkoutResultBean =
+                sibsGateway.generateMBPaymentReference(amount, validFrom.toDateTimeAtStartOfDay(),
+                        validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1), merchantTransactionId);
 
-            FenixFramework.atomic(() -> {
-                log.saveMerchantTransactionId(merchantTransactionId);
-                log.logRequestSendDate();
-            });
-
-            final MbCheckoutResultBean checkoutResultBean =
-                    sibsGateway.generateMBPaymentReference(amount, validFrom.toDateTimeAtStartOfDay(),
-                            validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1), merchantTransactionId);
 
             final String sibsReferenceId = checkoutResultBean.getTransactionId();
             FenixFramework.atomic(() -> {
@@ -102,6 +103,7 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
                         checkoutResultBean.getPaymentBrand() != null ? checkoutResultBean.getPaymentBrand().name() : null);
             });
 
+
             if (!checkoutResultBean.isOperationSuccess()) {
                 throw new TreasuryDomainException(
                         "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
@@ -113,7 +115,7 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
                 throw new TreasuryDomainException(
                         "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.reference.not.empty");
             }
-
+            
             if (PaymentReferenceCode.findByReferenceCode(this.paymentCodePool.getEntityReferenceCode(), paymentCode,
                     this.paymentCodePool.getFinantialInstitution()).count() >= 1) {
                 throw new TreasuryDomainException("error.PaymentReferenceCode.referenceCode.duplicated");
@@ -130,7 +132,7 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
                     throw new TreasuryDomainException("error.PaymentReferenceCode.sibsReferenceId.found.duplicated");
                 }
             }
-
+            
             return createPaymentReferenceCodeInstance(amount, validFrom, validTo, log, paymentCode, merchantTransactionId,
                     sibsReferenceId, selectedDebitEntries, selectedInstallments);
         } catch (final Exception e) {

@@ -115,16 +115,6 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
         }
     }
 
-    @Atomic
-    public void edit(final String referenceCode, final LocalDate beginDate, final LocalDate endDate,
-            final PaymentReferenceCodeStateType state) {
-        setReferenceCode(referenceCode);
-        setBeginDate(beginDate);
-        setEndDate(endDate);
-        setState(state);
-        checkRules();
-    }
-
     public boolean isDeletable() {
         return getReportedInFilesSet().isEmpty();
     }
@@ -461,7 +451,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
         if (!this.getState().equals(PaymentReferenceCodeStateType.ANNULLED)) {
             this.setState(PaymentReferenceCodeStateType.ANNULLED);
         }
-        
+
         checkRules();
     }
 
@@ -474,23 +464,10 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     }
 
     @Atomic(mode = TxMode.READ)
+    @Deprecated
     public static PaymentReferenceCode createPaymentReferenceCodeForMultipleDebitEntries(final DebtAccount debtAccount,
             final PaymentReferenceCodeBean bean) {
-        BigDecimal amount = BigDecimal.ZERO;
-        for (DebitEntry entry : bean.getSelectedDebitEntries()) {
-            amount = amount
-                    .add(bean.isUsePaymentAmountWithInterests() ? entry.getOpenAmountWithInterests() : entry.getOpenAmount());
-        }
-        for (Installment installment : bean.getSelectedInstallments()) {
-            amount = amount.add(installment.getOpenAmount());
-        }
-
-        bean.setPaymentAmount(amount);
-
-        final PaymentReferenceCode paymentReferenceCode =
-                bean.getPaymentCodePool().getReferenceCodeGenerator().createPaymentReferenceCode(debtAccount, bean);
-
-        return paymentReferenceCode;
+        throw new RuntimeException("deprecated");
     }
 
 }

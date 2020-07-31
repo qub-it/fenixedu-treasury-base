@@ -41,7 +41,7 @@ import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.paymentcodes.SibsConfiguration;
+import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.DateTime;
@@ -86,7 +86,8 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         setZipCode(zipCode);
         setCurrency(currency);
         
-        SibsConfiguration.create(this, null, null, null);
+        ERPConfiguration.createEmpty(this);
+        
         checkRules();
     }
 

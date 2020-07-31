@@ -99,6 +99,8 @@ public abstract class Customer extends Customer_Base {
     public abstract String getPhoneNumber();
 
     public abstract BigDecimal getGlobalBalance();
+    
+    public abstract String getUsername();
 
     public abstract Set<Customer> getAllCustomers();
     
@@ -226,7 +228,8 @@ public abstract class Customer extends Customer_Base {
                 || getIdentificationNumber() != null && getIdentificationNumber().contains(searchFieldClear)
                 || getFiscalNumber() != null && getFiscalNumber().toLowerCase().contains(searchFieldClear)
                 || getCode() != null && getCode().contains(searchFieldClear)
-                || getBusinessIdentification() != null && getBusinessIdentification().contains(searchFieldClear);
+                || getBusinessIdentification() != null && getBusinessIdentification().contains(searchFieldClear)
+                || getUsername() != null && getUsername().contains(searchFieldClear);
     }
 
     public Set<FinantialInstitution> getFinantialInstitutions() {

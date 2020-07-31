@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.sibspaymentsgateway.integration.SibsPaymentsGateway;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -79,6 +80,13 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
             throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.transaction.duplicate",
                     getSibsEntityReferenceCode(), getSibsPaymentReferenceCode(),
                     getPaymentDate().toString(TreasuryConstants.DATE_TIME_FORMAT_YYYY_MM_DD));
+        }
+        
+        if(getPaymentRequest().getDigitalPaymentPlatform() instanceof SibsPaymentsGateway) {
+            if (!StringUtils.isEmpty(getSibsTransactionId()) && findBySibsGatewayTransactionId(getSibsTransactionId()).count() > 1) {
+                throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.sibsTransactionId.duplicate",
+                        getSibsTransactionId());
+            }
         }
     }
 

@@ -22,11 +22,9 @@ import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.beans.InstallmentBean;
 import org.fenixedu.treasury.domain.paymentPlan.beans.PaymentPlanBean;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
-import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -62,8 +60,6 @@ public class PaymentPlan extends PaymentPlan_Base {
         boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmolumentAmount());
         boolean hasInterest = !TreasuryConstants.isZero(paymentPlanBean.getInterestAmount());
         if (hasEmolument || hasInterest) {
-            Optional<DebitNote> debitNote = null;
-
             if (hasEmolument) {
                 createEmolument(paymentPlanBean, debtAccount, endDate, creationDate);
             }
@@ -79,29 +75,25 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public void createPaymentReferenceCode() {
-        PaymentCodePool paymentCodePool = PaymentPlanSettings.getActiveInstance().getPaymentCodePool();
+        DigitalPaymentPlatform paymentCodePool = PaymentPlanSettings.getActiveInstance().getDigitalPaymentPlatform();
 
         if (paymentCodePool == null) {
             throw new IllegalArgumentException(TreasuryConstants.treasuryBundle("error.paymentPlan.paymentCodePool.required"));
         }
 
         for (Installment installment : getInstallmentsSet()) {
-            PaymentReferenceCodeBean bean = new PaymentReferenceCodeBean(paymentCodePool, getDebtAccount());
-            bean.setPaymentCodePool(paymentCodePool);
-            bean.setUsePaymentAmountWithInterests(false);
-            bean.setSelectedInstallments(List.of(installment));
-            bean.setSelectedDebitEntries(Collections.emptyList());
-            PaymentReferenceCode.createPaymentReferenceCodeForMultipleDebitEntries(getDebtAccount(), bean);
+            paymentCodePool.castToSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(), Collections.emptySet(),
+                    Set.of(installment));
         }
     }
 
     private void annulPaymentReferenceCodeFromDebitEntries(List<DebitEntry> list) {
         for (DebitEntry entry : list) {
-            Set<MultipleEntriesPaymentCode> paymentCodesSet = entry.getPaymentCodesSet().stream()
-                    .filter(s -> !s.getPaymentReferenceCode().isProcessed()).collect(Collectors.toSet());
-            for (MultipleEntriesPaymentCode paymentCode : paymentCodesSet) {
-                if (paymentCode.getInvoiceEntriesSet().size() == 1 && paymentCode.getInstallmentsSet().isEmpty()) {
-                    paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+            Set<SibsPaymentRequest> paymentCodesSet =
+                    entry.getSibsPaymentRequests().stream().filter(s -> !s.isInPaidState()).collect(Collectors.toSet());
+            for (SibsPaymentRequest paymentCode : paymentCodesSet) {
+                if (paymentCode.getDebitEntriesSet().size() == 1 && paymentCode.getInstallmentsSet().isEmpty()) {
+                    paymentCode.anull();
                 }
             }
         }

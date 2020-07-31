@@ -13,10 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.joda.time.YearMonthDay;
 
 /**
  * 
@@ -71,7 +70,7 @@ public class SibsOutgoingPaymentFile {
             header.append(FILE_TYPE);
             header.append(this.sourceInstitutionId);
             header.append(this.destinationInstitutionId);
-            header.append(new YearMonthDay().toString(DATE_FORMAT));
+            header.append(new LocalDate().toString(DATE_FORMAT));
             header.append(OMISSION_SEQUENCE_NUMBER);
             // last file's data if it was already sent
             header.append(lastSentPaymentFile != null ? lastSentPaymentFile.toString(DATE_FORMAT) : "00000000");
@@ -200,7 +199,7 @@ public class SibsOutgoingPaymentFile {
         this.associatedPaymentCodes = new PrintedPaymentCodes();
     }
 
-    public void addAssociatedPaymentCode(final PaymentReferenceCode paymentCode) {
+    public void addAssociatedPaymentCode(final SibsReferenceCode paymentCode) {
         this.associatedPaymentCodes.addPaymentCode(paymentCode);
     }
 
@@ -208,14 +207,14 @@ public class SibsOutgoingPaymentFile {
         return associatedPaymentCodes;
     }
 
-    public void addLine(String code, BigDecimal minAmount, BigDecimal maxAmount, LocalDate startDate, LocalDate endDate) {
+    public void addLine(String code, BigDecimal minAmount, BigDecimal maxAmount, LocalDate validFrom, LocalDate validTo) {
         if (existingCodes.contains(code)) {
             throw new RuntimeException(MessageFormat.format("Code {0} is duplicated", code));
         }
 
         existingCodes.add(code);
 
-        this.lines.add(new Line(code, minAmount, maxAmount, startDate, endDate));
+        this.lines.add(new Line(code, minAmount, maxAmount, validFrom, validTo));
     }
 
     public String render() {
