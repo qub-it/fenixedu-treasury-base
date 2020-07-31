@@ -176,11 +176,11 @@ public class Currency extends Currency_Base {
         return getValueWithScale(value, decimalsPlaces) + " " + this.getSymbol();
     }
 
-    public BigDecimal getValueWithScale(BigDecimal amount) {
+    public static BigDecimal getValueWithScale(BigDecimal amount) {
         return getValueWithScale(amount, 2);
     }
 
-    public BigDecimal getValueWithScale(BigDecimal amount, int decimalPlaces) {
+    public static BigDecimal getValueWithScale(BigDecimal amount, int decimalPlaces) {
         return amount.setScale(decimalPlaces, RoundingMode.HALF_EVEN);
     }
 

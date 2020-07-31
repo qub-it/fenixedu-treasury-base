@@ -743,7 +743,6 @@ public class SettlementNote extends SettlementNote_Base {
      */
     // @formatter:on
 
-    @Atomic
     public static SettlementNote create(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
             final DateTime documentDate, final DateTime paymentDate, final String originDocumentNumber,
             final String finantialTransactionReference) {
@@ -813,7 +812,7 @@ public class SettlementNote extends SettlementNote_Base {
         return findAll().filter(i -> state.equals(i.getState()));
     }
     
-    public static void checkMixingOfInvoiceEntriesExportedInLegacyERP(final Set<InvoiceEntry> invoiceEntries) {
+    public static void checkMixingOfInvoiceEntriesExportedInLegacyERP(final Set<? extends InvoiceEntry> invoiceEntries) {
         if(!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return;
         }

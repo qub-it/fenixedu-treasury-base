@@ -5,9 +5,9 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 import java.util.Comparator;
 
 import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.treasury.util.TreasuryConstants;
+import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 
-public enum ForwardPaymentStateType {
+public enum ForwardPaymentStateType implements IPaymentRequestState {
     
     CREATED,
     REQUESTED,
@@ -53,7 +53,13 @@ public enum ForwardPaymentStateType {
         return isCreated() || isRequested();
     }
     
+    @Override
     public LocalizedString getLocalizedName() {
         return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
+    }
+
+    @Override
+    public String getCode() {
+        return name();
     }
 }

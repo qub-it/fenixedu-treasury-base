@@ -31,6 +31,7 @@ import org.joda.time.DateTime;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+@Deprecated
 public interface IPaymentProcessorForInvoiceEntries {
 
     public DebtAccount getDebtAccount();

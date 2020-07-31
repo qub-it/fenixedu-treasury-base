@@ -60,6 +60,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.Atomic.TxMode;
 
+@Deprecated
 public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     private static final int LENGTH_REFERENCE_CODE = 9;
     private static final BigDecimal SIBS_IGNORE_MAX_AMOUNT = BigDecimal.ZERO;
@@ -113,16 +114,6 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
                 && StringUtils.isEmpty(getSibsReferenceId())) {
             throw new TreasuryDomainException("error.PaymentReferenceCode.sibsReferenceId.required");
         }
-    }
-
-    @Atomic
-    public void edit(final String referenceCode, final LocalDate beginDate, final LocalDate endDate,
-            final PaymentReferenceCodeStateType state) {
-        setReferenceCode(referenceCode);
-        setBeginDate(beginDate);
-        setEndDate(endDate);
-        setState(state);
-        checkRules();
     }
 
     public boolean isDeletable() {
@@ -465,20 +456,10 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     }
 
     @Atomic(mode = TxMode.READ)
+    @Deprecated
     public static PaymentReferenceCode createPaymentReferenceCodeForMultipleDebitEntries(final DebtAccount debtAccount,
             final PaymentReferenceCodeBean bean) {
-        BigDecimal amount = BigDecimal.ZERO;
-        for (DebitEntry entry : bean.getSelectedDebitEntries()) {
-            amount = amount
-                    .add(bean.isUsePaymentAmountWithInterests() ? entry.getOpenAmountWithInterests() : entry.getOpenAmount());
-        }
-
-        bean.setPaymentAmount(amount);
-
-        final PaymentReferenceCode paymentReferenceCode =
-                bean.getPaymentCodePool().getReferenceCodeGenerator().createPaymentReferenceCode(debtAccount, bean);
-
-        return paymentReferenceCode;
+        throw new RuntimeException("deprecated");
     }
 
 }

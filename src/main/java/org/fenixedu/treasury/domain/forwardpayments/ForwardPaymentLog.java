@@ -7,6 +7,7 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class ForwardPaymentLog extends ForwardPaymentLog_Base {
     
     public static final Comparator<ForwardPaymentLog> COMPARATOR_BY_ORDER = new Comparator<ForwardPaymentLog>() {

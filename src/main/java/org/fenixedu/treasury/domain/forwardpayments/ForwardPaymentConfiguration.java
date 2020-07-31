@@ -18,25 +18,26 @@ import com.google.common.base.Strings;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Base {
 
     private static final Logger logger = LoggerFactory.getLogger(ForwardPaymentConfiguration.class);
 
     public static Comparator<ForwardPaymentConfiguration> COMPARATOR_BY_FINANTIAL_INSTITUTION_AND_NAME = (o1, o2) -> {
         int c = FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
-        if(c != 0) {
+        if (c != 0) {
             return c;
         }
-        
+
         c = o1.getName().compareTo(o2.getName());
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     public static Comparator<ForwardPaymentConfiguration> COMPARATOR_BY_NAME = (o1, o2) -> {
         int c = o1.getName().compareTo(o2.getName());
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     private ForwardPaymentConfiguration() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -66,11 +67,11 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
 
         setSeries(bean.getSeries());
         setPaymentMethod(bean.getPaymentMethod());
-        
+
         setReimbursementPolicyJspFile(bean.getReimbursementPolicyJspFile());
         setPrivacyPolicyJspFile(bean.getPrivacyPolicyJspFile());
         setLogosJspPageFile(bean.getLogosJspPageFile());
-        
+
         checkRules();
     }
 
@@ -82,11 +83,11 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
         if (findActive(getFinantialInstitution()).count() > 1) {
             throw new TreasuryDomainException("error.ForwardPaymentConfiguration.finantialInstitution.only.one.active.allowed");
         }
-        
-        if(!StringUtils.isEmpty(getImplementation())) {
+
+        if (!StringUtils.isEmpty(getImplementation())) {
             try {
                 implementation();
-            }catch(Exception e) {
+            } catch (Exception e) {
                 throw new TreasuryDomainException("error.ForwardPaymentConfiguration.unknown.implementation");
             }
         }
@@ -116,54 +117,54 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
         setReimbursementPolicyJspFile(bean.getReimbursementPolicyJspFile());
         setPrivacyPolicyJspFile(bean.getPrivacyPolicyJspFile());
         setLogosJspPageFile(bean.getLogosJspPageFile());
-        
+
         checkRules();
     }
-    
+
     @Atomic
     public void saveVirtualTPACertificate(final String filename, final byte[] contents) {
-        if(getVirtualTPACertificate() != null) {
+        if (getVirtualTPACertificate() != null) {
             ForwardPaymentConfigurationFile virtualTPACertificate = getVirtualTPACertificate();
             setVirtualTPACertificate(null);
             virtualTPACertificate.delete();
         }
-        
+
         ForwardPaymentConfigurationFile file = ForwardPaymentConfigurationFile.create(filename, contents);
         setVirtualTPACertificate(file);
     }
-    
+
     public void delete() {
-        if(!getForwardPaymentsSet().isEmpty()) {
+        if (!getForwardPaymentsSet().isEmpty()) {
             throw new TreasuryDomainException("error.ForwardPaymentConfiguration.cannot.delete");
         }
-        
-        if(getSibsOnlinePaymentsGateway() != null) {
+
+        if (getSibsOnlinePaymentsGateway() != null) {
             throw new TreasuryDomainException("error.ForwardPaymentConfiguration.remove.sibs.oppwa.configuration.first");
         }
-        
+
         this.setDomainRoot(null);
         this.setFinantialInstitution(null);
         this.setPaymentMethod(null);
         this.setSeries(null);
-        if(this.getVirtualTPACertificate() != null) {
+        if (this.getVirtualTPACertificate() != null) {
             this.getVirtualTPACertificate().delete();
         }
-        
+
         super.deleteDomainObject();
     }
 
     public boolean isActive() {
         return getActive();
     }
-    
+
     public boolean isLogosPageDefined() {
         return !Strings.isNullOrEmpty(implementation().getLogosJspPage(this));
     }
-    
+
     public boolean isReimbursementPolicyTextDefined() {
         return !Strings.isNullOrEmpty(getReimbursementPolicyJspFile());
     }
-    
+
     public boolean isPrivacyPolicyTextDefined() {
         return !Strings.isNullOrEmpty(getPrivacyPolicyJspFile());
     }
@@ -183,14 +184,14 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
             throw new RuntimeException(e);
         }
     }
-    
+
     public String getImplementationCode() {
         try {
             return implementation().getImplementationCode();
-        } catch(Exception e) {
+        } catch (Exception e) {
             logger.error(e.getLocalizedMessage(), e);
         }
-        
+
         return null;
     }
 
@@ -200,36 +201,34 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
      * ********
      */
     // @formatter:on
-    
-    
+
     @Atomic
     public static ForwardPaymentConfiguration create(final FinantialInstitution finantialInstitution,
             final ForwardPaymentConfigurationBean bean) {
         return new ForwardPaymentConfiguration(finantialInstitution, bean);
     }
-    
+
     public static Stream<ForwardPaymentConfiguration> findAll() {
         return FenixFramework.getDomainRoot().getForwardPaymentConfigurationsSet().stream();
     }
-    
+
     public static Stream<ForwardPaymentConfiguration> find(final FinantialInstitution finantialInstitution) {
         return finantialInstitution.getForwardPaymentConfigurationsSet().stream();
     }
-    
+
     public static Stream<ForwardPaymentConfiguration> findActive(final FinantialInstitution finantialInstitution) {
         return find(finantialInstitution).filter(e -> e.isActive());
     }
-    
+
     public static Optional<ForwardPaymentConfiguration> findUniqueActive(final FinantialInstitution finantialInstitution) {
         return findActive(finantialInstitution).findFirst();
     }
 
     public static boolean isActive(final FinantialInstitution finantialInstitution) {
-        if(!findUniqueActive(finantialInstitution).isPresent()) {
+        if (!findUniqueActive(finantialInstitution).isPresent()) {
             return false;
         }
-        
+
         return findUniqueActive(finantialInstitution).get().isActive();
     }
-
 }

@@ -30,8 +30,9 @@ package org.fenixedu.treasury.domain.paymentcodes;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 
-public enum PaymentReferenceCodeStateType {
+public enum PaymentReferenceCodeStateType implements IPaymentRequestState {
     UNUSED, USED, ANNULLED, PROCESSED;
 
     public boolean isUnused() {
@@ -54,4 +55,13 @@ public enum PaymentReferenceCodeStateType {
         return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
     }
 
+    @Override
+    public String getCode() {
+        return name();
+    }
+
+    @Override
+    public LocalizedString getLocalizedName() {
+        return getDescriptionI18N();
+    }
 }
