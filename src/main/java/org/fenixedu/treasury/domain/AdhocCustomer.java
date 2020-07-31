@@ -287,6 +287,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         throw new RuntimeException("not supported");
     }
 
+    @Override
     public BigDecimal getGlobalBalance() {
         BigDecimal globalBalance = BigDecimal.ZERO;
         for (final DebtAccount debtAccount : getDebtAccountsSet()) {
@@ -294,6 +295,11 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         }
 
         return globalBalance;
+    }
+    
+    @Override
+    public String getUsername() {
+        return null;
     }
 
     @Override

@@ -22,11 +22,10 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentCodeTransaction;
 import org.joda.time.DateTime;
 
 public class SibsIncommingPaymentFileDetailLine {
-
-    private static final String DATE_TIME_FORMAT = "yyyyMMddHHmm";
 
     private DateTime whenOccuredTransaction;
 
@@ -66,7 +65,7 @@ public class SibsIncommingPaymentFileDetailLine {
 
     private static DateTime getWhenOccuredTransactionFrom(String[] fields) {
         try {
-            return new DateTime(new SimpleDateFormat(DATE_TIME_FORMAT).parse(fields[4]));
+            return new DateTime(new SimpleDateFormat(SibsPaymentCodeTransaction.DATE_TIME_FORMAT).parse(fields[4]));
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }

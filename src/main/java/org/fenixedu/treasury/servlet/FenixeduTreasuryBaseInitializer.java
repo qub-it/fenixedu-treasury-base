@@ -15,7 +15,7 @@ public class FenixeduTreasuryBaseInitializer implements ServletContextListener {
     public void contextInitialized(ServletContextEvent event) {
         TreasuryAccessControlAPI.registerExtension(new TreasuryUIAccessControlExtension());
 
-        TreasuryBootstrapUtil.InitializeDomain();
+//        TreasuryBootstrapUtil.InitializeDomain();
     }
 
     @Override

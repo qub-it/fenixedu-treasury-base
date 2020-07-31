@@ -27,6 +27,7 @@
  */
 package org.fenixedu.treasury.domain.debt;
 
+
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Optional;
@@ -42,9 +43,8 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.paymentcodes.FinantialDocumentPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
+import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -114,24 +114,12 @@ public class DebtAccount extends DebtAccount_Base {
         return result;
     }
 
-    public Set<PaymentCodeTarget> getUsedPaymentCodeTargetOfPendingInvoiceEntries() {
-        final Set<PaymentCodeTarget> result = Sets.newHashSet();
-        for (final InvoiceEntry invoiceEntry : getPendingInvoiceEntriesSet()) {
-            if (!invoiceEntry.isDebitNoteEntry()) {
-                continue;
-            }
-
-            result.addAll(
-                    MultipleEntriesPaymentCode.findUsedByDebitEntry((DebitEntry) invoiceEntry).collect(Collectors.toSet()));
-
-            if (invoiceEntry.getFinantialDocument() != null) {
-                result
-                        .addAll(FinantialDocumentPaymentCode.findUsedByFinantialDocument(invoiceEntry.getFinantialDocument())
-                                .collect(Collectors.<PaymentCodeTarget> toSet()));
-            }
-        }
-        
-        return result;
+    public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
+        return getPendingInvoiceEntriesSet().stream().filter(e -> e.isDebitNoteEntry()).map(DebitEntry.class::cast)
+            .flatMap(d -> d.getPaymentRequestsSet().stream()).filter(p -> p instanceof SibsPaymentRequest)
+            .map(SibsPaymentRequest.class::cast)
+            .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED || p.getState() == PaymentReferenceCodeStateType.USED)
+            .collect(Collectors.toSet());
     }
 
     public boolean isClosed() {
@@ -237,7 +225,7 @@ public class DebtAccount extends DebtAccount_Base {
     public boolean isDeletable() {
         return this.getFinantialDocumentsSet().isEmpty() && getInvoiceEntrySet().isEmpty() && getInvoiceSet().isEmpty()
                 && getPayorDebitEntriesSet().isEmpty() && getForwardPaymentsSet().isEmpty()
-                && getPaymentCodeTargetsSet().isEmpty() && getTreasuryEventsSet().isEmpty();
+                && getPaymentRequestsSet().isEmpty() && getTreasuryEventsSet().isEmpty();
     }
 
     @Atomic

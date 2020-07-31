@@ -9,7 +9,9 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
+import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -19,6 +21,7 @@ import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
+@Deprecated
 public class SequentialPaymentCodeGenerator implements IPaymentCodeGenerator {
 
     private final PaymentCodePool referenceCodePool;
@@ -127,13 +130,17 @@ public class SequentialPaymentCodeGenerator implements IPaymentCodeGenerator {
     @Override
     @Atomic
     public PaymentReferenceCode createPaymentReferenceCode(DebtAccount debtAccount, PaymentReferenceCodeBean bean) {
-        final PaymentReferenceCode paymentReferenceCode =
-                generateNewCodeFor(
-                                bean.getPaymentAmount(), bean.getBeginDate(), bean.getEndDate(),
-                                bean.getPaymentCodePool().getIsFixedAmount());
+        final PaymentReferenceCode paymentReferenceCode = generateNewCodeFor(bean.getPaymentAmount(), bean.getValidFrom(),
+                bean.getValidTo(), getIsFixedAmount(bean.getPaymentCodePool()));
 
         paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()), bean.getPaymentAmount());
         return paymentReferenceCode;
+    }
+
+    private boolean getIsFixedAmount(DigitalPaymentPlatform platform) {
+        //When using checkdigit, it's fixed amount 
+        //HACK: there is also an option without check digit for fixed amount
+        return ((SibsPaymentCodePool) platform).getUseCheckDigit();
     }
 
     @Override

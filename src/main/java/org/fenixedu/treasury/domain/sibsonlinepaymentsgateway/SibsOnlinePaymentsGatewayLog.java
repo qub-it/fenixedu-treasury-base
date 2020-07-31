@@ -3,12 +3,12 @@ package org.fenixedu.treasury.domain.sibsonlinepaymentsgateway;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
@@ -17,6 +17,7 @@ import com.google.common.base.Strings;
 
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_Base {
     
     public static final String REQUEST_PAYMENT_CODE = "REQUEST_PAYMENT_CODE";
@@ -182,6 +183,10 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
     /* ******** */
     /* SERVICES */
     /* ******** */
+
+    public static Stream<SibsOnlinePaymentsGatewayLog> findAll() {
+        return FenixFramework.getDomainRoot().getSibsOnlinePaymentsGatewayLogsSet().stream();
+    }
     
     public static SibsOnlinePaymentsGatewayLog createLogForRequestPaymentCode(
             final SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway, final DebtAccount debtAccount) {

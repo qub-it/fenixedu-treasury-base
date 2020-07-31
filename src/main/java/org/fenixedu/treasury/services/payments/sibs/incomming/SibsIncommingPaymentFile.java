@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.YearMonthDay;
+import org.joda.time.LocalDate;
 
 public class SibsIncommingPaymentFile {
 
@@ -132,7 +132,7 @@ public class SibsIncommingPaymentFile {
         return filename;
     }
 
-    public YearMonthDay getWhenProcessedBySibs() {
+    public LocalDate getWhenProcessedBySibs() {
         return getHeader().getWhenProcessedBySibs();
     }
 

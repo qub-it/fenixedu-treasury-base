@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -49,29 +49,28 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     public static final Comparator<SibsInputFile> COMPARATOR_BY_DATE = (o1, o2) -> {
         int c = o1.getCreationDate().compareTo(o2.getCreationDate());
-        
+
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     protected SibsInputFile() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
     }
 
-    protected SibsInputFile(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS, String displayName,
-            String filename, byte[] content, final String uploader) {
+    protected SibsInputFile(DateTime whenProcessedBySIBS, String filename, byte[] content,
+            final String uploader) {
         this();
-        init(finantialInstitution, whenProcessedBySIBS, displayName, filename, content, uploader);
+        init(whenProcessedBySIBS, filename, content, uploader);
     }
 
-    protected void init(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS, String displayName,
-            String filename, byte[] content, final String uploader) {
+    protected void init(DateTime whenProcessedBySIBS, String filename, byte[] content,
+            final String uploader) {
         TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, CONTENT_TYPE, content);
 
         setWhenProcessedBySibs(whenProcessedBySIBS);
         setUploaderUsername(uploader);
-        setFinantialInstitution(finantialInstitution);
 
         checkRules();
     }
@@ -81,6 +80,20 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     public boolean isDeletable() {
         return true;
+    }
+
+    @Override
+    @Deprecated
+    public FinantialInstitution getFinantialInstitution() {
+        // TODO Auto-generated method stub
+        return super.getFinantialInstitution();
+    }
+
+    @Override
+    @Deprecated
+    public void setFinantialInstitution(FinantialInstitution finantialInstitution) {
+        // TODO Auto-generated method stub
+        super.setFinantialInstitution(finantialInstitution);
     }
 
     @Override
@@ -101,38 +114,33 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
     }
 
     @Atomic
-    public static SibsInputFile create(FinantialInstitution finantialInstitution, DateTime whenProcessedBySIBS,
-            String displayName, String filename, byte[] content, final String uploader) {
-        return new SibsInputFile(finantialInstitution, whenProcessedBySIBS, displayName, filename, content, uploader);
+    public static SibsInputFile create(DateTime whenProcessedBySIBS,
+            String filename, byte[] content, final String uploader) {
+        return new SibsInputFile(whenProcessedBySIBS, filename, content, uploader);
     }
 
     @Atomic
-    public static SibsInputFile createSibsInputFile(DateTime whenProcessedBySibs, final String originalSibsFilename,
-            final String sibsName, final byte[] sibsContent) {
-
-        PaymentCodePool pool = null;
-
+    public static SibsInputFile createSibsInputFile(DateTime whenProcessedBySibs, final String filename,
+            final byte[] sibsContent) {
         try {
 
-            final SibsIncommingPaymentFile file = SibsIncommingPaymentFile.parse(originalSibsFilename, sibsContent);
-            if (file.getHeader().getWhenProcessedBySibs().toDateTimeAtMidnight().compareTo(whenProcessedBySibs) != 0) {
-                whenProcessedBySibs = file.getHeader().getWhenProcessedBySibs().toDateTimeAtMidnight();
+            final SibsIncommingPaymentFile file = SibsIncommingPaymentFile.parse(filename, sibsContent);
+            if (file.getHeader().getWhenProcessedBySibs().toDateTimeAtStartOfDay().compareTo(whenProcessedBySibs) != 0) {
+                whenProcessedBySibs = file.getHeader().getWhenProcessedBySibs().toDateTimeAtStartOfDay();
             }
 
-            String entityCode = file.getHeader().getEntityCode();
-
-            pool = PaymentCodePool.findByEntityCode(entityCode).findFirst().orElse(null);
-
-            if (pool == null) {
+            String entityReferenceCode = file.getHeader().getEntityCode();
+            
+            if (!SibsPaymentCodePool.find(entityReferenceCode).findAny().isPresent()) {
                 throw new TreasuryDomainException(
-                        "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile.poolNull", entityCode);
+                        "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile.poolNull",
+                        entityReferenceCode);
             }
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-
-            SibsInputFile sibsInputFile =
-                    SibsInputFile.create(pool.getFinantialInstitution(), whenProcessedBySibs, sibsName, originalSibsFilename,
-                            sibsContent, loggedUsername);
+            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            SibsInputFile sibsInputFile = new SibsInputFile(whenProcessedBySibs, filename, 
+                    sibsContent, loggedUsername);
+            
             return sibsInputFile;
         } catch (RuntimeException ex) {
             throw new TreasuryDomainException(

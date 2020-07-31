@@ -57,6 +57,7 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -818,6 +819,18 @@ public class DebitEntry extends DebitEntry_Base {
             return getOpenAmount().add(getPendingInterestAmount());
         }
     }
+    
+    public BigDecimal getOpenAmountWithInterestsAtDate(LocalDate date) {
+        if (isAnnulled()) {
+            return BigDecimal.ZERO;
+        }
+
+        if (TreasuryConstants.isEqual(getOpenAmount(), BigDecimal.ZERO)) {
+            return getOpenAmount();
+        } else {
+            return getOpenAmount().add(getPendingInterestAmount(date));
+        }
+    }
 
     @Atomic
     public void clearInterestRate() {
@@ -864,6 +877,15 @@ public class DebitEntry extends DebitEntry_Base {
 
     public DebitNote getDebitNote() {
         return (DebitNote) getFinantialDocument();
+    }
+
+    public Set<SibsPaymentRequest> getSibsPaymentRequests() {
+        return getSibsPaymentRequestsSet();
+    }
+    
+    public Set<SibsPaymentRequest> getSibsPaymentRequestsSet() {
+        return getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
+                .map(SibsPaymentRequest.class::cast).collect(Collectors.toSet());
     }
 
     @Atomic

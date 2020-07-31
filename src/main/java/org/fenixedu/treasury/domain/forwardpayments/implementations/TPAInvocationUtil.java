@@ -2,8 +2,6 @@ package org.fenixedu.treasury.domain.forwardpayments.implementations;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,8 +14,6 @@ import java.net.URLEncoder;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,9 +31,8 @@ import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.encoders.Hex;
-import org.fenixedu.bennu.io.domain.GenericFile;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentConfiguration;
+import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
@@ -49,8 +44,8 @@ import org.xml.sax.SAXException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.qubit.solution.fenixedu.bennu.webservices.domain.keystore.DomainKeyStore;
 
+@Deprecated
 public class TPAInvocationUtil {
 
     private static final class PropInfo {
@@ -63,7 +58,7 @@ public class TPAInvocationUtil {
         }
     }
 
-    private ForwardPayment forwardPayment;
+    private ForwardPaymentRequest forwardPayment;
 
     private static final Map<String, PropInfo> propsInfo = Maps.newHashMap();
 
@@ -105,26 +100,24 @@ public class TPAInvocationUtil {
         propsInfo.put("XA086", new PropInfo("C", 42));
     }
 
-    public TPAInvocationUtil(final ForwardPayment forwardPayment) {
+    public TPAInvocationUtil(ForwardPaymentRequest forwardPayment) {
         this.forwardPayment = forwardPayment;
     }
 
     public Map<String, String> mapAuthenticationRequest() {
-        final TPAVirtualImplementation implementation =
-                (TPAVirtualImplementation) forwardPayment.getForwardPaymentConfiguration().implementation();
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
 
-        final LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
+        LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
 
         // MBNET Homologacao
 
         // MBNET Producao https://www.mbnet.pt
 
         params.put("A030", padding(TPAVirtualImplementation.AUTHENTICATION_REQUEST_MESSAGE, 4));
-        params.put("A001", padding(forwardPayment.getForwardPaymentConfiguration().getVirtualTPAId(), 9));
-        params.put("C007", padding(forwardPayment.getReferenceNumber(), 15));
+        params.put("A001", padding(implementation.getVirtualTPAId(), 9));
+        params.put("C007", padding(getReferenceNumber(), 15));
         params.put("A105", padding(TPAVirtualImplementation.EURO_CODE, 4));
-        params.put("A061", padding(forwardPayment.getDebtAccount().getFinantialInstitution().getCurrency()
-                .getValueWithScale(forwardPayment.getAmount()).toString(), 8));
+        params.put("A061", padding(Currency.getValueWithScale(forwardPayment.getPayableAmount()).toString(), 8));
         params.put("C046", "");
         params.put("C012", implementation.getReturnURL(forwardPayment));
 
@@ -134,14 +127,18 @@ public class TPAInvocationUtil {
         return params;
     }
 
+    private String getReferenceNumber() {
+        return String.valueOf(this.forwardPayment.getOrderNumber());
+    }
+
     public Map<String, String> postAuthorizationRequest(final LinkedHashMap<String, String> requestMap) {
-        final LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
+        LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
 
         params.put("A030", TPAVirtualImplementation.M001);
-        params.put("A001", padding(forwardPayment.getForwardPaymentConfiguration().getVirtualTPAId(), 9));
-        params.put("C007", padding(forwardPayment.getReferenceNumber(), 15));
-        params.put("A061", padding(forwardPayment.getDebtAccount().getFinantialInstitution().getCurrency()
-                .getValueWithScale(forwardPayment.getAmount()).toString(), 8));
+        params.put("A001", padding(implementation.getVirtualTPAId(), 9));
+        params.put("C007", padding(getReferenceNumber(), 15));
+        params.put("A061", padding(Currency.getValueWithScale(forwardPayment.getPayableAmount()).toString(), 8));
         params.put("A105", padding(TPAVirtualImplementation.EURO_CODE, 4));
 
         final String c013 = hmacsha1(params);
@@ -153,11 +150,12 @@ public class TPAInvocationUtil {
     }
 
     public Map<String, String> postPaymentStatus(final LinkedHashMap<String, String> requestData) {
-        final LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
+        LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
 
         params.put("A030", TPAVirtualImplementation.M020);
-        params.put("A001", padding(forwardPayment.getForwardPaymentConfiguration().getVirtualTPAId(), 9));
-        params.put("C007", padding(forwardPayment.getReferenceNumber(), 15));
+        params.put("A001", padding(implementation.getVirtualTPAId(), 9));
+        params.put("C007", padding(getReferenceNumber(), 15));
 
         final String c013 = hmacsha1(params);
         params.put("C013", c013);
@@ -168,13 +166,13 @@ public class TPAInvocationUtil {
     }
 
     public Map<String, String> postPayment(final DateTime authorizationDate, final LinkedHashMap<String, String> requestData) {
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
         final LinkedHashMap<String, String> params = Maps.newLinkedHashMap();
 
         params.put("A030", TPAVirtualImplementation.M002);
-        params.put("A001", padding(forwardPayment.getForwardPaymentConfiguration().getVirtualTPAId(), 9));
-        params.put("C007", padding(forwardPayment.getReferenceNumber(), 15));
-        params.put("A061", padding(forwardPayment.getDebtAccount().getFinantialInstitution().getCurrency()
-                .getValueWithScale(forwardPayment.getAmount()).toString(), 8));
+        params.put("A001", padding(implementation.getVirtualTPAId(), 9));
+        params.put("C007", padding(getReferenceNumber(), 15));
+        params.put("A061", padding(Currency.getValueWithScale(forwardPayment.getPayableAmount()).toString(), 8));
         params.put("A105", padding(TPAVirtualImplementation.EURO_CODE, 4));
         params.put("A037", authorizationDate.toString("yyyyMMddHHmmss"));
 
@@ -187,10 +185,11 @@ public class TPAInvocationUtil {
     }
 
     private Map<String, String> post(final LinkedHashMap<String, String> params, final boolean isXml) {
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
         try {
             // https://teste.mbnet.pt/pvtn
-            final URL url = new URL(forwardPayment.getForwardPaymentConfiguration().getVirtualTPAMOXXURL());
-            
+            final URL url = new URL(implementation.getVirtualTPAMOXXURL());
+
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
 
@@ -199,7 +198,7 @@ public class TPAInvocationUtil {
             } catch (final Exception e) {
                 throw new RuntimeException(e);
             }
-            
+
             connection.setUseCaches(false);
 
             connection.setDoInput(true);
@@ -321,12 +320,14 @@ public class TPAInvocationUtil {
 
     private SSLSocketFactory getFactory() throws Exception {
         ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-        final String pKeyPassword = forwardPayment.getForwardPaymentConfiguration().getVirtualTPACertificatePassword();
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
+
+        String pKeyPassword = implementation.getVirtualTPACertificatePassword();
 
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
 
-        InputStream keyInput = services.getFileStream(forwardPayment.getForwardPaymentConfiguration().getVirtualTPACertificate());
+        InputStream keyInput = services.getFileStream(implementation.getVirtualTPACertificate());
         keyStore.load(keyInput, pKeyPassword.toCharArray());
         keyInput.close();
 
@@ -363,8 +364,9 @@ public class TPAInvocationUtil {
         }
 
         final HMac hmac = new HMac(new SHA1Digest());
+        TPAVirtualImplementation implementation = (TPAVirtualImplementation) forwardPayment.getDigitalPaymentPlatform();
 
-        hmac.init(new KeyParameter(this.forwardPayment.getForwardPaymentConfiguration().getVirtualTPAMerchantId().getBytes()));
+        hmac.init(new KeyParameter(implementation.getVirtualTPAMerchantId().getBytes()));
         hmac.update(strMensagemASCII.getBytes(), 0, strMensagemASCII.getBytes().length);
         byte[] resBuf = new byte[hmac.getMacSize()];
         hmac.doFinal(resBuf, 0);
