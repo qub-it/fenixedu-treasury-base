@@ -47,10 +47,10 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected void init(final Series paymentsIntegrationSeries, final FinantialInstitution finantialInstitution,
-            final String code, final String externalURL, final String username, final String password,
-            final String implementationClassName, final Long maxSizeBytesToExportOnline) {
-        setActive(true);
+    protected void init(Series paymentsIntegrationSeries, FinantialInstitution finantialInstitution, String code,
+            String externalURL, String username, String password, String implementationClassName,
+            Long maxSizeBytesToExportOnline) {
+        setActive(false);
         setPaymentsIntegrationSeries(paymentsIntegrationSeries);
         setFinantialInstitution(finantialInstitution);
         setCode(code);
@@ -62,11 +62,16 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         setImplementationClassName(implementationClassName);
         setMaxSizeBytesToExportOnline(maxSizeBytesToExportOnline);
         setCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled(false);
+        
         checkRules();
     }
 
     private void checkRules() {
-        if (getPaymentsIntegrationSeries() == null) {
+        if (getDomainRoot() == null) {
+            throw new TreasuryDomainException("error.ERPConfiguration.domainRoot.required");
+        }
+
+        if (Boolean.TRUE.equals(getActive()) && getPaymentsIntegrationSeries() == null) {
             throw new TreasuryDomainException("error.ERPConfiguration.paymentsIntegrationSeries.required");
         }
 
@@ -76,10 +81,9 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     }
 
     @Atomic
-    public void edit(final boolean active, final Series paymentsIntegrationSeries, final String externalURL,
-            final String username, final String password, final boolean exportAnnulledRelatedDocuments,
-            final boolean exportOnlyRelatedDocumentsPerExport, final String implementationClassName,
-            Long maxSizeBytesToExportOnline, final String erpIdProcess) {
+    public void edit(boolean active, Series paymentsIntegrationSeries, String externalURL, String username, String password,
+            boolean exportAnnulledRelatedDocuments, boolean exportOnlyRelatedDocumentsPerExport, String implementationClassName,
+            Long maxSizeBytesToExportOnline, String erpIdProcess) {
         setActive(active);
         setPaymentsIntegrationSeries(paymentsIntegrationSeries);
         setExternalURL(externalURL);
@@ -90,7 +94,7 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         setImplementationClassName(implementationClassName);
         setMaxSizeBytesToExportOnline(maxSizeBytesToExportOnline);
         setErpIdProcess(erpIdProcess);
-        
+
         checkRules();
     }
 
@@ -102,11 +106,11 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     public boolean isDeletable() {
         return true;
     }
-    
+
     public boolean isIntegratedDocumentsExportationEnabled() {
         return getIntegratedDocumentsExportationEnabled();
     }
-    
+
     public boolean isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled() {
         return getCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled();
     }
@@ -114,7 +118,7 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     public boolean isAllowFiscalFixWithLegacyDocsExportedLegacyERP() {
         return getAllowFiscalFixWithLegacyDocsExportedLegacyERP();
     }
-    
+
     @Atomic
     public void delete() {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
@@ -128,10 +132,16 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         deleteDomainObject();
     }
 
+    public static ERPConfiguration createEmpty(FinantialInstitution finantialInstitution) {
+        ERPConfiguration eRPConfiguration = new ERPConfiguration();
+        eRPConfiguration.init(null, finantialInstitution, null, null, null, null, null, 1024l);
+        return eRPConfiguration;
+    }
+
     @Atomic
-    public static ERPConfiguration create(final Series paymentsIntegrationSeries,
-            final FinantialInstitution finantialInstitution, final String code, final String externalURL, final String username,
-            final String password, final String implementationClassName, final Long maxSizeBytesToExportOnline) {
+    public static ERPConfiguration create(Series paymentsIntegrationSeries, FinantialInstitution finantialInstitution,
+            String code, String externalURL, String username, String password, String implementationClassName,
+            Long maxSizeBytesToExportOnline) {
         ERPConfiguration eRPConfiguration = new ERPConfiguration();
         eRPConfiguration.init(paymentsIntegrationSeries, finantialInstitution, code, externalURL, username, password,
                 implementationClassName, maxSizeBytesToExportOnline);

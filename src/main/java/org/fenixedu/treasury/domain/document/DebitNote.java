@@ -47,7 +47,8 @@ import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -163,17 +164,17 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void closeDocument(boolean markDocumentToExport) {
         setDocumentDueDate(maxDebitEntryDueDate());
-        
+
         super.closeDocument(markDocumentToExport);
     }
-    
+
     private LocalDate maxDebitEntryDueDate() {
-        final LocalDate maxDate = getDebitEntries().max(DebitEntry.COMPARE_BY_DUE_DATE).map(DebitEntry::getDueDate)
-                .orElse(getDocumentDueDate());
-        
+        final LocalDate maxDate =
+                getDebitEntries().max(DebitEntry.COMPARE_BY_DUE_DATE).map(DebitEntry::getDueDate).orElse(getDocumentDueDate());
+
         return maxDate.isAfter(getDocumentDate().toLocalDate()) ? maxDate : getDocumentDate().toLocalDate();
     }
-    
+
     // @formatter:off
     /* ********
      * SERVICES
@@ -215,18 +216,18 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
-    public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount, 
+    public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate,
             String originDocumentNumber, String documentObservations) {
         final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
                 documentDate, documentDueDate, originDocumentNumber);
         debitNote.setDocumentObservations(documentObservations);
-        
+
         debitEntry.setFinantialDocument(debitNote);
-        
+
         return debitNote;
     }
-    
+
     public static DebitNote copyDebitNote(final DebitNote debitNoteToCopy, final boolean copyDocumentDate,
             final boolean copyCloseDate, final boolean applyExemptions) {
         final DebitNote result = DebitNote.create(debitNoteToCopy.getDebtAccount(), debitNoteToCopy.getPayorDebtAccount(),
@@ -357,10 +358,11 @@ public class DebitNote extends DebitNote_Base {
 
             //Clear the InterestRate for DebitEntry
             for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
+
                 // Annul payment reference codes
-                for (final MultipleEntriesPaymentCode paymentCode : debitEntry.getPaymentCodesSet()) {
-                    if (paymentCode.getPaymentReferenceCode().isNew() || paymentCode.getPaymentReferenceCode().isUsed()) {
-                        paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+                for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                    if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                        ((SibsPaymentRequest) paymentCode).anull();
                     }
                 }
 
@@ -396,9 +398,9 @@ public class DebitNote extends DebitNote_Base {
                     debitEntry.annulOnEvent();
                 }
 
-                for (final MultipleEntriesPaymentCode paymentCode : debitEntry.getPaymentCodesSet()) {
-                    if (paymentCode.getPaymentReferenceCode().isNew() || paymentCode.getPaymentReferenceCode().isUsed()) {
-                        paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+                for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                    if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                        ((SibsPaymentRequest) paymentCode).anull();
                     }
                 }
             }
@@ -502,11 +504,12 @@ public class DebitNote extends DebitNote_Base {
         updatingDebitNote.setPayorDebtAccount(payorDebtAccount);
 
         for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
-            for (final MultipleEntriesPaymentCode paymentCode : debitEntry.getPaymentCodesSet()) {
-                if (paymentCode.getPaymentReferenceCode().isNew() || paymentCode.getPaymentReferenceCode().isUsed()) {
-                    paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+            for (PaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                    ((SibsPaymentRequest) paymentCode).anull();
                 }
             }
+
         }
 
         return updatingDebitNote;

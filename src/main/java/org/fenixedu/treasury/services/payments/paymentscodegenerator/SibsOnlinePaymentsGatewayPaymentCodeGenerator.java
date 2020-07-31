@@ -25,6 +25,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCodeGenerator {
 
     private PaymentCodePool paymentCodePool;
@@ -134,7 +135,6 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
 
                 throw new TreasuryDomainException(e, message);
             }
-
         }
     }
 

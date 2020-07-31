@@ -9,9 +9,9 @@ import org.fenixedu.treasury.services.payments.paymentscodegenerator.IPaymentCod
 
 import com.google.common.base.Strings;
 
-import pt.ist.fenixWebFramework.renderers.CheckBoxOptionListRenderer;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class PaymentCodeGeneratorInstance extends PaymentCodeGeneratorInstance_Base {
 
     public PaymentCodeGeneratorInstance() {

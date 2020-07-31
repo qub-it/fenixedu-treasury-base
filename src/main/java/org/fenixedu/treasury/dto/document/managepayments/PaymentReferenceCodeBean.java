@@ -29,33 +29,29 @@ package org.fenixedu.treasury.dto.document.managepayments;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.fenixedu.treasury.dto.ITreasuryBean;
-import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.DebitNote;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
+import org.fenixedu.treasury.dto.ITreasuryBean;
+import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.LocalDate;
 
 public class PaymentReferenceCodeBean implements ITreasuryBean {
 
-    private DebitNote debitNote;
-    private PaymentCodePool paymentCodePool;
+    private DigitalPaymentPlatform paymentCodePool;
     private List<TreasuryTupleDataSourceBean> paymentCodePoolDataSource;
-    private java.lang.String referenceCode;
-    private org.joda.time.LocalDate beginDate;
-    private org.joda.time.LocalDate endDate;
-    private java.math.BigDecimal maxAmount;
-    private java.math.BigDecimal minAmount;
-    private java.math.BigDecimal paymentAmount;
-    private java.math.BigDecimal paymentAmountWithInterst;
+    private String referenceCode;
+    private LocalDate validFrom;
+    private LocalDate validTo;
+    private BigDecimal maxAmount;
+    private BigDecimal minAmount;
+    private BigDecimal paymentAmount;
     private boolean isPoolWithFixedAmount;
     private boolean isPoolVariableTimeWindow;
-    private boolean useCustomPaymentAmount;
     private boolean usePaymentAmountWithInterests;
 
     // Several debit entries
@@ -65,26 +61,27 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     // MbwayPaymentRequest
     private String phoneNumberCountryPrefix;
     private String phoneNumber;
-    
+
     public PaymentReferenceCodeBean() {
-        usePaymentAmountWithInterests = false;
-        useCustomPaymentAmount = false;
+        this.usePaymentAmountWithInterests = false;
     }
 
-    public PaymentReferenceCodeBean(final PaymentCodePool paymentCodePool, final DebtAccount debtAccount) {
-        this.paymentCodePool = paymentCodePool;
+    public PaymentReferenceCodeBean(final DigitalPaymentPlatform digitalPaymentPlatform, final DebtAccount debtAccount) {
+        this.paymentCodePool = digitalPaymentPlatform;
         this.debtAccount = debtAccount;
         this.usePaymentAmountWithInterests = false;
-        this.useCustomPaymentAmount = false;
 
-        List<PaymentCodePool> activePools = debtAccount.getFinantialInstitution().getPaymentCodePoolsSet().stream()
-                .filter(x -> Boolean.TRUE.equals(x.getActive())).collect(Collectors.toList());
-        setPaymentCodePoolDataSource(activePools);
+        this.paymentCodePoolDataSource =
+                DigitalPaymentPlatform.findForSibsPaymentCodeService(debtAccount.getFinantialInstitution())
+                        .filter(x -> x.isActive()).map(ISibsPaymentCodePoolService.class::cast)
+                        .map(x -> new TreasuryTupleDataSourceBean(x.getExternalId(),
+                                String.format("[%s] - %s", x.getEntityReferenceCode(), x.getName())))
+                        .collect(Collectors.toList());
     }
 
     public void updateAmountOnSelectedDebitEntries() {
-        this.paymentAmount =
-                this.selectedDebitEntries.stream().map(e -> isUsePaymentAmountWithInterests() ? e.getOpenAmountWithInterests() : e.getOpenAmount())
+        this.paymentAmount = this.selectedDebitEntries.stream()
+                .map(e -> isUsePaymentAmountWithInterests() ? e.getOpenAmountWithInterests() : e.getOpenAmount())
                 .reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO);
     }
 
@@ -93,11 +90,11 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
                 .sorted(DebitEntry.COMPARE_BY_EXTERNAL_ID).collect(Collectors.<DebitEntry> toList());
     }
 
-    public PaymentCodePool getPaymentCodePool() {
+    public DigitalPaymentPlatform getPaymentCodePool() {
         return paymentCodePool;
     }
 
-    public void setPaymentCodePool(PaymentCodePool value) {
+    public void setPaymentCodePool(DigitalPaymentPlatform value) {
         paymentCodePool = value;
     }
 
@@ -105,68 +102,51 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
         return paymentCodePoolDataSource;
     }
 
-    public void setPaymentCodePoolDataSource(List<PaymentCodePool> value) {
-        this.paymentCodePoolDataSource = value.stream().map(x -> {
-            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
-            tuple.setId(x.getExternalId());
-            tuple.setText("[" + x.getEntityReferenceCode() + "] - " + x.getName());
-            return tuple;
-        }).collect(Collectors.toList());
-    }
-
-    public java.lang.String getReferenceCode() {
+    public String getReferenceCode() {
         return referenceCode;
     }
 
-    public void setReferenceCode(java.lang.String value) {
+    public void setReferenceCode(String value) {
         referenceCode = value;
     }
 
-    public org.joda.time.LocalDate getBeginDate() {
-        return beginDate;
+    public LocalDate getValidFrom() {
+        return validFrom;
     }
 
-    public void setBeginDate(org.joda.time.LocalDate value) {
-        beginDate = value;
+    public void setValidFrom(LocalDate value) {
+        validFrom = value;
     }
 
-    public org.joda.time.LocalDate getEndDate() {
-        return endDate;
+    public LocalDate getValidTo() {
+        return validTo;
     }
 
-    public void setEndDate(org.joda.time.LocalDate value) {
-        endDate = value;
+    public void setValidTo(LocalDate value) {
+        validTo = value;
     }
 
-    public java.math.BigDecimal getMaxAmount() {
+    public BigDecimal getMaxAmount() {
         return maxAmount;
     }
 
-    public void setMaxAmount(java.math.BigDecimal value) {
+    public void setMaxAmount(BigDecimal value) {
         maxAmount = value;
     }
 
-    public java.math.BigDecimal getMinAmount() {
+    public BigDecimal getMinAmount() {
         return minAmount;
     }
 
-    public void setMinAmount(java.math.BigDecimal value) {
+    public void setMinAmount(BigDecimal value) {
         minAmount = value;
     }
 
-    public DebitNote getDebitNote() {
-        return debitNote;
-    }
-
-    public void setDebitNote(DebitNote debitNote) {
-        this.debitNote = debitNote;
-    }
-
-    public java.math.BigDecimal getPaymentAmount() {
+    public BigDecimal getPaymentAmount() {
         return paymentAmount;
     }
 
-    public void setPaymentAmount(java.math.BigDecimal paymentAmount) {
+    public void setPaymentAmount(BigDecimal paymentAmount) {
         this.paymentAmount = paymentAmount;
     }
 
@@ -194,14 +174,6 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
         this.isPoolVariableTimeWindow = isPoolVariableTimeWindow;
     }
 
-    public boolean isUseCustomPaymentAmount() {
-        return useCustomPaymentAmount;
-    }
-
-    public void setUseCustomPaymentAmount(boolean useCustomPaymentAmount) {
-        this.useCustomPaymentAmount = useCustomPaymentAmount;
-    }
-
     public List<DebitEntry> getSelectedDebitEntries() {
         return selectedDebitEntries;
     }
@@ -213,17 +185,17 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     public String getPhoneNumberCountryPrefix() {
         return this.phoneNumberCountryPrefix;
     };
-    
+
     public void setPhoneNumberCountryPrefix(String phoneNumberCountryPrefix) {
         this.phoneNumberCountryPrefix = phoneNumberCountryPrefix;
     }
-    
+
     public String getPhoneNumber() {
         return this.phoneNumber;
     }
-    
+
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-    
+
 }

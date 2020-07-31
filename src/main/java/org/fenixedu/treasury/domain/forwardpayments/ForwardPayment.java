@@ -59,6 +59,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class ForwardPayment extends ForwardPayment_Base implements IPaymentProcessorForInvoiceEntries {
 
     private static final Comparator<ForwardPayment> ORDER_COMPARATOR = new Comparator<ForwardPayment>() {

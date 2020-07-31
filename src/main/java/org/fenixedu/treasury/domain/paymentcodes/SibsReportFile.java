@@ -139,32 +139,6 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
         return TreasuryAccessControlAPI.isBackOfficeMember(username);
     }
 
-    public Integer getNumberOfTransactions() {
-        return this.getSibsTransactionsSet().size();
-    }
-
-    public String getTransactionDescription(Integer index) {
-        if (this.getSibsTransactionsSet().size() > index) {
-            if (index > 0) {
-                return this.getSibsTransactionsSet().stream().skip(index - 1).findFirst().get().toString();
-            } else if (index == 0) {
-                return this.getSibsTransactionsSet().iterator().next().toString();
-            }
-        }
-        return "";
-    }
-
-    public BigDecimal getTransactionAmount(Integer index) {
-        if (this.getSibsTransactionsSet().size() > index) {
-            if (index > 0) {
-                return this.getSibsTransactionsSet().stream().skip(index - 1).findFirst().get().getAmountPayed();
-            } else if (index == 0) {
-                return this.getSibsTransactionsSet().iterator().next().getAmountPayed();
-            }
-        }
-        return BigDecimal.ZERO;
-    }
-
     @Atomic
     public void updateLogMessages(ProcessResult result) {
         StringBuilder build = new StringBuilder();

@@ -7,9 +7,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.reflect.MethodUtils;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
+import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.springframework.ui.Model;
 
 public interface IForwardPaymentController {
@@ -18,26 +18,26 @@ public interface IForwardPaymentController {
     public static final String PROCESS_FORWARD_PAYMENT_URI = "/processforwardpayment";
     public static final String PROCESS_FORWARD_PAYMENT_URL = CONTROLLER_URL + PROCESS_FORWARD_PAYMENT_URI;
 
-    public static Map<Class<? extends IForwardPaymentImplementation>, Class<? extends IForwardPaymentController>> CONTROLLER_MAP =
+    public static Map<Class<? extends IForwardPaymentPlatformService>, Class<? extends IForwardPaymentController>> CONTROLLER_MAP =
             new HashMap<>();
-    
-    public static void registerForwardPaymentController(
-            Class<? extends IForwardPaymentImplementation> implementationClass, 
+
+    public static void registerForwardPaymentController(Class<? extends IForwardPaymentPlatformService> implementationClass,
             Class<? extends IForwardPaymentController> controllerClass) {
         CONTROLLER_MAP.put(implementationClass, controllerClass);
     }
-    
-    public static IForwardPaymentController getForwardPaymentController(final ForwardPayment forwardPayment) {
-        
+
+    public static IForwardPaymentController getForwardPaymentController(final PaymentRequest request) {
+
         try {
-            final Class<IForwardPaymentImplementation> implementationClass = ClassUtils.getClass(forwardPayment.getForwardPaymentConfiguration().getImplementation());
-            Object result = MethodUtils.invokeStaticMethod(CONTROLLER_MAP.get(implementationClass), "getForwardPaymentController", forwardPayment);
+            final Class<?> implementationClass = (Class<?>) request.getDigitalPaymentPlatform().getClass();
+            Object result = MethodUtils.invokeStaticMethod(CONTROLLER_MAP.get(implementationClass), "getForwardPaymentController",
+                    request);
             return (IForwardPaymentController) result;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
-    
-    public String processforwardpayment(final ForwardPayment forwardPayment, final Model model,
+
+    public String processforwardpayment(final ForwardPaymentRequest forwardPayment, final Model model,
             final HttpServletResponse response, final HttpSession session);
 }
