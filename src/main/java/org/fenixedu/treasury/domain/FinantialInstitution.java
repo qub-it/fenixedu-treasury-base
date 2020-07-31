@@ -27,6 +27,7 @@
  */
 package org.fenixedu.treasury.domain;
 
+
 import static org.fenixedu.treasury.util.TreasuryConstants.DEFAULT_LANGUAGE;
 
 import java.util.Comparator;

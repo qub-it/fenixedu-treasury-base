@@ -1,5 +1,6 @@
 package org.fenixedu.treasury.domain.forwardpayments;
 
+
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.io.IOException;
@@ -38,7 +39,6 @@ import org.fenixedu.treasury.domain.forwardpayments.exceptions.ForwardPaymentAlr
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentImplementation;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessPaymentStatusBean;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -806,11 +806,6 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     @Override
     public boolean isForwardPayment() {
         return true;
-    }
-
-    @Override
-    public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway() {
-        return getForwardPaymentConfiguration().getSibsOnlinePaymentsGateway();
     }
 
     @Override

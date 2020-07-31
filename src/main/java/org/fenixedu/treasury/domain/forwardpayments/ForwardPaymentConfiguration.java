@@ -138,10 +138,6 @@ public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Bas
             throw new TreasuryDomainException("error.ForwardPaymentConfiguration.cannot.delete");
         }
 
-        if (getSibsOnlinePaymentsGateway() != null) {
-            throw new TreasuryDomainException("error.ForwardPaymentConfiguration.remove.sibs.oppwa.configuration.first");
-        }
-
         this.setDomainRoot(null);
         this.setFinantialInstitution(null);
         this.setPaymentMethod(null);

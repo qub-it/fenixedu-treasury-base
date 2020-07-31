@@ -240,7 +240,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
     }
 
     public boolean isDeletable() {
-        return this.isPreparing() && getPaymentCodesSet().isEmpty();
+        return this.isPreparing();
     }
 
     public boolean isAnnulled() {

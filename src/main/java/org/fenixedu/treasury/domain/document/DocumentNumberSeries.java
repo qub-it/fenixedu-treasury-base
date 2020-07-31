@@ -111,7 +111,7 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     public boolean isDeletable() {
-        return getFinantialDocumentsSet().isEmpty() && getPaymentCodePoolPaymentSeriesSet().isEmpty();
+        return getFinantialDocumentsSet().isEmpty();
     }
 
     public void editReplacingPrefix(final boolean replacePrefix, final String replacingPrefix) {

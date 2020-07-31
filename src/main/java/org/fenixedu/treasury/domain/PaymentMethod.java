@@ -70,7 +70,7 @@ public class PaymentMethod extends PaymentMethod_Base {
         findByCode(getCode());
         getName().getLocales().stream().forEach(l -> findByName(getName().getContent(l)));
     }
-    
+
     public boolean isAvailableForPaymentInApplication() {
         return getAvailableForPaymentInApplication();
     }
@@ -85,8 +85,7 @@ public class PaymentMethod extends PaymentMethod_Base {
     }
 
     public boolean isDeletable() {
-        return getPaymentCodePoolPaymentMethodSet().isEmpty() && getPaymentEntriesSet().isEmpty()
-                && getReimbursementEntriesSet().isEmpty();
+        return getPaymentEntriesSet().isEmpty() && getReimbursementEntriesSet().isEmpty();
     }
 
     @Atomic
@@ -114,7 +113,7 @@ public class PaymentMethod extends PaymentMethod_Base {
     public static Stream<PaymentMethod> findAll() {
         return FenixFramework.getDomainRoot().getPaymentMethodsSet().stream();
     }
-    
+
     public static Stream<PaymentMethod> findAvailableForPaymentInApplication() {
         return findAll().filter(l -> l.isAvailableForPaymentInApplication());
     }

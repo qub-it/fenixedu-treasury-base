@@ -100,7 +100,7 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
     }
 
     public boolean isDeletable() {
-        return getReferenceCodesSet().isEmpty() && getSibsTransactionsSet().isEmpty();
+        return getSibsTransactionsSet().isEmpty();
     }
 
     @Override

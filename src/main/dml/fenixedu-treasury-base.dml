@@ -790,25 +790,6 @@ class payments.PaymentRequestLogFile /* implements IGenericFile */  {
  * ----
  */
 
-class paymentcodes.SibsConfiguration extends integration.Configuration {
-    //No fields for now...
-    String entityReferenceCode;
-    String sourceInstitutionId;
-    String destinationInstitutionId;
-    String sibsPaymentsBrokerUrl;
-    String sibsPaymentsBrokerSharedKey;
-}
-
- relation SibsConfigurationFinantialInstitution {
-       FinantialInstitution playsRole finantialInstitution {
-           multiplicity 1..1;
-       }
-       
-       paymentcodes.SibsConfiguration playsRole sibsConfiguration {
-           multiplicity 0..1;
-       }
-    }
-
 class paymentcodes.SibsPaymentRequest extends payments.PaymentRequest {
        String referenceCode;
        PaymentReferenceCodeStateType state;
@@ -853,19 +834,6 @@ class paymentcodes.SibsReferenceCode {
 		}
 	}
 
-// Deprecated
-class paymentcodes.PaymentReferenceCode {
-       String referenceCode;
-       LocalDate beginDate;
-       LocalDate endDate;
-       PaymentReferenceCodeStateType state;
-       BigDecimalT maxAmount;
-       BigDecimalT minAmount;
-       BigDecimalT payableAmount;
-       String sibsMerchantTransactionId;
-       String sibsReferenceId;
-}
-
 class paymentcodes.integration.SibsPaymentCodePool extends payments.integration.DigitalPaymentPlatform {
 	String entityReferenceCode;
 	long minReferenceCode;
@@ -881,159 +849,6 @@ class paymentcodes.integration.SibsPaymentCodePool extends payments.integration.
     String destinationInstitutionId;
 }
 
-// Deprecated
-class paymentcodes.pool.PaymentCodePool {
-	String name;
-	String entityReferenceCode;
-	Long minReferenceCode;
-	Long maxReferenceCode;
-	BigDecimalT minAmount;
-	BigDecimalT maxAmount;
-	LocalDate validFrom;
-	LocalDate validTo;
-	Boolean active;
-	Boolean useCheckDigit;
-	boolean generateReferenceCodeOnDemand;
-	Long nextReferenceCode;
-	boolean invalidateAnnuledCodesInSibsOutputFiles;
-}
-	
-    relation PaymentCodePoolPaymentMethod {
-       PaymentMethod playsRole paymentMethod {
-           multiplicity 1..1;
-       }
-       
-       paymentcodes.pool.PaymentCodePool playsRole paymentCodePoolPaymentMethod {
-           multiplicity *;
-       }
-    }
-	
-	relation PaymentCodePoolDocumentNumberSeries {
-	   document.DocumentNumberSeries playsRole documentSeriesForPayments {
-	       multiplicity 1..1;
-	   }
-	   
-	   paymentcodes.pool.PaymentCodePool playsRole paymentCodePoolPaymentSeries {
-	       multiplicity *;
-	   }
-	}
-	
-	relation PaymentCodePoolFinantialInstitution {
-		FinantialInstitution playsRole finantialInstitution {
-			multiplicity 1..1;
-		}
-	
-		paymentcodes.pool.PaymentCodePool playsRole paymentCodePools{
-			multiplicity *;
-		}
-	}
-	
-	relation PaymentReferenceCodePaymentCodePool {
-		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool {
-			multiplicity 1..1;
-		}
-	
-		paymentcodes.PaymentReferenceCode playsRole paymentReferenceCodes{
-			multiplicity *;
-		}
-	}
-	
-	class paymentcodes.PaymentCodeTarget {
-	   Boolean valid;
-    }
-
-    class paymentcodes.MultipleEntriesPaymentCode extends paymentcodes.PaymentCodeTarget {
-    }
-
-    class paymentcodes.FinantialDocumentPaymentCode extends paymentcodes.PaymentCodeTarget {
-    }
-    
-    relation PaymentReferenceCodeTargetPaymentCode {
-        paymentcodes.PaymentCodeTarget playsRole targetPayment {
-            multiplicity 0..1;
-        }
-    
-        paymentcodes.PaymentReferenceCode playsRole paymentReferenceCode{
-            multiplicity 1..1;
-        }
-    }
-    
-    relation PaymentCodeTargetBennu {
-        paymentcodes.PaymentCodeTarget playsRole targetPayment {
-            multiplicity *;
-        }
-    
-	    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-	        multiplicity 1..1;
-	    }
-    }
-
-    relation FinantialDocumentPaymentCodeFinantialDocument {
-        document.FinantialDocument playsRole finantialDocument {
-            multiplicity 1..1;
-        }
-    
-        paymentcodes.FinantialDocumentPaymentCode playsRole paymentCodes{
-            multiplicity *;
-        }
-    }
-
-    relation MultipleEntriesPaymentCodeInvoiceEntry {
-        document.InvoiceEntry playsRole invoiceEntries {
-            multiplicity *;
-        }
-    
-        paymentcodes.MultipleEntriesPaymentCode playsRole paymentCodes{
-            multiplicity *;
-        }
-    }
-
-    relation PaymentReferenceCodeTargetSettlementNote {
-        paymentcodes.PaymentCodeTarget playsRole usedInTargetPayment {
-            multiplicity *;
-        }
-    
-        document.SettlementNote playsRole settlementNotes{
-            multiplicity *;
-        }
-    }
-	
-	/* The relation with debt account is to pay when debts are deleted */
-	relation PaymentReferenceCodeTargetDebtAccount {
-		paymentcodes.PaymentCodeTarget playsRole paymentCodeTargets {
-			multiplicity *;
-		}
-		
-		debt.DebtAccount playsRole debtAccount {
-			multiplicity 0..1;
-		}
-	}
-	
-class paymentcodes.pool.PaymentCodeGeneratorInstance {
-	String name;
-	String implementationClassName;
-}
-
-	relation PaymentCodeGeneratorInstanceDomainRoot {
-		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-			multiplicity 1..1;
-		}
-		
-		paymentcodes.pool.PaymentCodeGeneratorInstance playsRole paymentCodeGeneratorInstances {
-			multiplicity *;
-		}
-	}
-	
-	relation PaymentCodeGeneratorInstancePaymentCodePool {
-		paymentcodes.pool.PaymentCodeGeneratorInstance playsRole paymentCodeGeneratorInstance {
-			multiplicity 0..1;
-		}
-		
-		paymentcodes.pool.PaymentCodePool playsRole paymentCodePools {
-			multiplicity *;
-		}
-		
-	}
 
 class paymentcodes.SibsPaymentCodeTransaction extends payments.PaymentTransaction {
 	String comments;
@@ -1100,16 +915,6 @@ class paymentcodes.SibsTransactionDetail  {
             }
         }
 	
-		relation PaymentReferenceCodeSibsReportFile {
-			paymentcodes.SibsReportFile playsRole reportedInFiles {
-				multiplicity *;
-			}
-		   
-			paymentcodes.PaymentReferenceCode playsRole referenceCodes {
-				multiplicity *;
-			}
-		}
-		
 		relation SibsPaymentCodeTransactionSibsReportFile {
 			paymentcodes.SibsReportFile playsRole sibsReportFile {
 				multiplicity 0..1;
@@ -2591,9 +2396,9 @@ class FiscalYear {
 	
 
 /* 
- * *************************
- * SibsOnlinePaymentsGateway
- * *************************	
+ * *******************
+ * SibsPaymentsGateway
+ * *******************
  */
  
 class sibspaymentsgateway.integration.SibsPaymentsGateway extends payments.integration.DigitalPaymentPlatform {
@@ -2606,69 +2411,6 @@ class sibspaymentsgateway.integration.SibsPaymentsGateway extends payments.integ
 	int numberOfMonthsToExpirePaymentReferenceCode;
 	boolean sendBillingDataInOnlinePayment;
 }
-
-class sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway {
-	String sibsEntityId;
-	String sibsEndpointUrl;
-	String bearerToken;
-	String aesKey;
-	String merchantTransactionIdPrefix;
-	long merchantTransactionIdCounter;
-	SibsOnlinePaymentsGatewayEnviromentMode enviromentMode;
-	Boolean mbwayActive;
-	int numberOfMonthsToExpirePaymentReferenceCode;
-	boolean sendBillingDataInOnlinePayment;
-}
-
-	relation SibsOnlinePaymentsGatewayDomainRoot {
-		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-			multiplicity 1..1;
-		}
-	
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole sibsOnlinePaymentsGateway {
-			multiplicity *;
-		}
-	}
-
-	relation SibsOnlinePaymentsGatewayPaymentCodePool {
-		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool {
-			multiplicity 1..1;
-		}
-		
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole sibsOnlinePaymentsGateway {
-			multiplicity 0..1;
-		}
-	}
-
-	relation SibsOnlinePaymentsGateway {
-		forwardpayments.ForwardPaymentConfiguration playsRole forwardPaymentConfiguration {
-			multiplicity 0..1;
-		}
-		
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole sibsOnlinePaymentsGateway {
-			multiplicity 0..1;
-		}
-	}
-	
-	relation SibsOnlinePaymentsGatewayMbwayPaymentMethod {
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole {
-			multiplicity *;
-		}
-	
-		PaymentMethod playsRole mbwayPaymentMethod {
-			multiplicity 1..1;
-		}
-	}
-
-	relation SibsOnlinePaymentsGatewayMbwayDocumentNumberSeries {
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole {
-			multiplicity *;
-		}
-	
-		document.DocumentNumberSeries playsRole mbwayDocumentSeries {
-			multiplicity 1..1;
-		}
-	}
 	
 class sibspaymentsgateway.SibsPaymentsGatewayLog extends payments.PaymentRequestLog {
 	
@@ -2690,76 +2432,6 @@ class sibspaymentsgateway.SibsPaymentsGatewayLog extends payments.PaymentRequest
 	
 	boolean sibsTransactionDuplicated;
 }
-
-class sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog {
-	String operationCode;
-	DateTime creationDate;
-	String responsibleUsername;
-	
-	String merchantTransactionId;
-	String transactionId;
-	String paymentCode;
-	String referenceId;
-
-	BigDecimalT amount;
-	DateTime paymentDate;
-
-	String customerFiscalNumber;
-	String customerName;
-	String customerBusinessIdentification;
-
-	DateTime requestSendDate;
-	DateTime requestReceiveDate;
-	
-	String requestPayloadFileId;
-	String responsePayloadFileId;
-
-	boolean exceptionOccured;
-	String exceptionLogFileId;
-	
-	boolean operationSuccess;
-	boolean transactionPaid;
-	
-	String operationResultCode;
-	String operationResultDescription;
-	
-	String notificationInitializationVector;
-	String notificationAuthTag;
-	String notificationEncryptedPayloadFileId;
-	
-	boolean sibsTransactionDuplicated;
-	String settlementNoteNumbers;
-}
-
-	relation SibsOnlinePaymentsGatewayLogDomainRoot {
-		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-			multiplicity 1..1;
-		}
-	
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog playsRole sibsOnlinePaymentsGatewayLogs {
-			multiplicity *;
-		}
-	}
-
-	relation SibsOnlinePaymentsGatewayLogGateway {
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole sibsOnlinePaymentsGateway {
-			multiplicity 0..1;
-		}
-	
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog playsRole sibsOnlinePaymentsGatewayLogs {
-			multiplicity *;
-		}
-	}
-
-	relation SibsOnlinePaymentsGatewayLogDebtAccount {
-		debt.DebtAccount playsRole debtAccount {
-			multiplicity 0..1;
-		}
-	
-		sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog playsRole sibsOnlinePaymentsGatewayLogs {
-			multiplicity *;
-		}
-	}
 
 class sibspaymentsgateway.MbwayPaymentRequest extends payments.PaymentRequest {
 	String phoneNumber;
