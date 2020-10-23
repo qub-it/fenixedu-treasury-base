@@ -5,21 +5,23 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.qubit.solution.fenixedu.build</groupId>
-		<artifactId>qub-fenixedu-project</artifactId>
-		<version>1.2.0</version>
+		<groupId>com.qubit.terra.build</groupId>
+		<artifactId>qub-maven-fullstack-build</artifactId>
+		<version>1.3.13</version>
 	</parent>
 
-	<groupId>org.fenixedu</groupId>
-	<artifactId>fenixedu-treasury-base</artifactId>
-	<version>7.0.5</version>
+	<groupId>com.qubit.solution.qubEdu.module</groupId>
+	<artifactId>fenixedu-treasury-base-iscte</artifactId>
+	<version>6.1.2</version>
 	<packaging>jar</packaging>
 
-	<name>Treasury</name>
+	<name>Treasury Base ISCTE</name>
 
 	<properties>
-		<version.org.fenixedu.bennu>6.0.8-FORK</version.org.fenixedu.bennu>
+		<fenix.framework.version>2.8.0</fenix.framework.version>
+		<qubEdu.framework.version>3.4.12-iscte-fork</qubEdu.framework.version>
 		<version.pt.ist.standards>1.1.0-SNAPSHOT</version.pt.ist.standards>
+		<iscte.fenix-repo.url>file:///home/omnis-dev/development/workspaces/iscte/fenix-iscte-iul-artifact-repository</iscte.fenix-repo.url>
 	</properties>
 
 	<dependencyManagement>
@@ -41,8 +43,51 @@
 		</dependencies>
 	</dependencyManagement>
 
-
 	<dependencies>
+		<dependency>
+			<groupId>com.qubit.solution.qubEdu.framework</groupId>
+			<artifactId>qubEdu-framework</artifactId>
+			<version>${qubEdu.framework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>pt.iscte</groupId>
+			<artifactId>fenix-web-framework</artifactId>
+			<version>3.0.2-iscte</version>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-web-docs</artifactId>
+			<version>1.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-reporting</artifactId>
+			<version>3.15.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-workflow</artifactId>
+			<version>4.2.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-augmentation</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-surveys</artifactId>
+			<version>2.12.4</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-domain-serializer</artifactId>
+			<version>1.0.2</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>pt.ist</groupId>
 			<artifactId>standards</artifactId>
@@ -52,11 +97,6 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
-		</dependency>
-		<dependency>
-			<groupId>com.qubit.solution.fenixedu</groupId>
-			<artifactId>bennu-webservices-core</artifactId>
-			<version>2.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.fenixedu</groupId>
@@ -105,34 +145,117 @@
 	</dependencies>
 
 	<pluginRepositories>
+                <pluginRepository>
+                        <id>fenix-iscte-iul-artifact-repository</id>
+                        <url>${iscte.fenix-repo.url}</url>
+                </pluginRepository>
 		<pluginRepository>
-			<id>ulisboa-repo</id>
-			<url>https://nexjen.ulisboa.pt/nexus/content/groups/public/</url>
+			<id>qubIT-repo</id>
+			<url>https://repository.qub-it.com/nexus/content/groups/qubITRepo</url>
 		</pluginRepository>
 	</pluginRepositories>
 
 	<repositories>
+                <repository>
+                        <id>fenix-iscte-iul-artifact-repository</id>
+                        <url>${iscte.fenix-repo.url}</url>
+                </repository>
 		<repository>
-			<id>ulisboa-repo</id>
-			<url>https://nexjen.ulisboa.pt/nexus/content/groups/public/</url>
+			<id>qubIT-repo-public</id>
+			<url>https://repository.qub-it.com/nexus/content/groups/public</url>
 		</repository>
 		<repository>
-			<id>fenixedu-maven-repository</id>
-			<url>https://repo.fenixedu.org/fenixedu-maven-repository</url>
+			<id>qubIT-repo</id>
+			<url>https://repository.qub-it.com/nexus/content/groups/qubITRepo</url>
 		</repository>
 	</repositories>
+	
 	<distributionManagement>
 		<repository>
-			<id>ulisboa-repo</id>
-			<url>https://nexjen.ulisboa.pt/nexus/content/repositories/releases/</url>
+			<id>fenix-iscte-iul-artifact-repository</id>
+			<url>${iscte.fenix-repo.url}</url>
 		</repository>
-		<snapshotRepository>
-			<id>ulisboa-repo</id>
-			<url>https://nexjen.ulisboa.pt/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository>
 	</distributionManagement>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>3.2.0</version>
+					<configuration>
+						<archive>
+							<manifest>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							</manifest>
+							<manifestSections>
+								<manifestSection>
+									<name>qubJar</name>
+									<manifestEntries>
+										<artifact-name>
+											${project.artifactId}
+										</artifact-name>
+										<artifact-build-version>
+											${project.version}
+										</artifact-build-version>
+										<artifact-build-date>
+											${maven.build.timestamp}
+										</artifact-build-date>
+										<artifact-built-by>
+											${user.name}
+										</artifact-built-by>
+										<artifact-src-dir-path>
+											${project.basedir}/src/main/java/
+										</artifact-src-dir-path>
+										<artifact-base-dir-path>
+											${project.basedir}
+										</artifact-base-dir-path>
+										<artifact-bootstrap-class>
+											com.qubit.solution.qubEdu.module.treasury.QubEduTreasuryPlugin
+										</artifact-bootstrap-class>
+										<artifact-license>
+										</artifact-license>
+										<artifact-dependencies>
+											qubEdu-framework
+										</artifact-dependencies>
+										<artifact-repository>
+										</artifact-repository>
+									</manifestEntries>
+								</manifestSection>
+								<manifestSection>
+									<name>qubModule</name>
+									<manifestEntries>
+										<module-overrides-domain></module-overrides-domain>
+										<module-overrides-enum></module-overrides-enum>
+										<core-source-path></core-source-path>
+									</manifestEntries>
+								</manifestSection>
+								<manifestSection>
+									<name>qubExpandable</name>
+									<manifestEntries>
+										<static-resources-folders>META-INF/resources</static-resources-folders>
+										<jars-folders></jars-folders>
+									</manifestEntries>
+								</manifestSection>
+							</manifestSections>
+						</archive>
+						<excludes>
+							<exclude>**/domain/**/*_Base.class</exclude>
+							<exclude>**/domain/**/*_Base$*.class</exclude>
+							<exclude>**/**/domain/**/**MetaHolder.class</exclude>
+							<exclude>pt/ist/fenixframework/**/**_Base*.class</exclude>
+							<exclude>pt/ist/fenixframework/**/**_Base$*.class</exclude>
+							<exclude>pt/ist/fenixframework/**/**MetaHolder.class</exclude>
+							<exclude>**/pt/ist/fenixframework/ValueTypeSerializer*</exclude>
+							<exclude>**/pt/ist/fenixframework/backend/CurrentBackEndId*</exclude>
+							<exclude>**/git.properties</exclude>
+						</excludes>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -198,149 +321,6 @@
 							<sources>
 								<source>${basedir}/target/generated-sources/xsd/</source>
 							</sources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<executable>maven</executable>
-					<arguments></arguments>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>8</source>
-					<target>8</target>
-				</configuration>
-			</plugin>
-			<!-- Dependency needed because we cannot be a child of 2 parent projects 
-				(versioning and webservices) -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>jaxws-maven-plugin</artifactId>
-				<version>2.6</version>
-				<executions>
-					<execution>
-						<id>SIAG</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>wsimport</goal>
-						</goals>
-						<configuration>
-							<packageName>org.fenixedu.treasury.services.integration.erp.siag</packageName>
-
-							<!-- <wsdlDirectory> -->
-							<!-- src/main/webapp/wsdl -->
-							<!-- </wsdlDirectory> -->
-							<wsdlFiles>
-								<wsdlFile>
-									${basedir}/src/main/resources/wsdl/SIAGGestaoAcademicaService.wsdl
-								</wsdlFile>
-							</wsdlFiles>
-							<wsdlLocation>
-								/wsdl/SIAGGestaoAcademicaService.wsdl
-							</wsdlLocation>
-							<vmArgs>
-								<vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
-							</vmArgs>
-						</configuration>
-
-					</execution>
-					<execution>
-						<id>SINGAP</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>wsimport</goal>
-						</goals>
-						<configuration>
-							<packageName>org.fenixedu.treasury.services.integration.erp.singap</packageName>
-
-							<!-- <wsdlDirectory> -->
-							<!-- src/main/webapp/wsdl -->
-							<!-- </wsdlDirectory> -->
-							<wsdlFiles>
-								<wsdlFile>
-									${basedir}/src/main/resources/wsdl/Fenix_Singap_v2.0.wsdl
-								</wsdlFile>
-							</wsdlFiles>
-							<wsdlLocation>
-								/wsdl/Fenix_Singap_v2.0.wsdl
-							</wsdlLocation>
-							<vmArgs>
-								<vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
-							</vmArgs>
-						</configuration>
-
-					</execution>
-					<execution>
-						<id>SINGAP_WCF</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>wsimport</goal>
-						</goals>
-						<configuration>
-							<packageName>org.fenixedu.treasury.services.integration.erp.singapWCF</packageName>
-
-							<!-- <wsdlDirectory> -->
-							<!-- src/main/webapp/wsdl -->
-							<!-- </wsdlDirectory> -->
-							<wsdlFiles>
-								<wsdlFile>
-									${basedir}/src/main/resources/wsdl/WCFGenio.WSF.WCFServiceWSF-1.0.0-15092015.svc.wsdl
-								</wsdlFile>
-							</wsdlFiles>
-							<wsdlLocation>
-								/wsdl/WCFGenio.WSF.WCFServiceWSF-1.0.0-15092015.svc.wsdl
-							</wsdlLocation>
-							<extension>true</extension>
-							<protocol>Xsoap1.2</protocol>
-							<vmArgs>
-								<vmArg>-Djavax.xml.accessExternalSchema=all </vmArg>
-							</vmArgs>
-						</configuration>
-
-					</execution>
-					<execution>
-						<id>SAP</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>wsimport</goal>
-						</goals>
-						<configuration>
-							<packageName>org.fenixedu.treasury.services.integration.erp.sap</packageName>
-
-							<!-- <wsdlDirectory> -->
-							<!-- src/main/webapp/wsdl -->
-							<!-- </wsdlDirectory> -->
-							<wsdlFiles>
-								<wsdlFile>
-									${basedir}/src/main/resources/wsdl/zulws_faturacaoclientes_blk_2017_01_17.xml
-								</wsdlFile>
-							</wsdlFiles>
-							<wsdlLocation>
-								/wsdl/zulws_faturacaoclientes_blk_2017_01_17.xml
-							</wsdlLocation>
-							<extension>true</extension>
-							<protocol>Xsoap1.2</protocol>
-							<vmArgs>
-								<vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
-							</vmArgs>
 						</configuration>
 					</execution>
 				</executions>

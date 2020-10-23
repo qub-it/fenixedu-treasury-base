@@ -19,6 +19,14 @@ valueType java.math.BigDecimal as BigDecimalT
 	}
 } 
 
+valueType org.fenixedu.commons.i18n.LocalizedString as LocalizedStringT {
+	externalizeWith {
+		JsonElement json();
+	}
+	
+	internalizeWith fromJson();
+}
+
 valueType pt.ist.standards.geographic.Municipality as Municipality {
     externalizeWith {
         String pt.ist.standards.geographic.TreasuryGeographicInfoLoader.externalizePlace();
@@ -53,17 +61,17 @@ valueType pt.ist.standards.geographic.Country as Country {
 
 class FiscalCountryRegion {
 	String fiscalCode;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class CustomerType {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	LocalizedStringT name (REQUIRED);
 }
 
 class VatType {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class Vat {
@@ -75,18 +83,18 @@ class Vat {
 class VatExemptionReason
 {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class ProductGroup {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class Product {
 	String code;
-	LocalizedString name;
-	LocalizedString unitOfMeasure;
+	LocalizedStringT name;
+	LocalizedStringT unitOfMeasure;
 	boolean active;
 	boolean legacy;
 	int tuitionInstallmentOrder;
@@ -94,14 +102,14 @@ class Product {
 
 class Currency {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	String isoCode;
 	String symbol;
 }
 
 class PaymentMethod {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	boolean availableForPaymentInApplication;
 }
 
@@ -143,7 +151,7 @@ class FinantialInstitution {
 
 class FinantialEntity {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	LocalizedStringT name (REQUIRED);
 } 
 
 
@@ -244,7 +252,7 @@ class document.TreasuryDocumentTemplateFile /* implements IGenericFile */ {
 class document.FinantialDocumentType {
 	FinantialDocumentTypeEnum type;
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	String documentNumberSeriesPrefix;
 	boolean invoice;
 	
@@ -252,7 +260,7 @@ class document.FinantialDocumentType {
 
 class document.Series {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	LocalizedStringT name (REQUIRED);
 	boolean active;
 	boolean externSeries;
 	boolean certificated;
@@ -278,7 +286,7 @@ class document.DocumentNumberSeries {
 }
 
 class event.TreasuryEvent {
-	LocalizedString description;
+	LocalizedStringT description;
 	String propertiesJsonMap;
 }
 
@@ -422,7 +430,7 @@ class debt.DebitEntrySuspensionRequestEntry {
 
 class exemption.TreasuryExemptionType {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	BigDecimalT defaultExemptionPercentage;
 	boolean active;
 }
@@ -524,7 +532,7 @@ class tariff.InterestRate {
 class tariff.GlobalInterestRate {
     int year;
     LocalDate firstDay;
-    LocalizedString description;
+    LocalizedStringT description;
     BigDecimalT rate;
     boolean applyPaymentMonth;
     boolean applyInFirstWorkday;
@@ -700,7 +708,7 @@ class payments.PaymentRequestLog {
 	DateTime creationDate;
 	String responsibleUsername;	
 	String stateCode;
-	LocalizedString stateDescription;
+	LocalizedStringT stateDescription;
 	String operationCode;
 	String statusCode;
 	String statusMessage;
@@ -2919,7 +2927,7 @@ class paymentPlan.PaymentPlan{
 
 
 class paymentPlan.Installment {
-	LocalizedString description;
+	LocalizedStringT description;
 	LocalDate dueDate;
 	String propertiesJsonMap;
 }
@@ -3056,7 +3064,7 @@ class paymentPlan.InstallmentSettlementEntry{
 
 class paymentPlan.PaymentPlanSettings{
 	Boolean active;
-	LocalizedString installmentDescriptionFormat;
+	LocalizedStringT installmentDescriptionFormat;
 	Boolean interestCalculationOfDebitsInPlans;
 	Integer numberOfPaymentPlansActives;
 }	
@@ -3112,7 +3120,7 @@ class paymentPlan.PaymentPlanSettings{
 	}
 	
 class paymentPlan.PaymentPlanNumberGenerator {
-	LocalizedString name;
+	LocalizedStringT name;
 	String prefix;
 	Integer initialValue;
 	Integer actualValue;
@@ -3160,7 +3168,7 @@ class paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 	}
 
 class paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
-	LocalizedString name;
+	LocalizedStringT name;
 	Boolean active;
 	Boolean conjunction;
 }
