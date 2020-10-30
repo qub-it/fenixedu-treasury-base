@@ -4,14 +4,19 @@ import java.io.InputStream;
 import java.util.Locale;
 import java.util.Set;
 
+import javax.servlet.http.HttpSession;
+
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
+import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.joda.time.DateTime;
+
+import pt.ist.fenixframework.DomainObject;
 
 public interface ITreasuryPlatformDependentServices {
 
@@ -66,6 +71,8 @@ public interface ITreasuryPlatformDependentServices {
 	// TODO: provide the default locale of the platform
 	Locale defaultLocale();
 	
+	Locale currentLocale();
+	
 	Set<Locale> availableLocales();
 
 	/* Bundles */
@@ -95,5 +102,14 @@ public interface ITreasuryPlatformDependentServices {
     
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
     PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
+    void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
+
+    /* Web */
+    String calculateURLChecksum(String urlToChecksum, HttpSession session);
+
+    /* Domain entities events */
+    void signalsRegisterHandlerForKey(String signalKey, Object handler);
+    void signalsUnregisterHandlerForKey(String signalKey, Object handler);
+    void signalsEmitForObject(String signalKey, DomainObject obj);
     
 }

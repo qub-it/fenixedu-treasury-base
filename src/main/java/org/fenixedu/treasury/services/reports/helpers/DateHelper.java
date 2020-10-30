@@ -29,9 +29,9 @@ package org.fenixedu.treasury.services.reports.helpers;
 
 import java.util.Locale;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.Partial;
@@ -56,14 +56,16 @@ public class DateHelper implements IDocumentHelper {
     }
 
     public LocalizedString extendedDate(final LocalDate localDate) {
+        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        
         LocalizedString i18NString = new LocalizedString();
-        for (Locale locale : CoreConfiguration.supportedLocales()) {
+        for (Locale locale : services.availableLocales()) {
             String month = localDate.toString("MMMM", locale);
             if (locale.getLanguage().equals("pt")) {
                 month = month.toLowerCase(); // Java does not follow the Portuguese Language Orthographic Agreement of 1990
             }
             String message =
-                    BundleUtil.getString("resources.FenixeduQubdocsReportsResources", locale, "message.DateHelper.extendedDate",
+                    services.bundle(locale, "resources.FenixeduQubdocsReportsResources", "message.DateHelper.extendedDate",
                             localDate.toString("dd", locale), month, localDate.toString("yyyy", locale));
             i18NString = i18NString.with(locale, message);
         }

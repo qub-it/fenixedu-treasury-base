@@ -4,11 +4,12 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 
 import pt.ist.fenixframework.FenixFramework;
 
@@ -60,8 +61,9 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     }
     
     public LocalizedString getDigitalPaymentPlatformPaymentMethodDesignation() {
+        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
         LocalizedString result = new LocalizedString();
-        for (Locale locale : CoreConfiguration.supportedLocales()) {
+        for (Locale locale : services.availableLocales()) {
             result.with(locale, String.format("[%s] %s", getDigitalPaymentPlatform().getName(), getPaymentMethod().getName().getContent(locale)));
         }
         

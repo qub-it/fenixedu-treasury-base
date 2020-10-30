@@ -10,7 +10,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.lang.reflect.MethodUtils;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
-import org.springframework.ui.Model;
 
 public interface IForwardPaymentController {
 
@@ -38,6 +37,6 @@ public interface IForwardPaymentController {
         }
     }
 
-    public String processforwardpayment(final ForwardPaymentRequest forwardPayment, final Model model,
-            final HttpServletResponse response, final HttpSession session);
+    public String processforwardpayment(ForwardPaymentRequest forwardPayment, Object model, HttpServletResponse response,
+            HttpSession session);
 }

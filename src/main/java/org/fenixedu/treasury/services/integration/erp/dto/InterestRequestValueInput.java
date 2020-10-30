@@ -29,8 +29,8 @@ package org.fenixedu.treasury.services.integration.erp.dto;
 import java.math.BigDecimal;
 
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.springframework.format.datetime.joda.DateTimeFormatterFactory;
 
 public class InterestRequestValueInput {
     private String finantialInstitutionFiscalNumber;
@@ -99,7 +99,7 @@ public class InterestRequestValueInput {
 
     public LocalDate convertPaymentDateToLocalDate() {
         try {
-            DateTimeFormatter createDateTimeFormatter = new DateTimeFormatterFactory("YYYY-MM-dd").createDateTimeFormatter();
+            DateTimeFormatter createDateTimeFormatter = DateTimeFormat.forPattern("YYYY-MM-dd");
             return LocalDate.parse(paymentDate, createDateTimeFormatter);
         } catch (Exception ex) {
             throw new RuntimeException("Invalid date format. Date Format MUST be: YYYY-MM-dd");

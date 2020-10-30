@@ -44,9 +44,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.bennu.core.security.Authenticate;
-import org.fenixedu.bennu.core.util.CoreConfiguration;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -61,6 +59,7 @@ import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -165,7 +164,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         getInterestDebitEntriesSet().stream().forEach(ide -> ide.checkForDeletionBlockers(blockers));
         if (!getCreditEntriesSet().isEmpty()) {
-            blockers.add(BundleUtil.getString(TreasuryConstants.BUNDLE, "error.DebitEntry.cannot.delete.has.creditentries"));
+            blockers.add(TreasuryConstants.treasuryBundle("error.DebitEntry.cannot.delete.has.creditentries"));
         }
 
     }
@@ -641,15 +640,15 @@ public class DebitEntry extends DebitEntry_Base {
 
     public static DebitEntry copyDebitEntry(final DebitEntry debitEntryToCopy, final DebitNote debitNoteToAssociate,
             final boolean applyExemption) {
+        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        String loggedUsername = services.getLoggedUsername();
 
         final Map<String, String> propertiesMap = Maps.newHashMap(
                 debitEntryToCopy.getPropertiesMap() != null ? debitEntryToCopy.getPropertiesMap() : Maps.newHashMap());
         propertiesMap.put(TreasuryEvent.TreasuryEventKeys.COPIED_FROM_DEBIT_ENTRY_ID.getDescriptionI18N()
                 .getContent(TreasuryConstants.DEFAULT_LANGUAGE), debitEntryToCopy.getExternalId());
-        propertiesMap.put(
-                TreasuryEvent.TreasuryEventKeys.COPY_DEBIT_ENTRY_RESPONSIBLE.getDescriptionI18N()
-                        .getContent(TreasuryConstants.DEFAULT_LANGUAGE),
-                Authenticate.getUser() != null ? Authenticate.getUser().getUsername() : "");
+        propertiesMap.put(TreasuryEvent.TreasuryEventKeys.COPY_DEBIT_ENTRY_RESPONSIBLE.getDescriptionI18N()
+                .getContent(TreasuryConstants.DEFAULT_LANGUAGE), StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "");
 
         final DebitEntry result = DebitEntry.create(Optional.ofNullable(debitNoteToAssociate), debitEntryToCopy.getDebtAccount(),
                 debitEntryToCopy.getTreasuryEvent(), debitEntryToCopy.getVat(),
@@ -734,10 +733,9 @@ public class DebitEntry extends DebitEntry_Base {
         return findActive(treasuryEvent).map(d -> d.getOpenAmount()).reduce((x, y) -> x.add(y)).orElse(BigDecimal.ZERO);
     }
 
-    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount,
-            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate,
-            Map<String, String> propertiesMap, Product product, String description, BigDecimal quantity,
-            InterestRate interestRate, DateTime entryDateTime) {
+    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
+            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
 
         if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
             throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
@@ -748,14 +746,13 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public static DebitEntry createForImportationPurpose(Optional<DebitNote> debitNote, DebtAccount debtAccount,
-            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate,
-            Map<String, String> propertiesMap, Product product, String description, BigDecimal quantity,
-            InterestRate interestRate, DateTime entryDateTime) {
-        
+            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap,
+            Product product, String description, BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
+
         return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
                 interestRate, entryDateTime);
     }
-    
+
     private static boolean isDebitEntryCreationAllowed(final DebtAccount debtAccount, Optional<DebitNote> debitNote,
             Product product) {
         if (debtAccount.getCustomer().isActive()) {
@@ -819,7 +816,7 @@ public class DebitEntry extends DebitEntry_Base {
             return getOpenAmount().add(getPendingInterestAmount());
         }
     }
-    
+
     public BigDecimal getOpenAmountWithInterestsAtDate(LocalDate date) {
         if (isAnnulled()) {
             return BigDecimal.ZERO;
@@ -882,10 +879,10 @@ public class DebitEntry extends DebitEntry_Base {
     public Set<SibsPaymentRequest> getSibsPaymentRequests() {
         return getSibsPaymentRequestsSet();
     }
-    
+
     public Set<SibsPaymentRequest> getSibsPaymentRequestsSet() {
-        return getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                .map(SibsPaymentRequest.class::cast).collect(Collectors.toSet());
+        return getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest).map(SibsPaymentRequest.class::cast)
+                .collect(Collectors.toSet());
     }
 
     @Atomic

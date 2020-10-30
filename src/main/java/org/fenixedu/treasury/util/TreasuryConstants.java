@@ -35,15 +35,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.springframework.util.StringUtils;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -300,15 +300,15 @@ public class TreasuryConstants {
     // @formatter:on
 
     public static String treasuryBundle(final String key, final String... args) {
-        return BundleUtil.getString(TreasuryConstants.BUNDLE, key, args);
+        return TreasuryPlataformDependentServicesFactory.implementation().bundle(TreasuryConstants.BUNDLE, key, args);
     }
     
     public static String treasuryBundle(final Locale locale, final String key, final String... args) {
-        return BundleUtil.getString(TreasuryConstants.BUNDLE, locale, key, args);
+        return TreasuryPlataformDependentServicesFactory.implementation().bundle(locale, TreasuryConstants.BUNDLE, key, args);
     }
 
     public static LocalizedString treasuryBundleI18N(final String key, final String... args) {
-        return BundleUtil.getLocalizedString(TreasuryConstants.BUNDLE, key, args);
+        return TreasuryPlataformDependentServicesFactory.implementation().bundleI18N(TreasuryConstants.BUNDLE, key, args);
     }
 
     // @formatter:off

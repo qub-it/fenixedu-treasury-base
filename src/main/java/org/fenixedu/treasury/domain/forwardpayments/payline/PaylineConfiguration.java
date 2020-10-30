@@ -1,6 +1,5 @@
 package org.fenixedu.treasury.domain.forwardpayments.payline;
 
-
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
@@ -27,11 +26,7 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
-import com.google.gson.GsonBuilder;
 
-import pt.ist.fenixWebFramework.servlets.filters.contentRewrite.GenericChecksumRewriter;
 import pt.ist.fenixframework.Atomic;
 
 public class PaylineConfiguration extends PaylineConfiguration_Base implements IForwardPaymentPlatformService {
@@ -87,7 +82,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
         ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
         PaylineWebServiceResponse response = implementation.paylineGetWebPaymentDetails(forwardPayment);
-        
+
         ForwardPaymentStateType type = null;
 
         String authorizationNumber = null;
@@ -114,8 +109,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
             type = ForwardPaymentStateType.PAYED;
         }
 
-        final ForwardPaymentStatusBean bean = new ForwardPaymentStatusBean(true, type, 
-                response.getResultCode(),
+        final ForwardPaymentStatusBean bean = new ForwardPaymentStatusBean(true, type, response.getResultCode(),
                 response.getResultLongMessage(), response.getJsonRequest(), response.getJsonResponse());
 
         bean.editAuthorizationDetails(authorizationNumber, authorizationDate);
@@ -214,14 +208,14 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                 forwardPayment.getReturnForwardPaymentUrlChecksum());
     }
 
-    private void saveReturnUrlChecksum(final ForwardPaymentRequest forwardPayment, final String returnControllerURL,
-            final HttpSession session) {
+    private void saveReturnUrlChecksum(ForwardPaymentRequest forwardPayment, String returnControllerURL, HttpSession session) {
         final String returnUrlToChecksum =
                 String.format("%s%s/%s", TreasurySettings.getInstance().getForwardPaymentReturnDefaultURL(), returnControllerURL,
                         forwardPayment.getExternalId());
 
-        forwardPayment
-                .setReturnForwardPaymentUrlChecksum(GenericChecksumRewriter.calculateChecksum(returnUrlToChecksum, session));
+        String urlChecksum =
+                TreasuryPlataformDependentServicesFactory.implementation().calculateURLChecksum(returnUrlToChecksum, session);
+        forwardPayment.setReturnForwardPaymentUrlChecksum(urlChecksum);
     }
 
     public static String getCancelURL(final ForwardPaymentRequest forwardPayment, final String returnControllerURL) {
@@ -261,33 +255,12 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         final String code = response.getResultCode();
         final String longMessage = response.getResultLongMessage();
 
-        forwardPayment.advanceToRequestState("doWebPayment", code, longMessage, response.getJsonRequest(), response.getJsonResponse());
+        forwardPayment.advanceToRequestState("doWebPayment", code, longMessage, response.getJsonRequest(),
+                response.getJsonResponse());
         forwardPayment.setPaylineToken(response.getToken());
         forwardPayment.setPaylineRedirectUrl(response.getRedirectURL());
 
         return true;
-    }
-
-    private String json(final Object obj) {
-        GsonBuilder builder = new GsonBuilder();
-        builder.addSerializationExclusionStrategy(new ExclusionStrategy() {
-
-            @Override
-            public boolean shouldSkipField(FieldAttributes arg0) {
-                return false;
-            }
-
-            @Override
-            public boolean shouldSkipClass(final Class<?> clazz) {
-                if (clazz == Class.class) {
-                    return true;
-                }
-
-                return false;
-            }
-        });
-
-        return builder.create().toJson(obj);
     }
 
     @Atomic
@@ -339,12 +312,12 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
     public static PaylineConfiguration create(FinantialInstitution finantialInstitution, String name, boolean active,
             String paymentURL, String paylineMerchantId, String paylineMerchantAccessKey, String paylineContractNumber) {
-        return new PaylineConfiguration(finantialInstitution, name, active, paymentURL, paylineMerchantId, paylineMerchantAccessKey,
-                paylineContractNumber);
+        return new PaylineConfiguration(finantialInstitution, name, active, paymentURL, paylineMerchantId,
+                paylineMerchantAccessKey, paylineContractNumber);
     }
 
     public static String getPresentationName() {
         return TreasuryConstants.treasuryBundle("label.PaylineConfiguration.presentationName");
     }
-    
+
 }

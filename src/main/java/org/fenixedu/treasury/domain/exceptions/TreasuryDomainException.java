@@ -33,32 +33,91 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response.Status;
 
-import org.fenixedu.bennu.core.domain.exceptions.DomainException;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
-public class TreasuryDomainException extends DomainException {
+import com.google.gson.JsonObject;
 
+public class TreasuryDomainException extends RuntimeException {
+
+    // Bennu DomainException
+    private final String key;
+
+    private final String[] args;
+
+    private final String bundle;
+
+    private final Status status;
+
+    protected TreasuryDomainException(String bundle, String key, String... args) {
+        this(Status.PRECONDITION_FAILED, bundle, key, args);
+    }
+
+    protected TreasuryDomainException(Status status, String bundle, String key, String... args) {
+        super(key);
+        this.status = status;
+        this.bundle = bundle;
+        this.key = key;
+        this.args = args;
+    }
+
+    protected TreasuryDomainException(Throwable cause, String bundle, String key, String... args) {
+        this(cause, Status.INTERNAL_SERVER_ERROR, bundle, key, args);
+    }
+
+    protected TreasuryDomainException(Throwable cause, Status status, String bundle, String key, String... args) {
+        super(key, cause);
+        this.status = status;
+        this.bundle = bundle;
+        this.key = key;
+        this.args = args;
+    }
+
+    public String getLocalizedMessage() {
+        return TreasuryPlataformDependentServicesFactory.implementation().bundle(this.bundle, this.key, this.args);
+    }
+
+    public Status getResponseStatus() {
+        return this.status;
+    }
+
+    public JsonObject asJson() {
+        JsonObject json = new JsonObject();
+        json.addProperty("message", getLocalizedMessage());
+        return json;
+    }
+
+    public String getKey() {
+        return this.key;
+    }
+
+    public String[] getArgs() {
+        return this.args;
+    }
+    
+    // TreasuryDomainException
+    
     private static final long serialVersionUID = 1L;
 
     public TreasuryDomainException(String key, String... args) {
-        super(TreasuryConstants.BUNDLE, key, args);
+        this(TreasuryConstants.BUNDLE, key, args);
     }
 
     public TreasuryDomainException(Status status, String key, String... args) {
-        super(status, TreasuryConstants.BUNDLE, key, args);
+        this(status, TreasuryConstants.BUNDLE, key, args);
     }
 
     public TreasuryDomainException(Throwable cause, String key, String... args) {
-        super(cause, TreasuryConstants.BUNDLE, key, args);
+        this(cause, TreasuryConstants.BUNDLE, key, args);
     }
 
     public TreasuryDomainException(Throwable cause, Status status, String key, String... args) {
-        super(cause, status, TreasuryConstants.BUNDLE, key, args);
+        this(cause, status, TreasuryConstants.BUNDLE, key, args);
     }
 
     public static void throwWhenDeleteBlocked(Collection<String> blockers) {
         if (!blockers.isEmpty()) {
-            throw new TreasuryDomainException("key.return.argument", blockers.stream().collect(Collectors.joining(", ")));
+            throw new TreasuryDomainException("key.return.argument", new String[] { blockers.stream().collect(Collectors.joining(", ")) });
         }
     }
 }

@@ -37,13 +37,14 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.bennu.core.security.Authenticate;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.domain.integration.ERPImportOperation;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.ERPExporterManager;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -286,7 +287,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         } else {
             throw new TreasuryDomainException(
-                    BundleUtil.getString(TreasuryConstants.BUNDLE, "error.FinantialDocumentState.invalid.state.change.request"));
+                    TreasuryConstants.treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
 
         }
 
@@ -320,7 +321,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
             
-            final String username = Authenticate.getUser() != null ? Authenticate.getUser().getUsername() : "unknown";
+            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
             super.setClearDocumentToExportReason(String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
@@ -335,7 +337,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
 
-            final String username = Authenticate.getUser() != null ? Authenticate.getUser().getUsername() : "unknown";
+            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
             super.setClearDocumentToExportReason(String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));

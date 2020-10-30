@@ -33,8 +33,6 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
