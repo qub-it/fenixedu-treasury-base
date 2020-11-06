@@ -20,32 +20,34 @@ import pt.ist.fenixframework.DomainObject;
 
 public interface ITreasuryPlatformDependentServices {
 
-	void scheduleSingleDocument(final FinantialDocument finantialDocument);
+    /* ERP Integration */
+    void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
 
-	IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
+    void scheduleSingleDocument(final FinantialDocument finantialDocument);
 
-	/* File */
+    IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
 
-	byte[] getFileContent(IGenericFile genericFile);
-
-	long getFileSize(IGenericFile genericFile);
-
-	String getFilename(IGenericFile genericFile);
-
-	InputStream getFileStream(IGenericFile genericFile);
-
-	DateTime getFileCreationDate(IGenericFile genericFile);
-
-	String getFileContentType(IGenericFile iGenericFile);
-
-	void createFile(final IGenericFile genericFile, final String fileName, final String contentType,
-			final byte[] content);
-
-	void deleteFile(final IGenericFile genericFile);
-	
     /* File */
 
-	byte[] getFileContent(String fileId);
+    byte[] getFileContent(IGenericFile genericFile);
+
+    long getFileSize(IGenericFile genericFile);
+
+    String getFilename(IGenericFile genericFile);
+
+    InputStream getFileStream(IGenericFile genericFile);
+
+    DateTime getFileCreationDate(IGenericFile genericFile);
+
+    String getFileContentType(IGenericFile iGenericFile);
+
+    void createFile(final IGenericFile genericFile, final String fileName, final String contentType, final byte[] content);
+
+    void deleteFile(final IGenericFile genericFile);
+
+    /* File */
+
+    byte[] getFileContent(String fileId);
 
     long getFileSize(String fileId);
 
@@ -57,51 +59,47 @@ public interface ITreasuryPlatformDependentServices {
 
     String getFileContentType(String fileId);
 
-    String createFile(final String fileName, final String contentType,
-            final byte[] content);
+    String createFile(String fileName, String contentType, byte[] content);
 
     void deleteFile(String fileId);
-	
-	/* User */
 
-	String getLoggedUsername();
+    /* User */
 
-	/* Locales */
+    String getLoggedUsername();
 
-	// TODO: provide the default locale of the platform
-	Locale defaultLocale();
-	
-	Locale currentLocale();
-	
-	Set<Locale> availableLocales();
+    /* Locales */
 
-	/* Bundles */
+    // TODO: provide the default locale of the platform
+    Locale defaultLocale();
 
-	String bundle(final String bundleName, final String key, final String... args);
+    Locale currentLocale();
 
-	String bundle(final Locale locale, final String bundleName, final String key, final String... args);
+    Set<Locale> availableLocales();
 
-	LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
+    /* Bundles */
 
-	
-	/* Versioning Information */
-	
-	<T> String versioningCreatorUsername(final T obj);
-	
-	<T> DateTime versioningCreationDate(final T obj);
-	
+    String bundle(final String bundleName, final String key, final String... args);
+
+    String bundle(final Locale locale, final String bundleName, final String key, final String... args);
+
+    LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
+
+    /* Versioning Information */
+
+    <T> String versioningCreatorUsername(final T obj);
+
+    <T> DateTime versioningCreationDate(final T obj);
+
     <T> String versioningUpdatorUsername(final T obj);
-    
+
     <T> DateTime versioningUpdateDate(final T obj);
 
-    /* ERP Integration */
-    void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
-
-    
     /* Web Services */
-    
+
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
+
     PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
+
     void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
 
     /* Web */
@@ -109,7 +107,9 @@ public interface ITreasuryPlatformDependentServices {
 
     /* Domain entities events */
     void signalsRegisterHandlerForKey(String signalKey, Object handler);
+
     void signalsUnregisterHandlerForKey(String signalKey, Object handler);
+
     void signalsEmitForObject(String signalKey, DomainObject obj);
-    
+
 }
