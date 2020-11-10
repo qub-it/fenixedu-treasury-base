@@ -166,6 +166,11 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
         setAmount(amount);
         setPaymentDate(paymentDate);
     }
+    
+    public void savePaymentTypeAndBrand(String paymentType, String paymentBrand) {
+        setPaymentType(paymentType);
+        setPaymentBrand(paymentBrand);
+    }
 
     public void markAsDuplicatedTransaction() {
         setSibsTransactionDuplicated(true);

@@ -1,16 +1,15 @@
 package org.fenixedu.treasury.services.payments.paymentscodegenerator;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.onlinepaymentsgateway.api.MbCheckoutResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
@@ -53,6 +52,17 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.paymentCodePool.not.active");
         }
 
+        for (DebitEntry debitEntry : selectedDebitEntries) {
+            final long activePaymentCodesOnDebitEntryCount = 
+                    MultipleEntriesPaymentCode.findNewByDebitEntry(debitEntry).count()
+                    + MultipleEntriesPaymentCode.findUsedByDebitEntry(debitEntry).count();
+            
+            if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
+                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
+                        debitEntry.getDescription());
+            }
+        }
+        
         final SibsOnlinePaymentsGateway sibsGateway = this.paymentCodePool.getSibsOnlinePaymentsGateway();
         final String merchantTransactionId = sibsGateway.generateNewMerchantTransactionId();
 
@@ -75,6 +85,9 @@ public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCo
                         false, checkoutResultBean.getPaymentGatewayResultCode(),
                         checkoutResultBean.getOperationResultDescription());
                 log.saveRequestAndResponsePayload(checkoutResultBean.getRequestLog(), checkoutResultBean.getResponseLog());
+                log.savePaymentTypeAndBrand(
+                        checkoutResultBean.getPaymentType() != null ? checkoutResultBean.getPaymentType().name() : null, 
+                        checkoutResultBean.getPaymentBrand() != null ? checkoutResultBean.getPaymentBrand().name() : null);
             });
 
             if (!checkoutResultBean.isOperationSuccess()) {

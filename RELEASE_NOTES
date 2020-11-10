@@ -1,3 +1,5 @@
+- Bug Fix: With SIBS OPPWA payment code generation, check if debit entry has maximum active reference codes
+
 5.1.2 (07-09-2020)
 - Improvement: Improve spreasheet generation to use less memory
 

@@ -2267,6 +2267,9 @@ class sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog {
 	String transactionId;
 	String paymentCode;
 	String referenceId;
+	
+	String paymentType;
+	String paymentBrand;
 
 	BigDecimalT amount;
 	DateTime paymentDate;

@@ -33,7 +33,7 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base {
 
-    private static final int MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY = 2;
+    public static final int MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY = 2;
 
     protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, final PaymentReferenceCode paymentReferenceCode,
             final boolean valid) {
