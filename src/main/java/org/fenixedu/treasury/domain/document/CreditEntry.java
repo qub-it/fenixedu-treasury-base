@@ -52,9 +52,9 @@ import com.google.common.collect.Sets;
 public class CreditEntry extends CreditEntry_Base {
 
     protected CreditEntry(final FinantialDocument finantialDocument, final Product product, final Vat vat,
-            final BigDecimal amount, String description, BigDecimal quantity, final DateTime entryDateTime,
+            final BigDecimal amountWithoutVat, String description, BigDecimal quantity, final DateTime entryDateTime,
             final DebitEntry debitEntry, final boolean fromExemption) {
-        init(finantialDocument, product, vat, amount, description, quantity, entryDateTime, debitEntry, fromExemption);
+        init(finantialDocument, product, vat, amountWithoutVat, description, quantity, entryDateTime, debitEntry, fromExemption);
 
     }
 
@@ -70,10 +70,10 @@ public class CreditEntry extends CreditEntry_Base {
         throw new RuntimeException("error.CreditEntry.use.init.without.finantialEntryType");
     }
 
-    protected void init(final FinantialDocument finantialDocument, final Product product, final Vat vat, final BigDecimal amount,
+    protected void init(final FinantialDocument finantialDocument, final Product product, final Vat vat, final BigDecimal amountWithoutVat,
             String description, BigDecimal quantity, final DateTime entryDateTime, final DebitEntry debitEntry,
             final boolean fromExemption) {
-        super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat, amount,
+        super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat, amountWithoutVat,
                 description, quantity, entryDateTime);
         this.setDebitEntry(debitEntry);
         this.setFromExemption(fromExemption);

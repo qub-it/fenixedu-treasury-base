@@ -33,6 +33,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Stream;
@@ -240,8 +241,18 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
             this.setVatRate(super.getVat().getTaxRate());
         }
         setNetAmount(getCurrency().getValueWithScale(getQuantity().multiply(getAmount())));
-        setVatAmount(getCurrency().getValueWithScale(getNetAmount().multiply(rationalVatRate(this))));
-        setAmountWithVat(getCurrency().getValueWithScale(getNetAmount().multiply(BigDecimal.ONE.add(rationalVatRate(this)))));
+
+        // TODO
+        // Check: The rounding mode used was HALF_EVEN which was giving incorrect result
+        // For example 12.5 by 5% IVA is 0.63 but with RoundingMode.HALF_EVEN give 0.62
+        //
+        BigDecimal rationalVatRate = rationalVatRate(this);
+        BigDecimal netAmount = getNetAmount();
+        BigDecimal vatAmount = netAmount.multiply(rationalVatRate);
+        BigDecimal amountWithVat = netAmount.multiply(BigDecimal.ONE.add(rationalVatRate));
+        
+        setVatAmount(vatAmount.setScale(2, RoundingMode.HALF_UP));
+        setAmountWithVat(amountWithVat.setScale(2, RoundingMode.HALF_UP));
     }
 
     public static Stream<? extends InvoiceEntry> findAll() {

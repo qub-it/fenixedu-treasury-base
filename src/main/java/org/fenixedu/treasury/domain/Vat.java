@@ -151,9 +151,9 @@ public class Vat extends Vat_Base {
                 .filter(v -> v.interval().overlaps(interval));
     }
 
-    public static Optional<Vat> findActiveUnique(final VatType vatType, final FinantialInstitution finantialInstiution,
+    public static Optional<Vat> findActiveUnique(final VatType vatType, final FinantialInstitution finantialInstitution,
             final DateTime when) {
-        return findActive(vatType, when).filter(x -> x.getFinantialInstitution().equals(finantialInstiution)).findFirst();
+        return findActive(vatType, when).filter(x -> x.getFinantialInstitution().equals(finantialInstitution)).findFirst();
     }
 
     @Atomic

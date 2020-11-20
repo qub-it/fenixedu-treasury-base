@@ -20,7 +20,7 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class TreasuryExemption extends TreasuryExemption_Base {
 
-    protected TreasuryExemption() {
+    public TreasuryExemption() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
     }

@@ -162,10 +162,16 @@ public class Currency extends Currency_Base {
         return new Currency(code, name, isoCode, symbol);
     }
 
+    @Deprecated
+    /* TODO: Rename method to describe the value returned has currency symbol 
+     */
     public String getValueFor(BigDecimal value) {
         return getValueWithScale(value) + " " + this.getSymbol();
     }
 
+    @Deprecated
+    /* TODO: Rename method to describe the value returned has currency symbol
+     */
     public String getValueFor(BigDecimal value, int decimalsPlaces) {
         return getValueWithScale(value, decimalsPlaces) + " " + this.getSymbol();
     }

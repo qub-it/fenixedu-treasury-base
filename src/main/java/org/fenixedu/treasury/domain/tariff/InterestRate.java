@@ -441,9 +441,9 @@ public class InterestRate extends InterestRate_Base {
     }
 
     @Atomic
-    public static InterestRate createForDebitEntry(final DebitEntry debitEntry, final InterestType interestType,
-            final int numberOfDaysAfterDueDate, final boolean applyInFirstWorkday, final int maximumDaysToApplyPenalty,
-            final BigDecimal interestFixedAmount, final BigDecimal rate) {
+    public static InterestRate createForDebitEntry(DebitEntry debitEntry, InterestType interestType,
+            int numberOfDaysAfterDueDate, boolean applyInFirstWorkday, int maximumDaysToApplyPenalty,
+            BigDecimal interestFixedAmount, BigDecimal rate) {
         return new InterestRate(null, debitEntry, interestType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                 maximumDaysToApplyPenalty, interestFixedAmount, rate);
     }
