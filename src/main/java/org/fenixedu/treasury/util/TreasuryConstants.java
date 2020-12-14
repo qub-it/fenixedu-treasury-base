@@ -79,6 +79,7 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.qubit.solution.qubEdu.module.treasury.QubEduTreasuryPlugin;
 
 public class TreasuryConstants {
 

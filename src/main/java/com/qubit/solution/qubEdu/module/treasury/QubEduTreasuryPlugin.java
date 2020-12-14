@@ -57,6 +57,9 @@ import com.qubit.terra.framework.domain.packages.interfaces.QubJar;
 
 public class QubEduTreasuryPlugin extends AbstractQubEduPlugin {
 
+    static final private String PLUGIN_NAME = "fenixedu-treasury-base-iscte";
+    static final public String BUNDLE = PLUGIN_NAME + "Resources";
+    
     public QubEduTreasuryPlugin(QubJar module) {
         super(module);
     }
