@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>pt.iscte</groupId>
 			<artifactId>fenix-web-framework</artifactId>
-			<version>3.0.0-iscte</version>
+			<version>3.0.1-iscte</version>
 		</dependency>
 		<dependency>
 			<groupId>com.qubit.terra</groupId>
@@ -150,12 +150,6 @@
 			<url>https://repository.qub-it.com/nexus/content/groups/qubITRepo</url>
 		</pluginRepository>
 		
-		<!-- 
-		<pluginRepository>
-			<id>ulisboa-repo</id>
-			<url>https://nexjen.ulisboa.pt/nexus/content/groups/public/</url>
-		</pluginRepository>
-		 -->	
 	</pluginRepositories>
 
 	<repositories>
