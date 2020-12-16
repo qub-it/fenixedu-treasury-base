@@ -7,5 +7,6 @@
 /src/main/webapp/WEB-INF/resources/FenixeduTreasuryResources_en.properties
 /GERO.properties
 /target/
+/bin/
 /src/main/java/test/not/commit
 .dbeaver-data-sources.xml
