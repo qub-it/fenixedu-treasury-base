@@ -1,3 +1,4 @@
+5.1.4 (29-12-2020)
 - Bug Fix: Use HALF_UP for calculation of vat amounts
 - Improvement: Error messages for insuccess attempts in online payments
 
