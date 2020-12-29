@@ -1,3 +1,6 @@
+- Bug Fix: Use HALF_UP for calculation of vat amounts
+- Improvement: Error messages for insuccess attempts in online payments
+
 5.1.3 (10-11-2020)
 - Bug Fix: With SIBS OPPWA payment code generation, check if debit entry has maximum active reference codes
 
