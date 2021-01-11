@@ -52,6 +52,8 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class AdhocCustomer extends AdhocCustomer_Base {
 
+    private static final int SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH = 100;
+
     protected AdhocCustomer() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -101,6 +103,10 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     @Override
     public void checkRules() {
         super.checkRules();
+        
+        if(getName().length() > SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH) {
+            throw new TreasuryDomainException("error.AdhocCustomer.name.exceeds.max.length", String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
+        }
     }
 
     @Override

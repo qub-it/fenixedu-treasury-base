@@ -1,4 +1,5 @@
 - Bug Fix: Trim fiscalNumber to not accept spaces as fiscal number
+- Improvement: Limit adhoc customer name to 100 characters (limit set by SAFT-PT)
 
 5.1.4 (29-12-2020)
 - Bug Fix: Use HALF_UP for calculation of vat amounts
