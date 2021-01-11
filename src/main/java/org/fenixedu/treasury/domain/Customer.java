@@ -147,7 +147,7 @@ public abstract class Customer extends Customer_Base {
             throw new TreasuryDomainException("error.Customer.code.maxlenght");
         }
         
-        if(Strings.isNullOrEmpty(getFiscalNumber())) {
+        if(Strings.isNullOrEmpty(getFiscalNumber().trim())) {
             throw new TreasuryDomainException("error.Customer.fiscalNumber.required");
         }
 
