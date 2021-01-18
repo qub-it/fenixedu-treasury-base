@@ -61,13 +61,8 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class ForwardPayment extends ForwardPayment_Base implements IPaymentProcessorForInvoiceEntries {
 
-    private static final Comparator<ForwardPayment> ORDER_COMPARATOR = new Comparator<ForwardPayment>() {
-
-        @Override
-        public int compare(final ForwardPayment o1, final ForwardPayment o2) {
-            return ((Long) o1.getOrderNumber()).compareTo(o2.getOrderNumber());
-        }
-    };
+    private static final Comparator<ForwardPayment> ORDER_COMPARATOR =
+            (o1, o2) -> ((Long) o1.getOrderNumber()).compareTo(o2.getOrderNumber());
 
     private ForwardPayment() {
         super();
@@ -146,29 +141,24 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         checkRules();
     }
 
-    private static final Comparator<DebitEntry> COMPARE_DEBIT_ENTRIES = new Comparator<DebitEntry>() {
-
-        @Override
-        public int compare(final DebitEntry o1, final DebitEntry o2) {
-            final Product interestProduct = TreasurySettings.getInstance().getInterestProduct();
-            if (o1.getProduct() == interestProduct && o2.getProduct() != interestProduct) {
-                return -1;
-            }
-
-            if (o1.getProduct() != interestProduct && o2.getProduct() == interestProduct) {
-                return 1;
-            }
-
-            // compare by openAmount. First higher amounts then lower amounts
-            int compareByOpenAmount = o1.getOpenAmount().compareTo(o2.getOpenAmount());
-
-            if (compareByOpenAmount != 0) {
-                return compareByOpenAmount * -1;
-            }
-
-            return o1.getExternalId().compareTo(o2.getExternalId());
+    private static final Comparator<DebitEntry> COMPARE_DEBIT_ENTRIES = (o1, o2) -> {
+        final Product interestProduct = TreasurySettings.getInstance().getInterestProduct();
+        if (o1.getProduct() == interestProduct && o2.getProduct() != interestProduct) {
+            return -1;
         }
 
+        if (o1.getProduct() != interestProduct && o2.getProduct() == interestProduct) {
+            return 1;
+        }
+
+        // compare by openAmount. First higher amounts then lower amounts
+        int compareByOpenAmount = o1.getOpenAmount().compareTo(o2.getOpenAmount());
+
+        if (compareByOpenAmount != 0) {
+            return compareByOpenAmount * -1;
+        }
+
+        return o1.getExternalId().compareTo(o2.getExternalId());
     };
 
     public void advanceToPayedState(final String statusCode, final String statusMessage, final BigDecimal payedAmount,
@@ -462,7 +452,7 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
                 ForwardPaymentConfiguration.findUniqueActive(bean.getDebtAccount().getFinantialInstitution()).get();
 
         final Set<DebitEntry> debitEntriesToPay = new HashSet<>();
-        for (final DebitEntryBean debitEntryBean : bean.getDebitEntries()) {
+        for (final DebitEntryBean debitEntryBean : bean.getDebitEntriesByType(DebitEntryBean.class)) {
             if (!debitEntryBean.isIncluded()) {
                 continue;
             }
@@ -491,6 +481,7 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     public static void postForwardPaymentProcessService(final DateTime beginDate, final DateTime endDate, final Logger logger) {
 
         Thread t = new Thread() {
+            @Override
             public void run() {
                 try {
                     _postForwardPaymentProcessService(beginDate, endDate, logger);
@@ -526,7 +517,7 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
                         reportBean = updateForwardPayment(f.getExternalId(), logger);
 
                         if (reportBean != null) {
-                            // @formatter:off
+                // @formatter:off
                             logger.info(String.format(
                                     "C\tPAYMENT REQUEST\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
                                     reportBean.executionDate, reportBean.forwardPaymentExternalId,
@@ -552,48 +543,41 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     private static void writeExcel(final List<PostForwardPaymentReportBean> reportBeans,
             final DateTime postForwardPaymentsExecutionDate, final DateTime beginDate, final DateTime endDate) {
 
-        final byte[] content = Spreadsheet.buildSpreadsheetContent(new Spreadsheet() {
+        final byte[] content = Spreadsheet.buildSpreadsheetContent(() -> new ExcelSheet[] { new ExcelSheet() {
 
             @Override
-            public ExcelSheet[] getSheets() {
-                return new ExcelSheet[] { new ExcelSheet() {
-
-                    @Override
-                    public String getName() {
-                        return treasuryBundle("label.PostForwardPaymentReportBean.sheet.name");
-                    }
-
-                    @Override
-                    public String[] getHeaders() {
-                        return new String[] { treasuryBundle("label.PostForwardPaymentReportBean.cell.executionDate"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.forwardPaymentExternalId"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.forwardPaymentOrderNumber"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.forwardPaymentWhenOccured"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.customerCode"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.customerName"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.previousStateDescription"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.nextStateDescription"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.paymentRegisteredWithSuccess"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.settlementNote"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.advancedCreditSettlementNote"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.paymentDate"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.paidAmount"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.advancedCreditAmount"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.transactionId"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.statusCode"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.statusMessage"),
-                                treasuryBundle("label.PostForwardPaymentReportBean.cell.remarks") };
-                    }
-
-                    @Override
-                    public Stream<? extends SpreadsheetRow> getRows() {
-                        return reportBeans.stream();
-                    }
-
-                } };
+            public String getName() {
+                return treasuryBundle("label.PostForwardPaymentReportBean.sheet.name");
             }
 
-        }, null);
+            @Override
+            public String[] getHeaders() {
+                return new String[] { treasuryBundle("label.PostForwardPaymentReportBean.cell.executionDate"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.forwardPaymentExternalId"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.forwardPaymentOrderNumber"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.forwardPaymentWhenOccured"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.customerCode"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.customerName"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.previousStateDescription"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.nextStateDescription"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.paymentRegisteredWithSuccess"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.settlementNote"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.advancedCreditSettlementNote"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.paymentDate"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.paidAmount"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.advancedCreditAmount"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.transactionId"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.statusCode"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.statusMessage"),
+                        treasuryBundle("label.PostForwardPaymentReportBean.cell.remarks") };
+            }
+
+            @Override
+            public Stream<? extends SpreadsheetRow> getRows() {
+                return reportBeans.stream();
+            }
+
+        } }, null);
 
         final String filename = treasuryBundle("label.PostForwardPaymentsReportFile.filename",
                 postForwardPaymentsExecutionDate.toString("yyyy_MM_dd_HH_mm_ss"));
@@ -611,8 +595,7 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
                         final ForwardPayment forwardPayment = FenixFramework.getDomainObject(forwardPaymentId);
                         final IForwardPaymentImplementation implementation =
                                 forwardPayment.getForwardPaymentConfiguration().implementation();
-                        final String justification =
-                                treasuryBundle("error.PostForwardPaymentsTask.post.payment.justification");
+                        final String justification = treasuryBundle("error.PostForwardPaymentsTask.post.payment.justification");
 
                         final PostProcessPaymentStatusBean postProcessPaymentStatusBean =
                                 implementation.postProcessPayment(forwardPayment, justification, Optional.empty());
@@ -746,13 +729,13 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         }
 
     }
-    
+
     public static String PAYMENT_TYPE_DESCRIPTION() {
         return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.forwardPayment");
     }
 
     /* IPaymentProcessorForInvoiceEntries */
-    
+
     @Override
     public DocumentNumberSeries getDocumentSeriesForPayments() {
         return DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
@@ -773,35 +756,35 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     public String fillPaymentEntryMethodId() {
         return null;
     }
-    
+
     @Override
     public BigDecimal getPayableAmount() {
         return getAmount();
     }
-    
+
     @Override
     public DateTime getPaymentRequestDate() {
         return getWhenOccured();
     }
-    
+
     @Override
     public String getPaymentRequestStateDescription() {
         return getCurrentState().getLocalizedName().getContent();
     }
-    
+
     @Override
     public String getPaymentTypeDescription() {
         return PAYMENT_TYPE_DESCRIPTION();
     }
-    
+
     @Override
     public Set<InvoiceEntry> getInvoiceEntriesSet() {
         Set<InvoiceEntry> result = new HashSet<>();
         result.addAll(getDebitEntriesSet());
-        
+
         return result;
     }
-    
+
     @Override
     public boolean isForwardPayment() {
         return true;
@@ -821,5 +804,5 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     public String getSibsOppwaTransactionId() {
         return getSibsTransactionId();
     }
-    
+
 }

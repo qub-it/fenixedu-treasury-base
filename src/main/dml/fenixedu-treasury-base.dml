@@ -8,6 +8,7 @@ enum org.fenixedu.treasury.domain.tariff.InterestType                           
 enum org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType						as PaymentReferenceCodeStateType;
 enum org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType                           as ForwardPaymentStateType;
 enum org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayEnviromentMode	as SibsOnlinePaymentsGatewayEnviromentMode;
+enum org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType 									as PaymentPlanStateType;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -2415,4 +2416,147 @@ class sibsonlinepaymentsgateway.MbwayTransaction {
         document.SettlementNote playsRole settlementNotes {
             multiplicity *;
         }
+	}
+	
+	
+//*********************************************
+//PaymentPlan
+//*********************************************
+class paymentPlan.PaymentPlan{
+	String name;
+	DateTime creationDate;
+	String description;
+	PaymentPlanStateType state;
+	String reason;
+}
+	relation PaymentPlanDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlan playsRole paymentPlans {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanDebtaccount{
+		paymentPlan.PaymentPlan playsRole paymentPlans {
+			multiplicity *;
+		}
+		
+		debt.DebtAccount playsRole debtAccount {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation PaymentPlanEmolumentDebitEntry{
+		paymentPlan.PaymentPlan playsRole emolumentPaymentPlan {
+			multiplicity 0..1;
+		}
+		
+		document.DebitEntry playsRole emolument {
+			multiplicity 0..1;
+		}
+	}
+	//*********************************************
+	// Interests are in PaymentPlanInstallment relation
+	//*********************************************
+	//relation PaymentPlanInterestDebitEntry{
+	//	paymentPlan.PaymentPlan playsRole interestPaymentPlan {
+	//		multiplicity 0..1;
+	//	}
+	//	
+	//	document.DebitEntry playsRole interest {
+	//		multiplicity 0..1;
+	//	}
+	//}
+	relation PaymentPlanPaymentPlanRevision{
+		paymentPlan.PaymentPlan playsRole paymentPlanOriginal {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.PaymentPlan playsRole paymentPlanRevisions {
+			multiplicity *;
+		}
+	}
+
+
+class paymentPlan.Installment{
+	String description;
+	LocalDate dueDate;
+}
+	relation InstallmentDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.Installment playsRole installments {
+			multiplicity *;
+		}
+	}
+	//*********************************************
+	// Verify existance of interestRate in installments
+	//*********************************************
+	//relation InstallmentInterestRate{
+	//	paymentPlan.Installment playsRole installment {
+	//		multiplicity 0..1;
+	//	}
+	//	
+	//	tariff.InterestRate playsRole interestRate {
+	//		multiplicity 0..1;
+	//	}
+	//}
+	//*********************************************
+	// Need branch of Online payments
+	//*********************************************
+	//relation InstallmentPaymentRequest{
+	//	paymentPlan.Installment playsRole installment {
+	//		multiplicity *;
+	//	}
+	//	
+	//	payments.PaymentRequest playsRole paymentRequest {
+	//		multiplicity *;
+	//	}
+	//}
+	
+	relation PaymentPlanInstallment{
+		paymentPlan.PaymentPlan playsRole paymentPlan {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.Installment playsRole installments {
+			multiplicity *;
+		}
+	}
+class paymentPlan.InstallmentEntry{
+	BigDecimalT amount;
+}	
+	relation InstallmentEntryDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.InstallmentEntry playsRole installmentEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation InstallmentEntryDebitEntry{
+		paymentPlan.InstallmentEntry playsRole installmentEntry {
+			multiplicity *;
+		}
+		
+		document.DebitEntry playsRole debitEntry {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation InstallmentInstallmentEntry{
+		paymentPlan.Installment playsRole installment {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.InstallmentEntry playsRole installmentEntries {
+			multiplicity *;
+		}
 	}

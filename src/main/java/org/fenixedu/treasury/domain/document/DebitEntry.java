@@ -1,15 +1,15 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
  *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
  *
- * 
+ *
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -33,21 +33,15 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.bennu.core.security.Authenticate;
-import org.fenixedu.bennu.core.util.CoreConfiguration;
-import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -57,6 +51,7 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
+import org.fenixedu.treasury.domain.paymentPlan.ConfiguracaoToDelete;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -69,73 +64,79 @@ import org.joda.time.LocalDate;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
 public class DebitEntry extends DebitEntry_Base {
 
-    public static final Comparator<DebitEntry> COMPARE_BY_OPEN_AMOUNT_WITH_VAT = new Comparator<DebitEntry>() {
+    public static final Comparator<DebitEntry> COMPARE_BY_OPEN_AMOUNT_WITH_VAT = (o1, o2) -> {
+        final int c = o1.getAmountWithVat().compareTo(o2.getAmountWithVat());
 
-        @Override
-        public int compare(final DebitEntry o1, final DebitEntry o2) {
-            final int c = o1.getAmountWithVat().compareTo(o2.getAmountWithVat());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
-    public static final Comparator<DebitEntry> COMPARE_BY_DUE_DATE = new Comparator<DebitEntry>() {
-        @Override
-        public int compare(DebitEntry o1, DebitEntry o2) {
-            int c = o1.getDueDate().compareTo(o2.getDueDate());
+    public static final Comparator<DebitEntry> COMPARE_BY_DUE_DATE = (o1, o2) -> {
+        int c = o1.getDueDate().compareTo(o2.getDueDate());
 
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
-    public static final Comparator<DebitEntry> COMPARE_BY_EVENT_ANNULED_AND_BY_DATE = new Comparator<DebitEntry>() {
+    public static final Comparator<DebitEntry> COMPARE_BY_EVENT_ANNULED_AND_BY_DATE = (o1, o2) -> {
 
-        @Override
-        public int compare(DebitEntry o1, DebitEntry o2) {
-
-            if (!o1.isEventAnnuled() && o2.isEventAnnuled()) {
-                return -1;
-            } else if (o1.isEventAnnuled() && !o2.isEventAnnuled()) {
-                return 1;
-            }
-
-            int c = o1.getEntryDateTime().compareTo(o2.getEntryDateTime());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+        if (!o1.isEventAnnuled() && o2.isEventAnnuled()) {
+            return -1;
+        } else if (o1.isEventAnnuled() && !o2.isEventAnnuled()) {
+            return 1;
         }
 
+        int c = o1.getEntryDateTime().compareTo(o2.getEntryDateTime());
+
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
-    public static final Comparator<DebitEntry> COMPARE_BY_EVENT_ANNULED_AND_DUE_DATE = new Comparator<DebitEntry>() {
-
-        @Override
-        public int compare(DebitEntry o1, DebitEntry o2) {
-            if (!o1.isEventAnnuled() && o2.isEventAnnuled()) {
-                return 1;
-            } else if (o1.isEventAnnuled() && !o2.isEventAnnuled()) {
-                return -1;
-            }
-
-            int c = o1.getDueDate().compareTo(o2.getDueDate());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
-    };
-
-    public static Comparator<DebitEntry> COMPARE_BY_EXTERNAL_ID = new Comparator<DebitEntry>() {
-
-        @Override
-        public int compare(final DebitEntry o1, final DebitEntry o2) {
-            return o1.getExternalId().compareTo(o2.getExternalId());
+    public static final Comparator<DebitEntry> COMPARE_BY_EVENT_ANNULED_AND_DUE_DATE = (o1, o2) -> {
+        if (!o1.isEventAnnuled() && o2.isEventAnnuled()) {
+            return 1;
+        } else if (o1.isEventAnnuled() && !o2.isEventAnnuled()) {
+            return -1;
         }
 
+        int c = o1.getDueDate().compareTo(o2.getDueDate());
+
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
+
+    public static final Comparator<DebitEntry> COMPARE_DEBIT_ENTRY_IN_SAME_PAYMENT_PLAN = (m1, m2) -> {
+        boolean m1IsInterest = m1.getDebitEntry() != null;
+        boolean m1IsEmolument = m1.getEmolumentPaymentPlan() != null && m1.getEmolumentPaymentPlan().isOpen();
+
+        boolean m2IsInterest = m2.getDebitEntry() != null;
+        boolean m2IsEmolument = m2.getEmolumentPaymentPlan() != null && m2.getEmolumentPaymentPlan().isOpen();
+
+        if (m1IsInterest && m2IsInterest) {
+            return (m1.getDebitEntry().getDueDate().compareTo(m2.getDebitEntry().getDueDate()) * 100)
+                    + (m1.getDueDate().compareTo(m2.getDueDate()) * 10) + m1.getExternalId().compareTo(m2.getExternalId());
+        }
+        if (m1IsInterest && !m2IsInterest) {
+            return -1;
+        }
+        if (m1IsEmolument && m2IsInterest) {
+            return 1;
+        }
+        if (m1IsEmolument && m2IsEmolument) {
+            return (m1.getDueDate().compareTo(m2.getDueDate()) * 10) + m1.getExternalId().compareTo(m2.getExternalId());
+        }
+        if (m1IsEmolument && !(m2IsInterest || m2IsEmolument)) {
+            return -1;
+        }
+        if (m2IsInterest || m2IsEmolument) {
+            return 1;
+        }
+        return (m1.getDueDate().compareTo(m2.getDueDate()) * 100) + (m1.getDescription().compareTo(m2.getDescription()) * 10)
+                + m1.getExternalId().compareTo(m2.getExternalId());
+    };
+
+    public static Comparator<DebitEntry> COMPARE_BY_EXTERNAL_ID = (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId());
 
     protected DebitEntry(final DebitNote debitNote, final DebtAccount debtAccount, final TreasuryEvent treasuryEvent,
             final Vat vat, final BigDecimal amount, final LocalDate dueDate, final Map<String, String> propertiesMap,
@@ -234,6 +235,10 @@ public class DebitEntry extends DebitEntry_Base {
 
     public InterestRateBean calculateUndebitedInterestValue(final LocalDate whenToCalculate) {
         if (!this.isApplyInterests()) {
+            return new InterestRateBean();
+        }
+
+        if (!ConfiguracaoToDelete.isToCalculateInterest && isInOpenPaymentPlan()) {
             return new InterestRateBean();
         }
 
@@ -662,7 +667,7 @@ public class DebitEntry extends DebitEntry_Base {
         // We could copy eventAnnuled property, but in most cases we want to create an active debit entry
         result.setEventAnnuled(false);
 
-        // Interest relation must be done outside because the origin 
+        // Interest relation must be done outside because the origin
         // debit entry of debitEntryToCopy will may be annuled
         // result.setDebitEntry(debitEntryToCopy.getDebitEntry());
 
@@ -733,10 +738,9 @@ public class DebitEntry extends DebitEntry_Base {
         return findActive(treasuryEvent).map(d -> d.getOpenAmount()).reduce((x, y) -> x.add(y)).orElse(BigDecimal.ZERO);
     }
 
-    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount,
-            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate,
-            Map<String, String> propertiesMap, Product product, String description, BigDecimal quantity,
-            InterestRate interestRate, DateTime entryDateTime) {
+    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
+            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
 
         if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
             throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
@@ -747,14 +751,13 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public static DebitEntry createForImportationPurpose(Optional<DebitNote> debitNote, DebtAccount debtAccount,
-            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate,
-            Map<String, String> propertiesMap, Product product, String description, BigDecimal quantity,
-            InterestRate interestRate, DateTime entryDateTime) {
-        
+            TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap,
+            Product product, String description, BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
+
         return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
                 interestRate, entryDateTime);
     }
-    
+
     private static boolean isDebitEntryCreationAllowed(final DebtAccount debtAccount, Optional<DebitNote> debitNote,
             Product product) {
         if (debtAccount.getCustomer().isActive()) {
@@ -933,7 +936,7 @@ public class DebitEntry extends DebitEntry_Base {
                 final CreditEntry openCreditEntry = getCreditEntriesSet().stream()
                         .filter(c -> TreasuryConstants.isPositive(c.getOpenAmount())).findFirst().get();
 
-                // Find debit entry with open amount equal or higher than the open credit 
+                // Find debit entry with open amount equal or higher than the open credit
                 DebitEntry openDebitEntry = getDebitNote().getDebitEntriesSet().stream()
                         .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount()))
                         .filter(d -> TreasuryConstants.isGreaterOrEqualThan(d.getOpenAmount(), openCreditEntry.getOpenAmount()))
@@ -958,4 +961,10 @@ public class DebitEntry extends DebitEntry_Base {
         setFinantialDocument(null);
     }
 
+    public boolean isInOpenPaymentPlan() {
+        boolean isEmolumentActive = getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().isOpen();
+        boolean isItemActive = !getInstallmentEntrySet().isEmpty()
+                && getInstallmentEntrySet().stream().anyMatch(i -> i.getInstallment().getPaymentPlan().isOpen());
+        return isEmolumentActive || isItemActive;
+    }
 }

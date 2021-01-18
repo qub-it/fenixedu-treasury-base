@@ -1,15 +1,15 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
  *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
  *
- * 
+ *
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 import org.fenixedu.treasury.domain.bennu.signals.BennuSignalsServices;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.InterestRateBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
@@ -44,52 +43,42 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class SettlementEntry extends SettlementEntry_Base {
 
-    public static final Comparator<SettlementEntry> COMPARATOR_BY_ENTRY_DATE_TIME = new Comparator<SettlementEntry>() {
+    public static final Comparator<SettlementEntry> COMPARATOR_BY_ENTRY_DATE_TIME = (o1, o2) -> {
+        int c = o1.getEntryDateTime().compareTo(o2.getEntryDateTime());
 
-        @Override
-        public int compare(final SettlementEntry o1, final SettlementEntry o2) {
-            int c = o1.getEntryDateTime().compareTo(o2.getEntryDateTime());
-
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
-
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
-    public static final Comparator<SettlementEntry> COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION = new Comparator<SettlementEntry>() {
+    public static final Comparator<SettlementEntry> COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION = (o1, o2) -> {
+        if (o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0
+                && o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0) {
+            int c1 = Integer.compare(o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder(),
+                    o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder());
 
-        @Override
-        public int compare(final SettlementEntry o1, final SettlementEntry o2) {
-            if(o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0 && o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0) {
-                int c = Integer.compare(o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder(), o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder());
-            
-                return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-            } else if(o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0 && o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() == 0) {
-                return -1;
-            } else if(o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() == 0 && o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0) {
-                return 1;
-            }
-            
-            final int c = o1.getDescription().compareTo(o2.getDescription());
-            
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+            return c1 != 0 ? c1 : o1.getExternalId().compareTo(o2.getExternalId());
+        } else if (o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0
+                && o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() == 0) {
+            return -1;
+        } else if (o1.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() == 0
+                && o2.getInvoiceEntry().getProduct().getTuitionInstallmentOrder() != 0) {
+            return 1;
         }
-    };
-    
-    public static final Comparator<SettlementEntry> COMPARATOR_BY_ENTRY_ORDER = new Comparator<SettlementEntry>() {
 
-        @Override
-        public int compare(final SettlementEntry o1, final SettlementEntry o2) {
-            if(o1.getEntryOrder() == null || o2.getEntryOrder() == null) {
-                throw new RuntimeException("error");
-            }
-            
-            int c = o1.getEntryOrder().compareTo(o2.getEntryOrder());
-            
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
-        
+        final int c2 = o1.getDescription().compareTo(o2.getDescription());
+
+        return c2 != 0 ? c2 : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
+    public static final Comparator<SettlementEntry> COMPARATOR_BY_ENTRY_ORDER = (o1, o2) -> {
+        if (o1.getEntryOrder() == null || o2.getEntryOrder() == null) {
+            throw new RuntimeException("error");
+        }
+
+        int c = o1.getEntryOrder().compareTo(o2.getEntryOrder());
+
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
+
     protected SettlementEntry() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -147,7 +136,7 @@ public class SettlementEntry extends SettlementEntry_Base {
         if (getInvoiceEntry().isCreditNoteEntry() && !TreasuryConstants.isEqual(getAmount(), getTotalAmount())) {
             throw new TreasuryDomainException("error.SettlementEntry.creditNoteEntry.total.amount.not.equal");
         }
-        
+
         if (!TreasuryConstants.isPositive(getAmount())) {
             throw new TreasuryDomainException("error.FinantialDocumentEntry.amount.less.than.zero");
         }
@@ -165,15 +154,14 @@ public class SettlementEntry extends SettlementEntry_Base {
     }
 
     @Atomic
-    public static SettlementEntry create(final DebitEntryBean debitEntryBean, final SettlementNote settlementNote,
-            DateTime entryDate) {
-        return new SettlementEntry(debitEntryBean.getDebitEntry(), settlementNote, debitEntryBean.getDebtAmount(),
-                debitEntryBean.getDebitEntry().getDescription(), entryDate, true);
+    public static SettlementEntry create(final DebitEntry debitEntry, final BigDecimal debtAmount,
+            final SettlementNote settlementNote, DateTime entryDate) {
+        return new SettlementEntry(debitEntry, settlementNote, debtAmount, debitEntry.getDescription(), entryDate, true);
     }
 
     @Atomic
-    public static SettlementEntry create(final CreditEntry creditEntry, final BigDecimal creditAmount, final String creditDescription, 
-            final SettlementNote settlementNote, final DateTime entryDate) {
+    public static SettlementEntry create(final CreditEntry creditEntry, final BigDecimal creditAmount,
+            final String creditDescription, final SettlementNote settlementNote, final DateTime entryDate) {
         return new SettlementEntry(creditEntry, settlementNote, creditAmount, creditDescription, entryDate, false);
     }
 
@@ -194,7 +182,7 @@ public class SettlementEntry extends SettlementEntry_Base {
             return "-";
         }
     }
-    
+
     /* Avoid cast from FinantialDocument to SettlementNote */
     public SettlementNote getSettlementNote() {
         return (SettlementNote) getFinantialDocument();

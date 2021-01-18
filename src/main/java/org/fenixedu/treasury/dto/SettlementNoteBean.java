@@ -14,13 +14,9 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import org.fenixedu.treasury.dto.ITreasuryBean;
-import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.CreditEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
+import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.AdvancedPaymentCreditNote;
@@ -28,14 +24,18 @@ import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.CreditNote;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
+import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Lists;
@@ -54,7 +54,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public static final String INSERT_PAYMENT_URL = CONTROLLER_URL + INSERT_PAYMENT_URI;
     public static final String SUMMARY_URI = "/summary/";
     public static final String SUMMARY_URL = CONTROLLER_URL + SUMMARY_URI;
-    
+
     private static final long serialVersionUID = 1L;
 
     private boolean reimbursementNote;
@@ -69,7 +69,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     private List<CreditEntryBean> creditEntries;
 
-    private List<DebitEntryBean> debitEntries;
+    private List<ISettlementInvoiceEntryBean> debitEntries;
 
     private List<InterestEntryBean> interestEntries;
 
@@ -91,7 +91,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public SettlementNoteBean() {
         creditEntries = new ArrayList<CreditEntryBean>();
-        debitEntries = new ArrayList<DebitEntryBean>();
+        debitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
         interestEntries = new ArrayList<InterestEntryBean>();
         paymentEntries = new ArrayList<PaymentEntryBean>();
         date = new LocalDate();
@@ -137,16 +137,18 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
 
+        Set<Installment> installments = debtAccount.getActivePaymentPlansSet().stream()
+                .flatMap(plan -> plan.getSortedOpenInstallments().stream()).collect(Collectors.toSet());
+
+        for (Installment installment : installments) {
+            debitEntries.add(new InstallmentPaymenPlanBean(installment));
+        }
+
         setDocumentNumberSeries(debtAccount, reimbursementNote);
 
-        settlementNoteStateUrls =
-                Arrays.asList(
-                        CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote,
-                        CHOOSE_INVOICE_ENTRIES_URL, 
-                        CALCULATE_INTEREST_URL,
-                        CREATE_DEBIT_NOTE_URL, 
-                        INSERT_PAYMENT_URL,
-                        SUMMARY_URL);
+        settlementNoteStateUrls = Arrays.asList(
+                CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote, CHOOSE_INVOICE_ENTRIES_URL,
+                CALCULATE_INTEREST_URL, CREATE_DEBIT_NOTE_URL, INSERT_PAYMENT_URL, SUMMARY_URL);
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
@@ -155,58 +157,42 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public Set<Customer> getReferencedCustomers() {
         final Set<Customer> result = Sets.newHashSet();
 
-        for (final DebitEntryBean debitEntryBean : debitEntries) {
-            if (!debitEntryBean.isIncluded()) {
+        for (final ISettlementInvoiceEntryBean iSettlementInvoiceEntryBean : getDebitEntries()) {
+            if (!iSettlementInvoiceEntryBean.isIncluded()) {
                 continue;
             }
+            result.addAll(iSettlementInvoiceEntryBean.getPaymentCustomer());
 
-            final DebitEntry debitEntry = debitEntryBean.getDebitEntry();
-
-            if (debitEntry.getFinantialDocument() != null
-                    && ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount() != null) {
-                result.add(((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
-                continue;
-            }
-
-            result.add(debitEntry.getDebtAccount().getCustomer());
         }
 
         for (final CreditEntryBean creditEntryBean : creditEntries) {
             if (!creditEntryBean.isIncluded()) {
                 continue;
             }
-
-            final CreditEntry creditEntry = creditEntryBean.getCreditEntry();
-
-            if (creditEntry.getFinantialDocument() != null
-                    && ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() != null) {
-                result.add(((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
-                continue;
-            }
-
-            result.add(creditEntry.getDebtAccount().getCustomer());
+            result.addAll(creditEntryBean.getPaymentCustomer());
         }
 
         return result;
     }
-    
+
     public boolean isReimbursementWithCompensation() {
-        if(!isReimbursementNote()) {
+        if (!isReimbursementNote()) {
             return false;
         }
-        
-        if(getCreditEntries().stream().filter(ce -> ce.isIncluded()).count() > 1) {
+
+        if (getCreditEntries().stream().filter(ce -> ce.isIncluded()).count() > 1) {
             throw new TreasuryDomainException("error.SettlementNote.reimbursement.supports.only.one.settlement.entry");
         }
-        
-        final CreditEntry creditEntry = getCreditEntries().stream().filter(ce -> ce.isIncluded()).findFirst().get().getCreditEntry();
+
+        final CreditEntry creditEntry =
+                getCreditEntries().stream().filter(ce -> ce.isIncluded()).findFirst().get().getCreditEntry();
         return ReimbursementUtils.isCreditNoteForReimbursementMustBeClosedWithDebitNoteAndCreatedNew(creditEntry);
     }
-    
+
     public boolean checkAdvancePaymentCreditsWithPaymentDate() {
         final Optional<SettlementNote> lastAdvancedCreditSettlementNote = getLastPaidAdvancedCreditSettlementNote();
 
-        if(!lastAdvancedCreditSettlementNote.isPresent()) {
+        if (!lastAdvancedCreditSettlementNote.isPresent()) {
             return true;
         }
 
@@ -214,25 +200,22 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public Optional<SettlementNote> getLastPaidAdvancedCreditSettlementNote() {
-        final Optional<SettlementNote> lastAdvancedCreditSettlementNote = getCreditEntries().stream()
-                .filter(ce -> ce.isIncluded())
-                .filter(ce -> ce.getCreditEntry().getFinantialDocument() != null && 
-                    ((CreditNote) ce.getCreditEntry().getFinantialDocument()).isAdvancePayment())
-                .map(ce -> ce.getCreditEntry().getFinantialDocument())
-                .map(AdvancedPaymentCreditNote.class::cast)
-                .filter(c -> c.getAdvancedPaymentSettlementNote() != null)
-                .map(c -> c.getAdvancedPaymentSettlementNote())
-                .sorted(Comparator.comparing(SettlementNote::getPaymentDate).reversed())
-                .findFirst();
-        
+        final Optional<SettlementNote> lastAdvancedCreditSettlementNote =
+                getCreditEntries().stream().filter(ce -> ce.isIncluded())
+                        .filter(ce -> ce.getCreditEntry().getFinantialDocument() != null
+                                && ((CreditNote) ce.getCreditEntry().getFinantialDocument()).isAdvancePayment())
+                        .map(ce -> ce.getCreditEntry().getFinantialDocument()).map(AdvancedPaymentCreditNote.class::cast)
+                        .filter(c -> c.getAdvancedPaymentSettlementNote() != null).map(c -> c.getAdvancedPaymentSettlementNote())
+                        .sorted(Comparator.comparing(SettlementNote::getPaymentDate).reversed()).findFirst();
+
         return lastAdvancedCreditSettlementNote;
     }
 
     public void calculateInterestDebitEntries() {
         setInterestEntries(new ArrayList<InterestEntryBean>());
-        for (DebitEntryBean debitEntryBean : getDebitEntries()) {
-            if (debitEntryBean.isIncluded()
-                    && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(), debitEntryBean.getDebtAmount())) {
+        for (DebitEntryBean debitEntryBean : getDebitEntriesByType(DebitEntryBean.class)) {
+            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
+                    debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
                 InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
@@ -243,62 +226,58 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
     }
-    
+
     public BigDecimal getTotalAmountToPay() {
         BigDecimal totalAmount = BigDecimal.ZERO;
-        
-        for (final DebitEntryBean debitEntryBean : getDebitEntries()) {
-            if(!debitEntryBean.isIncluded()) {
+
+        for (final ISettlementInvoiceEntryBean debitEntryBean : getDebitEntries()) {
+            if (!debitEntryBean.isIncluded()) {
                 continue;
             }
-            
-            if(isReimbursementNote()) {
-                totalAmount = totalAmount.subtract(debitEntryBean.getDebtAmountWithVat());
+
+            if (isReimbursementNote()) {
+                totalAmount = totalAmount.subtract(debitEntryBean.getSettledAmount());
             } else {
-                totalAmount = totalAmount.add(debitEntryBean.getDebtAmountWithVat());
+                totalAmount = totalAmount.add(debitEntryBean.getSettledAmount());
             }
         }
-        
+
         for (InterestEntryBean interestEntryBean : getInterestEntries()) {
-            if(!interestEntryBean.isIncluded()) {
+            if (!interestEntryBean.isIncluded()) {
                 continue;
             }
-            
-            if(isReimbursementNote()) {
+
+            if (isReimbursementNote()) {
                 totalAmount = totalAmount.subtract(interestEntryBean.getInterest().getInterestAmount());
             } else {
                 totalAmount = totalAmount.add(interestEntryBean.getInterest().getInterestAmount());
             }
         }
-        
+
         for (CreditEntryBean creditEntryBean : getCreditEntries()) {
-            if(!creditEntryBean.isIncluded()) {
+            if (!creditEntryBean.isIncluded()) {
                 continue;
             }
-            
-            if(isReimbursementNote()) {
+
+            if (isReimbursementNote()) {
                 totalAmount = totalAmount.add(creditEntryBean.getCreditAmountWithVat());
             } else {
                 totalAmount = totalAmount.subtract(creditEntryBean.getCreditAmountWithVat());
             }
         }
-        
+
         return totalAmount;
     }
-    
-    
+
     public List<ISettlementInvoiceEntryBean> getIncludedInvoiceEntryBeans() {
         final List<ISettlementInvoiceEntryBean> invoiceEntriesList = Lists.newArrayList();
-        for (int i = 0; i < getDebitEntries().size(); i++) {
-            DebitEntryBean debitEntryBean = getDebitEntries().get(i);
+        for (ISettlementInvoiceEntryBean debitEntryBean : getDebitEntries()) {
             if (debitEntryBean.isIncluded()) {
                 invoiceEntriesList.add(debitEntryBean);
             }
         }
 
-        for (int i = 0; i < getCreditEntries().size(); i++) {
-            final CreditEntryBean creditEntryBean = getCreditEntries().get(i);
-
+        for (final CreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 invoiceEntriesList.add(creditEntryBean);
             }
@@ -311,32 +290,31 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
         return invoiceEntriesList;
     }
-    
+
     public boolean isIncludedLegacyERPInvoiceEntryBeans() {
         for (ISettlementInvoiceEntryBean entryBean : getIncludedInvoiceEntryBeans()) {
-            if(entryBean.getInvoiceEntry() == null) {
+            if (entryBean.getInvoiceEntry() == null) {
                 continue;
             }
-            
-            if(entryBean.getInvoiceEntry().getFinantialDocument() == null) {
+
+            if (entryBean.getInvoiceEntry().getFinantialDocument() == null) {
                 continue;
             }
-            
-            if(entryBean.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP()) {
+
+            if (entryBean.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP()) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
-    
     public void includeAllInterestOfSelectedDebitEntries() {
         setInterestEntries(new ArrayList<InterestEntryBean>());
-        List<DebitEntryBean> debitEntriesToIterate = Lists.newArrayList(getDebitEntries());
+        List<DebitEntryBean> debitEntriesToIterate = Lists.newArrayList(getDebitEntriesByType(DebitEntryBean.class));
         for (DebitEntryBean debitEntryBean : debitEntriesToIterate) {
-            if (debitEntryBean.isIncluded()
-                    && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(), debitEntryBean.getDebtAmount())) {
+            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
+                    debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
                 InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
@@ -349,13 +327,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
 
         for (DebitEntryBean debitEntryBean : debitEntriesToIterate) {
-            if (debitEntryBean.isIncluded()
-                    && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(), debitEntryBean.getDebtAmount())) {
+            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
+                    debitEntryBean.getDebtAmount())) {
                 for (final DebitEntry interestDebitEntry : debitEntryBean.getDebitEntry().getInterestDebitEntriesSet()) {
-                    if(getDebitEntries().stream().filter(e -> e.isIncluded).filter(e -> e.getDebitEntry() == interestDebitEntry).findAny().isPresent()) {
+                    if (getDebitEntriesByType(DebitEntryBean.class).stream().filter(e -> e.isIncluded)
+                            .filter(e -> e.getDebitEntry() == interestDebitEntry).findAny().isPresent()) {
                         continue;
                     }
-                    
+
                     if (interestDebitEntry.isInDebt()) {
                         final DebitEntryBean interestDebitEntryBean = new DebitEntryBean(interestDebitEntry);
                         interestDebitEntryBean.setIncluded(true);
@@ -365,9 +344,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
 
-        
     }
-    
+
     // @formatter:off
     /* *****************
      * GETTERS & SETTERS
@@ -418,11 +396,19 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.creditEntries = creditEntries;
     }
 
-    public List<DebitEntryBean> getDebitEntries() {
+    public <T> List<T> getDebitEntriesByType(Class<T> clazz) {
+        if (clazz == null) {
+            return Collections.emptyList();
+        }
+        return debitEntries.stream().filter(entry -> clazz.isAssignableFrom(entry.getClass())).map(obj -> clazz.cast(obj))
+                .collect(Collectors.toList());
+    }
+
+    public List<ISettlementInvoiceEntryBean> getDebitEntries() {
         return debitEntries;
     }
 
-    public void setDebitEntries(List<DebitEntryBean> debitEntries) {
+    public void setDebitEntries(List<ISettlementInvoiceEntryBean> debitEntries) {
         this.debitEntries = debitEntries;
     }
 
@@ -444,14 +430,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public LocalDate getDebitNoteDate() {
         LocalDate lowerDate = new LocalDate();
-        for (DebitEntryBean debitEntryBean : getDebitEntries()) {
-            if (debitEntryBean.isIncluded() && debitEntryBean.getDocumentDueDate().isBefore(lowerDate)) {
-                lowerDate = debitEntryBean.getDocumentDueDate();
+        for (DebitEntryBean debitEntryBean : getDebitEntriesByType(DebitEntryBean.class)) {
+            if (debitEntryBean.isIncluded() && debitEntryBean.getDueDate().isBefore(lowerDate)) {
+                lowerDate = debitEntryBean.getDueDate();
             }
         }
         for (InterestEntryBean interestEntryBean : getInterestEntries()) {
-            if (interestEntryBean.isIncluded() && interestEntryBean.getDocumentDueDate().isBefore(lowerDate)) {
-                lowerDate = interestEntryBean.getDocumentDueDate();
+            if (interestEntryBean.isIncluded() && interestEntryBean.getDueDate().isBefore(lowerDate)) {
+                lowerDate = interestEntryBean.getDueDate();
             }
         }
         return lowerDate;
@@ -459,9 +445,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public BigDecimal getDebtAmount() {
         BigDecimal sum = BigDecimal.ZERO;
-        for (DebitEntryBean debitEntryBean : getDebitEntries()) {
+        for (ISettlementInvoiceEntryBean debitEntryBean : getDebitEntries()) {
             if (debitEntryBean.isIncluded()) {
-                sum = sum.add(debitEntryBean.getDebtAmount());
+                sum = sum.add(debitEntryBean.getSettledAmount());
             }
         }
         for (InterestEntryBean interestEntryBean : getInterestEntries()) {
@@ -479,9 +465,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public BigDecimal getDebtAmountWithVat() {
         BigDecimal sum = BigDecimal.ZERO;
-        for (DebitEntryBean debitEntryBean : getDebitEntries()) {
+        for (ISettlementInvoiceEntryBean debitEntryBean : getDebitEntries()) {
             if (debitEntryBean.isIncluded()) {
-                sum = sum.add(debitEntryBean.getDebtAmountWithVat());
+                sum = sum.add(debitEntryBean.getSettledAmount());
             }
         }
         for (InterestEntryBean interestEntryBean : getInterestEntries()) {
@@ -507,7 +493,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         for (VatType vatType : VatType.findAll().collect(Collectors.toList())) {
             sumByVat.put(vatType.getName().getContent(), new VatAmountBean(BigDecimal.ZERO, BigDecimal.ZERO));
         }
-        for (DebitEntryBean debitEntryBean : getDebitEntries()) {
+        for (DebitEntryBean debitEntryBean : getDebitEntriesByType(DebitEntryBean.class)) {
             if (debitEntryBean.isIncluded()) {
                 String vatType = debitEntryBean.getDebitEntry().getVat().getVatType().getName().getContent();
                 sumByVat.get(vatType).addAmount(debitEntryBean.getDebtAmount());
@@ -614,7 +600,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public boolean hasEntriesWithoutDocument() {
-        return debitEntries.stream().anyMatch(deb -> deb.isIncluded() && deb.getDebitEntry().getFinantialDocument() == null)
+        return getDebitEntriesByType(DebitEntryBean.class).stream()
+                .anyMatch(deb -> deb.isIncluded() && deb.getDebitEntry().getFinantialDocument() == null)
                 || interestEntries.stream().anyMatch(deb -> deb.isIncluded());
     }
 
@@ -676,18 +663,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentNumber() : null;
         }
 
+        @Deprecated
         public LocalDate getDocumentDueDate() {
             return debitEntry.getDueDate();
         }
 
-        public boolean isIncluded() {
-            return isIncluded;
-        }
-
-        public void setIncluded(boolean isIncluded) {
-            this.isIncluded = isIncluded;
-        }
-
+        @Deprecated
         public BigDecimal getDebtAmount() {
             if (debtAmount == null) {
                 return null;
@@ -696,30 +677,99 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
         }
 
+        @Deprecated
         public BigDecimal getDebtAmountWithVat() {
             if (debtAmount == null) {
                 return null;
             }
 
-            return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
+            return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency()
+                    .getValueWithScale(debitEntry.getOpenAmount());
         }
 
+        @Deprecated
         public void setDebtAmount(BigDecimal debtAmount) {
             this.debtAmount = debtAmount;
         }
 
-        public boolean isNotValid() {
-            return isNotValid;
-        }
-
-        public void setNotValid(boolean notValid) {
-            this.isNotValid = notValid;
-        }
-        
         @Override
         public InvoiceEntry getInvoiceEntry() {
             return debitEntry;
         }
+
+        @Override
+        public String getDescription() {
+            return debitEntry.getDescription();
+        }
+
+        @Override
+        public LocalDate getDueDate() {
+            return debitEntry.getDueDate();
+        }
+
+        @Override
+        public BigDecimal getEntryAmount() {
+            return debitEntry.getAmount();
+        }
+
+        @Override
+        public BigDecimal getEntryOpenAmount() {
+            return debitEntry.getOpenAmount();
+        }
+
+        @Override
+        public BigDecimal getSettledAmount() {
+            return debtAmount;
+        }
+
+        @Override
+        public void setSettledAmount(BigDecimal debtAmount) {
+            this.debtAmount = debtAmount;
+        }
+
+        @Override
+        public Vat getVat() {
+            return debitEntry.getVat();
+        }
+
+        @Override
+        public BigDecimal getVatRate() {
+            return debitEntry.getVatRate();
+        }
+
+        @Override
+        public boolean isIncluded() {
+            return isIncluded;
+        }
+
+        @Override
+        public void setIncluded(boolean isIncluded) {
+            this.isIncluded = isIncluded;
+        }
+
+        @Override
+        public boolean isNotValid() {
+            return isNotValid;
+        }
+
+        @Override
+        public void setNotValid(boolean notValid) {
+            this.isNotValid = notValid;
+        }
+
+        @Override
+        public FinantialDocument getFinantialDocument() {
+            return debitEntry.getFinantialDocument();
+        }
+
+        @Override
+        public Set<Customer> getPaymentCustomer() {
+            return debitEntry.getFinantialDocument() != null
+                    && ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
+                            ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
+                                    .singleton(debitEntry.getDebtAccount().getCustomer());
+        }
+
     }
 
     public class CreditEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
@@ -756,51 +806,115 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             return creditEntry.getFinantialDocument() != null ? creditEntry.getFinantialDocument().getDocumentNumber() : null;
         }
 
+        @Deprecated
         public LocalDate getDocumentDueDate() {
             return creditEntry.getFinantialDocument() != null ? creditEntry.getFinantialDocument()
                     .getDocumentDueDate() : creditEntry.getEntryDateTime().toLocalDate();
         }
 
-        public boolean isIncluded() {
-            return isIncluded;
-        }
-
-        public void setIncluded(boolean isIncluded) {
-            this.isIncluded = isIncluded;
-        }
-
+        @Deprecated
         public BigDecimal getCreditAmount() {
             if (creditAmount == null) {
                 return null;
             }
 
-            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
+            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency()
+                    .getValueWithScale(creditEntry.getAmount());
         }
 
+        @Deprecated
         public BigDecimal getCreditAmountWithVat() {
             if (creditAmount == null) {
                 return null;
             }
 
-            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
+            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency()
+                    .getValueWithScale(creditEntry.getAmountWithVat());
         }
 
+        @Deprecated
         public void setCreditAmount(BigDecimal creditAmount) {
             this.creditAmount = creditAmount;
         }
 
-        public boolean isNotValid() {
-            return isNotValid;
-        }
-
-        public void setNotValid(boolean notValid) {
-            this.isNotValid = notValid;
-        }
-        
         @Override
         public InvoiceEntry getInvoiceEntry() {
             return creditEntry;
         }
+
+        @Override
+        public String getDescription() {
+            return creditEntry.getDescription();
+        }
+
+        @Override
+        public LocalDate getDueDate() {
+            return creditEntry.getDueDate();
+        }
+
+        @Override
+        public BigDecimal getEntryAmount() {
+            return creditEntry.getAmount();
+        }
+
+        @Override
+        public BigDecimal getEntryOpenAmount() {
+            return creditEntry.getOpenAmount();
+        }
+
+        @Override
+        public BigDecimal getSettledAmount() {
+            return creditAmount;
+        }
+
+        @Override
+        public void setSettledAmount(BigDecimal debtAmount) {
+            this.creditAmount = debtAmount;
+        }
+
+        @Override
+        public Vat getVat() {
+            return creditEntry.getVat();
+        }
+
+        @Override
+        public BigDecimal getVatRate() {
+            return creditEntry.getVatRate();
+        }
+
+        @Override
+        public boolean isIncluded() {
+            return isIncluded;
+        }
+
+        @Override
+        public void setIncluded(boolean isIncluded) {
+            this.isIncluded = isIncluded;
+        }
+
+        @Override
+        public boolean isNotValid() {
+            return isNotValid;
+        }
+
+        @Override
+        public void setNotValid(boolean notValid) {
+            this.isNotValid = notValid;
+        }
+
+        @Override
+        public FinantialDocument getFinantialDocument() {
+            return creditEntry.getFinantialDocument();
+        }
+
+        @Override
+        public Set<Customer> getPaymentCustomer() {
+            return creditEntry.getFinantialDocument() != null
+                    && ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
+                            ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
+                                    .singleton(creditEntry.getDebtAccount().getCustomer());
+        }
+
     }
 
     public static class InterestEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
@@ -844,10 +958,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     .getDueDate();
         }
 
+        @Override
         public boolean isIncluded() {
             return isIncluded;
         }
 
+        @Override
         public void setIncluded(boolean isIncluded) {
             this.isIncluded = isIncluded;
         }
@@ -856,7 +972,68 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         public InvoiceEntry getInvoiceEntry() {
             return null;
         }
-        
+
+        @Override
+        public String getDescription() {
+            return debitEntry.getDescription();
+        }
+
+        @Override
+        public boolean isNotValid() {
+            return false;
+        }
+
+        @Override
+        public void setNotValid(boolean notValid) {
+        }
+
+        @Override
+        public BigDecimal getVatRate() {
+            return debitEntry.getVatRate();
+        }
+
+        @Override
+        public FinantialDocument getFinantialDocument() {
+            return null;
+        }
+
+        @Override
+        public Vat getVat() {
+            final VatType vatType = TreasurySettings.getInstance().getInterestProduct().getVatType();
+            return Vat.findActiveUnique(vatType, debitEntry.getDebtAccount().getFinantialInstitution(), DateTime.now()).get();
+
+        }
+
+        @Override
+        public Set<Customer> getPaymentCustomer() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public LocalDate getDueDate() {
+            return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentDueDate() : debitEntry
+                    .getDueDate();
+        }
+
+        @Override
+        public BigDecimal getEntryAmount() {
+            return null;
+        }
+
+        @Override
+        public BigDecimal getEntryOpenAmount() {
+            return null;
+        }
+
+        @Override
+        public BigDecimal getSettledAmount() {
+            return null;
+        }
+
+        @Override
+        public void setSettledAmount(BigDecimal debtAmount) {
+
+        }
     }
 
     public static class PaymentEntryBean implements ITreasuryBean, Serializable {
