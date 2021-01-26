@@ -33,11 +33,13 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
@@ -51,7 +53,9 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
-import org.fenixedu.treasury.domain.paymentPlan.ConfiguracaoToDelete;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -211,9 +215,10 @@ public class DebitEntry extends DebitEntry_Base {
         setExemptedAmount(BigDecimal.ZERO);
         setInterestRate(interestRate);
 
-        /* This property has academic significance but is meaningless in treasury scope
-         * It is false by default but can be set with markAcademicalActBlockingSuspension
-         * service method
+        /*
+         * This property has academic significance but is meaningless in treasury scope
+         * It is false by default but can be set with
+         * markAcademicalActBlockingSuspension service method
          */
         setAcademicalActBlockingSuspension(false);
         setBlockAcademicActsOnDebt(false);
@@ -238,7 +243,9 @@ public class DebitEntry extends DebitEntry_Base {
             return new InterestRateBean();
         }
 
-        if (!ConfiguracaoToDelete.isToCalculateInterest && isInOpenPaymentPlan()) {
+        if (PaymentPlanSettings.getActiveInstance() != null
+                && !PaymentPlanSettings.getActiveInstance().getInterestCalculationOfDebitsInPlans() && isInOpenPaymentPlan()
+                && !getOpenPaymentPlan().isCompliant(whenToCalculate)) {
             return new InterestRateBean();
         }
 
@@ -344,10 +351,10 @@ public class DebitEntry extends DebitEntry_Base {
         FinantialInstitution finantialInstitution = this.getDebtAccount().getFinantialInstitution();
         Vat vat = Vat.findActiveUnique(product.getVatType(), finantialInstitution, when).orElse(null);
 
-        //entry description for Interest Entry
+        // entry description for Interest Entry
         String entryDescription = interest.getDescription();
         if (Strings.isNullOrEmpty(entryDescription)) {
-            //default entryDescription
+            // default entryDescription
             entryDescription = product.getName().getContent() + "-" + this.getDescription();
         }
 
@@ -604,8 +611,8 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     /**
-     * Differs from getLastSettlementDate in obtaining payment date only
-     * from settlement notes with payment entries
+     * Differs from getLastSettlementDate in obtaining payment date only from
+     * settlement notes with payment entries
      *
      * @return
      */
@@ -664,7 +671,8 @@ public class DebitEntry extends DebitEntry_Base {
         result.edit(result.getDescription(), result.getTreasuryEvent(), result.getDueDate(),
                 debitEntryToCopy.getAcademicalActBlockingSuspension(), debitEntryToCopy.getBlockAcademicActsOnDebt());
 
-        // We could copy eventAnnuled property, but in most cases we want to create an active debit entry
+        // We could copy eventAnnuled property, but in most cases we want to create an
+        // active debit entry
         result.setEventAnnuled(false);
 
         // Interest relation must be done outside because the origin
@@ -926,7 +934,8 @@ public class DebitEntry extends DebitEntry_Base {
         closeCreditEntryIfPossible(reason, now, creditEntry);
 
         if (closeWithOtherDebitEntriesOfDebitNote) {
-            // With the remaining credit amount, close with other debit entries of same debit note
+            // With the remaining credit amount, close with other debit entries of same
+            // debit note
             final Supplier<Boolean> openCreditEntriesExistsFunc =
                     () -> getCreditEntriesSet().stream().filter(c -> TreasuryConstants.isPositive(c.getOpenAmount())).count() > 0;
             final Supplier<Boolean> openDebitEntriesExistsFunc = () -> getDebitNote().getDebitEntriesSet().stream()
@@ -966,5 +975,19 @@ public class DebitEntry extends DebitEntry_Base {
         boolean isItemActive = !getInstallmentEntrySet().isEmpty()
                 && getInstallmentEntrySet().stream().anyMatch(i -> i.getInstallment().getPaymentPlan().isOpen());
         return isEmolumentActive || isItemActive;
+    }
+
+    public PaymentPlan getOpenPaymentPlan() {
+        if (getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().isOpen()) {
+            return getEmolumentPaymentPlan();
+        }
+        return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().isOpen())
+                .map(inst -> inst.getInstallment().getPaymentPlan()).findFirst().orElse(null);
+
+    }
+
+    public List<InstallmentEntry> getSortedInstallmentEntries() {
+        return getInstallmentEntrySet().stream().sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR)
+                .collect(Collectors.toList());
     }
 }

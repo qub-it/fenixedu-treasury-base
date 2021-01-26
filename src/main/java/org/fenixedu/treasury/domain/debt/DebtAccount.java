@@ -28,6 +28,7 @@
 package org.fenixedu.treasury.domain.debt;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
@@ -304,5 +305,15 @@ public class DebtAccount extends DebtAccount_Base {
 
     public Set<PaymentPlan> getActivePaymentPlansSet() {
         return getPaymentPlansSet().stream().filter(plan -> plan.isOpen()).collect(Collectors.toSet());
+    }
+
+    public Collection<? extends PaymentCodeTarget> getUsedPaymentCodeTargetOfPendingInstallments() {
+        final Set<PaymentCodeTarget> result = Sets.newHashSet();
+        for (final PaymentPlan paymentPlan : getActivePaymentPlansSet()) {
+            result.addAll(paymentPlan.getInstallmentsSet().stream().flatMap(inst -> inst.getPaymentCodesSet().stream())
+                    .filter(pay -> pay.getPaymentReferenceCode().isUsed()).collect(Collectors.toSet()));
+        }
+        return result;
+
     }
 }

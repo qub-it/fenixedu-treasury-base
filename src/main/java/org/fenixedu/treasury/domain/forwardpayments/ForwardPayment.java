@@ -19,24 +19,22 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.IPaymentProcessorForInvoiceEntries;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.exceptions.ForwardPaymentAlreadyPayedException;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentImplementation;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessPaymentStatusBean;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
@@ -165,6 +163,125 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
             final DateTime transactionDate, final String transactionId, final String authorizationNumber,
             final String requestBody, final String responseBody, String justification) {
 
+//        if (!isActive()) {
+//            throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
+//        }
+//
+//        if (isInPayedState()) {
+//            throw new ForwardPaymentAlreadyPayedException("error.ForwardPayment.already.payed");
+//        }
+//
+//        if (getSettlementNote() != null) {
+//            throw new TreasuryDomainException("error.ForwardPayment.with.settlement.note.already.associated");
+//        }
+//
+//        setTransactionId(transactionId);
+//        setAuthorizationId(authorizationNumber);
+//        setTransactionDate(transactionDate);
+//        setPayedAmount(payedAmount);
+//        setCurrentState(ForwardPaymentStateType.PAYED);
+//
+//        log(statusCode, statusMessage, requestBody, responseBody);
+//
+//        final FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
+//        final DocumentNumberSeries settlementSeries =
+//                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get();
+//        this.setSettlementNote(SettlementNote.create(getDebtAccount(), settlementSeries, new DateTime(), transactionDate,
+//                String.valueOf(getOrderNumber()), null));
+//
+//        final DocumentNumberSeries debitNoteSeries =
+//                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+//
+//        BigDecimal amountToConsume = payedAmount;
+//
+//        // Order entries from the highest to the lowest, first the debts and then interests
+//        final List<DebitEntry> orderedEntries = Lists.newArrayList(getDebitEntriesSet());
+//        Collections.sort(orderedEntries, COMPARE_DEBIT_ENTRIES);
+//
+//        final Map<String, String> propertiesMap = fillPaymentEntryPropertiesMap(statusCode);
+//
+//        PaymentEntry.create(getForwardPaymentConfiguration().getPaymentMethod(), getSettlementNote(), amountToConsume, null,
+//                propertiesMap);
+//
+//        if (getReferencedCustomers().size() == 1) {
+//            for (final DebitEntry debitEntry : orderedEntries) {
+//
+//                if (debitEntry.isAnnulled()) {
+//                    continue;
+//                }
+//
+//                if (!debitEntry.isInDebt()) {
+//                    continue;
+//                }
+//
+//                if (debitEntry.getFinantialDocument() == null) {
+//                    final DebitNote debitNote = DebitNote.create(getDebtAccount(), debitNoteSeries, new DateTime());
+//                    debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
+//                }
+//
+//                if (debitEntry.getFinantialDocument().isPreparing()) {
+//                    debitEntry.getFinantialDocument().closeDocument();
+//                }
+//
+//                if (TreasuryConstants.isGreaterThan(debitEntry.getOpenAmount(), amountToConsume)) {
+//                    break;
+//                }
+//
+//                amountToConsume = amountToConsume.subtract(debitEntry.getOpenAmount());
+//
+//                SettlementEntry.create(debitEntry, getSettlementNote(), debitEntry.getOpenAmount(), debitEntry.getDescription(),
+//                        transactionDate, true);
+//            }
+//
+//            // settle interest debit entries
+//            for (final DebitEntry de : orderedEntries) {
+//                if (de.isAnnulled()) {
+//                    continue;
+//                }
+//
+//                for (DebitEntry interestDebitEntry : de.getInterestDebitEntriesSet()) {
+//                    if (interestDebitEntry.isAnnulled()) {
+//                        continue;
+//                    }
+//
+//                    if (!interestDebitEntry.isInDebt()) {
+//                        continue;
+//                    }
+//
+//                    if (getSettlementNote().getSettlemetEntriesSet().stream()
+//                            .filter(se -> se.getInvoiceEntry() == interestDebitEntry).findAny().isPresent()) {
+//                        // Already settled above, which is interest debit entries created in the past
+//                        continue;
+//                    }
+//
+//                    if (TreasuryConstants.isGreaterThan(interestDebitEntry.getOpenAmount(), amountToConsume)) {
+//                        break;
+//                    }
+//
+//                    if (interestDebitEntry.getFinantialDocument() == null) {
+//                        final DebitNote debitNote = DebitNote.create(getDebtAccount(), debitNoteSeries, new DateTime());
+//                        debitNote.addDebitNoteEntries(Lists.newArrayList(interestDebitEntry));
+//                        debitNote.closeDocument();
+//                    }
+//
+//                    amountToConsume = amountToConsume.subtract(interestDebitEntry.getOpenAmount());
+//                    SettlementEntry.create(interestDebitEntry, getSettlementNote(), interestDebitEntry.getOpenAmount(),
+//                            interestDebitEntry.getDescription(), transactionDate, true);
+//                }
+//            }
+//        }
+//
+//        if (TreasuryConstants.isPositive(amountToConsume)) {
+//            getSettlementNote().createAdvancedPaymentCreditNote(amountToConsume,
+//                    treasuryBundle("label.ForwardPayment.advancedpayment", String.valueOf(getOrderNumber())),
+//                    String.valueOf(getOrderNumber()));
+//        }
+//
+//        getSettlementNote().closeDocument();
+//
+//        setJustification(justification);
+//
+//        checkRules();
         if (!isActive()) {
             throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
         }
@@ -183,107 +300,24 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         setPayedAmount(payedAmount);
         setCurrentState(ForwardPaymentStateType.PAYED);
 
-        log(statusCode, statusMessage, requestBody, responseBody);
-
-        final FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
-        final DocumentNumberSeries settlementSeries =
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get();
-        this.setSettlementNote(SettlementNote.create(getDebtAccount(), settlementSeries, new DateTime(), transactionDate,
-                String.valueOf(getOrderNumber()), null));
-
-        final DocumentNumberSeries debitNoteSeries =
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
-
-        BigDecimal amountToConsume = payedAmount;
-
-        // Order entries from the highest to the lowest, first the debts and then interests
-        final List<DebitEntry> orderedEntries = Lists.newArrayList(getDebitEntriesSet());
-        Collections.sort(orderedEntries, COMPARE_DEBIT_ENTRIES);
-
         final Map<String, String> propertiesMap = fillPaymentEntryPropertiesMap(statusCode);
 
-        PaymentEntry.create(getForwardPaymentConfiguration().getPaymentMethod(), getSettlementNote(), amountToConsume, null,
-                propertiesMap);
+        log(statusCode, statusMessage, requestBody, responseBody);
 
-        if (getReferencedCustomers().size() == 1) {
-            for (final DebitEntry debitEntry : orderedEntries) {
-
-                if (debitEntry.isAnnulled()) {
-                    continue;
-                }
-
-                if (!debitEntry.isInDebt()) {
-                    continue;
-                }
-
-                if (debitEntry.getFinantialDocument() == null) {
-                    final DebitNote debitNote = DebitNote.create(getDebtAccount(), debitNoteSeries, new DateTime());
-                    debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
-                }
-
-                if (debitEntry.getFinantialDocument().isPreparing()) {
-                    debitEntry.getFinantialDocument().closeDocument();
-                }
-
-                if (TreasuryConstants.isGreaterThan(debitEntry.getOpenAmount(), amountToConsume)) {
-                    break;
-                }
-
-                amountToConsume = amountToConsume.subtract(debitEntry.getOpenAmount());
-
-                SettlementEntry.create(debitEntry, getSettlementNote(), debitEntry.getOpenAmount(), debitEntry.getDescription(),
-                        transactionDate, true);
-            }
-
-            // settle interest debit entries
-            for (final DebitEntry de : orderedEntries) {
-                if (de.isAnnulled()) {
-                    continue;
-                }
-
-                for (DebitEntry interestDebitEntry : de.getInterestDebitEntriesSet()) {
-                    if (interestDebitEntry.isAnnulled()) {
-                        continue;
-                    }
-
-                    if (!interestDebitEntry.isInDebt()) {
-                        continue;
-                    }
-
-                    if (getSettlementNote().getSettlemetEntriesSet().stream()
-                            .filter(se -> se.getInvoiceEntry() == interestDebitEntry).findAny().isPresent()) {
-                        // Already settled above, which is interest debit entries created in the past
-                        continue;
-                    }
-
-                    if (TreasuryConstants.isGreaterThan(interestDebitEntry.getOpenAmount(), amountToConsume)) {
-                        break;
-                    }
-
-                    if (interestDebitEntry.getFinantialDocument() == null) {
-                        final DebitNote debitNote = DebitNote.create(getDebtAccount(), debitNoteSeries, new DateTime());
-                        debitNote.addDebitNoteEntries(Lists.newArrayList(interestDebitEntry));
-                        debitNote.closeDocument();
-                    }
-
-                    amountToConsume = amountToConsume.subtract(interestDebitEntry.getOpenAmount());
-                    SettlementEntry.create(interestDebitEntry, getSettlementNote(), interestDebitEntry.getOpenAmount(),
-                            interestDebitEntry.getDescription(), transactionDate, true);
-                }
-            }
-        }
-
-        if (TreasuryConstants.isPositive(amountToConsume)) {
-            getSettlementNote().createAdvancedPaymentCreditNote(amountToConsume,
-                    treasuryBundle("label.ForwardPayment.advancedpayment", String.valueOf(getOrderNumber())),
-                    String.valueOf(getOrderNumber()));
-        }
-
-        getSettlementNote().closeDocument();
+        Set<SettlementNote> internalProcessPayment =
+                IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(requestBody,
+                        payedAmount, transactionDate, responseBody, justification, getInvoiceEntriesSet(), getInstallmentsSet(),
+                        c -> propertiesMap);
+        this.setSettlementNote(internalProcessPayment.iterator().next());
 
         setJustification(justification);
 
         checkRules();
+    }
+
+    @Override
+    public boolean payAllDebitEntriesInterests() {
+        return true;
     }
 
     private Map<String, String> fillPaymentEntryPropertiesMap(final String statusCode) {
@@ -803,6 +837,11 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     @Override
     public String getSibsOppwaTransactionId() {
         return getSibsTransactionId();
+    }
+
+    @Override
+    public Set<Installment> getInstallmentsSet() {
+        return Collections.emptySet();
     }
 
 }
