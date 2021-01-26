@@ -2528,6 +2528,17 @@ class paymentPlan.Installment{
 			multiplicity *;
 		}
 	}
+	relation MultipleEntriesPaymentCodeInstallment {
+        paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+    
+        paymentcodes.MultipleEntriesPaymentCode playsRole paymentCodes{
+            multiplicity *;
+        }
+    }
+	
+	
 class paymentPlan.InstallmentEntry{
 	BigDecimalT amount;
 }	
@@ -2558,5 +2569,75 @@ class paymentPlan.InstallmentEntry{
 		
 		paymentPlan.InstallmentEntry playsRole installmentEntries {
 			multiplicity *;
+		}
+	}
+	
+	
+	
+class paymentPlan.InstallmentSettlementEntry{
+	BigDecimalT amount;
+}	
+	relation InstallmentSettlementEntryDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
+			multiplicity *;
+		}
+	}	
+	relation InstallmentSettlementEntrySettlementEntry{
+		document.SettlementEntry playsRole settlementEntry {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation InstallmentSettlementEntryInstallmentEntry{
+		paymentPlan.InstallmentEntry playsRole installmentEntry {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
+			multiplicity *;
+		}
+	}
+
+class paymentPlan.PaymentPlanSettings{
+	Boolean active;
+	LocalizedString installmentDescriptionFormat;
+	Boolean interestCalculationOfDebitsInPlans;
+	Integer numberOfPaymentPlansActives;
+}	
+	relation PaymentPlanSettingsDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanSettingsTreasurySettings {
+		settings.TreasurySettings playsRole treasurySettings {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanSettingsProduct {
+		Product playsRole emolumentProduct {
+			multiplicity 0..1;
+		}
+	
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings {
+			multiplicity 0..1;
 		}
 	}
