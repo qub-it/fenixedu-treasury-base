@@ -8,8 +8,9 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.IPaymentProcessorForInvoiceEntries;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -20,8 +21,8 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -35,17 +36,25 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     public static final int MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY = 2;
 
-    protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, final PaymentReferenceCode paymentReferenceCode,
-            final boolean valid) {
+    protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, Set<Installment> installments,
+            final PaymentReferenceCode paymentReferenceCode, final boolean valid) {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
-        init(debitNoteEntries, paymentReferenceCode, valid);
+        init(debitNoteEntries, installments, paymentReferenceCode, valid);
     }
 
-    protected void init(final Set<DebitEntry> debitNoteEntries, final PaymentReferenceCode paymentReferenceCode,
-            final boolean valid) {
+    protected void init(final Set<DebitEntry> debitNoteEntries, Set<Installment> installments,
+            final PaymentReferenceCode paymentReferenceCode, final boolean valid) {
         getInvoiceEntriesSet().addAll(debitNoteEntries);
-        setDebtAccount(debitNoteEntries.iterator().next().getDebtAccount());
+        getInstallmentsSet().addAll(installments);
+        DebtAccount debtAccount = null;
+        if (!debitNoteEntries.isEmpty()) {
+            debtAccount = debitNoteEntries.iterator().next().getDebtAccount();
+        }
+        if (!installments.isEmpty() && debtAccount == null) {
+            debtAccount = installments.iterator().next().getPaymentPlan().getDebtAccount();
+        }
+        setDebtAccount(debtAccount);
 
         setPaymentReferenceCode(paymentReferenceCode);
         setValid(valid);
@@ -58,8 +67,8 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
         }
 
         // Is associated with one debit entry
-        if (getInvoiceEntriesSet().isEmpty()) {
-            throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debitEntries.empty");
+        if (getInvoiceEntriesSet().isEmpty() && getInstallmentsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debitEntries.and.installments.empty");
         }
 
         final DebtAccount debtAccount = getDebtAccount();
@@ -122,13 +131,22 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
         for (FinantialDocumentEntry entry : getOrderedInvoiceEntries()) {
             builder.append(entry.getDescription()).append("\n");
         }
+        for (Installment entry : getInstallmentsSet()) {
+            builder.append(entry.getDescription()).append("\n");
+        }
         return builder.toString();
     }
 
     @Override
     public Set<SettlementNote> processPayment(final String username, final BigDecimal amountToPay, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments) {
-        return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, getInvoiceEntriesSet());
+        return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, getInvoiceEntriesSet(),
+                getInstallmentsSet());
+    }
+
+    @Override
+    public Set<Customer> getReferencedCustomers() {
+        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet(), getInstallmentsSet());
     }
 
     public TreeSet<DebitEntry> getOrderedInvoiceEntries() {
@@ -146,7 +164,10 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     @Override
     public boolean isPaymentCodeFor(final TreasuryEvent event) {
-        return getInvoiceEntriesSet().stream().map(DebitEntry.class::cast)
+        Set<InvoiceEntry> invoiceEntriesSet = getInvoiceEntriesSet();
+        invoiceEntriesSet.addAll(getInstallmentsSet().stream()
+                .flatMap(i -> i.getInstallmentEntriesSet().stream().map(e -> e.getDebitEntry())).collect(Collectors.toSet()));
+        return invoiceEntriesSet.stream().map(DebitEntry.class::cast)
                 .anyMatch(x -> x.getTreasuryEvent() != null && x.getTreasuryEvent().equals(event));
     }
 
@@ -154,11 +175,12 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
 
-        //add more logical tests for checking deletion rules
-        //if (getXPTORelation() != null)
-        //{
-        //    blockers.add(BundleUtil.getString(Bundle.APPLICATION, "error.MultipleEntriesPaymentCode.cannot.be.deleted"));
-        //}
+        // add more logical tests for checking deletion rules
+        // if (getXPTORelation() != null)
+        // {
+        // blockers.add(BundleUtil.getString(Bundle.APPLICATION,
+        // "error.MultipleEntriesPaymentCode.cannot.be.deleted"));
+        // }
     }
 
     @Atomic
@@ -178,18 +200,24 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     @Override
     public LocalDate getDueDate() {
-        return getInvoiceEntriesSet().stream().map(InvoiceEntry::getDueDate).sorted().findFirst().orElse(null);
+        Set<LocalDate> map = getInvoiceEntriesSet().stream().map(InvoiceEntry::getDueDate).collect(Collectors.toSet());
+        map.addAll(getInstallmentsSet().stream().map(Installment::getDueDate).collect(Collectors.toSet()));
+        return map.stream().sorted().findFirst().orElse(null);
+
     }
 
     @Atomic
-    public static MultipleEntriesPaymentCode create(final Set<DebitEntry> debitNoteEntries,
+    public static MultipleEntriesPaymentCode create(final Set<DebitEntry> debitNoteEntries, Set<Installment> installments,
             final PaymentReferenceCode paymentReferenceCode, final boolean valid) {
-        return new MultipleEntriesPaymentCode(debitNoteEntries, paymentReferenceCode, valid);
+        return new MultipleEntriesPaymentCode(debitNoteEntries, installments, paymentReferenceCode, valid);
     }
 
     @Override
     public Set<Product> getReferencedProducts() {
-        return getInvoiceEntriesSet().stream().map(d -> d.getProduct()).collect(Collectors.toSet());
+        Set<InvoiceEntry> invoiceEntriesSet = getInvoiceEntriesSet();
+        invoiceEntriesSet.addAll(getInstallmentsSet().stream()
+                .flatMap(i -> i.getInstallmentEntriesSet().stream().map(e -> e.getDebitEntry())).collect(Collectors.toSet()));
+        return invoiceEntriesSet.stream().map(d -> d.getProduct()).collect(Collectors.toSet());
     }
 
     // @formatter: off
@@ -197,14 +225,14 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
      * SERVICES *
      ************/
     // @formatter: on
-    
+
     public static Stream<MultipleEntriesPaymentCode> findAll() {
         Set<MultipleEntriesPaymentCode> entries = new HashSet<MultipleEntriesPaymentCode>();
-        
-        for(FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
+
+        for (FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
             findAll(finantialInstitution).collect(Collectors.toCollection(() -> entries));
         }
-        
+
         return entries.stream();
     }
 

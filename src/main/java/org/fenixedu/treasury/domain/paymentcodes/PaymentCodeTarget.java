@@ -3,6 +3,7 @@ package org.fenixedu.treasury.domain.paymentcodes;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -15,9 +16,9 @@ import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -51,12 +52,12 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
     public BigDecimal getPayableAmount() {
         return getPaymentReferenceCode().getPayableAmount();
     }
-    
+
     @Override
     public boolean isPaymentCodeTarget() {
         return true;
     }
-    
+
     public boolean isMultipleEntriesPaymentCode() {
         return false;
     }
@@ -68,17 +69,17 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
     @Override
     public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            Set<InvoiceEntry> invoiceEntriesToPay,
+            Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
 
         Set<SettlementNote> result =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay,
+                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay,
                         fillPaymentEntryPropertiesMapFunction);
 
-        //######################################
-        //6. Create a SibsTransactionDetail
-        //######################################
+        // ######################################
+        // 6. Create a SibsTransactionDetail
+        // ######################################
         this.getPaymentReferenceCode().setState(PaymentReferenceCodeStateType.PROCESSED);
 
         return result;
@@ -87,17 +88,17 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
     @Override
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            final Set<InvoiceEntry> invoiceEntriesToPay,
+            final Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
 
         Set<SettlementNote> result =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay,
+                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay,
                         fillPaymentEntryPropertiesMapFunction);
 
-        //######################################
-        //5. Create a SibsTransactionDetail
-        //######################################
+        // ######################################
+        // 5. Create a SibsTransactionDetail
+        // ######################################
         this.getPaymentReferenceCode().setState(PaymentReferenceCodeStateType.PROCESSED);
 
         return result;
@@ -107,17 +108,17 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
     @Atomic
     protected Set<SettlementNote> internalProcessPayment(final String username, final BigDecimal amount,
             final DateTime whenRegistered, final String sibsTransactionId, final String comments,
-            Set<InvoiceEntry> invoiceEntriesToPay) {
+            Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay) {
 
         Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction =
                 (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);
 
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, whenRegistered, sibsTransactionId,
-                    comments, invoiceEntriesToPay, additionalPropertiesMapFunction);
+                    comments, invoiceEntriesToPay, installmentsToPay, additionalPropertiesMapFunction);
         } else {
             return internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username, amount, whenRegistered,
-                    sibsTransactionId, comments, invoiceEntriesToPay, additionalPropertiesMapFunction);
+                    sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay, additionalPropertiesMapFunction);
         }
     }
 
@@ -139,28 +140,31 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
 
         return paymentEntryPropertiesMap;
     }
-    
+
     public static String PAYMENT_TYPE_DESCRIPTION() {
         return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.paymentReferenceCode");
     }
 
+    @Override
     public abstract DocumentNumberSeries getDocumentSeriesInterestDebits();
 
+    @Override
     public abstract DocumentNumberSeries getDocumentSeriesForPayments();
 
     public abstract LocalDate getDueDate();
 
     public abstract Set<Product> getReferencedProducts();
 
+    @Override
     public Set<Customer> getReferencedCustomers() {
-        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet());
+        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet(), Collections.emptySet());
     }
 
     @Override
     public PaymentMethod getPaymentMethod() {
         return getPaymentReferenceCode().getPaymentCodePool().getPaymentMethod();
     }
-    
+
     @Override
     public DateTime getPaymentRequestDate() {
         return TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(this);
@@ -170,22 +174,22 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implement
     public String getPaymentRequestStateDescription() {
         return getPaymentReferenceCode().getState().getDescriptionI18N().getContent();
     }
-    
+
     @Override
     public String getPaymentTypeDescription() {
         return PAYMENT_TYPE_DESCRIPTION();
     }
-    
+
     @Override
     public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway() {
         return getPaymentReferenceCode().getPaymentCodePool().getSibsOnlinePaymentsGateway();
     }
-    
+
     @Override
     public String getSibsOppwaMerchantTransactionId() {
         return getPaymentReferenceCode().getSibsMerchantTransactionId();
     }
-    
+
     @Override
     public String getSibsOppwaTransactionId() {
         return getPaymentReferenceCode().getSibsReferenceId();

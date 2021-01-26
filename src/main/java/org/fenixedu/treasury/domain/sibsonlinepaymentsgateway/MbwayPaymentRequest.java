@@ -3,6 +3,7 @@ package org.fenixedu.treasury.domain.sibsonlinepaymentsgateway;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -112,12 +114,12 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     @Override
     public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            Set<InvoiceEntry> invoiceEntriesToPay,
+            Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
 
         Set<SettlementNote> result =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay,
+                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay,
                         fillPaymentEntryPropertiesMapFunction);
 
         this.setState(PaymentReferenceCodeStateType.PROCESSED);
@@ -128,12 +130,12 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     @Override
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            final Set<InvoiceEntry> invoiceEntriesToPay,
+            final Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
 
         Set<SettlementNote> result =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay,
+                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay,
                         fillPaymentEntryPropertiesMapFunction);
 
         this.setState(PaymentReferenceCodeStateType.PROCESSED);
@@ -150,10 +152,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
 
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet(), additionalPropertiesMapFunction);
+                    comments, getInvoiceEntriesSet(), Collections.emptySet(), additionalPropertiesMapFunction);
         } else {
             return internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet(), additionalPropertiesMapFunction);
+                    comments, getInvoiceEntriesSet(), Collections.emptySet(), additionalPropertiesMapFunction);
         }
     }
 
@@ -225,9 +227,9 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
 
     @Override
     public Set<Customer> getReferencedCustomers() {
-        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet());
+        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet(), Collections.emptySet());
     }
-    
+
     @Override
     public DateTime getPaymentRequestDate() {
         return getCreationDate();
@@ -242,17 +244,17 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     public String getPaymentRequestStateDescription() {
         return getState().getDescriptionI18N().getContent();
     }
-    
+
     @Override
     public String getPaymentTypeDescription() {
         return PAYMENT_TYPE_DESCRIPTION();
     }
-    
+
     @Override
     public String fillPaymentEntryMethodId() {
         return "";
     }
-    
+
     @Override
     public boolean isMbwayRequest() {
         return true;
@@ -261,7 +263,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     public static String PAYMENT_TYPE_DESCRIPTION() {
         return treasuryBundle("label.IPaymentProcessorForInvoiceEntries.paymentProcessorDescription.mbwayPaymentRequest");
     }
-    
+
     /* ************ */
     /* * SERVICES * */
     /* ************ */
@@ -370,7 +372,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
             }
         }
 
-        if (IPaymentProcessorForInvoiceEntries.getReferencedCustomers(invoiceEntries).size() > 1) {
+        if (IPaymentProcessorForInvoiceEntries.getReferencedCustomers(invoiceEntries, Collections.emptySet()).size() > 1) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.referencedCustomers.only.one.allowed");
         }
 
@@ -423,6 +425,11 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     @Override
     public String getSibsOppwaTransactionId() {
         return getSibsReferenceId();
+    }
+
+    @Override
+    public Set<Installment> getInstallmentsSet() {
+        return Collections.emptySet();
     }
 
 }
