@@ -8,6 +8,7 @@ import java.util.List;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
@@ -16,29 +17,31 @@ public class PaymentPlanBean {
     private DebtAccount debtAccount;
     private List<DebitEntry> debitNotes;
     private BigDecimal debitAmount;
-    private BigDecimal emulmentAmount;
+    private BigDecimal emolumentAmount;
     private BigDecimal interestAmount;
-    private int nbInstallements;
+    private int nbInstallments;
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;
     private String name;
     private List<InstallmentBean> installmentsBean;
+    private DateTime creationDate;
 
-    public PaymentPlanBean(DebtAccount debtAccount) {
+    public PaymentPlanBean(DebtAccount debtAccount, DateTime creationDate) {
         super();
         this.debitNotes = new ArrayList<DebitEntry>();
         this.debitAmount = BigDecimal.ZERO;
         this.interestAmount = BigDecimal.ZERO;
-        this.emulmentAmount = BigDecimal.ZERO;
+        this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
+        this.creationDate = creationDate;
     }
 
-    public void addPaymentPlanInformations(BigDecimal emulmentAmount, BigDecimal interestAmount, int nbInstallements,
+    public void addPaymentPlanInformations(BigDecimal emolumentAmount, BigDecimal interestAmount, int nbInstallments,
             LocalDate startDate, LocalDate endDate, String description, String name) {
-        this.emulmentAmount = emulmentAmount != null ? emulmentAmount : BigDecimal.ZERO;
+        this.emolumentAmount = emolumentAmount != null ? emolumentAmount : BigDecimal.ZERO;
         this.interestAmount = interestAmount != null ? interestAmount : BigDecimal.ZERO;
-        this.nbInstallements = nbInstallements;
+        this.nbInstallments = nbInstallments;
         this.startDate = startDate;
         this.endDate = endDate;
         this.name = name;
@@ -58,9 +61,9 @@ public class PaymentPlanBean {
         LocalDate installmentDueDate = startDate;
         BigDecimal installmentAmmount = getInstallmentAmmount();
         BigDecimal restAmount = getTotalAmount();
-        for (int i = 1; i <= nbInstallements; i++) {
-            String installmentDescription = ConfiguracaoToDelete.getInstallmentDescription(i, name);
-            if (i == nbInstallements) {
+        for (int i = 1; i <= nbInstallments; i++) {
+            String installmentDescription = getInstallmentDescription(i, name);
+            if (i == nbInstallments) {
                 installmentAmmount = restAmount;
                 installmentDueDate = endDate;
             }
@@ -74,21 +77,29 @@ public class PaymentPlanBean {
         return result;
     }
 
+    private String getInstallmentDescription(int i, String name2) {
+        PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
+        if (activeInstance == null) {
+            throw new RuntimeException("error.paymentPlanBean.paymentPlanSettings.required");
+        }
+        return String.format(activeInstance.getInstallmentDescriptionFormat().getContent(), i, name2);
+    }
+
     private int getPlusDaysForInstallment(int i) {
         return Double.valueOf(((i) * getDaysBeweenInstallments())).intValue();
     }
 
     private double getDaysBeweenInstallments() {
-        return Days.daysBetween(startDate, endDate).getDays() / (nbInstallements - 1.00);
+        return Days.daysBetween(startDate, endDate).getDays() / (nbInstallments - 1.00);
     }
 
     private BigDecimal getInstallmentAmmount() {
         return debtAccount.getFinantialInstitution().getCurrency()
-                .getValueWithScale(TreasuryConstants.divide(getTotalAmount(), new BigDecimal(nbInstallements)));
+                .getValueWithScale(TreasuryConstants.divide(getTotalAmount(), new BigDecimal(nbInstallments)));
     }
 
     public BigDecimal getTotalAmount() {
-        return debitAmount.add(emulmentAmount).add(interestAmount);
+        return debitAmount.add(emolumentAmount).add(interestAmount);
     }
 
     public List<DebitEntry> getDebitNotes() {
@@ -111,12 +122,12 @@ public class PaymentPlanBean {
         this.debitAmount = debitAmount;
     }
 
-    public BigDecimal getEmulmentAmount() {
-        return emulmentAmount;
+    public BigDecimal getEmolumentAmount() {
+        return emolumentAmount;
     }
 
-    public void setEmulmentAmount(BigDecimal emulmentAmount) {
-        this.emulmentAmount = emulmentAmount;
+    public void setEmolumentAmount(BigDecimal emolumentAmount) {
+        this.emolumentAmount = emolumentAmount;
     }
 
     public BigDecimal getInterestAmount() {
@@ -127,12 +138,12 @@ public class PaymentPlanBean {
         this.interestAmount = interestAmount;
     }
 
-    public int getNbInstallements() {
-        return nbInstallements;
+    public int getNbInstallments() {
+        return nbInstallments;
     }
 
-    public void setNbInstallements(int nbInstallements) {
-        this.nbInstallements = nbInstallements;
+    public void setNbInstallments(int nbInstallments) {
+        this.nbInstallments = nbInstallments;
     }
 
     public LocalDate getStartDate() {
@@ -178,7 +189,7 @@ public class PaymentPlanBean {
         int size = installmentsBean.size();
         boolean diffAmount = getTotalAmount().compareTo(getTotalInstallments()) != 0;
         boolean diffDescription = installmentsBean != null && !installmentsBean.get(0).getDescription().endsWith(getName());
-        boolean diffNbInstallments = installmentsBean != null && size != getNbInstallements();
+        boolean diffNbInstallments = installmentsBean != null && size != getNbInstallments();
         boolean diffStartDate = installmentsBean != null && !installmentsBean.get(0).getDueDate().equals(getStartDate());
         boolean diffEndDate = installmentsBean != null && !installmentsBean.get(size - 1).getDueDate().equals(getEndDate());
 
@@ -204,5 +215,9 @@ public class PaymentPlanBean {
 
     protected void setDebtAccount(DebtAccount debtAccount) {
         this.debtAccount = debtAccount;
+    }
+
+    public DateTime getCreationDate() {
+        return creationDate;
     }
 }

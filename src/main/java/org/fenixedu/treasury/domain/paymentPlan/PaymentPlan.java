@@ -16,6 +16,7 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -26,16 +27,20 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentPlan extends PaymentPlan_Base {
+    private static final int NB_CONSECUTIVE_INSTALLMENTS = 3;
+    private static final int NB_NON_CONSECUTIVE_INSTALLMENTS = 6;
+    private static final int DAYS_AFTER_LAST = 30;
+
     public PaymentPlan() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
     private PaymentPlan(PaymentPlanBean paymentPlanBean) {
-    	this();
+        this();
         DebtAccount debtAccount = paymentPlanBean.getDebtAccount();
 
-        setCreationDate(DateTime.now());
+        setCreationDate(paymentPlanBean.getCreationDate());
         setDescription(paymentPlanBean.getDescription());
         setDebtAccount(debtAccount);
         setState(PaymentPlanStateType.OPEN);
@@ -44,32 +49,32 @@ public class PaymentPlan extends PaymentPlan_Base {
 
         LocalDate endDate = paymentPlanBean.getEndDate();
         DateTime creationDate = this.getCreationDate();
-        boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmulmentAmount());
+        boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmolumentAmount());
         boolean hasInterest = !TreasuryConstants.isZero(paymentPlanBean.getInterestAmount());
         if (hasEmolument || hasInterest) {
             Optional<DebitNote> debitNote = null;
 
-            if (ConfiguracaoToDelete.newItensInSameDebitNote) {
-                debitNote = createDebitNote(paymentPlanBean, this);
-            }
-
             if (hasEmolument) {
-                if (!ConfiguracaoToDelete.newItensInSameDebitNote) {
-                    debitNote = createDebitNote(paymentPlanBean, this);
+                debitNote = createDebitNote(paymentPlanBean, this);
+
+                PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
+                if (activeInstance == null) {
+                    throw new RuntimeException("error.paymentPlan.paymentPlanSettings.required");
                 }
-                Product product = ConfiguracaoToDelete.emulomentProduct;
-                BigDecimal amount = paymentPlanBean.getEmulmentAmount();
+                Product product = activeInstance.getEmolumentProduct();
+                BigDecimal amount = paymentPlanBean.getEmolumentAmount();
                 String description = product.getName().getContent() + "-" + this.getName();
                 Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                         .orElse(null);
 
-                DebitEntry emuloment =
+                DebitEntry emolument =
                         createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
+                debitNote.get().closeDocument();
 
-                setEmolument(emuloment);
+                setEmolument(emolument);
             }
             if (hasInterest) {
-                Product product = ConfiguracaoToDelete.interestProduct;
+                Product product = TreasurySettings.getInstance().getInterestProduct();
                 Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                         .orElse(null);
 
@@ -82,15 +87,17 @@ public class PaymentPlan extends PaymentPlan_Base {
                     BigDecimal maxInterestAmount = debitEntry.getPendingInterestAmount();
 
                     if (!TreasuryConstants.isZero(maxInterestAmount)) {
-                        if (!ConfiguracaoToDelete.newItensInSameDebitNote) {
-                            debitNote = createDebitNote(paymentPlanBean, this);
-                        }
+                        debitNote = createDebitNote(paymentPlanBean, this);
+
                         BigDecimal amount = TreasuryConstants.isGreaterThan(rest, maxInterestAmount) ? maxInterestAmount : rest;
                         rest = rest.subtract(amount);
                         String description = product.getName().getContent() + "-" + debitEntry.getDescription();
 
                         DebitEntry interest = createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate,
                                 product, vat);
+
+                        debitNote.get().closeDocument();
+
                         debitEntry.addInterestDebitEntries(interest);
                         paymentPlanBean.getDebitNotes().add(interest);
                     }
@@ -98,6 +105,8 @@ public class PaymentPlan extends PaymentPlan_Base {
                 }
 
             }
+//			debitNote = createDebitNote(paymentPlanBean, this);
+
         }
         createInstallments(paymentPlanBean);
         checkRules();
@@ -107,6 +116,18 @@ public class PaymentPlan extends PaymentPlan_Base {
     public static PaymentPlan createPaymentPlan(PaymentPlanBean paymentPlanBean) {
 
         return new PaymentPlan(paymentPlanBean);
+    }
+
+    @Atomic
+    public void annul(String reason) {
+        setState(PaymentPlanStateType.ANNULED);
+        setReason(reason);
+    }
+
+    @Atomic
+    public void close(String reason) {
+        setState(PaymentPlanStateType.CLOSED);
+        setReason(reason);
     }
 
     private void checkRules() {
@@ -128,6 +149,11 @@ public class PaymentPlan extends PaymentPlan_Base {
         if (getInstallmentsSet() == null || getInstallmentsSet().isEmpty()) {
             throw new TreasuryDomainException("error.paymentPlan.installments.required");
         }
+        if (getDebtAccount().getActivePaymentPlansSet().size() > PaymentPlanSettings.getActiveInstance()
+                .getNumberOfPaymentPlansActives()) {
+            throw new TreasuryDomainException("error.paymentPlan.max.active.plans.reached");
+        }
+
     }
 
     private static Optional<DebitNote> createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
@@ -202,7 +228,7 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public List<Installment> getSortedOpenInstallments() {
-        return super.getInstallmentsSet().stream().filter(inst -> !inst.isPayed()).sorted(Installment.COMPARE_BY_DUEDATE)
+        return super.getInstallmentsSet().stream().filter(inst -> !inst.isPaid()).sorted(Installment.COMPARE_BY_DUEDATE)
                 .collect(Collectors.toList());
     }
 
@@ -214,6 +240,41 @@ public class PaymentPlan extends PaymentPlan_Base {
         return getInstallmentsSet().stream().flatMap(inst -> inst.getInstallmentEntriesSet().stream())
                 .filter(ent -> ent.getDebitEntry() == debitEntry).map(i -> i.getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public Boolean isCompliant() {
+        return validate(LocalDate.now(), getSortedInstallments());
+    }
+
+    public Boolean isCompliant(LocalDate date) {
+        return validate(date, getSortedInstallments());
+    }
+
+    private boolean validate(LocalDate date, List<Installment> sortedInstallments) {
+
+        return withoutXConsecutiveInstallmentsOverdueRule(date, sortedInstallments)
+                && withoutXNonConsecutiveInstallmentsOverdueRule(date, sortedInstallments);
+    }
+
+    private boolean withoutXNonConsecutiveInstallmentsOverdueRule(LocalDate date, List<Installment> sortedInstallments) {
+
+        return NB_NON_CONSECUTIVE_INSTALLMENTS > sortedInstallments.stream()
+                .filter(inst -> inst.isOverdue(date) && inst.getDueDate().isBefore(date.minusDays(DAYS_AFTER_LAST))).count();
+    }
+
+    private boolean withoutXConsecutiveInstallmentsOverdueRule(LocalDate date, List<Installment> sortedInstallments) {
+        int count = 0;
+        for (Installment installment : sortedInstallments) {
+            if (installment.isOverdue(date) && installment.getDueDate().isBefore(date.minusDays(DAYS_AFTER_LAST))) {
+                count++;
+                if (count == NB_CONSECUTIVE_INSTALLMENTS) {
+                    return false;
+                }
+            } else {
+                count = 0;
+            }
+        }
+        return true;
     }
 
 }

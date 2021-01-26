@@ -684,7 +684,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
 
             return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency()
-                    .getValueWithScale(debitEntry.getOpenAmount());
+                    .getValueWithScale(debtAmount);
         }
 
         @Deprecated
@@ -819,7 +819,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
 
             return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency()
-                    .getValueWithScale(creditEntry.getAmount());
+                    .getValueWithScale(creditAmount);
         }
 
         @Deprecated
@@ -829,7 +829,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
 
             return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency()
-                    .getValueWithScale(creditEntry.getAmountWithVat());
+                    .getValueWithScale(creditAmount);
         }
 
         @Deprecated
