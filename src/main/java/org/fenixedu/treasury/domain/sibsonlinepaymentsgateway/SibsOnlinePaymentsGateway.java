@@ -191,9 +191,9 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
             bean.fillBillingData(
                     /* debtAccount.getCustomer().getName() */ null, 
                     billingAddressBean.getAddressCountryCode(), 
-                    billingAddressBean.getCity(), 
-                    billingAddressBean.getAddress(), 
-                    billingAddressBean.getZipCode(), 
+                    limitTextSize(billingAddressBean.getCity(), SECURE_3D_MAX_CITY_SIZE),
+                    limitTextSize(billingAddressBean.getAddress(), SECURE_3D_MAX_ADDRESS_SIZE), 
+                    limitTextSize(billingAddressBean.getZipCode(), SECURE_3D_MAX_ZIP_CODE),
                     customerEmail);
         }
         
@@ -202,6 +202,18 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
         CheckoutResultBean resultBean = gatewayService.prepareOnlinePaymentCheckout(bean);
 
         return resultBean;
+    }
+    
+    private static final int SECURE_3D_MAX_CITY_SIZE = 50;
+    private static final int SECURE_3D_MAX_ADDRESS_SIZE = 50;
+    private static final int SECURE_3D_MAX_ZIP_CODE = 16;
+
+    private String limitTextSize(String text, int maxSize) {
+        if(text == null) {
+            return null;
+        }
+        
+        return text.substring(0, Integer.min(text.length(), maxSize));
     }
 
     @Atomic(mode = TxMode.READ)
