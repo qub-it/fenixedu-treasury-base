@@ -1798,9 +1798,9 @@ public class SAPExporter implements IERPExporter {
             String xml = exportCustomersToXML(institution, preProcessFunctionBeforeSerialize);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
-            final OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.finished.customers.integration"));
 
             operation.setSuccess(success);
@@ -1827,9 +1827,9 @@ public class SAPExporter implements IERPExporter {
             String xml = exportsProductsToXML(institution, preProcessFunctionBeforeSerialize);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
-            final OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.finished.products.integration"));
 
             operation.setSuccess(success);
