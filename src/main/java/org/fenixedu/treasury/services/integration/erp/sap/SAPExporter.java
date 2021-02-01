@@ -1504,7 +1504,7 @@ public class SAPExporter implements IERPExporter {
     }
 
     private boolean sendDocumentsInformationToIntegration(final FinantialInstitution institution,
-            final OperationFile operationFile, final IntegrationOperationLogBean logBean) throws MalformedURLException {
+            byte[] contents, final IntegrationOperationLogBean logBean) throws MalformedURLException {
         boolean success = true;
         ERPConfiguration erpIntegrationConfiguration = institution.getErpIntegrationConfiguration();
         if (erpIntegrationConfiguration == null) {
@@ -1520,8 +1520,8 @@ public class SAPExporter implements IERPExporter {
         logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.sending.inforation"));
 
         DocumentsInformationInput input = new DocumentsInformationInput();
-        if (operationFile.getSize() <= erpIntegrationConfiguration.getMaxSizeBytesToExportOnline()) {
-            input.setData(operationFile.getContent());
+        if (contents.length <= erpIntegrationConfiguration.getMaxSizeBytesToExportOnline()) {
+            input.setData(contents);
             DocumentsInformationOutput sendInfoOnlineResult = service.sendInfoOnline(institution, input);
 
             logBean.appendIntegrationLog(
@@ -1768,9 +1768,9 @@ public class SAPExporter implements IERPExporter {
             String xml = exportFinantialDocumentToXML(institution, documents, preProcessFunctionBeforeSerialize);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
-            OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
             operation.getFinantialDocumentsSet().addAll(documents);
             operation.setSuccess(success);
 
