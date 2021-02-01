@@ -46,6 +46,8 @@ public class PaymentPlan extends PaymentPlan_Base {
         setState(PaymentPlanStateType.OPEN);
         setReason(null);
         setName(paymentPlanBean.getName());
+        getPaymentPlanValidatorsSet().clear();
+        getPaymentPlanValidatorsSet().add(paymentPlanBean.getPaymentPlanValidator());
 
         LocalDate endDate = paymentPlanBean.getEndDate();
         DateTime creationDate = this.getCreationDate();
@@ -243,38 +245,11 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public Boolean isCompliant() {
-        return validate(LocalDate.now(), getSortedInstallments());
+        return isCompliant(LocalDate.now());
     }
 
     public Boolean isCompliant(LocalDate date) {
-        return validate(date, getSortedInstallments());
-    }
-
-    private boolean validate(LocalDate date, List<Installment> sortedInstallments) {
-
-        return withoutXConsecutiveInstallmentsOverdueRule(date, sortedInstallments)
-                && withoutXNonConsecutiveInstallmentsOverdueRule(date, sortedInstallments);
-    }
-
-    private boolean withoutXNonConsecutiveInstallmentsOverdueRule(LocalDate date, List<Installment> sortedInstallments) {
-
-        return NB_NON_CONSECUTIVE_INSTALLMENTS > sortedInstallments.stream()
-                .filter(inst -> inst.isOverdue(date) && inst.getDueDate().isBefore(date.minusDays(DAYS_AFTER_LAST))).count();
-    }
-
-    private boolean withoutXConsecutiveInstallmentsOverdueRule(LocalDate date, List<Installment> sortedInstallments) {
-        int count = 0;
-        for (Installment installment : sortedInstallments) {
-            if (installment.isOverdue(date) && installment.getDueDate().isBefore(date.minusDays(DAYS_AFTER_LAST))) {
-                count++;
-                if (count == NB_CONSECUTIVE_INSTALLMENTS) {
-                    return false;
-                }
-            } else {
-                count = 0;
-            }
-        }
-        return true;
+        return getPaymentPlanValidatorsSet().stream().allMatch(v -> v.validate(date, getSortedInstallments()));
     }
 
 }

@@ -26,6 +26,7 @@ public class PaymentPlanBean {
     private String name;
     private List<InstallmentBean> installmentsBean;
     private DateTime creationDate;
+    private PaymentPlanValidator paymentPlanValidator;
 
     public PaymentPlanBean(DebtAccount debtAccount, DateTime creationDate) {
         super();
@@ -35,17 +36,6 @@ public class PaymentPlanBean {
         this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
         this.creationDate = creationDate;
-    }
-
-    public void addPaymentPlanInformations(BigDecimal emolumentAmount, BigDecimal interestAmount, int nbInstallments,
-            LocalDate startDate, LocalDate endDate, String description, String name) {
-        this.emolumentAmount = emolumentAmount != null ? emolumentAmount : BigDecimal.ZERO;
-        this.interestAmount = interestAmount != null ? interestAmount : BigDecimal.ZERO;
-        this.nbInstallments = nbInstallments;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.name = name;
-        this.description = description;
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
@@ -219,5 +209,13 @@ public class PaymentPlanBean {
 
     public DateTime getCreationDate() {
         return creationDate;
+    }
+
+    public PaymentPlanValidator getPaymentPlanValidator() {
+        return paymentPlanValidator;
+    }
+
+    public void setPaymentPlanValidator(PaymentPlanValidator paymentPlanValidator) {
+        this.paymentPlanValidator = paymentPlanValidator;
     }
 }
