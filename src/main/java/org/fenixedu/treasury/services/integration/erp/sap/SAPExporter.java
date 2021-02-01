@@ -1457,9 +1457,9 @@ public class SAPExporter implements IERPExporter {
             }
             
             String xml = saftExporter.generateERPFile(institution, fromDate, toDate, documents, true, true, auditFilePreProcess);
-            OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
 
             operation.getFinantialDocumentsSet().addAll(documents);
             operation.setSuccess(success);
