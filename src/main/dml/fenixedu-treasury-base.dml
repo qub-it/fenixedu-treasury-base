@@ -2537,6 +2537,16 @@ class paymentPlan.Installment{
             multiplicity *;
         }
     }
+    
+	relation ForwardPaymentInstallments {
+		forwardpayments.ForwardPayment playsRole forwardPayments {
+			multiplicity *;
+		}
+		
+		paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+	}
 	
 	
 class paymentPlan.InstallmentEntry{
@@ -2641,3 +2651,51 @@ class paymentPlan.PaymentPlanSettings{
 			multiplicity 0..1;
 		}
 	}
+
+
+class paymentPlan.PaymentPlanValidator{
+}
+	relation PaymentPlanValidatorDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlanValidator playsRole paymentPlanValidators {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanValidatorPaymentPlan{
+		paymentPlan.PaymentPlan playsRole paymentPlans {
+			multiplicity *;
+		}
+		
+		paymentPlan.PaymentPlanValidator playsRole paymentPlanValidators {
+			multiplicity *;
+		}
+	}
+
+class paymentPlan.PaymentPlanGroupValidator extends paymentPlan.PaymentPlanValidator{
+	LocalizedString name;
+	Boolean active;
+	Boolean conjunction;
+}
+	relation PaymentPlanGroupValidatorPaymentPlanValidator{
+		paymentPlan.PaymentPlanGroupValidator playsRole parentValidator {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.PaymentPlanValidator playsRole childValidators {
+			multiplicity *;
+		}
+	}
+class paymentPlan.WithoutNonConsecutiveInstallmentsOverdueValidator extends paymentPlan.PaymentPlanValidator{
+	Integer numberDaysToTakeEffect;
+	Integer numberInstallments;
+}
+
+class paymentPlan.WithoutConsecutiveInstallmentsOverdueValidator extends paymentPlan.PaymentPlanValidator{
+	Integer numberDaysToTakeEffect;
+	Integer numberInstallments;
+}
+
