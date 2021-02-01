@@ -305,6 +305,7 @@ public class DebtAccount extends DebtAccount_Base {
 
     public Set<PaymentPlan> getActivePaymentPlansSet() {
         return getPaymentPlansSet().stream().filter(plan -> plan.isOpen()).collect(Collectors.toSet());
+
     }
 
     public Collection<? extends PaymentCodeTarget> getUsedPaymentCodeTargetOfPendingInstallments() {
@@ -316,4 +317,13 @@ public class DebtAccount extends DebtAccount_Base {
         return result;
 
     }
+
+    public Set<PaymentPlan> getPaymentPlansNotCompliantSet(LocalDate when) {
+        return getActivePaymentPlansSet().stream().filter(plan -> !plan.isCompliant(when)).collect(Collectors.toSet());
+    }
+
+    public Set<PaymentPlan> getPaymentPlansNotCompliantSet() {
+        return getPaymentPlansNotCompliantSet(LocalDate.now());
+    }
+
 }

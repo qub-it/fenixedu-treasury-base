@@ -129,10 +129,10 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     public String getDescription() {
         final StringBuilder builder = new StringBuilder();
         for (FinantialDocumentEntry entry : getOrderedInvoiceEntries()) {
-            builder.append(entry.getDescription()).append("\n");
+            builder.append(entry.getDescription()).append(" <br>");
         }
         for (Installment entry : getInstallmentsSet()) {
-            builder.append(entry.getDescription()).append("\n");
+            builder.append(entry.getDescription()).append(" <br>");
         }
         return builder.toString();
     }

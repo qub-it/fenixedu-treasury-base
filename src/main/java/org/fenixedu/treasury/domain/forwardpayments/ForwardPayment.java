@@ -4,7 +4,6 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +25,6 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -37,6 +35,7 @@ import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessP
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
+import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -51,7 +50,6 @@ import org.slf4j.Logger;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -68,13 +66,13 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     }
 
     public ForwardPayment(final ForwardPaymentConfiguration forwardPaymentConfiguration, final DebtAccount debtAccount,
-            final Set<DebitEntry> debitEntriesSet) {
+            final Set<DebitEntry> debitEntriesSet, Set<Installment> installmentsToPay) {
         this();
 
         setForwardPaymentConfiguration(forwardPaymentConfiguration);
         setDebtAccount(debtAccount);
         getDebitEntriesSet().addAll(debitEntriesSet);
-
+        getInstallmentsSet().addAll(installmentsToPay);
         setCurrentState(ForwardPaymentStateType.CREATED);
         setWhenOccured(new DateTime());
 
@@ -85,8 +83,10 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
             }
         }
 
-        final BigDecimal amount = debitEntriesSet.stream().map(DebitEntry::getOpenAmountWithInterests).reduce((a, c) -> a.add(c))
+        BigDecimal amount = debitEntriesSet.stream().map(DebitEntry::getOpenAmountWithInterests).reduce((a, c) -> a.add(c))
                 .orElse(BigDecimal.ZERO);
+        amount = amount.add(
+                installmentsToPay.stream().map(Installment::getOpenAmount).reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO));
         setAmount(debtAccount.getFinantialInstitution().getCurrency().getValueWithScale(amount));
         setOrderNumber(lastForwardPayment().isPresent() ? lastForwardPayment().get().getOrderNumber() + 1 : 1);
         log();
@@ -306,8 +306,8 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
 
         Set<SettlementNote> internalProcessPayment =
                 IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(requestBody,
-                        payedAmount, transactionDate, responseBody, justification, getInvoiceEntriesSet(), getInstallmentsSet(),
-                        c -> propertiesMap);
+                        payedAmount, transactionDate, String.valueOf(getOrderNumber()), justification, getInvoiceEntriesSet(),
+                        getInstallmentsSet(), c -> propertiesMap);
         this.setSettlementNote(internalProcessPayment.iterator().next());
 
         setJustification(justification);
@@ -384,19 +384,20 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
 
     @Override
     public Set<Customer> getReferencedCustomers() {
-        final Set<Customer> result = Sets.newHashSet();
-
-        for (final DebitEntry debitEntry : getDebitEntriesSet()) {
-            if (debitEntry.getFinantialDocument() != null
-                    && ((Invoice) debitEntry.getFinantialDocument()).isForPayorDebtAccount()) {
-                result.add(((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
-                continue;
-            }
-
-            result.add(debitEntry.getDebtAccount().getCustomer());
-        }
-
-        return result;
+//        final Set<Customer> result = Sets.newHashSet();
+//
+//        for (final DebitEntry debitEntry : getDebitEntriesSet()) {
+//            if (debitEntry.getFinantialDocument() != null
+//                    && ((Invoice) debitEntry.getFinantialDocument()).isForPayorDebtAccount()) {
+//                result.add(((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
+//                continue;
+//            }
+//
+//            result.add(debitEntry.getDebtAccount().getCustomer());
+//        }
+//
+//        return result;
+        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet(), getInstallmentsSet());
     }
 
     public ForwardPaymentLog log(final String statusCode, final String statusMessage, final String requestBody,
@@ -474,8 +475,8 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     }
 
     public static ForwardPayment create(final ForwardPaymentConfiguration forwardPaymentConfiguration,
-            final DebtAccount debtAccount, final Set<DebitEntry> debitEntriesToPay) {
-        return new ForwardPayment(forwardPaymentConfiguration, debtAccount, debitEntriesToPay);
+            final DebtAccount debtAccount, final Set<DebitEntry> debitEntriesToPay, Set<Installment> installmentsToPay) {
+        return new ForwardPayment(forwardPaymentConfiguration, debtAccount, debitEntriesToPay, installmentsToPay);
     }
 
     @Atomic
@@ -494,7 +495,17 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
             debitEntriesToPay.add(debitEntryBean.getDebitEntry());
         }
 
-        final ForwardPayment forwardPayment = ForwardPayment.create(forwardPaymentConfiguration, debtAccount, debitEntriesToPay);
+        final Set<Installment> installmentsToPay = new HashSet<>();
+        for (final InstallmentPaymenPlanBean installmentBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
+            if (!installmentBean.isIncluded()) {
+                continue;
+            }
+
+            installmentsToPay.add(installmentBean.getInstallment());
+        }
+
+        final ForwardPayment forwardPayment =
+                ForwardPayment.create(forwardPaymentConfiguration, debtAccount, debitEntriesToPay, installmentsToPay);
 
         forwardPayment.setForwardPaymentSuccessUrl(successUrlFunction.apply(forwardPayment));
         forwardPayment.setForwardPaymentInsuccessUrl(insuccessUrlFunction.apply(forwardPayment));
@@ -837,11 +848,6 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     @Override
     public String getSibsOppwaTransactionId() {
         return getSibsTransactionId();
-    }
-
-    @Override
-    public Set<Installment> getInstallmentsSet() {
-        return Collections.emptySet();
     }
 
 }
