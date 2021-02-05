@@ -15,7 +15,7 @@ import org.joda.time.LocalDate;
 public class PaymentPlanBean {
 
     private DebtAccount debtAccount;
-    private List<DebitEntry> debitNotes;
+    private List<DebitEntry> debitEntries;
     private BigDecimal debitAmount;
     private BigDecimal emolumentAmount;
     private BigDecimal interestAmount;
@@ -30,7 +30,7 @@ public class PaymentPlanBean {
 
     public PaymentPlanBean(DebtAccount debtAccount, DateTime creationDate) {
         super();
-        this.debitNotes = new ArrayList<DebitEntry>();
+        this.debitEntries = new ArrayList<DebitEntry>();
         this.debitAmount = BigDecimal.ZERO;
         this.interestAmount = BigDecimal.ZERO;
         this.emolumentAmount = BigDecimal.ZERO;
@@ -92,16 +92,16 @@ public class PaymentPlanBean {
         return debitAmount.add(emolumentAmount).add(interestAmount);
     }
 
-    public List<DebitEntry> getDebitNotes() {
-        return debitNotes;
+    public List<DebitEntry> getDebitEntries() {
+        return debitEntries;
     }
 
-    public void addDebitNotes(DebitEntry entry) {
-        debitNotes.add(entry);
+    public void addDebitEntry(DebitEntry entry) {
+        debitEntries.add(entry);
     }
 
-    public void removeDebitNotes(DebitEntry entry) {
-        debitNotes.remove(entry);
+    public void removeDebitEntry(DebitEntry entry) {
+        debitEntries.remove(entry);
     }
 
     public BigDecimal getDebitAmount() {
@@ -192,18 +192,18 @@ public class PaymentPlanBean {
 
     public BigDecimal getTotalInstallments() {
         if (installmentsBean == null) {
-            return BigDecimal.ZERO;
+            installmentsBean = createInstallmentsBean();
         }
 
         return installmentsBean.stream().map(i -> i.getInstallmentAmmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
                 RoundingMode.HALF_UP);
     }
 
-    protected DebtAccount getDebtAccount() {
+    public DebtAccount getDebtAccount() {
         return debtAccount;
     }
 
-    protected void setDebtAccount(DebtAccount debtAccount) {
+    public void setDebtAccount(DebtAccount debtAccount) {
         this.debtAccount = debtAccount;
     }
 
@@ -218,4 +218,22 @@ public class PaymentPlanBean {
     public void setPaymentPlanValidator(PaymentPlanValidator paymentPlanValidator) {
         this.paymentPlanValidator = paymentPlanValidator;
     }
+
+    public void calculeTotalAndInterestsAmount() {
+        BigDecimal debitAmount = BigDecimal.ZERO;
+        BigDecimal interestAmount = BigDecimal.ZERO;
+
+        for (DebitEntry debitEntry : getDebitEntries()) {
+            debitAmount = debitAmount.add(debitEntry.getAmountInDebt(LocalDate.now()));
+            interestAmount = interestAmount.add(debitEntry.getPendingInterestAmount());
+        }
+        setDebitAmount(debitAmount);
+        setInterestAmount(interestAmount);
+    }
+
+    public BigDecimal getMaxInterestAmount() {
+        return debitEntries.stream().map(d -> d.getPendingInterestAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    }
+
 }

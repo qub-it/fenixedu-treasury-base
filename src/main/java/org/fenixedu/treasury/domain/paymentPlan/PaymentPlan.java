@@ -82,7 +82,7 @@ public class PaymentPlan extends PaymentPlan_Base {
 
                 BigDecimal rest = paymentPlanBean.getInterestAmount().add(BigDecimal.ZERO);
 
-                List<DebitEntry> debitEntries = paymentPlanBean.getDebitNotes();
+                List<DebitEntry> debitEntries = paymentPlanBean.getDebitEntries();
                 int i = 0;
                 while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
                     DebitEntry debitEntry = debitEntries.get(i);
@@ -101,7 +101,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                         debitNote.get().closeDocument();
 
                         debitEntry.addInterestDebitEntries(interest);
-                        paymentPlanBean.getDebitNotes().add(interest);
+                        paymentPlanBean.getDebitEntries().add(interest);
                     }
                     i++;
                 }
@@ -183,6 +183,20 @@ public class PaymentPlan extends PaymentPlan_Base {
             BigDecimal rest = BigDecimal.ZERO.add(installmentBean.getInstallmentAmmount());
             while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
                 DebitEntry debitEntry = keys.get(0);
+                if (debitEntry.getDebitNote() == null) {
+                    DebitNote debitNote =
+                            DebitNote
+                                    .create(paymentPlanBean.getDebtAccount(),
+                                            DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+                                                    paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
+                                            getCreationDate());
+                    debitEntry.setFinantialDocument(debitNote);
+                }
+
+                if (!debitEntry.getDebitNote().isClosed()) {
+                    debitEntry.getDebitNote().closeDocument();
+                }
+
                 BigDecimal debitAmount = mapDebitEntries.get(debitEntry);
                 if (TreasuryConstants.isGreaterThan(debitAmount, rest)) {
                     mapDebitEntries.replace(debitEntry, debitAmount.subtract(rest));
@@ -208,7 +222,7 @@ public class PaymentPlan extends PaymentPlan_Base {
             mapDebitEntries.put(getEmolument(), getEmolument().getAmountInDebt(LocalDate.now()));
         }
 
-        for (DebitEntry debitEntry : paymentPlanBean.getDebitNotes()) {
+        for (DebitEntry debitEntry : paymentPlanBean.getDebitEntries()) {
             mapDebitEntries.put(debitEntry, debitEntry.getAmountInDebt(LocalDate.now()));
         }
         return mapDebitEntries;

@@ -88,8 +88,8 @@ public class PaymentPlanGroupValidator extends PaymentPlanGroupValidator_Base {
             setDomainRoot(null);
             deleteDomainObject();
         } else {
-            if (deleteAll) {
-                getChildValidatorsSet().forEach(v -> v.delete(deleteAll));
+            if (deleteChilds) {
+                getChildValidatorsSet().forEach(v -> v.delete(deleteChilds));
             } else {
                 getChildValidatorsSet().forEach(v -> v.setParentValidator(getParentValidator()));
             }
