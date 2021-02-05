@@ -1,5 +1,7 @@
 package org.fenixedu.treasury.domain.paymentPlan;
 
+import java.util.stream.Stream;
+
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -10,59 +12,77 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentPlanSettings extends PaymentPlanSettings_Base {
 
-	public PaymentPlanSettings() {
-		super();
-		setDomainRoot(FenixFramework.getDomainRoot());
-		setActive(Boolean.FALSE);
-		setTreasurySettings(TreasurySettings.getInstance());
-	}
+    public PaymentPlanSettings() {
+        super();
+        setDomainRoot(FenixFramework.getDomainRoot());
+        setActive(Boolean.FALSE);
+        setTreasurySettings(TreasurySettings.getInstance());
+    }
 
-	private PaymentPlanSettings(LocalizedString installmentDescriptionFormat,
-			Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct) {
-		setInstallmentDescriptionFormat(installmentDescriptionFormat);
-		setInterestCalculationOfDebitsInPlans(interestCalculationOfDebitsInPlans);
-		setEmolumentProduct(emolumentProduct);
-		checkRules();
-	}
+    private PaymentPlanSettings(LocalizedString installmentDescriptionFormat, Boolean interestCalculationOfDebitsInPlans,
+            Product emolumentProduct, Integer numberOfPaymentPlansActives) {
+        this();
 
-	private void checkRules() {
-		if (getTreasurySettings() == null) {
-			throw new TreasuryDomainException("error.PaymentPlanSettings.treasurySettings.required");
-		}
-		if (getInstallmentDescriptionFormat() == null) {
-			throw new TreasuryDomainException("error.PaymentPlanSettings.InstallmentDescriptionFormat.required");
-		}
-		if (getInterestCalculationOfDebitsInPlans() == null) {
-			throw new TreasuryDomainException("error.PaymentPlanSettings.InterestCalculationOfDebitsInPlans.required");
-		}
-		if (getEmolumentProduct() == null) {
-			throw new TreasuryDomainException("error.PaymentPlanSettings.EmolumentProduct.required");
-		}
-		if (Boolean.TRUE.equals(getActive()) && getTreasurySettings().getPaymentPlanSettingsSet().stream()
-				.anyMatch(p -> p != this && Boolean.TRUE.equals(p.getActive()))) {
-			throw new TreasuryDomainException("error.PaymentPlanSettings.only.one.can.be.active");
-		}
-	}
+        setInstallmentDescriptionFormat(installmentDescriptionFormat);
+        setInterestCalculationOfDebitsInPlans(interestCalculationOfDebitsInPlans);
+        setEmolumentProduct(emolumentProduct);
 
-	@Atomic
-	public static PaymentPlanSettings create(LocalizedString installmentDescriptionFormat,
-			Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct) {
-		return new PaymentPlanSettings(installmentDescriptionFormat, interestCalculationOfDebitsInPlans,
-				emolumentProduct);
-	}
+        setNumberOfPaymentPlansActives(numberOfPaymentPlansActives);
 
-	@Atomic
-	public void active(Boolean active) {
-		setActive(active);
-		checkRules();
-	}
+        checkRules();
+    }
 
-	public static PaymentPlanSettings getActiveInstance() {
-		return TreasurySettings.getInstance().getPaymentPlanSettingsSet().stream()
-				.filter(p -> Boolean.TRUE.equals(p.getActive())).findFirst().orElse(null);
-	}
+    private void checkRules() {
+        if (getTreasurySettings() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.treasurySettings.required");
+        }
+        if (getInstallmentDescriptionFormat() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.InstallmentDescriptionFormat.required");
+        }
+        if (getInterestCalculationOfDebitsInPlans() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.InterestCalculationOfDebitsInPlans.required");
+        }
+        if (getEmolumentProduct() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.EmolumentProduct.required");
+        }
+        if (Boolean.TRUE.equals(getActive()) && getTreasurySettings().getPaymentPlanSettingsSet().stream()
+                .anyMatch(p -> p != this && Boolean.TRUE.equals(p.getActive()))) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.only.one.can.be.active");
+        }
 
-	public Boolean isActive() {
-		return Boolean.TRUE.equals(getActive());
-	}
+        if (getNumberOfPaymentPlansActives() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.numberOfPaymentPlansActives.required");
+        }
+    }
+
+    @Atomic
+    public static PaymentPlanSettings create(LocalizedString installmentDescriptionFormat,
+            Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct, Integer numberOfPaymentPlansActives) {
+        return new PaymentPlanSettings(installmentDescriptionFormat, interestCalculationOfDebitsInPlans, emolumentProduct,
+                numberOfPaymentPlansActives);
+    }
+
+    @Atomic
+    // TODO: rename to activate/deactivate or setActive(boolean)
+    public void active(Boolean active) {
+        setActive(active);
+        checkRules();
+    }
+
+    /*
+     * SERVICES
+     */
+
+    public static Stream<PaymentPlanSettings> findAll() {
+        return FenixFramework.getDomainRoot().getPaymentPlanSettingsSet().stream();
+    }
+
+    public static PaymentPlanSettings getActiveInstance() {
+        return TreasurySettings.getInstance().getPaymentPlanSettingsSet().stream().filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .findFirst().orElse(null);
+    }
+
+    public Boolean isActive() {
+        return Boolean.TRUE.equals(getActive());
+    }
 }

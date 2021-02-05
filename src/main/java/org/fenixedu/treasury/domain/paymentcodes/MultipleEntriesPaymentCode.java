@@ -36,10 +36,14 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     public static final int MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY = 2;
 
-    protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, Set<Installment> installments,
-            final PaymentReferenceCode paymentReferenceCode, final boolean valid) {
+    public MultipleEntriesPaymentCode() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
+    }
+    
+    protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, Set<Installment> installments,
+            final PaymentReferenceCode paymentReferenceCode, final boolean valid) {
+        this();
         init(debitNoteEntries, installments, paymentReferenceCode, valid);
     }
 

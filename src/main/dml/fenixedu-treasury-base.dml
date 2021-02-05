@@ -2428,6 +2428,7 @@ class paymentPlan.PaymentPlan{
 	String description;
 	PaymentPlanStateType state;
 	String reason;
+	String propertiesJsonMap;
 }
 	relation PaymentPlanDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
@@ -2484,7 +2485,9 @@ class paymentPlan.PaymentPlan{
 class paymentPlan.Installment{
 	String description;
 	LocalDate dueDate;
+	String propertiesJsonMap;
 }
+
 	relation InstallmentDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
@@ -2595,10 +2598,11 @@ class paymentPlan.InstallmentSettlementEntry{
 		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
 			multiplicity *;
 		}
-	}	
+	}
+	
 	relation InstallmentSettlementEntrySettlementEntry{
 		document.SettlementEntry playsRole settlementEntry {
-			multiplicity 0..1;
+			multiplicity 1..1;
 		}
 		
 		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
@@ -2608,7 +2612,7 @@ class paymentPlan.InstallmentSettlementEntry{
 	
 	relation InstallmentSettlementEntryInstallmentEntry{
 		paymentPlan.InstallmentEntry playsRole installmentEntry {
-			multiplicity 0..1;
+			multiplicity 1..1;
 		}
 		
 		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {

@@ -132,6 +132,14 @@ public class PaymentPlan extends PaymentPlan_Base {
         setReason(reason);
     }
 
+    public Map<String, String> getPropertiesMap() {
+        return TreasuryConstants.propertiesJsonToMap(getPropertiesJsonMap());
+    }
+
+    public void editPropertiesMap(final Map<String, String> propertiesMap) {
+        setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
+    }
+
     private void checkRules() {
         if (getDescription() == null) {
             throw new TreasuryDomainException("error.paymentPlan.description.required");

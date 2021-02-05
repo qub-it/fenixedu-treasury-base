@@ -52,7 +52,7 @@ public class PaymentPlanBean {
         BigDecimal installmentAmmount = getInstallmentAmmount();
         BigDecimal restAmount = getTotalAmount();
         for (int i = 1; i <= nbInstallments; i++) {
-            String installmentDescription = getInstallmentDescription(i, name);
+            String installmentDescription = Installment.installmentDescription(i, name);
             if (i == nbInstallments) {
                 installmentAmmount = restAmount;
                 installmentDueDate = endDate;
@@ -65,14 +65,6 @@ public class PaymentPlanBean {
         }
 
         return result;
-    }
-
-    private String getInstallmentDescription(int i, String name2) {
-        PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
-        if (activeInstance == null) {
-            throw new RuntimeException("error.paymentPlanBean.paymentPlanSettings.required");
-        }
-        return String.format(activeInstance.getInstallmentDescriptionFormat().getContent(), i, name2);
     }
 
     private int getPlusDaysForInstallment(int i) {
