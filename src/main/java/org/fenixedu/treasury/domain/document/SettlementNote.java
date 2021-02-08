@@ -439,7 +439,7 @@ public class SettlementNote extends SettlementNote_Base {
 				SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(),
 						this, bean.getDate().toDateTimeAtStartOfDay());
 				BigDecimal rest = debitEntryBean.getSettledAmount();
-				for (InstallmentEntry installmentEntry : debitEntry.getSortedInstallmentEntries()) {
+				for (InstallmentEntry installmentEntry : debitEntry.getSortedOpenInstallmentEntries()) {
 					if (TreasuryConstants.isZero(rest)) {
 						break;
 					}

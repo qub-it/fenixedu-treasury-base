@@ -47,8 +47,9 @@ public class PaymentPlan extends PaymentPlan_Base {
         setReason(null);
         setName(paymentPlanBean.getName());
         getPaymentPlanValidatorsSet().clear();
-        getPaymentPlanValidatorsSet().add(paymentPlanBean.getPaymentPlanValidator());
-
+        if (paymentPlanBean.getPaymentPlanValidator() != null) {
+            getPaymentPlanValidatorsSet().add(paymentPlanBean.getPaymentPlanValidator());
+        }
         LocalDate endDate = paymentPlanBean.getEndDate();
         DateTime creationDate = this.getCreationDate();
         boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmolumentAmount());
@@ -140,7 +141,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
 
-    private void checkRules() {
+    public void checkRules() {
         if (getDescription() == null) {
             throw new TreasuryDomainException("error.paymentPlan.description.required");
         }

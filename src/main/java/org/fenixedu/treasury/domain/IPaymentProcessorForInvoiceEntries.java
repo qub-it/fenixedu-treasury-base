@@ -181,7 +181,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                                 entry.getDescription(), paymentDate, true);
 
                         BigDecimal installmentAvailableAmount = amountToPay;
-                        for (InstallmentEntry installmentEntry : debitEntry.getSortedInstallmentEntries()) {
+                        for (InstallmentEntry installmentEntry : debitEntry.getSortedOpenInstallmentEntries()) {
                             if (TreasuryConstants.isZero(installmentAvailableAmount)) {
                                 break;
                             }

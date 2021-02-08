@@ -986,8 +986,8 @@ public class DebitEntry extends DebitEntry_Base {
 
     }
 
-    public List<InstallmentEntry> getSortedInstallmentEntries() {
-        return getInstallmentEntrySet().stream().sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR)
-                .collect(Collectors.toList());
+    public List<InstallmentEntry> getSortedOpenInstallmentEntries() {
+        return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().isOpen())
+                .sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR).collect(Collectors.toList());
     }
 }
