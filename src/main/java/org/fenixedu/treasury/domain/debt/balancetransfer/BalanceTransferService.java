@@ -1,13 +1,15 @@
 package org.fenixedu.treasury.domain.debt.balancetransfer;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import static org.fenixedu.treasury.services.integration.erp.sap.SAPExporter.ERP_INTEGRATION_START_DATE;
 import static org.fenixedu.treasury.util.TreasuryConstants.isEqual;
 import static org.fenixedu.treasury.util.TreasuryConstants.isGreaterOrEqualThan;
 import static org.fenixedu.treasury.util.TreasuryConstants.isPositive;
 import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,8 +30,12 @@ import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
@@ -43,9 +49,15 @@ public class BalanceTransferService {
     private DebtAccount objectDebtAccount;
     private DebtAccount destinyDebtAccount;
 
+    private Map<DebitEntry, DebitEntry> conversionMap;
+    private Map<DebitEntry, SettlementEntry> settlementOfDebitEntry;
+
     public BalanceTransferService(final DebtAccount objectDebtAccount, final DebtAccount destinyDebtAccount) {
         this.objectDebtAccount = objectDebtAccount;
         this.destinyDebtAccount = destinyDebtAccount;
+        this.conversionMap = new HashMap<>();
+        this.settlementOfDebitEntry = new HashMap<>();
+
     }
 
     @Atomic
@@ -88,6 +100,58 @@ public class BalanceTransferService {
             throw new TreasuryDomainException("error.BalanceTransferService.initial.and.final.global.balance",
                     currency.getValueFor(initialGlobalBalance), currency.getValueFor(finalGlobalBalance));
         }
+
+        transferPaymentPlans();
+    }
+
+    private void transferPaymentPlans() {
+        for (PaymentPlan objectPaymentPlan : objectDebtAccount.getActivePaymentPlansSet()) {
+            // Create destiny PaymentPlan
+            PaymentPlan destinyPaymentPlan = new PaymentPlan();
+            destinyPaymentPlan.setCreationDate(objectPaymentPlan.getCreationDate());
+            destinyPaymentPlan.setDebtAccount(destinyDebtAccount);
+            destinyPaymentPlan.setDescription(objectPaymentPlan.getDescription());
+            destinyPaymentPlan.setName(objectPaymentPlan.getName());
+            destinyPaymentPlan.setState(objectPaymentPlan.getState());
+            destinyPaymentPlan.getPaymentPlanValidatorsSet().addAll(objectPaymentPlan.getPaymentPlanValidatorsSet());
+            destinyPaymentPlan.setEmolument(conversionMap.get(objectPaymentPlan.getEmolument()));
+
+            for (Installment objectInstallment : objectPaymentPlan.getSortedOpenInstallments()) {
+                //Create destiny Installment
+                Installment destinyInstallment = Installment.create(objectInstallment.getDescription(),
+                        objectInstallment.getDueDate(), destinyPaymentPlan);
+                for (InstallmentEntry objectInstallmentEntry : objectInstallment.getSortedOpenInstallmentEntries()) {
+                    DebitEntry destinyDebitEntry = conversionMap.get(objectInstallmentEntry.getDebitEntry());
+                    if (destinyDebitEntry.getDebitNote() != null && !destinyDebitEntry.getDebitNote().isClosed()) {
+                        destinyDebitEntry.getDebitNote().closeDocument();
+                    }
+
+                    //Create destiny InstallmentEntry
+                    InstallmentEntry.create(destinyDebitEntry, objectInstallmentEntry.getOpenAmount(), destinyInstallment);
+
+                    //Create SettlementEntry for object InstallmentEntry
+                    SettlementEntry settlementEntry = settlementOfDebitEntry.get(objectInstallmentEntry.getDebitEntry());
+                    if (settlementEntry != null) {
+                        InstallmentSettlementEntry.create(objectInstallmentEntry, settlementEntry,
+                                objectInstallmentEntry.getOpenAmount());
+                    }
+                }
+            }
+
+            //update object payment Plan
+            objectPaymentPlan.setState(PaymentPlanStateType.TRANSFERRED);
+            objectPaymentPlan
+                    .setReason(treasuryBundle("label.BalanceTransferService.paymentPlan.reason",
+                            destinyDebtAccount.getCustomer().getFiscalNumber()));
+
+            //Add Revision to Payment Plan
+            objectPaymentPlan.addPaymentPlanRevisions(destinyPaymentPlan);
+
+            //Validate Rules
+            objectPaymentPlan.checkRules();
+            destinyPaymentPlan.checkRules();
+        }
+
     }
 
     private void transferCreditEntry(final CreditEntry invoiceEntry) {
@@ -97,7 +161,7 @@ public class BalanceTransferService {
                 DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), defaultSeries);
         final DateTime now = new DateTime();
 
-        final CreditEntry creditEntry = (CreditEntry) invoiceEntry;
+        final CreditEntry creditEntry = invoiceEntry;
         final BigDecimal creditOpenAmount = creditEntry.getOpenAmount();
 
         final String originNumber = creditEntry.getFinantialDocument() != null
@@ -108,30 +172,32 @@ public class BalanceTransferService {
         DebitEntry regulationDebitEntry = DebitNote.createBalanceTransferDebit(objectDebtAccount, now, now.toLocalDate(),
                 originNumber, creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), null);
 
-        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-            
-            if(creditEntry.getFinantialDocument().isExportedInLegacyERP() || 
-                    (creditEntry.getFinantialDocument().getCloseDate() != null && creditEntry.getFinantialDocument().getCloseDate().isBefore(ERP_INTEGRATION_START_DATE))) {
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+
+            if (creditEntry.getFinantialDocument().isExportedInLegacyERP()
+                    || (creditEntry.getFinantialDocument().getCloseDate() != null
+                            && creditEntry.getFinantialDocument().getCloseDate().isBefore(ERP_INTEGRATION_START_DATE))) {
                 regulationDebitEntry.getFinantialDocument().setExportedInLegacyERP(true);
                 regulationDebitEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
             }
-            
-        }
-        
-        regulationDebitEntry.getFinantialDocument().closeDocument();
-        CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(destinyDebtAccount, now, originNumber, creditEntry.getProduct(), creditOpenAmount,
-                payorDebtAccount, creditEntry.getDescription());
 
-        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-            
-            if(creditEntry.getFinantialDocument().isExportedInLegacyERP() || 
-                    (creditEntry.getFinantialDocument().getCloseDate() != null && creditEntry.getFinantialDocument().getCloseDate().isBefore(ERP_INTEGRATION_START_DATE))) {
+        }
+
+        regulationDebitEntry.getFinantialDocument().closeDocument();
+        CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(destinyDebtAccount, now, originNumber,
+                creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription());
+
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+
+            if (creditEntry.getFinantialDocument().isExportedInLegacyERP()
+                    || (creditEntry.getFinantialDocument().getCloseDate() != null
+                            && creditEntry.getFinantialDocument().getCloseDate().isBefore(ERP_INTEGRATION_START_DATE))) {
                 regulationCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
                 regulationCreditEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
             }
 
         }
-        
+
         final SettlementNote settlementNote =
                 SettlementNote.create(objectDebtAccount, settlementNoteSeries, now, now, null, null);
 
@@ -174,59 +240,71 @@ public class BalanceTransferService {
                 final BigDecimal openAmount = debitEntry.getOpenAmount();
                 final BigDecimal availableCreditAmount = debitEntry.getAvailableAmountForCredit();
 
+                DebitEntry destinyDebitEntry = null;
+                SettlementEntry destinySettlementEntry = null;
+
                 if (!debitEntry.getFinantialDocument().getDocumentNumberSeries().getSeries().isRegulationSeries()
                         && isGreaterOrEqualThan(availableCreditAmount, openAmount)) {
 
-                    final BigDecimal openAmountWithoutVat = debitEntry.getCurrency()
-                            .getValueWithScale(TreasuryConstants.divide(openAmount, BigDecimal.ONE.add(rationalVatRate(debitEntry))));
+                    final BigDecimal openAmountWithoutVat = debitEntry.getCurrency().getValueWithScale(
+                            TreasuryConstants.divide(openAmount, BigDecimal.ONE.add(rationalVatRate(debitEntry))));
                     final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null,
                             openAmountWithoutVat, null, null);
 
                     newCreditEntry.getFinantialDocument().closeDocument();
 
-                    SettlementEntry.create(debitEntry, settlementNote, openAmount, debitEntry.getDescription(), now, false);
+                    destinySettlementEntry = SettlementEntry.create(debitEntry, settlementNote, openAmount,
+                            debitEntry.getDescription(), now, false);
                     SettlementEntry.create(newCreditEntry, settlementNote, openAmount, newCreditEntry.getDescription(), now,
                             false);
-                    createDestinyDebitEntry(destinyDebitNote, debitEntry);
+                    destinyDebitEntry = createDestinyDebitEntry(destinyDebitNote, debitEntry);
 
                 } else {
 
-                    {
-                        final CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(objectDebtAccount, now,
-                                objectDebitNote.getUiDocumentNumber(), debitEntry.getProduct(), openAmount, payorDebtAccount,
-                                null);
+                    final CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(objectDebtAccount, now,
+                            objectDebitNote.getUiDocumentNumber(), debitEntry.getProduct(), openAmount, payorDebtAccount, null);
 
-                        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-                            
-                            if(objectDebitNote.isExportedInLegacyERP() || objectDebitNote.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE)) {
-                                regulationCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
-                                regulationCreditEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
-                            }
+                    if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
-                        }
-                        
-                        regulationCreditEntry.getFinantialDocument().closeDocument();
-
-                        SettlementEntry.create(debitEntry, settlementNote, openAmount, debitEntry.getDescription(), now, false);
-                        SettlementEntry.create(regulationCreditEntry, settlementNote, openAmount,
-                                regulationCreditEntry.getDescription(), now, false);
-
-                        final DebitEntry regulationDebitEntry = DebitNote.createBalanceTransferDebit(destinyDebtAccount,
-                                debitEntry.getEntryDateTime(), debitEntry.getDueDate(),
-                                regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(), debitEntry.getProduct(),
-                                openAmount, payorDebtAccount, debitEntry.getDescription(), debitEntry.getInterestRate());
-
-                        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-                            
-                            if(objectDebitNote.isExportedInLegacyERP() || objectDebitNote.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE)) {
-                                regulationDebitEntry.getFinantialDocument().setExportedInLegacyERP(true);
-                                regulationDebitEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
-                            }
-                            
+                        if (objectDebitNote.isExportedInLegacyERP()
+                                || objectDebitNote.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE)) {
+                            regulationCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
+                            regulationCreditEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
                         }
 
-                        regulationDebitEntry.getFinantialDocument().closeDocument();
                     }
+
+                    regulationCreditEntry.getFinantialDocument().closeDocument();
+
+                    destinySettlementEntry = SettlementEntry.create(debitEntry, settlementNote, openAmount,
+                            debitEntry.getDescription(), now, false);
+
+                    SettlementEntry.create(regulationCreditEntry, settlementNote, openAmount,
+                            regulationCreditEntry.getDescription(), now, false);
+
+                    final DebitEntry regulationDebitEntry = DebitNote.createBalanceTransferDebit(destinyDebtAccount,
+                            debitEntry.getEntryDateTime(), debitEntry.getDueDate(),
+                            regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(), debitEntry.getProduct(),
+                            openAmount, payorDebtAccount, debitEntry.getDescription(), debitEntry.getInterestRate());
+
+                    destinyDebitEntry = regulationDebitEntry;
+
+                    if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+
+                        if (objectDebitNote.isExportedInLegacyERP()
+                                || objectDebitNote.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE)) {
+                            regulationDebitEntry.getFinantialDocument().setExportedInLegacyERP(true);
+                            regulationDebitEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
+                        }
+
+                    }
+                    regulationDebitEntry.getFinantialDocument().closeDocument();
+                }
+
+                //paymentPlan
+                if (debitEntry.getOpenPaymentPlan() != null) {
+                    conversionMap.put(debitEntry, destinyDebitEntry);
+                    settlementOfDebitEntry.put(debitEntry, destinySettlementEntry);
                 }
             }
 
@@ -281,6 +359,8 @@ public class BalanceTransferService {
 
             newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),
                     debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());
+
+            //paymentPlan
 
         }
 
