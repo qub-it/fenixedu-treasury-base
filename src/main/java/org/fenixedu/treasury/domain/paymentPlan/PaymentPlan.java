@@ -248,10 +248,6 @@ public class PaymentPlan extends PaymentPlan_Base {
         deleteDomainObject();
     }
 
-    public boolean isOpen() {
-        return getState().equals(PaymentPlanStateType.OPEN);
-    }
-
     public List<Installment> getSortedOpenInstallments() {
         return super.getInstallmentsSet().stream().filter(inst -> !inst.isPaid()).sorted(Installment.COMPARE_BY_DUEDATE)
                 .collect(Collectors.toList());

@@ -112,10 +112,10 @@ public class DebitEntry extends DebitEntry_Base {
 
     public static final Comparator<DebitEntry> COMPARE_DEBIT_ENTRY_IN_SAME_PAYMENT_PLAN = (m1, m2) -> {
         boolean m1IsInterest = m1.getDebitEntry() != null;
-        boolean m1IsEmolument = m1.getEmolumentPaymentPlan() != null && m1.getEmolumentPaymentPlan().isOpen();
+        boolean m1IsEmolument = m1.getEmolumentPaymentPlan() != null && m1.getEmolumentPaymentPlan().getState().isOpen();
 
         boolean m2IsInterest = m2.getDebitEntry() != null;
-        boolean m2IsEmolument = m2.getEmolumentPaymentPlan() != null && m2.getEmolumentPaymentPlan().isOpen();
+        boolean m2IsEmolument = m2.getEmolumentPaymentPlan() != null && m2.getEmolumentPaymentPlan().getState().isOpen();
 
         if (m1IsInterest && m2IsInterest) {
             return (m1.getDebitEntry().getDueDate().compareTo(m2.getDebitEntry().getDueDate()) * 100)
@@ -971,23 +971,23 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public boolean isInOpenPaymentPlan() {
-        boolean isEmolumentActive = getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().isOpen();
+        boolean isEmolumentActive = getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().getState().isOpen();
         boolean isItemActive = !getInstallmentEntrySet().isEmpty()
-                && getInstallmentEntrySet().stream().anyMatch(i -> i.getInstallment().getPaymentPlan().isOpen());
+                && getInstallmentEntrySet().stream().anyMatch(i -> i.getInstallment().getPaymentPlan().getState().isOpen());
         return isEmolumentActive || isItemActive;
     }
 
     public PaymentPlan getOpenPaymentPlan() {
-        if (getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().isOpen()) {
+        if (getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().getState().isOpen()) {
             return getEmolumentPaymentPlan();
         }
-        return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().isOpen())
+        return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().getState().isOpen())
                 .map(inst -> inst.getInstallment().getPaymentPlan()).findFirst().orElse(null);
 
     }
 
     public List<InstallmentEntry> getSortedOpenInstallmentEntries() {
-        return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().isOpen())
+        return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().getState().isOpen())
                 .sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR).collect(Collectors.toList());
     }
 }

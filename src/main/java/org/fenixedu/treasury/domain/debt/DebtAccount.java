@@ -304,7 +304,7 @@ public class DebtAccount extends DebtAccount_Base {
     }
 
     public Set<PaymentPlan> getActivePaymentPlansSet() {
-        return getPaymentPlansSet().stream().filter(plan -> plan.isOpen()).collect(Collectors.toSet());
+        return getPaymentPlansSet().stream().filter(plan -> plan.getState().isOpen()).collect(Collectors.toSet());
 
     }
 
