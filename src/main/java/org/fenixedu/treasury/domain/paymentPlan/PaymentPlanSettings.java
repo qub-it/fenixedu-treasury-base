@@ -62,10 +62,10 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
                 numberOfPaymentPlansActives);
     }
 
+    @Override
     @Atomic
-    // TODO: rename to activate/deactivate or setActive(boolean)
-    public void active(Boolean active) {
-        setActive(active);
+    public void setActive(Boolean active) {
+        super.setActive(active);
         checkRules();
     }
 
