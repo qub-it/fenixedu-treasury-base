@@ -1,4 +1,4 @@
-package org.fenixedu.treasury.domain.paymentPlan;
+package org.fenixedu.treasury.domain.paymentPlan.beans;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.Days;

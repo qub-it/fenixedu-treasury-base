@@ -16,6 +16,8 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.beans.InstallmentBean;
+import org.fenixedu.treasury.domain.paymentPlan.beans.PaymentPlanBean;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;

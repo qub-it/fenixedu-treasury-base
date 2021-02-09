@@ -2657,14 +2657,14 @@ class paymentPlan.PaymentPlanSettings{
 	}
 
 
-class paymentPlan.PaymentPlanValidator{
+class paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 }
 	relation PaymentPlanValidatorDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 			multiplicity 1..1;
 		}
 	
-		paymentPlan.PaymentPlanValidator playsRole paymentPlanValidators {
+		paymentPlan.paymentPlanValidator.PaymentPlanValidator playsRole paymentPlanValidators {
 			multiplicity *;
 		}
 	}
@@ -2674,31 +2674,31 @@ class paymentPlan.PaymentPlanValidator{
 			multiplicity *;
 		}
 		
-		paymentPlan.PaymentPlanValidator playsRole paymentPlanValidators {
+		paymentPlan.paymentPlanValidator.PaymentPlanValidator playsRole paymentPlanValidators {
 			multiplicity *;
 		}
 	}
 
-class paymentPlan.PaymentPlanGroupValidator extends paymentPlan.PaymentPlanValidator{
+class paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 	LocalizedString name;
 	Boolean active;
 	Boolean conjunction;
 }
 	relation PaymentPlanGroupValidatorPaymentPlanValidator{
-		paymentPlan.PaymentPlanGroupValidator playsRole parentValidator {
+		paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator playsRole parentValidator {
 			multiplicity 0..1;
 		}
 		
-		paymentPlan.PaymentPlanValidator playsRole childValidators {
+		paymentPlan.paymentPlanValidator.PaymentPlanValidator playsRole childValidators {
 			multiplicity *;
 		}
 	}
-class paymentPlan.WithoutNonConsecutiveInstallmentsOverdueValidator extends paymentPlan.PaymentPlanValidator{
+class paymentPlan.paymentPlanValidator.WithoutNonConsecutiveInstallmentsOverdueValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 	Integer numberDaysToTakeEffect;
 	Integer numberInstallments;
 }
 
-class paymentPlan.WithoutConsecutiveInstallmentsOverdueValidator extends paymentPlan.PaymentPlanValidator{
+class paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 	Integer numberDaysToTakeEffect;
 	Integer numberInstallments;
 }

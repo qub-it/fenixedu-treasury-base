@@ -1,10 +1,11 @@
-package org.fenixedu.treasury.domain.paymentPlan;
+package org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
 
@@ -55,18 +56,19 @@ public class PaymentPlanGroupValidator extends PaymentPlanGroupValidator_Base {
     @Override
     public String getDescription() {
         if (getConjunction()) {
-            return TreasuryConstants
-                    .treasuryBundle("org.fenixedu.treasury.domain.paymentPlan.PaymentPlanGroupValidator.GroupofrulesAND");
+            return TreasuryConstants.treasuryBundle(
+                    "org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator.GroupofrulesAND");
         } else {
-            return TreasuryConstants
-                    .treasuryBundle("org.fenixedu.treasury.domain.paymentPlan.PaymentPlanGroupValidator.GroupofrulesOR");
+            return TreasuryConstants.treasuryBundle(
+                    "org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator.GroupofrulesOR");
         }
     }
 
     @Override
     public void delete() {
         if (!getPaymentPlansSet().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete Payment Plan Validator with associeted plans");
+            throw new IllegalArgumentException(TreasuryConstants
+                    .treasuryBundle("PaymentPlanGroupValidator.Cannot.delete.PaymentPlanValidator.withAssocietedPlans"));
         } else if (getParentValidator() == null) {
             getChildValidatorsSet().forEach(v -> v.delete(true));
             setDomainRoot(null);
@@ -82,7 +84,8 @@ public class PaymentPlanGroupValidator extends PaymentPlanGroupValidator_Base {
     @Override
     public void delete(boolean deleteChilds) {
         if (!getPaymentPlansSet().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete Payment Plan Validator with associeted plans");
+            throw new IllegalArgumentException(TreasuryConstants
+                    .treasuryBundle("PaymentPlanGroupValidator.Cannot.delete.PaymentPlanValidator.withAssocietedPlans"));
         } else if (getParentValidator() == null) {
             getChildValidatorsSet().forEach(v -> v.delete(true));
             setDomainRoot(null);

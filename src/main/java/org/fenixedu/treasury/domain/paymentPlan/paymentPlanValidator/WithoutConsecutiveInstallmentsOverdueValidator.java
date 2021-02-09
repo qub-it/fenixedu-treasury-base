@@ -1,7 +1,8 @@
-package org.fenixedu.treasury.domain.paymentPlan;
+package org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator;
 
 import java.util.List;
 
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
 
@@ -25,7 +26,7 @@ public class WithoutConsecutiveInstallmentsOverdueValidator extends WithoutConse
     @Override
     public String getDescription() {
         return TreasuryConstants.treasuryBundle(
-                "org.fenixedu.treasury.domain.paymentPlan.WithoutConsecutiveInstallmentsOverdueValidator.description",
+                "org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueValidator.description",
                 String.valueOf(getNumberInstallments()), String.valueOf(getNumberDaysToTakeEffect()));
     }
 

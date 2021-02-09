@@ -1,4 +1,4 @@
-package org.fenixedu.treasury.domain.paymentPlan;
+package org.fenixedu.treasury.domain.paymentPlan.beans;
 
 import java.math.BigDecimal;
 
