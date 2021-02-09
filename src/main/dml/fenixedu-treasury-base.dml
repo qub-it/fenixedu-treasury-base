@@ -2482,8 +2482,8 @@ class paymentPlan.PaymentPlan{
 	}
 
 
-class paymentPlan.Installment{
-	String description;
+class paymentPlan.Installment {
+	LocalizedString description;
 	LocalDate dueDate;
 	String propertiesJsonMap;
 }

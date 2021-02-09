@@ -2,10 +2,15 @@ package org.fenixedu.treasury.domain.paymentPlan;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.text.StrSubstitutor;
+import org.fenixedu.bennu.core.util.CoreConfiguration;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -24,7 +29,7 @@ public class Installment extends Installment_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    public Installment(String description, LocalDate dueDate, PaymentPlan paymentPlan) {
+    public Installment(LocalizedString description, LocalDate dueDate, PaymentPlan paymentPlan) {
         this();
         setDescription(description);
         setDueDate(dueDate);
@@ -33,7 +38,7 @@ public class Installment extends Installment_Base {
     }
 
     @Atomic
-    public static Installment create(String description, LocalDate dueDate, PaymentPlan paymentPlan) {
+    public static Installment create(LocalizedString description, LocalDate dueDate, PaymentPlan paymentPlan) {
         return new Installment(description, dueDate, paymentPlan);
     }
 
@@ -107,13 +112,24 @@ public class Installment extends Installment_Base {
     public void editPropertiesMap(final Map<String, String> propertiesMap) {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
-
-    public static String installmentDescription(int installmentNumber, String paymentPlanName) {
+    
+    public static LocalizedString installmentDescription(int installmentNumber, String paymentPlanId) {
+        Map<String, String> values = new HashMap<>();
+        values.put("installmentNumber", "" + installmentNumber);
+        values.put("paymentPlanId", paymentPlanId);
+        
         PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
         if (activeInstance == null) {
             throw new RuntimeException("error.paymentPlanBean.paymentPlanSettings.required");
         }
+        
+        LocalizedString installmentDescriptionFormat = PaymentPlanSettings.getActiveInstance().getInstallmentDescriptionFormat();
+        
+        LocalizedString ls = new LocalizedString();
+        for (Locale locale : CoreConfiguration.supportedLocales()) {
+            ls = ls.with(locale, StrSubstitutor.replace(installmentDescriptionFormat.getContent(locale), values));
+        }
 
-        return String.format(activeInstance.getInstallmentDescriptionFormat().getContent(), installmentNumber, paymentPlanName);
+        return ls;
     }
 }

@@ -2,15 +2,16 @@ package org.fenixedu.treasury.domain.paymentPlan.beans;
 
 import java.math.BigDecimal;
 
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.joda.time.LocalDate;
 
 public class InstallmentBean {
 
     private LocalDate dueDate;
-    private String description;
+    private LocalizedString description;
     private BigDecimal installmentAmmount;
 
-    public InstallmentBean(LocalDate installmentDueDate, String description, BigDecimal installmentAmmount) {
+    public InstallmentBean(LocalDate installmentDueDate, LocalizedString description, BigDecimal installmentAmmount) {
         super();
         this.dueDate = installmentDueDate;
         this.description = description;
@@ -25,11 +26,11 @@ public class InstallmentBean {
         this.dueDate = dueDate;
     }
 
-    public String getDescription() {
+    public LocalizedString getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(LocalizedString description) {
         this.description = description;
     }
 

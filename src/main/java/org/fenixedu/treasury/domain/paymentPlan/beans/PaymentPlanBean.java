@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
@@ -54,7 +55,7 @@ public class PaymentPlanBean {
         BigDecimal installmentAmmount = getInstallmentAmmount();
         BigDecimal restAmount = getTotalAmount();
         for (int i = 1; i <= nbInstallments; i++) {
-            String installmentDescription = Installment.installmentDescription(i, name);
+            LocalizedString installmentDescription = Installment.installmentDescription(i, name);
             if (i == nbInstallments) {
                 installmentAmmount = restAmount;
                 installmentDueDate = endDate;
@@ -172,7 +173,7 @@ public class PaymentPlanBean {
         }
         int size = installmentsBean.size();
         boolean diffAmount = getTotalAmount().compareTo(getTotalInstallments()) != 0;
-        boolean diffDescription = installmentsBean != null && !installmentsBean.get(0).getDescription().endsWith(getName());
+        boolean diffDescription = installmentsBean != null && !installmentsBean.get(0).getDescription().getContent().endsWith(getName());
         boolean diffNbInstallments = installmentsBean != null && size != getNbInstallments();
         boolean diffStartDate = installmentsBean != null && !installmentsBean.get(0).getDueDate().equals(getStartDate());
         boolean diffEndDate = installmentsBean != null && !installmentsBean.get(size - 1).getDueDate().equals(getEndDate());

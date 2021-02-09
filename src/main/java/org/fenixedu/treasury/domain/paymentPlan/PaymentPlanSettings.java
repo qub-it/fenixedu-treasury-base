@@ -53,6 +53,15 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
         if (getNumberOfPaymentPlansActives() == null) {
             throw new TreasuryDomainException("error.PaymentPlanSettings.numberOfPaymentPlansActives.required");
         }
+        
+        if(getInstallmentDescriptionFormat().anyMatch(o -> !o.endsWith("%s"))) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.installmentDescriptionFormat.payment.plan.id.required");
+        }
+        
+        if(getInstallmentDescriptionFormat().anyMatch(o -> !o.contains("%d"))) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.installmentDescriptionFormat.installment.number.required");
+        }
+        
     }
 
     @Atomic

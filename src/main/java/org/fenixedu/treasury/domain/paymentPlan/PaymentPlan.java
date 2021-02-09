@@ -48,10 +48,11 @@ public class PaymentPlan extends PaymentPlan_Base {
         setState(PaymentPlanStateType.OPEN);
         setReason(null);
         setName(paymentPlanBean.getName());
-        getPaymentPlanValidatorsSet().clear();
+
         if (paymentPlanBean.getPaymentPlanValidator() != null) {
             getPaymentPlanValidatorsSet().add(paymentPlanBean.getPaymentPlanValidator());
         }
+
         LocalDate endDate = paymentPlanBean.getEndDate();
         DateTime creationDate = this.getCreationDate();
         boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmolumentAmount());
@@ -265,11 +266,11 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public Boolean isCompliant() {
+    public boolean isCompliant() {
         return isCompliant(LocalDate.now());
     }
 
-    public Boolean isCompliant(LocalDate date) {
+    public boolean isCompliant(LocalDate date) {
         return getPaymentPlanValidatorsSet().stream().allMatch(v -> v.validate(date, getSortedInstallments()));
     }
 
