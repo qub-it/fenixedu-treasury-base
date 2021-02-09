@@ -15,7 +15,7 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
     public PaymentPlanSettings() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
-        setActive(Boolean.FALSE);
+        super.setActive(Boolean.FALSE);
         setTreasurySettings(TreasurySettings.getInstance());
     }
 
