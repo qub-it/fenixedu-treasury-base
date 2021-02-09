@@ -51,7 +51,7 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
     @Override
     public String getDescription() {
 
-        String result = installment.getDescription() + ":<br>";
+        String result = installment.getDescription().getContent() + ":<br>";
 
         for (InstallmentEntry element : installment.getSortedInstallmentEntries()) {
             result = result + "  - " + element.getDebitEntry().getDescription() + " <br>";
