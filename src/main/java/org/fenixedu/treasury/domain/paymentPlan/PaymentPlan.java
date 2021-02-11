@@ -6,8 +6,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -15,6 +17,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
+import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.beans.InstallmentBean;
 import org.fenixedu.treasury.domain.paymentPlan.beans.PaymentPlanBean;
@@ -29,10 +32,6 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentPlan extends PaymentPlan_Base {
-    private static final int NB_CONSECUTIVE_INSTALLMENTS = 3;
-    private static final int NB_NON_CONSECUTIVE_INSTALLMENTS = 6;
-    private static final int DAYS_AFTER_LAST = 30;
-
     public PaymentPlan() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -43,11 +42,11 @@ public class PaymentPlan extends PaymentPlan_Base {
         DebtAccount debtAccount = paymentPlanBean.getDebtAccount();
 
         setCreationDate(paymentPlanBean.getCreationDate());
-        setDescription(paymentPlanBean.getDescription());
+        setReason(paymentPlanBean.getReason());
         setDebtAccount(debtAccount);
         setState(PaymentPlanStateType.OPEN);
-        setReason(null);
-        setName(paymentPlanBean.getName());
+        setStateReason(null);
+        setPaymentPlanId(PaymentPlanSettings.getActiveInstance().getNumberGenerators().generateNumber());
 
         if (paymentPlanBean.getPaymentPlanValidator() != null) {
             getPaymentPlanValidatorsSet().add(paymentPlanBean.getPaymentPlanValidator());
@@ -69,7 +68,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                 }
                 Product product = activeInstance.getEmolumentProduct();
                 BigDecimal amount = paymentPlanBean.getEmolumentAmount();
-                String description = product.getName().getContent() + "-" + this.getName();
+                String description = product.getName().getContent() + "-" + this.getPaymentPlanId();
                 Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                         .orElse(null);
 
@@ -127,13 +126,13 @@ public class PaymentPlan extends PaymentPlan_Base {
     @Atomic
     public void annul(String reason) {
         setState(PaymentPlanStateType.ANNULED);
-        setReason(reason);
+        setStateReason(reason);
     }
 
     @Atomic
     public void close(String reason) {
         setState(PaymentPlanStateType.CLOSED);
-        setReason(reason);
+        setStateReason(reason);
     }
 
     public Map<String, String> getPropertiesMap() {
@@ -145,11 +144,8 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public void checkRules() {
-        if (getDescription() == null) {
-            throw new TreasuryDomainException("error.paymentPlan.description.required");
-        }
-        if (getName() == null) {
-            throw new TreasuryDomainException("error.paymentPlan.name.required");
+        if (getReason() == null) {
+            throw new TreasuryDomainException("error.paymentPlan.reason.required");
         }
         if (getCreationDate() == null) {
             throw new TreasuryDomainException("error.paymentPlan.creationDate.required");
@@ -167,7 +163,21 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .getNumberOfPaymentPlansActives()) {
             throw new TreasuryDomainException("error.paymentPlan.max.active.plans.reached");
         }
+        if (getCustomers().size() > 1) {
+            throw new TreasuryDomainException("error.paymentPlan.multiple.customers");
+        }
 
+    }
+
+    private Set<Customer> getCustomers() {
+        Set<DebitEntry> debitEntries = getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream())
+                .map(ie -> ie.getDebitEntry()).collect(Collectors.toSet());
+
+        return debitEntries.stream()
+                .map(entry -> (entry.getFinantialDocument() != null && ((Invoice) entry.getFinantialDocument())
+                        .isForPayorDebtAccount()) ? ((Invoice) entry.getFinantialDocument()).getPayorDebtAccount()
+                                .getCustomer() : entry.getDebtAccount().getCustomer())
+                .collect(Collectors.toSet());
     }
 
     private static Optional<DebitNote> createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
@@ -272,6 +282,12 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     public boolean isCompliant(LocalDate date) {
         return getPaymentPlanValidatorsSet().stream().allMatch(v -> v.validate(date, getSortedInstallments()));
+    }
+
+    public void tryClosePaymentPlanByPaidOff() {
+        if (getSortedOpenInstallments().isEmpty()) {
+            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff"));
+        }
     }
 
 }

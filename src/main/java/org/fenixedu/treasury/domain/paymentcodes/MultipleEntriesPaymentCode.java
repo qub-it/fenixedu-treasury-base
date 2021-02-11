@@ -40,7 +40,7 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
     }
-    
+
     protected MultipleEntriesPaymentCode(final Set<DebitEntry> debitNoteEntries, Set<Installment> installments,
             final PaymentReferenceCode paymentReferenceCode, final boolean valid) {
         this();
@@ -135,8 +135,9 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
         for (FinantialDocumentEntry entry : getOrderedInvoiceEntries()) {
             builder.append(entry.getDescription()).append(" <br>");
         }
-        for (Installment entry : getInstallmentsSet()) {
-            builder.append(entry.getDescription()).append(" <br>");
+        for (Installment entry : getInstallmentsSet().stream().sorted(Installment.COMPARE_BY_DUEDATE)
+                .collect(Collectors.toList())) {
+            builder.append(entry.getDescription().getContent()).append(" <br>");
         }
         return builder.toString();
     }

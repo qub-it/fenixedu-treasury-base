@@ -971,10 +971,7 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public boolean isInOpenPaymentPlan() {
-        boolean isEmolumentActive = getEmolumentPaymentPlan() != null && getEmolumentPaymentPlan().getState().isOpen();
-        boolean isItemActive = !getInstallmentEntrySet().isEmpty()
-                && getInstallmentEntrySet().stream().anyMatch(i -> i.getInstallment().getPaymentPlan().getState().isOpen());
-        return isEmolumentActive || isItemActive;
+        return getOpenPaymentPlan() != null;
     }
 
     public PaymentPlan getOpenPaymentPlan() {

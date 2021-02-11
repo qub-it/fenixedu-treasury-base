@@ -408,6 +408,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return debitEntries;
     }
 
+//    public List<DebitEntryBean> getDebitEntriesJSP() {
+//        return getDebitEntriesByType(DebitEntryBean.class);
+//    }
+
     public void setDebitEntries(List<ISettlementInvoiceEntryBean> debitEntries) {
         this.debitEntries = debitEntries;
     }
@@ -683,8 +687,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 return null;
             }
 
-            return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency()
-                    .getValueWithScale(debtAmount);
+            return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
         }
 
         @Deprecated
@@ -818,8 +821,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 return null;
             }
 
-            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency()
-                    .getValueWithScale(creditAmount);
+            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
         }
 
         @Deprecated
@@ -828,8 +830,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 return null;
             }
 
-            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency()
-                    .getValueWithScale(creditAmount);
+            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
         }
 
         @Deprecated
@@ -975,7 +976,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         @Override
         public String getDescription() {
-            return debitEntry.getDescription();
+            return getInterest().getDescription();
         }
 
         @Override
@@ -1027,7 +1028,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         @Override
         public BigDecimal getSettledAmount() {
-            return null;
+            return getInterest().getInterestAmount();
         }
 
         @Override

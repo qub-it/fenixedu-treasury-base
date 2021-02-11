@@ -162,6 +162,11 @@ public interface IPaymentProcessorForInvoiceEntries {
                                     if (!interestDebitEntry.isInDebt()) {
                                         continue;
                                     }
+
+                                    if (sortedInvoiceEntriesToPay.contains(interestDebitEntry)) {
+                                        continue;
+                                    }
+
                                     interestRateEntries.add(interestDebitEntry);
                                 }
                             }
@@ -193,6 +198,8 @@ public interface IPaymentProcessorForInvoiceEntries {
                                             .getOpenAmount() : installmentAvailableAmount;
                             installmentAvailableAmount = installmentAvailableAmount.subtract(debtAmount);
                             InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
+                            installmentEntry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+
                         }
 
                         // Update the amount to Pay
@@ -229,6 +236,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                         settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
                     }
                     InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
+                    entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
 
                     // Update the amount to Pay
                     availableAmount = availableAmount.subtract(installmentAmountToPay);

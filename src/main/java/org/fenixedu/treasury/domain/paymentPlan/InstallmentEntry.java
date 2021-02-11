@@ -60,8 +60,8 @@ public class InstallmentEntry extends InstallmentEntry_Base {
     }
 
     public BigDecimal getPaidAmount() {
-        return getInstallmentSettlementEntriesSet().stream().map(i -> i.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        return getInstallmentSettlementEntriesSet().stream().filter(i -> !i.getSettlementEntry().getSettlementNote().isAnnulled())
+                .map(i -> i.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public BigDecimal getOpenAmount() {

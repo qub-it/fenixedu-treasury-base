@@ -9,6 +9,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -25,8 +26,8 @@ public class PaymentPlanBean {
     private int nbInstallments;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String description;
-    private String name;
+    private String reason;
+    private String paymentPlanId;
     private List<InstallmentBean> installmentsBean;
     private DateTime creationDate;
     private PaymentPlanValidator paymentPlanValidator;
@@ -39,6 +40,7 @@ public class PaymentPlanBean {
         this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
         this.creationDate = creationDate;
+        this.paymentPlanId = PaymentPlanSettings.getActiveInstance().getNumberGenerators().getNextNumberPreview();
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
@@ -55,7 +57,7 @@ public class PaymentPlanBean {
         BigDecimal installmentAmmount = getInstallmentAmmount();
         BigDecimal restAmount = getTotalAmount();
         for (int i = 1; i <= nbInstallments; i++) {
-            LocalizedString installmentDescription = Installment.installmentDescription(i, name);
+            LocalizedString installmentDescription = Installment.installmentDescription(i, paymentPlanId);
             if (i == nbInstallments) {
                 installmentAmmount = restAmount;
                 installmentDueDate = endDate;
@@ -147,20 +149,20 @@ public class PaymentPlanBean {
         this.endDate = endDate;
     }
 
-    public String getName() {
-        return name;
+    public String getPaymentPlanId() {
+        return paymentPlanId;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setPaymentPlanId(String paymentPlanId) {
+        this.paymentPlanId = paymentPlanId;
     }
 
-    public String getDescription() {
-        return description;
+    public String getReason() {
+        return reason;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public void setInstallmentsBean(List<InstallmentBean> installmentsBean) {
@@ -173,7 +175,8 @@ public class PaymentPlanBean {
         }
         int size = installmentsBean.size();
         boolean diffAmount = getTotalAmount().compareTo(getTotalInstallments()) != 0;
-        boolean diffDescription = installmentsBean != null && !installmentsBean.get(0).getDescription().getContent().endsWith(getName());
+        boolean diffDescription =
+                installmentsBean != null && !installmentsBean.get(0).getDescription().getContent().endsWith(getPaymentPlanId());
         boolean diffNbInstallments = installmentsBean != null && size != getNbInstallments();
         boolean diffStartDate = installmentsBean != null && !installmentsBean.get(0).getDueDate().equals(getStartDate());
         boolean diffEndDate = installmentsBean != null && !installmentsBean.get(size - 1).getDueDate().equals(getEndDate());

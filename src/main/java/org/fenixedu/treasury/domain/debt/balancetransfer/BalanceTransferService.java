@@ -34,6 +34,7 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -110,16 +111,20 @@ public class BalanceTransferService {
             PaymentPlan destinyPaymentPlan = new PaymentPlan();
             destinyPaymentPlan.setCreationDate(objectPaymentPlan.getCreationDate());
             destinyPaymentPlan.setDebtAccount(destinyDebtAccount);
-            destinyPaymentPlan.setDescription(objectPaymentPlan.getDescription());
-            destinyPaymentPlan.setName(objectPaymentPlan.getName());
+            destinyPaymentPlan.setReason(objectPaymentPlan.getReason());
+            destinyPaymentPlan.setPaymentPlanId(PaymentPlanSettings.getActiveInstance().getNumberGenerators().generateNumber());
             destinyPaymentPlan.setState(objectPaymentPlan.getState());
             destinyPaymentPlan.getPaymentPlanValidatorsSet().addAll(objectPaymentPlan.getPaymentPlanValidatorsSet());
             destinyPaymentPlan.setEmolument(conversionMap.get(objectPaymentPlan.getEmolument()));
 
             for (Installment objectInstallment : objectPaymentPlan.getSortedOpenInstallments()) {
                 //Create destiny Installment
-                Installment destinyInstallment = Installment.create(objectInstallment.getDescription(),
-                        objectInstallment.getDueDate(), destinyPaymentPlan);
+                Installment destinyInstallment =
+                        Installment.create(
+                                objectInstallment.getDescription()
+                                        .map(des -> des.replace(objectPaymentPlan.getPaymentPlanId(),
+                                                destinyPaymentPlan.getPaymentPlanId())),
+                                objectInstallment.getDueDate(), destinyPaymentPlan);
                 for (InstallmentEntry objectInstallmentEntry : objectInstallment.getSortedOpenInstallmentEntries()) {
                     DebitEntry destinyDebitEntry = conversionMap.get(objectInstallmentEntry.getDebitEntry());
                     if (destinyDebitEntry.getDebitNote() != null && !destinyDebitEntry.getDebitNote().isClosed()) {
@@ -140,9 +145,8 @@ public class BalanceTransferService {
 
             //update object payment Plan
             objectPaymentPlan.setState(PaymentPlanStateType.TRANSFERRED);
-            objectPaymentPlan
-                    .setReason(treasuryBundle("label.BalanceTransferService.paymentPlan.reason",
-                            destinyDebtAccount.getCustomer().getFiscalNumber()));
+            objectPaymentPlan.setStateReason(treasuryBundle("label.BalanceTransferService.paymentPlan.reason",
+                    destinyDebtAccount.getCustomer().getFiscalNumber()));
 
             //Add Revision to Payment Plan
             objectPaymentPlan.addPaymentPlanRevisions(destinyPaymentPlan);
