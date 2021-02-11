@@ -2423,11 +2423,11 @@ class sibsonlinepaymentsgateway.MbwayTransaction {
 //PaymentPlan
 //*********************************************
 class paymentPlan.PaymentPlan{
-	String name;
+	String paymentPlanId;
 	DateTime creationDate;
-	String description;
-	PaymentPlanStateType state;
 	String reason;
+	PaymentPlanStateType state;
+	String stateReason;
 	String propertiesJsonMap;
 }
 	relation PaymentPlanDomainRoot {
@@ -2655,7 +2655,32 @@ class paymentPlan.PaymentPlanSettings{
 			multiplicity 0..1;
 		}
 	}
+	
+class paymentPlan.PaymentPlanNumberGenerator {
+	LocalizedString name;
+	String prefix;
+	Integer initialValue;
+	Integer actualValue;
+}
 
+	relation PaymentPlanNumberGeneratorRootDomainObject {
+		 paymentPlan.PaymentPlanNumberGenerator playsRole paymentPlanNumberGenerators {
+		 	 multiplicity *; 
+		}
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot { 
+			multiplicity 1..1; 
+		}
+	}
+	
+	relation PaymentPlanNumberGeneratorPaymentPlanSettings {
+		paymentPlan.PaymentPlanNumberGenerator playsRole numberGenerators { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
+			multiplicity *; 
+		}
+	}
 
 class paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 }
