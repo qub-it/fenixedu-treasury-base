@@ -510,7 +510,7 @@ public class DebitEntry extends DebitEntry_Base {
         SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(), reasonDescription + ": " + getDescription(),
                 now, false);
         
-        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry)
+        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
         
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                 && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
