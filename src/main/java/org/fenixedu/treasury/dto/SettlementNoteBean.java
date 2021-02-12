@@ -410,10 +410,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return debitEntries;
     }
 
-//    public List<DebitEntryBean> getDebitEntriesJSP() {
-//        return getDebitEntriesByType(DebitEntryBean.class);
-//    }
-
     public void setDebitEntries(List<ISettlementInvoiceEntryBean> debitEntries) {
         this.debitEntries = debitEntries;
     }
