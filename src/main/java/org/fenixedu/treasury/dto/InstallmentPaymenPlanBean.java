@@ -50,7 +50,7 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public String getDescription() {
-
+        // TODO: This method should not deal with presentation
         String result = installment.getDescription().getContent() + ":<br>";
 
         for (InstallmentEntry element : installment.getSortedInstallmentEntries()) {
@@ -129,4 +129,23 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
                 .collect(Collectors.toSet());
     }
 
+    @Override
+    public boolean isForDebitEntry() {
+        return false;
+    }
+    
+    @Override
+    public boolean isForInstallment() {
+        return true;
+    }
+    
+    @Override
+    public boolean isForCreditEntry() {
+        return false;
+    }
+    
+    @Override
+    public boolean isForPendingInterest() {
+        return false;
+    }
 }

@@ -54,6 +54,7 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -506,9 +507,11 @@ public class DebitEntry extends DebitEntry_Base {
 
         SettlementEntry.create(creditEntry, settlementNote, creditEntry.getOpenAmount(),
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
-        SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(), reasonDescription + ": " + getDescription(),
+        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(), reasonDescription + ": " + getDescription(),
                 now, false);
 
+        extracted(creditEntry, debitSettlementEntry);
+        
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                 && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.exportedInLegacyERP.not.same");
@@ -526,6 +529,22 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         settlementNote.closeDocument();
+    }
+
+    private void extracted(final CreditEntry creditEntry, SettlementEntry debitSettlementEntry) {
+        BigDecimal rest = creditEntry.getOpenAmount();
+        for (InstallmentEntry installmentEntry : getSortedOpenInstallmentEntries()) {
+            if (TreasuryConstants.isZero(rest)) {
+                break;
+            }
+            
+            BigDecimal debtAmount =
+                    rest.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry.getOpenAmount() : rest;
+            rest = rest.subtract(debtAmount);
+            InstallmentSettlementEntry.create(installmentEntry, debitSettlementEntry, debtAmount);
+
+            installmentEntry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+        }
     }
 
     public boolean isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices() {

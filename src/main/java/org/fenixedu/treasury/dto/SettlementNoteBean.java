@@ -152,6 +152,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
+        
+        Collections.sort(this.debitEntries, (o1, o2) -> o1.getDueDate().compareTo(o2.getDueDate()));
     }
 
     public Set<Customer> getReferencedCustomers() {
@@ -772,6 +774,30 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                             ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
                                     .singleton(debitEntry.getDebtAccount().getCustomer());
         }
+        
+        /*
+         * Methods to support jsp, overriden in subclasses
+         */
+        
+        @Override
+        public boolean isForDebitEntry() {
+            return true;
+        }
+        
+        @Override
+        public boolean isForInstallment() {
+            return false;
+        }
+        
+        @Override
+        public boolean isForCreditEntry() {
+            return false;
+        }
+        
+        @Override
+        public boolean isForPendingInterest() {
+            return false;
+        }
 
     }
 
@@ -916,6 +942,29 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                                     .singleton(creditEntry.getDebtAccount().getCustomer());
         }
 
+        /*
+         * Methods to support jsp, overriden in subclasses
+         */
+        
+        @Override
+        public boolean isForDebitEntry() {
+            return false;
+        }
+        
+        @Override
+        public boolean isForInstallment() {
+            return false;
+        }
+        
+        @Override
+        public boolean isForCreditEntry() {
+            return true;
+        }
+        
+        @Override
+        public boolean isForPendingInterest() {
+            return false;
+        }
     }
 
     public static class InterestEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
@@ -1034,6 +1083,30 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         @Override
         public void setSettledAmount(BigDecimal debtAmount) {
 
+        }
+        
+        /*
+         * Methods to support jsp, overriden in subclasses
+         */
+        
+        @Override
+        public boolean isForDebitEntry() {
+            return false;
+        }
+        
+        @Override
+        public boolean isForInstallment() {
+            return true;
+        }
+        
+        @Override
+        public boolean isForCreditEntry() {
+            return false;
+        }
+        
+        @Override
+        public boolean isForPendingInterest() {
+            return false;
         }
     }
 
