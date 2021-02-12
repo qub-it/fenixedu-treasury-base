@@ -22,6 +22,7 @@ import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -131,13 +132,17 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     @Override
     public String getDescription() {
+        //TODO Remove UI form domain method
         final StringBuilder builder = new StringBuilder();
         for (FinantialDocumentEntry entry : getOrderedInvoiceEntries()) {
             builder.append(entry.getDescription()).append(" <br>");
         }
         for (Installment entry : getInstallmentsSet().stream().sorted(Installment.COMPARE_BY_DUEDATE)
                 .collect(Collectors.toList())) {
-            builder.append(entry.getDescription().getContent()).append(" <br>");
+            builder.append(entry.getDescription().getContent()).append(": <br>");
+            for (InstallmentEntry installmentEntry : entry.getInstallmentEntriesSet()) {
+                builder.append("-" + installmentEntry.getDebitEntry().getDescription()).append(" <br>");
+            }
         }
         return builder.toString();
     }
