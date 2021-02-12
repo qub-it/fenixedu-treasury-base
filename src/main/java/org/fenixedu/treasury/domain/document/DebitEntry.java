@@ -509,8 +509,8 @@ public class DebitEntry extends DebitEntry_Base {
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
         SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(), reasonDescription + ": " + getDescription(),
                 now, false);
-
-        extracted(creditEntry, debitSettlementEntry);
+        
+        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry)
         
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                 && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
@@ -529,22 +529,6 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         settlementNote.closeDocument();
-    }
-
-    private void extracted(final CreditEntry creditEntry, SettlementEntry debitSettlementEntry) {
-        BigDecimal rest = creditEntry.getOpenAmount();
-        for (InstallmentEntry installmentEntry : getSortedOpenInstallmentEntries()) {
-            if (TreasuryConstants.isZero(rest)) {
-                break;
-            }
-            
-            BigDecimal debtAmount =
-                    rest.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry.getOpenAmount() : rest;
-            rest = rest.subtract(debtAmount);
-            InstallmentSettlementEntry.create(installmentEntry, debitSettlementEntry, debtAmount);
-
-            installmentEntry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
-        }
     }
 
     public boolean isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices() {
@@ -1002,6 +986,11 @@ public class DebitEntry extends DebitEntry_Base {
 
     }
 
+    /**
+     * Return all installments of open payment plans
+     * @return
+     */
+    // TODO Rename method imply the returning value installments entries that are not paid, of open payment plan
     public List<InstallmentEntry> getSortedOpenInstallmentEntries() {
         return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().getState().isOpen())
                 .sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR).collect(Collectors.toList());

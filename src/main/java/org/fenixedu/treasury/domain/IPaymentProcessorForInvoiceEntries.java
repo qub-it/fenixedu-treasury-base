@@ -186,10 +186,15 @@ public interface IPaymentProcessorForInvoiceEntries {
                                 entry.getDescription(), paymentDate, true);
 
                         BigDecimal installmentAvailableAmount = amountToPay;
+                        
+                        // TODO: Replace this logic by InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry)
                         for (InstallmentEntry installmentEntry : debitEntry.getSortedOpenInstallmentEntries()) {
+                            // TODO: Replace by !TreasuryConstants.isPositive(installmentAvailableAmount)
                             if (TreasuryConstants.isZero(installmentAvailableAmount)) {
                                 break;
                             }
+                            
+                            // TODO: Replace by !TreasuryConstants.isPositive(installmentEntry.getOpenAmount())
                             if (TreasuryConstants.isZero(installmentEntry.getOpenAmount())) {
                                 continue;
                             }
