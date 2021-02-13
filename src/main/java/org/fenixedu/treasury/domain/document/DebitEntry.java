@@ -246,7 +246,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         if (PaymentPlanSettings.getActiveInstance() != null
                 && !PaymentPlanSettings.getActiveInstance().getInterestCalculationOfDebitsInPlans() && isInOpenPaymentPlan()
-                && !getOpenPaymentPlan().isCompliant(whenToCalculate)) {
+                && getOpenPaymentPlan().isCompliant(whenToCalculate)) {
             return new InterestRateBean();
         }
 

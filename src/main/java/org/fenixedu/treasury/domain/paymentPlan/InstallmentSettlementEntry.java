@@ -64,6 +64,11 @@ public class InstallmentSettlementEntry extends InstallmentSettlementEntry_Base 
         return new InstallmentSettlementEntry(installmentEntry, settlementEntry, debtAmount);
     }
     
+    /**
+     * Just invoke with the creation of settlement entry, settling the debitEntry instead installmentEntry
+     * @param settlementEntry
+     * @return
+     */
     public static Set<InstallmentSettlementEntry> settleInstallmentEntriesOfDebitEntry(SettlementEntry settlementEntry) {
         if(!settlementEntry.getInvoiceEntry().isDebitNoteEntry()) {
             throw new TreasuryDomainException("error.InstallmentSettlementEntry.settleForDebitEntry.expecting.settlementEntry.forDebitEntry");

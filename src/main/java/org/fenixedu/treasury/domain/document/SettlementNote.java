@@ -428,25 +428,7 @@ public class SettlementNote extends SettlementNote_Base {
                 SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
                         bean.getDate().toDateTimeAtStartOfDay());
                 
-                // TODO: Replace this logic by InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry)
-                BigDecimal rest = debitEntryBean.getSettledAmount();
-                for (InstallmentEntry installmentEntry : debitEntry.getSortedOpenInstallmentEntries()) {
-                    if (TreasuryConstants.isZero(rest)) {
-                        break;
-                    }
-                    
-                    if(installmentEntry.isPaid()) {
-                        continue;
-                    }
-                    
-                    BigDecimal debtAmount =
-                            rest.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry.getOpenAmount() : rest;
-                    rest = rest.subtract(debtAmount);
-                    InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
-
-                    installmentEntry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
-                }
-
+                InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
             }
         }
         for (InstallmentPaymenPlanBean installmentPaymenPlanBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {

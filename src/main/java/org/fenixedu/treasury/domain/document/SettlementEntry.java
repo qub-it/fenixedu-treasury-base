@@ -30,10 +30,15 @@ package org.fenixedu.treasury.domain.document;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.bennu.signals.BennuSignalsServices;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -188,4 +193,9 @@ public class SettlementEntry extends SettlementEntry_Base {
         return (SettlementNote) getFinantialDocument();
     }
 
+    public Set<InstallmentSettlementEntry> getSortedInstallmentSettlementEntries() {
+        Set<InstallmentSettlementEntry> result = new TreeSet<>((o1, o2) -> InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR.compare(o1.getInstallmentEntry(), o2.getInstallmentEntry()));
+        return super.getInstallmentSettlementEntriesSet().stream().collect(Collectors.toCollection(() -> result));
+    }
+    
 }

@@ -185,27 +185,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                         SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay,
                                 entry.getDescription(), paymentDate, true);
 
-                        BigDecimal installmentAvailableAmount = amountToPay;
-                        
-                        // TODO: Replace this logic by InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry)
-                        for (InstallmentEntry installmentEntry : debitEntry.getSortedOpenInstallmentEntries()) {
-                            // TODO: Replace by !TreasuryConstants.isPositive(installmentAvailableAmount)
-                            if (TreasuryConstants.isZero(installmentAvailableAmount)) {
-                                break;
-                            }
-                            
-                            // TODO: Replace by !TreasuryConstants.isPositive(installmentEntry.getOpenAmount())
-                            if (TreasuryConstants.isZero(installmentEntry.getOpenAmount())) {
-                                continue;
-                            }
-                            BigDecimal debtAmount =
-                                    installmentAvailableAmount.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry
-                                            .getOpenAmount() : installmentAvailableAmount;
-                            installmentAvailableAmount = installmentAvailableAmount.subtract(debtAmount);
-                            InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
-                            installmentEntry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
-
-                        }
+                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
 
                         // Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
