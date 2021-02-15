@@ -31,6 +31,7 @@ public class PaymentPlanBean {
     private List<InstallmentBean> installmentsBean;
     private DateTime creationDate;
     private PaymentPlanValidator paymentPlanValidator;
+    private boolean isChanged;
 
     public PaymentPlanBean(DebtAccount debtAccount, DateTime creationDate) {
         super();
@@ -41,11 +42,13 @@ public class PaymentPlanBean {
         this.debtAccount = debtAccount;
         this.creationDate = creationDate;
         this.paymentPlanId = PaymentPlanSettings.getActiveInstance().getNumberGenerators().getNextNumberPreview();
+        this.isChanged = false;
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
-        if (installmentsBean == null || isChangedInstallmentPlan()) {
+        if (installmentsBean == null || isChanged) {
             installmentsBean = createInstallmentsBean();
+            isChanged = false;
         }
         return installmentsBean;
     }
@@ -95,6 +98,7 @@ public class PaymentPlanBean {
 
     public void addDebitEntry(DebitEntry entry) {
         debitEntries.add(entry);
+        this.isChanged = true;
     }
 
     public void removeDebitEntry(DebitEntry entry) {
@@ -107,6 +111,7 @@ public class PaymentPlanBean {
 
     public void setDebitAmount(BigDecimal debitAmount) {
         this.debitAmount = debitAmount;
+        this.isChanged = true;
     }
 
     public BigDecimal getEmolumentAmount() {
@@ -115,6 +120,7 @@ public class PaymentPlanBean {
 
     public void setEmolumentAmount(BigDecimal emolumentAmount) {
         this.emolumentAmount = emolumentAmount;
+        this.isChanged = true;
     }
 
     public BigDecimal getInterestAmount() {
@@ -123,6 +129,7 @@ public class PaymentPlanBean {
 
     public void setInterestAmount(BigDecimal interestAmount) {
         this.interestAmount = interestAmount;
+        this.isChanged = true;
     }
 
     public int getNbInstallments() {
@@ -131,6 +138,7 @@ public class PaymentPlanBean {
 
     public void setNbInstallments(int nbInstallments) {
         this.nbInstallments = nbInstallments;
+        this.isChanged = true;
     }
 
     public LocalDate getStartDate() {
@@ -139,6 +147,7 @@ public class PaymentPlanBean {
 
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
+        this.isChanged = true;
     }
 
     public LocalDate getEndDate() {
@@ -147,6 +156,7 @@ public class PaymentPlanBean {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+        this.isChanged = true;
     }
 
     public String getPaymentPlanId() {
@@ -155,6 +165,7 @@ public class PaymentPlanBean {
 
     public void setPaymentPlanId(String paymentPlanId) {
         this.paymentPlanId = paymentPlanId;
+        this.isChanged = true;
     }
 
     public String getReason() {
@@ -163,6 +174,7 @@ public class PaymentPlanBean {
 
     public void setReason(String reason) {
         this.reason = reason;
+        this.isChanged = true;
     }
 
     public void setInstallmentsBean(List<InstallmentBean> installmentsBean) {
@@ -170,22 +182,7 @@ public class PaymentPlanBean {
     }
 
     public boolean isChangedInstallmentPlan() {
-        if (installmentsBean == null) {
-            return true;
-        }
-        int size = installmentsBean.size();
-        boolean diffAmount = getTotalAmount().compareTo(getTotalInstallments()) != 0;
-        boolean diffDescription =
-                installmentsBean != null && !installmentsBean.get(0).getDescription().getContent().endsWith(getPaymentPlanId());
-        boolean diffNbInstallments = installmentsBean != null && size != getNbInstallments();
-        boolean diffStartDate = installmentsBean != null && !installmentsBean.get(0).getDueDate().equals(getStartDate());
-        boolean diffEndDate = installmentsBean != null && !installmentsBean.get(size - 1).getDueDate().equals(getEndDate());
-
-        if (diffAmount || diffDescription || diffNbInstallments || diffStartDate || diffEndDate) {
-            return true;
-        }
-        return false;
-
+        return isChanged;
     }
 
     public BigDecimal getTotalInstallments() {
@@ -215,6 +212,7 @@ public class PaymentPlanBean {
 
     public void setPaymentPlanValidator(PaymentPlanValidator paymentPlanValidator) {
         this.paymentPlanValidator = paymentPlanValidator;
+        this.isChanged = true;
     }
 
     public void calculeTotalAndInterestsAmount() {
