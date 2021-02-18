@@ -32,6 +32,7 @@ public class PaymentPlanBean {
     private DateTime creationDate;
     private PaymentPlanValidator paymentPlanValidator;
     private boolean isChanged;
+    private boolean withInitialValues;
 
     public PaymentPlanBean(DebtAccount debtAccount, DateTime creationDate) {
         super();
@@ -43,6 +44,7 @@ public class PaymentPlanBean {
         this.creationDate = creationDate;
         this.paymentPlanId = PaymentPlanSettings.getActiveInstance().getNumberGenerators().getNextNumberPreview();
         this.isChanged = false;
+        this.withInitialValues = true;
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
@@ -230,6 +232,14 @@ public class PaymentPlanBean {
     public BigDecimal getMaxInterestAmount() {
         return debitEntries.stream().map(d -> d.getPendingInterestAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+    }
+
+    public boolean isWithInitialValues() {
+        return withInitialValues;
+    }
+
+    public void setWithInitialValues(boolean withInitialValues) {
+        this.withInitialValues = withInitialValues;
     }
 
 }

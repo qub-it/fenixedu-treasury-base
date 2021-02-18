@@ -8,7 +8,7 @@ import java.util.List;
 import org.fenixedu.commons.i18n.LocalizedString;
 
 public enum PaymentPlanStateType {
-    CLOSED, ANNULED, OPEN, ACTIVE, TRANSFERRED;
+    CLOSED, ANNULED, OPEN, TRANSFERRED;
 
     public boolean isOpen() {
         return this == OPEN;
@@ -20,6 +20,10 @@ public enum PaymentPlanStateType {
 
     public boolean isAnnuled() {
         return this == ANNULED;
+    }
+
+    public boolean isTransferred() {
+        return this == TRANSFERRED;
     }
 
     public LocalizedString getDescriptionI18N() {

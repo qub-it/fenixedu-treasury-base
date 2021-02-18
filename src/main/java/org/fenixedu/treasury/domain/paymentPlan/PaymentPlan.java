@@ -60,58 +60,12 @@ public class PaymentPlan extends PaymentPlan_Base {
             Optional<DebitNote> debitNote = null;
 
             if (hasEmolument) {
-                debitNote = createDebitNote(paymentPlanBean, this);
-
-                PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
-                if (activeInstance == null) {
-                    throw new RuntimeException("error.paymentPlan.paymentPlanSettings.required");
-                }
-                Product product = activeInstance.getEmolumentProduct();
-                BigDecimal amount = paymentPlanBean.getEmolumentAmount();
-                String description = product.getName().getContent() + "-" + this.getPaymentPlanId();
-                Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
-                        .orElse(null);
-
-                DebitEntry emolument =
-                        createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
-                debitNote.get().closeDocument();
-
-                setEmolument(emolument);
+                createEmolument(paymentPlanBean, debtAccount, endDate, creationDate);
             }
             if (hasInterest) {
-                Product product = TreasurySettings.getInstance().getInterestProduct();
-                Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
-                        .orElse(null);
-
-                BigDecimal rest = paymentPlanBean.getInterestAmount().add(BigDecimal.ZERO);
-
-                List<DebitEntry> debitEntries = paymentPlanBean.getDebitEntries();
-                int i = 0;
-                while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
-                    DebitEntry debitEntry = debitEntries.get(i);
-                    BigDecimal maxInterestAmount = debitEntry.getPendingInterestAmount();
-
-                    if (!TreasuryConstants.isZero(maxInterestAmount)) {
-                        debitNote = createDebitNote(paymentPlanBean, this);
-
-                        BigDecimal amount = TreasuryConstants.isGreaterThan(rest, maxInterestAmount) ? maxInterestAmount : rest;
-                        rest = rest.subtract(amount);
-                        String description = product.getName().getContent() + "-" + debitEntry.getDescription();
-
-                        DebitEntry interest = createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate,
-                                product, vat);
-
-                        debitNote.get().closeDocument();
-
-                        debitEntry.addInterestDebitEntries(interest);
-                        paymentPlanBean.getDebitEntries().add(interest);
-                    }
-                    i++;
-                }
+                createInterests(paymentPlanBean, debtAccount, endDate, creationDate);
 
             }
-//			debitNote = createDebitNote(paymentPlanBean, this);
-
         }
         createInstallments(paymentPlanBean);
         checkRules();
@@ -230,6 +184,59 @@ public class PaymentPlan extends PaymentPlan_Base {
                 rest = rest.subtract(debitAmount);
                 InstallmentEntry.create(debitEntry, debitAmount, installment);
             }
+        }
+    }
+
+    private void createEmolument(PaymentPlanBean paymentPlanBean, DebtAccount debtAccount, LocalDate endDate,
+            DateTime creationDate) {
+        Optional<DebitNote> debitNote;
+        debitNote = createDebitNote(paymentPlanBean, this);
+
+        PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
+        if (activeInstance == null) {
+            throw new RuntimeException("error.paymentPlan.paymentPlanSettings.required");
+        }
+        Product product = activeInstance.getEmolumentProduct();
+        BigDecimal amount = paymentPlanBean.getEmolumentAmount();
+        String description = product.getName().getContent() + "-" + this.getPaymentPlanId();
+        Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime()).orElse(null);
+
+        DebitEntry emolument = createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
+        debitNote.get().closeDocument();
+
+        setEmolument(emolument);
+    }
+
+    private void createInterests(PaymentPlanBean paymentPlanBean, DebtAccount debtAccount, LocalDate endDate,
+            DateTime creationDate) {
+        Optional<DebitNote> debitNote;
+        Product product = TreasurySettings.getInstance().getInterestProduct();
+        Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime()).orElse(null);
+
+        BigDecimal rest = paymentPlanBean.getInterestAmount().add(BigDecimal.ZERO);
+
+        List<DebitEntry> debitEntries = paymentPlanBean.getDebitEntries();
+        int i = 0;
+        while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
+            DebitEntry debitEntry = debitEntries.get(i);
+            BigDecimal maxInterestAmount = debitEntry.getPendingInterestAmount();
+
+            if (!TreasuryConstants.isZero(maxInterestAmount)) {
+                debitNote = createDebitNote(paymentPlanBean, this);
+
+                BigDecimal amount = TreasuryConstants.isGreaterThan(rest, maxInterestAmount) ? maxInterestAmount : rest;
+                rest = rest.subtract(amount);
+                String description = product.getName().getContent() + "-" + debitEntry.getDescription();
+
+                DebitEntry interest =
+                        createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
+
+                debitNote.get().closeDocument();
+
+                debitEntry.addInterestDebitEntries(interest);
+                paymentPlanBean.getDebitEntries().add(interest);
+            }
+            i++;
         }
     }
 
