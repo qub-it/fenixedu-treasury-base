@@ -98,7 +98,8 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     private void annulPaymentReferenceCodeFromDebitEntries(List<DebitEntry> list) {
         for (DebitEntry entry : list) {
-            Set<MultipleEntriesPaymentCode> paymentCodesSet = entry.getPaymentCodesSet();
+            Set<MultipleEntriesPaymentCode> paymentCodesSet = entry.getPaymentCodesSet().stream()
+                    .filter(s -> !s.getPaymentReferenceCode().isProcessed()).collect(Collectors.toSet());
             for (MultipleEntriesPaymentCode paymentCode : paymentCodesSet) {
                 if (paymentCode.getInvoiceEntriesSet().size() == 1 && paymentCode.getInstallmentsSet().isEmpty()) {
                     paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
