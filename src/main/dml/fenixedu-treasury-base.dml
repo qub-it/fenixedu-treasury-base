@@ -2424,7 +2424,7 @@ class sibsonlinepaymentsgateway.MbwayTransaction {
 //*********************************************
 class paymentPlan.PaymentPlan{
 	String paymentPlanId;
-	DateTime creationDate;
+	LocalDate creationDate;
 	String reason;
 	PaymentPlanStateType state;
 	String stateReason;

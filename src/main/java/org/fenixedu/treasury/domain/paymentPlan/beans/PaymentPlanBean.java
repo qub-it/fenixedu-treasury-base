@@ -12,7 +12,6 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
 import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
@@ -29,12 +28,13 @@ public class PaymentPlanBean {
     private String reason;
     private String paymentPlanId;
     private List<InstallmentBean> installmentsBean;
-    private DateTime creationDate;
+    private LocalDate creationDate;
+
     private PaymentPlanValidator paymentPlanValidator;
     private boolean isChanged;
     private boolean withInitialValues;
 
-    public PaymentPlanBean(DebtAccount debtAccount, DateTime creationDate) {
+    public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
         this.debitEntries = new ArrayList<DebitEntry>();
         this.debitAmount = BigDecimal.ZERO;
@@ -204,7 +204,7 @@ public class PaymentPlanBean {
         this.debtAccount = debtAccount;
     }
 
-    public DateTime getCreationDate() {
+    public LocalDate getCreationDate() {
         return creationDate;
     }
 
@@ -217,20 +217,20 @@ public class PaymentPlanBean {
         this.isChanged = true;
     }
 
-    public void calculeTotalAndInterestsAmount() {
+    public void calculeTotalAndInterestsAmount(LocalDate date) {
         BigDecimal debitAmount = BigDecimal.ZERO;
         BigDecimal interestAmount = BigDecimal.ZERO;
 
         for (DebitEntry debitEntry : getDebitEntries()) {
             debitAmount = debitAmount.add(debitEntry.getAmountInDebt(LocalDate.now()));
-            interestAmount = interestAmount.add(debitEntry.getPendingInterestAmount());
+            interestAmount = interestAmount.add(debitEntry.getPendingInterestAmount(date));
         }
         setDebitAmount(debitAmount);
         setInterestAmount(interestAmount);
     }
 
     public BigDecimal getMaxInterestAmount() {
-        return debitEntries.stream().map(d -> d.getPendingInterestAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return debitEntries.stream().map(d -> d.getPendingInterestAmount(creationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
 
     }
 
@@ -242,4 +242,7 @@ public class PaymentPlanBean {
         this.withInitialValues = withInitialValues;
     }
 
+    public void setCreationDate(LocalDate creationDate) {
+        this.creationDate = creationDate;
+    }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 import org.fenixedu.commons.i18n.LocalizedString;
 
 public enum PaymentPlanStateType {
-    CLOSED, ANNULED, OPEN, TRANSFERRED;
+    CLOSED, ANNULED, OPEN, TRANSFERRED, NON_COMPLIANCE;
 
     public boolean isOpen() {
         return this == OPEN;
@@ -26,6 +26,10 @@ public enum PaymentPlanStateType {
         return this == TRANSFERRED;
     }
 
+    public boolean isInNonCompliance() {
+        return this == NON_COMPLIANCE;
+    }
+
     public LocalizedString getDescriptionI18N() {
         return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
     }
@@ -36,6 +40,7 @@ public enum PaymentPlanStateType {
         result.add(ANNULED);
         result.add(OPEN);
         result.add(TRANSFERRED);
+        result.add(NON_COMPLIANCE);
         return result;
     }
 }

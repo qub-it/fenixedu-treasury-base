@@ -209,6 +209,19 @@ public interface IPaymentProcessorForInvoiceEntries {
                 if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
                     DebitEntry debitEntry = entry.getDebitEntry();
 
+                    if (debitEntry.getFinantialDocument() == null) {
+                        final DocumentNumberSeries documentNumberSeries =
+                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+                                        getDebtAccount().getFinantialInstitution()).get();
+                        final DebitNote debitNote =
+                                DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
+                        debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
+                    }
+
+                    if (debitEntry.getFinantialDocument().isPreparing()) {
+                        debitEntry.getFinantialDocument().closeDocument();
+                    }
+
                     // check if the amount to pay in the Debit Entry
                     if (installmentAmountToPay.compareTo(availableAmount) > 0) {
                         installmentAmountToPay = availableAmount;

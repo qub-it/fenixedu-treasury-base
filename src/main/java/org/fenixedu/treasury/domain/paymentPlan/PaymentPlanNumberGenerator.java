@@ -26,9 +26,11 @@ public class PaymentPlanNumberGenerator extends PaymentPlanNumberGenerator_Base 
         if (getInitialValue() == null) {
             throw new TreasuryDomainException("error.PaymentPlanNumberGenerator.initialValue.required");
         }
+
         if (getPrefix() == null) {
             throw new TreasuryDomainException("error.PaymentPlanNumberGenerator.prefix.required");
         }
+
         if (getName() == null) {
             throw new TreasuryDomainException("error.PaymentPlanNumberGenerator.name.required");
         }

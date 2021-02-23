@@ -20,7 +20,7 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
     }
 
     private PaymentPlanSettings(LocalizedString installmentDescriptionFormat, Boolean interestCalculationOfDebitsInPlans,
-            Product emolumentProduct, Integer numberOfPaymentPlansActives) {
+            Product emolumentProduct, Integer numberOfPaymentPlansActives, PaymentPlanNumberGenerator numberGenerator) {
         this();
 
         setInstallmentDescriptionFormat(installmentDescriptionFormat);
@@ -28,7 +28,7 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
         setEmolumentProduct(emolumentProduct);
 
         setNumberOfPaymentPlansActives(numberOfPaymentPlansActives);
-
+        setNumberGenerators(numberGenerator);
         checkRules();
     }
 
@@ -67,9 +67,10 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
 
     @Atomic
     public static PaymentPlanSettings create(LocalizedString installmentDescriptionFormat,
-            Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct, Integer numberOfPaymentPlansActives) {
+            Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct, Integer numberOfPaymentPlansActives,
+            PaymentPlanNumberGenerator numberGenerator) {
         return new PaymentPlanSettings(installmentDescriptionFormat, interestCalculationOfDebitsInPlans, emolumentProduct,
-                numberOfPaymentPlansActives);
+                numberOfPaymentPlansActives, numberGenerator);
     }
 
     @Override

@@ -46,6 +46,7 @@ public class Installment extends Installment_Base {
         if (getDescription() == null) {
             throw new TreasuryDomainException("error.Installment.description.required");
         }
+
         if (getDueDate() == null) {
             throw new TreasuryDomainException("error.Installment.dueDate.required");
         }
@@ -53,7 +54,8 @@ public class Installment extends Installment_Base {
         if (getPaymentPlan() == null) {
             throw new TreasuryDomainException("error.Installment.paymentPlan.required");
         }
-        if (getDueDate().isBefore(getPaymentPlan().getCreationDate().toLocalDate())) {
+
+        if (getDueDate().isBefore(getPaymentPlan().getCreationDate())) {
             throw new TreasuryDomainException("error.Installment.paymentPlan.must.be.after.paymentPlan.creationDate");
         }
     }
@@ -112,19 +114,19 @@ public class Installment extends Installment_Base {
     public void editPropertiesMap(final Map<String, String> propertiesMap) {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
-    
+
     public static LocalizedString installmentDescription(int installmentNumber, String paymentPlanId) {
         Map<String, String> values = new HashMap<>();
         values.put("installmentNumber", "" + installmentNumber);
         values.put("paymentPlanId", paymentPlanId);
-        
+
         PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
         if (activeInstance == null) {
             throw new RuntimeException("error.paymentPlanBean.paymentPlanSettings.required");
         }
-        
+
         LocalizedString installmentDescriptionFormat = PaymentPlanSettings.getActiveInstance().getInstallmentDescriptionFormat();
-        
+
         LocalizedString ls = new LocalizedString();
         for (Locale locale : CoreConfiguration.supportedLocales()) {
             ls = ls.with(locale, StrSubstitutor.replace(installmentDescriptionFormat.getContent(locale), values));

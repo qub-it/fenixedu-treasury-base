@@ -2,6 +2,7 @@ package org.fenixedu.treasury.domain.paymentPlan;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,11 @@ import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.beans.InstallmentBean;
 import org.fenixedu.treasury.domain.paymentPlan.beans.PaymentPlanBean;
+import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
+import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
+import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -53,7 +58,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         }
 
         LocalDate endDate = paymentPlanBean.getEndDate();
-        DateTime creationDate = this.getCreationDate();
+        LocalDate creationDate = this.getCreationDate();
         boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmolumentAmount());
         boolean hasInterest = !TreasuryConstants.isZero(paymentPlanBean.getInterestAmount());
         if (hasEmolument || hasInterest) {
@@ -68,7 +73,38 @@ public class PaymentPlan extends PaymentPlan_Base {
             }
         }
         createInstallments(paymentPlanBean);
+        createPaymentReferenceCode();
+        annulPaymentReferenceCodeFromDebitEntries(paymentPlanBean.getDebitEntries());
         checkRules();
+    }
+
+    private void createPaymentReferenceCode() {
+        PaymentCodePool paymentCodePool =
+                PaymentCodePool.findByActive(Boolean.TRUE, getDebtAccount().getFinantialInstitution()).findFirst().orElse(null);
+
+        if (paymentCodePool == null) {
+            throw new IllegalArgumentException(TreasuryConstants.treasuryBundle("error.paymentPlan.paymentCodePool.required"));
+        }
+
+        for (Installment installment : getInstallmentsSet()) {
+            PaymentReferenceCodeBean bean = new PaymentReferenceCodeBean(paymentCodePool, getDebtAccount());
+            bean.setPaymentCodePool(paymentCodePool);
+            bean.setUsePaymentAmountWithInterests(false);
+            bean.setSelectedInstallments(List.of(installment));
+            bean.setSelectedDebitEntries(Collections.emptyList());
+            PaymentReferenceCode.createPaymentReferenceCodeForMultipleDebitEntries(getDebtAccount(), bean);
+        }
+    }
+
+    private void annulPaymentReferenceCodeFromDebitEntries(List<DebitEntry> list) {
+        for (DebitEntry entry : list) {
+            Set<MultipleEntriesPaymentCode> paymentCodesSet = entry.getPaymentCodesSet();
+            for (MultipleEntriesPaymentCode paymentCode : paymentCodesSet) {
+                if (paymentCode.getInvoiceEntriesSet().size() == 1 && paymentCode.getInstallmentsSet().isEmpty()) {
+                    paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+                }
+            }
+        }
     }
 
     @Atomic
@@ -87,6 +123,13 @@ public class PaymentPlan extends PaymentPlan_Base {
     public void close(String reason) {
         setState(PaymentPlanStateType.CLOSED);
         setStateReason(reason);
+    }
+
+    @Atomic
+    public void nonCompliance(LocalDate date) {
+        setState(PaymentPlanStateType.NON_COMPLIANCE);
+        setStateReason(
+                TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.nonCompliance", date.toString("dd/MM/yyyy")));
     }
 
     public Map<String, String> getPropertiesMap() {
@@ -135,18 +178,16 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private static Optional<DebitNote> createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
-        return Optional
-                .of(DebitNote
-                        .create(paymentPlanBean.getDebtAccount(),
-                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                                        paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
-                                result.getCreationDate()));
+        return Optional.of(DebitNote.create(paymentPlanBean.getDebtAccount(),
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+                        paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
+                result.getCreationDate().toDateTimeAtStartOfDay()));
     }
 
     private static DebitEntry createDebitEntry(DebtAccount debtAccount, Optional<DebitNote> debitNote, String description,
-            BigDecimal amount, DateTime creationDate, LocalDate endDate, Product product, Vat vat) {
+            BigDecimal amount, LocalDate creationDate, LocalDate endDate, Product product, Vat vat) {
         return DebitEntry.create(debitNote, debtAccount, null, vat, amount, endDate, Maps.newHashMap(), product, description,
-                BigDecimal.ONE, null, creationDate);
+                BigDecimal.ONE, null, creationDate.toDateTimeAtStartOfDay());
     }
 
     private void createInstallments(PaymentPlanBean paymentPlanBean) {
@@ -159,19 +200,19 @@ public class PaymentPlan extends PaymentPlan_Base {
             BigDecimal rest = BigDecimal.ZERO.add(installmentBean.getInstallmentAmmount());
             while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
                 DebitEntry debitEntry = keys.get(0);
-                if (debitEntry.getDebitNote() == null) {
-                    DebitNote debitNote =
-                            DebitNote
-                                    .create(paymentPlanBean.getDebtAccount(),
-                                            DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                                                    paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
-                                            getCreationDate());
-                    debitEntry.setFinantialDocument(debitNote);
-                }
-
-                if (!debitEntry.getDebitNote().isClosed()) {
-                    debitEntry.getDebitNote().closeDocument();
-                }
+//                if (debitEntry.getDebitNote() == null) {
+//                    DebitNote debitNote =
+//                            DebitNote
+//                                    .create(paymentPlanBean.getDebtAccount(),
+//                                            DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+//                                                    paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
+//                                            getCreationDate());
+//                    debitEntry.setFinantialDocument(debitNote);
+//                }
+//
+//                if (!debitEntry.getDebitNote().isClosed()) {
+//                    debitEntry.getDebitNote().closeDocument();
+//                }
 
                 BigDecimal debitAmount = mapDebitEntries.get(debitEntry);
                 if (TreasuryConstants.isGreaterThan(debitAmount, rest)) {
@@ -188,7 +229,7 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private void createEmolument(PaymentPlanBean paymentPlanBean, DebtAccount debtAccount, LocalDate endDate,
-            DateTime creationDate) {
+            LocalDate creationDate) {
         Optional<DebitNote> debitNote;
         debitNote = createDebitNote(paymentPlanBean, this);
 
@@ -202,13 +243,13 @@ public class PaymentPlan extends PaymentPlan_Base {
         Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime()).orElse(null);
 
         DebitEntry emolument = createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
-        debitNote.get().closeDocument();
+//        debitNote.get().closeDocument();
 
         setEmolument(emolument);
     }
 
     private void createInterests(PaymentPlanBean paymentPlanBean, DebtAccount debtAccount, LocalDate endDate,
-            DateTime creationDate) {
+            LocalDate creationDate) {
         Optional<DebitNote> debitNote;
         Product product = TreasurySettings.getInstance().getInterestProduct();
         Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime()).orElse(null);
@@ -231,7 +272,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                 DebitEntry interest =
                         createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
 
-                debitNote.get().closeDocument();
+//                debitNote.get().closeDocument();
 
                 debitEntry.addInterestDebitEntries(interest);
                 paymentPlanBean.getDebitEntries().add(interest);
@@ -294,6 +335,18 @@ public class PaymentPlan extends PaymentPlan_Base {
     public void tryClosePaymentPlanByPaidOff() {
         if (getSortedOpenInstallments().isEmpty()) {
             close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff"));
+        }
+    }
+
+    public static void validatePaymentPlanInNonCompliance() {
+        for (PaymentPlan paymentPlan : FenixFramework.getDomainRoot().getPaymentPlansSet()) {
+            if (!paymentPlan.getState().isOpen()) {
+                continue;
+            }
+            if (paymentPlan.isCompliant()) {
+                paymentPlan.nonCompliance(LocalDate.now());
+            }
+
         }
     }
 
