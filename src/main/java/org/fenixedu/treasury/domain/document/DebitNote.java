@@ -336,6 +336,10 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void anullDebitNoteWithCreditNote(String reason, boolean anullGeneratedInterests) {
 
+        if(getDebitEntriesSet().stream().anyMatch(d -> d.getOpenPaymentPlan() != null)) {
+            throw new TreasuryDomainException("error.DebitNote.anullDebitNoteWithCreditNote.cannot.anull.debt.with.open.paymentPlan");
+        }
+        
         if (this.getFinantialDocumentEntriesSet().size() > 0 && this.isClosed()) {
 
             final DateTime now = new DateTime();
