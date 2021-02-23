@@ -452,9 +452,15 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
 
     @Atomic
     public void anullPaymentReferenceCode() {
+        if (PaymentReferenceCodeStateType.PROCESSED == this.getState()) {
+            throw new TreasuryDomainException(
+                    "error.PaymentReferenceCode.anullPaymentReferenceCode.cannot.anull.processed.references");
+        }
+
         if (!this.getState().equals(PaymentReferenceCodeStateType.ANNULLED)) {
             this.setState(PaymentReferenceCodeStateType.ANNULLED);
         }
+        
         checkRules();
     }
 
