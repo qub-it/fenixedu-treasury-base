@@ -147,7 +147,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
 
-                        // check if the amount to pay in the Debit Entry
+                        // check if the amount to pay in the Debit Entry exceeds the availableAmount
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
@@ -200,6 +200,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                     // Ignore since the "open amount" is ZERO
                 }
             }
+            
             for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
                 if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     break;
@@ -222,7 +223,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                         debitEntry.getFinantialDocument().closeDocument();
                     }
 
-                    // check if the amount to pay in the Debit Entry
+                    // check if the amount to pay in the installment entry exceeds the available amount
                     if (installmentAmountToPay.compareTo(availableAmount) > 0) {
                         installmentAmountToPay = availableAmount;
                     }
@@ -253,8 +254,15 @@ public interface IPaymentProcessorForInvoiceEntries {
                 DebitNote interestNote =
                         DebitNote.create(referenceDebtAccount, this.getDocumentSeriesInterestDebits(), paymentDate);
                 for (DebitEntry interestEntry : interestRateEntries) {
-                    interestEntry.setFinantialDocument(interestNote);
+                    if(interestEntry.getFinantialDocument() != null) {
+                        if(interestEntry.getFinantialDocument().isPreparing()) {
+                            interestEntry.getFinantialDocument().closeDocument();
+                        }
+                    } else {
+                        interestEntry.setFinantialDocument(interestNote);
+                    }
                 }
+                
                 interestNote.closeDocument();
 
                 // if "availableAmount" still exists, then we must check if there is any
@@ -267,7 +275,7 @@ public interface IPaymentProcessorForInvoiceEntries {
                         }
 
                         BigDecimal amountToPay = interestEntry.getOpenAmount();
-                        // check if the amount to pay in the Debit Entry
+                        // check if the amount to pay in the debit entry exceeds the available amount
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
@@ -330,6 +338,12 @@ public interface IPaymentProcessorForInvoiceEntries {
         final TreeSet<InvoiceEntry> sortedInvoiceEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
         sortedInvoiceEntriesToPay.addAll(invoiceEntriesToPay);
 
+        final TreeSet<InstallmentEntry> sortedInstallmentEntryToPay =
+                Sets.newTreeSet(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR);
+
+        sortedInstallmentEntryToPay.addAll(
+                installmentsToPay.stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).collect(Collectors.toSet()));
+
         // Process the payment of pending invoiceEntries
         // 1. Find the InvoiceEntries
         // 2. Create the SEttlementEntries and the SEttlementNote
@@ -382,8 +396,10 @@ public interface IPaymentProcessorForInvoiceEntries {
                             }
                         }
 
-                        SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
+                        SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
 
+                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
+                        
                         // Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
 
@@ -399,6 +415,43 @@ public interface IPaymentProcessorForInvoiceEntries {
             }
         }
 
+        for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
+            if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                break;
+            }
+
+            BigDecimal installmentAmountToPay = entry.getOpenAmount();
+            if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
+                DebitEntry debitEntry = entry.getDebitEntry();
+
+                if (debitEntry.getFinantialDocument().isPreparing()) {
+                    debitEntry.getFinantialDocument().closeDocument();
+                }
+
+                // check if the amount to pay in the installment entry exceeds the available amount
+                if (installmentAmountToPay.compareTo(availableAmount) > 0) {
+                    installmentAmountToPay = availableAmount;
+                }
+                
+                SettlementEntry settlementEntry = settlementNote.getSettlementEntryByDebitEntry(debitEntry);
+                if (settlementEntry == null) {
+                    settlementEntry = SettlementEntry.create(debitEntry, settlementNote, installmentAmountToPay,
+                            debitEntry.getDescription(), paymentDate, false);
+                } else {
+                    settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
+                }
+                
+                InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
+                entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+
+                // Update the amount to Pay
+                availableAmount = availableAmount.subtract(installmentAmountToPay);
+
+            } else {
+                // Ignore since the "open amount" is ZERO
+            }
+        }
+        
         if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
             availableAmount = BigDecimal.ZERO;
         }
