@@ -79,8 +79,7 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private void createPaymentReferenceCode() {
-        PaymentCodePool paymentCodePool =
-                PaymentCodePool.findByActive(Boolean.TRUE, getDebtAccount().getFinantialInstitution()).findFirst().orElse(null);
+        PaymentCodePool paymentCodePool = PaymentPlanSettings.getActiveInstance().getPaymentCodePool();
 
         if (paymentCodePool == null) {
             throw new IllegalArgumentException(TreasuryConstants.treasuryBundle("error.paymentPlan.paymentCodePool.required"));
@@ -344,7 +343,7 @@ public class PaymentPlan extends PaymentPlan_Base {
             if (!paymentPlan.getState().isOpen()) {
                 continue;
             }
-            if (paymentPlan.isCompliant()) {
+            if (!paymentPlan.isCompliant()) {
                 paymentPlan.nonCompliance(LocalDate.now());
             }
 

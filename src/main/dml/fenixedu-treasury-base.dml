@@ -2656,6 +2656,17 @@ class paymentPlan.PaymentPlanSettings{
 		}
 	}
 	
+	relation PaymentCodePoolPaymentPlanSettings {
+		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
+			multiplicity *; 
+		}
+	}
+	
+	
 class paymentPlan.PaymentPlanNumberGenerator {
 	LocalizedString name;
 	String prefix;

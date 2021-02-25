@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 
 import jvstm.Atomic;
@@ -20,7 +21,8 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
     }
 
     private PaymentPlanSettings(LocalizedString installmentDescriptionFormat, Boolean interestCalculationOfDebitsInPlans,
-            Product emolumentProduct, Integer numberOfPaymentPlansActives, PaymentPlanNumberGenerator numberGenerator) {
+            Product emolumentProduct, Integer numberOfPaymentPlansActives, PaymentPlanNumberGenerator numberGenerator,
+            PaymentCodePool paymentCodePool) {
         this();
 
         setInstallmentDescriptionFormat(installmentDescriptionFormat);
@@ -29,6 +31,7 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
 
         setNumberOfPaymentPlansActives(numberOfPaymentPlansActives);
         setNumberGenerators(numberGenerator);
+        setPaymentCodePool(paymentCodePool);
         checkRules();
     }
 
@@ -62,15 +65,21 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
             throw new TreasuryDomainException(
                     "error.PaymentPlanSettings.installmentDescriptionFormat.installment.number.required");
         }
+        if (getNumberGenerators() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.NumberGenerators.required");
+        }
 
+        if (getPaymentCodePool() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.PaymentCodePool.required");
+        }
     }
 
     @Atomic
     public static PaymentPlanSettings create(LocalizedString installmentDescriptionFormat,
             Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct, Integer numberOfPaymentPlansActives,
-            PaymentPlanNumberGenerator numberGenerator) {
+            PaymentPlanNumberGenerator numberGenerator, PaymentCodePool paymentCodePool) {
         return new PaymentPlanSettings(installmentDescriptionFormat, interestCalculationOfDebitsInPlans, emolumentProduct,
-                numberOfPaymentPlansActives, numberGenerator);
+                numberOfPaymentPlansActives, numberGenerator, paymentCodePool);
     }
 
     @Override

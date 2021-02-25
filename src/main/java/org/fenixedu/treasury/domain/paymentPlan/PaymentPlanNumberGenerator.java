@@ -12,6 +12,7 @@ public class PaymentPlanNumberGenerator extends PaymentPlanNumberGenerator_Base 
     }
 
     public PaymentPlanNumberGenerator(LocalizedString name, String prefix, Integer initialValue) {
+        this();
         setName(name);
         setPrefix(prefix);
         setInitialValue(initialValue);
