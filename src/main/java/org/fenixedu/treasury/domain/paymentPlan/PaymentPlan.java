@@ -164,6 +164,15 @@ public class PaymentPlan extends PaymentPlan_Base {
             throw new TreasuryDomainException("error.paymentPlan.multiple.customers");
         }
 
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && hasDebitEntriesExportedInLegacyERP()) {
+            throw new TreasuryDomainException(
+                    "error.PaymentPlan.debitEntries.exported.in.legacyERP.not.supported.in.restrictedPaymentMode");
+        }
+    }
+
+    private boolean hasDebitEntriesExportedInLegacyERP() {
+        return getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).map(i -> i.getDebitEntry())
+                .anyMatch(d -> d.getFinantialDocument() != null && d.getFinantialDocument().isExportedInLegacyERP());
     }
 
     private Set<Customer> getCustomers() {
