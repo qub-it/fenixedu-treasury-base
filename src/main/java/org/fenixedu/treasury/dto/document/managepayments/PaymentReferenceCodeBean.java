@@ -1,6 +1,6 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
@@ -8,7 +8,7 @@
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
  *
- * 
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -28,17 +28,17 @@
 package org.fenixedu.treasury.dto.document.managepayments;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.fenixedu.treasury.dto.ITreasuryBean;
-import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.dto.ITreasuryBean;
+import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
 public class PaymentReferenceCodeBean implements ITreasuryBean {
@@ -62,20 +62,23 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     private DebtAccount debtAccount;
     private List<DebitEntry> selectedDebitEntries;
 
+    // PaymentPlan Installments
+    private List<Installment> selectedInstallments;
+
     // MbwayPaymentRequest
     private String phoneNumberCountryPrefix;
     private String phoneNumber;
-    
+
     public PaymentReferenceCodeBean() {
         usePaymentAmountWithInterests = false;
         useCustomPaymentAmount = false;
+        selectedInstallments = new ArrayList<>();
     }
 
     public PaymentReferenceCodeBean(final PaymentCodePool paymentCodePool, final DebtAccount debtAccount) {
+        this();
         this.paymentCodePool = paymentCodePool;
         this.debtAccount = debtAccount;
-        this.usePaymentAmountWithInterests = false;
-        this.useCustomPaymentAmount = false;
 
         List<PaymentCodePool> activePools = debtAccount.getFinantialInstitution().getPaymentCodePoolsSet().stream()
                 .filter(x -> Boolean.TRUE.equals(x.getActive())).collect(Collectors.toList());
@@ -83,8 +86,8 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     }
 
     public void updateAmountOnSelectedDebitEntries() {
-        this.paymentAmount =
-                this.selectedDebitEntries.stream().map(e -> isUsePaymentAmountWithInterests() ? e.getOpenAmountWithInterests() : e.getOpenAmount())
+        this.paymentAmount = this.selectedDebitEntries.stream()
+                .map(e -> isUsePaymentAmountWithInterests() ? e.getOpenAmountWithInterests() : e.getOpenAmount())
                 .reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO);
     }
 
@@ -213,17 +216,25 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     public String getPhoneNumberCountryPrefix() {
         return this.phoneNumberCountryPrefix;
     };
-    
+
     public void setPhoneNumberCountryPrefix(String phoneNumberCountryPrefix) {
         this.phoneNumberCountryPrefix = phoneNumberCountryPrefix;
     }
-    
+
     public String getPhoneNumber() {
         return this.phoneNumber;
     }
-    
+
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-    
+
+    public List<Installment> getSelectedInstallments() {
+        return selectedInstallments;
+    }
+
+    public void setSelectedInstallments(List<Installment> selectedInstallments) {
+        this.selectedInstallments = selectedInstallments;
+    }
+
 }

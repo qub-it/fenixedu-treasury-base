@@ -1,15 +1,15 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
  *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
  *
- * 
+ *
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -44,84 +44,84 @@ import pt.ist.fenixframework.Atomic;
 
 public class SequentialPaymentWithCheckDigitCodeGenerator implements IPaymentCodeGenerator {
 
-    private final PaymentCodePool referenceCodePool;
+	private final PaymentCodePool referenceCodePool;
 
-    @Override
-    public PaymentCodePool getReferenceCodePool() {
-        return referenceCodePool;
-    }
+	@Override
+	public PaymentCodePool getReferenceCodePool() {
+		return referenceCodePool;
+	}
 
-    public SequentialPaymentWithCheckDigitCodeGenerator(PaymentCodePool pool) {
-        super();
-        this.referenceCodePool = pool;
-    }
+	public SequentialPaymentWithCheckDigitCodeGenerator(PaymentCodePool pool) {
+		super();
+		this.referenceCodePool = pool;
+	}
 
-    @Atomic
-    public PaymentReferenceCode generateNewCodeFor(final BigDecimal amount, LocalDate validFrom, LocalDate validTo,
-            boolean useFixedAmount) {
-        return generateNewCodeFor(amount, validFrom, validTo, useFixedAmount, false);
-    }
+	@Atomic
+	public PaymentReferenceCode generateNewCodeFor(final BigDecimal amount, LocalDate validFrom, LocalDate validTo,
+			boolean useFixedAmount) {
+		return generateNewCodeFor(amount, validFrom, validTo, useFixedAmount, false);
+	}
 
-    @Atomic
-    public PaymentReferenceCode generateNewCodeFor(final BigDecimal amount, LocalDate validFrom, LocalDate validTo,
-            boolean useFixedAmount, final boolean forceGeneration) {
+	@Atomic
+	public PaymentReferenceCode generateNewCodeFor(final BigDecimal amount, LocalDate validFrom, LocalDate validTo,
+			boolean useFixedAmount, final boolean forceGeneration) {
 
-        if (validFrom == null) {
-            validFrom = referenceCodePool.getValidFrom();
-        }
-        if (validTo == null) {
-            validTo = referenceCodePool.getValidTo();
-        }
+		if (validFrom == null) {
+			validFrom = referenceCodePool.getValidFrom();
+		}
+		if (validTo == null) {
+			validTo = referenceCodePool.getValidTo();
+		}
 
-        Long nextReferenceCode = referenceCodePool.getAndIncrementNextReferenceCode();
-        if (nextReferenceCode > referenceCodePool.getMaxReferenceCode()) {
-            //The pool is "OVER"... Try to get the first unused code
+		Long nextReferenceCode = referenceCodePool.getAndIncrementNextReferenceCode();
+		if (nextReferenceCode > referenceCodePool.getMaxReferenceCode()) {
+			// The pool is "OVER"... Try to get the first unused code
 
-            PaymentReferenceCode availableReferenceCode = this.referenceCodePool.getPaymentReferenceCodesSet().stream()
-                    .filter(x -> x.isAvailableForReuse()).findFirst().orElse(null);
-            if (availableReferenceCode != null) {
-                nextReferenceCode = Long.parseLong(availableReferenceCode.getReferenceCodeWithoutCheckDigits());
-            } else {
-                throw new TreasuryDomainException("error.PaymentCodeGenerator.not.paymentreferences.available.in.pool");
-            }
-        }
+			PaymentReferenceCode availableReferenceCode = this.referenceCodePool.getPaymentReferenceCodesSet().stream()
+					.filter(x -> x.isAvailableForReuse()).findFirst().orElse(null);
+			if (availableReferenceCode != null) {
+				nextReferenceCode = Long.parseLong(availableReferenceCode.getReferenceCodeWithoutCheckDigits());
+			} else {
+				throw new TreasuryDomainException("error.PaymentCodeGenerator.not.paymentreferences.available.in.pool");
+			}
+		}
 
-        final String referenceCodeString = CheckDigitGenerator
-                .generateReferenceCodeWithCheckDigit(referenceCodePool.getEntityReferenceCode(), "" + nextReferenceCode, amount);
+		final String referenceCodeString = CheckDigitGenerator.generateReferenceCodeWithCheckDigit(
+				referenceCodePool.getEntityReferenceCode(), "" + nextReferenceCode, amount);
 
-        BigDecimal minAmount = referenceCodePool.getMinAmount();
-        BigDecimal maxAmount = referenceCodePool.getMaxAmount();
-        if (useFixedAmount) {
-            minAmount = amount;
-            maxAmount = amount;
-        }
+		BigDecimal minAmount = referenceCodePool.getMinAmount();
+		BigDecimal maxAmount = referenceCodePool.getMaxAmount();
+		if (useFixedAmount) {
+			minAmount = amount;
+			maxAmount = amount;
+		}
 
-        PaymentReferenceCode newPaymentReference = PaymentReferenceCode.create(referenceCodeString, validFrom, validTo,
-                PaymentReferenceCodeStateType.UNUSED, referenceCodePool, minAmount, maxAmount);
-        newPaymentReference.setPayableAmount(amount);
+		PaymentReferenceCode newPaymentReference = PaymentReferenceCode.create(referenceCodeString, validFrom, validTo,
+				PaymentReferenceCodeStateType.UNUSED, referenceCodePool, minAmount, maxAmount);
+		newPaymentReference.setPayableAmount(amount);
 
-        return newPaymentReference;
-    }
+		return newPaymentReference;
+	}
 
-    protected Set<PaymentReferenceCode> allPaymentCodes(PaymentCodePool referenceCodePool) {
-        return referenceCodePool.getPaymentReferenceCodesSet();
-    }
+	protected Set<PaymentReferenceCode> allPaymentCodes(PaymentCodePool referenceCodePool) {
+		return referenceCodePool.getPaymentReferenceCodesSet();
+	}
 
-    @Override
-    @Atomic
-    public PaymentReferenceCode createPaymentReferenceCode(final DebtAccount debtAccount, final PaymentReferenceCodeBean bean) {
-        final PaymentReferenceCode paymentReferenceCode =
-                generateNewCodeFor(
-                                bean.getPaymentAmount(), bean.getBeginDate(), bean.getEndDate(),
-                                bean.getPaymentCodePool().getIsFixedAmount());
+	@Override
+	@Atomic
+	public PaymentReferenceCode createPaymentReferenceCode(final DebtAccount debtAccount,
+			final PaymentReferenceCodeBean bean) {
+		final PaymentReferenceCode paymentReferenceCode = generateNewCodeFor(bean.getPaymentAmount(),
+				bean.getBeginDate(), bean.getEndDate(), bean.getPaymentCodePool().getIsFixedAmount());
 
-        paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()), bean.getPaymentAmount());
-        return paymentReferenceCode;
-    }
+		paymentReferenceCode.createPaymentTargetTo(Sets.newHashSet(bean.getSelectedDebitEntries()),
+				Sets.newHashSet(bean.getSelectedInstallments()), bean.getPaymentAmount());
+		return paymentReferenceCode;
+	}
 
-    @Override
-    public boolean isSibsMerchantTransactionAndReferenceIdRequired() {
-        return false;
-    }
+	@Override
+	public boolean isSibsMerchantTransactionAndReferenceIdRequired() {
+		return false;
+	}
 
 }

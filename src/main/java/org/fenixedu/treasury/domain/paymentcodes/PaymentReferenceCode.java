@@ -1,15 +1,15 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
  *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
  *
- * 
+ *
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.onlinepaymentsgateway.api.PaymentStateBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -43,6 +42,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog;
@@ -54,11 +54,10 @@ import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.Atomic.TxMode;
+import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     private static final int LENGTH_REFERENCE_CODE = 9;
@@ -303,12 +302,12 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
             return null;
         }
 
-        if(checkSibsTransactionIdDuplication) {
-            if(SibsTransactionDetail.isSibsOppwaReferenceProcessingDuplicate(sibsTransactionId)) {
+        if (checkSibsTransactionIdDuplication) {
+            if (SibsTransactionDetail.isSibsOppwaReferenceProcessingDuplicate(sibsTransactionId)) {
                 throw new RuntimeException("Duplicate transaction id: " + sibsTransactionId);
             }
         }
-        
+
         final Set<SettlementNote> noteSet = this.getTargetPayment().processPayment(responsibleUsername, amountToPay, paymentDate,
                 sibsTransactionId, comments);
 
@@ -338,7 +337,8 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     @Atomic(mode = TxMode.READ)
     public void processPaymentReferenceCodeTransaction(final SibsOnlinePaymentsGatewayLog log, PaymentStateBean bean) {
         if (!bean.getMerchantTransactionId().equals(getSibsMerchantTransactionId())) {
-            throw new TreasuryDomainException("error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.merchantTransactionId.not.equal");
+            throw new TreasuryDomainException(
+                    "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.merchantTransactionId.not.equal");
         }
 
         FenixFramework.atomic(() -> {
@@ -361,7 +361,8 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
         }
 
         if (paymentDate == null) {
-            throw new TreasuryDomainException("error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.payment.date");
+            throw new TreasuryDomainException(
+                    "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.payment.date");
         }
 
         if (SibsTransactionDetail.isReferenceProcessingDuplicate(getReferenceCode(),
@@ -370,7 +371,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
                 log.markAsDuplicatedTransaction();
             });
 
-        } else if(SibsTransactionDetail.isSibsOppwaReferenceProcessingDuplicate(bean.getTransactionId())) {
+        } else if (SibsTransactionDetail.isSibsOppwaReferenceProcessingDuplicate(bean.getTransactionId())) {
             FenixFramework.atomic(() -> {
                 log.markAsDuplicatedTransaction();
             });
@@ -380,7 +381,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
             final Set<SettlementNote> settlementNotes =
                     processPayment(StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown", amount, paymentDate,
                             bean.getTransactionId(), bean.getMerchantTransactionId(), new DateTime(), null, true);
-            
+
             FenixFramework.atomic(() -> {
                 log.markSettlementNotesCreated(settlementNotes);
             });
@@ -436,12 +437,13 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     }
 
     @Atomic
-    public void createPaymentTargetTo(final Set<DebitEntry> debitNoteEntries, final BigDecimal payableAmount) {
+    public void createPaymentTargetTo(final Set<DebitEntry> debitNoteEntries, final Set<Installment> installments,
+            final BigDecimal payableAmount) {
         if (this.getTargetPayment() != null && Boolean.TRUE.equals(this.getTargetPayment().getValid())) {
             throw new TreasuryDomainException("error.PaymentReferenceCode.payment.target.already.exists");
         }
 
-        MultipleEntriesPaymentCode target = MultipleEntriesPaymentCode.create(debitNoteEntries, this, true);
+        MultipleEntriesPaymentCode target = MultipleEntriesPaymentCode.create(debitNoteEntries, installments, this, true);
         this.setTargetPayment(target);
         this.setState(PaymentReferenceCodeStateType.USED);
         this.setPayableAmount(payableAmount);
@@ -450,9 +452,15 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
 
     @Atomic
     public void anullPaymentReferenceCode() {
+        if (PaymentReferenceCodeStateType.PROCESSED == this.getState()) {
+            throw new TreasuryDomainException(
+                    "error.PaymentReferenceCode.anullPaymentReferenceCode.cannot.anull.processed.references");
+        }
+
         if (!this.getState().equals(PaymentReferenceCodeStateType.ANNULLED)) {
             this.setState(PaymentReferenceCodeStateType.ANNULLED);
         }
+        
         checkRules();
     }
 
@@ -471,6 +479,9 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
         for (DebitEntry entry : bean.getSelectedDebitEntries()) {
             amount = amount
                     .add(bean.isUsePaymentAmountWithInterests() ? entry.getOpenAmountWithInterests() : entry.getOpenAmount());
+        }
+        for (Installment installment : bean.getSelectedInstallments()) {
+            amount = amount.add(installment.getOpenAmount());
         }
 
         bean.setPaymentAmount(amount);

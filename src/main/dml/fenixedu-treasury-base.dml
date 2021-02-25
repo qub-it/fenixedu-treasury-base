@@ -8,6 +8,7 @@ enum org.fenixedu.treasury.domain.tariff.InterestType                           
 enum org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType						as PaymentReferenceCodeStateType;
 enum org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType                           as ForwardPaymentStateType;
 enum org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayEnviromentMode	as SibsOnlinePaymentsGatewayEnviromentMode;
+enum org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType 									as PaymentPlanStateType;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -2416,3 +2417,325 @@ class sibsonlinepaymentsgateway.MbwayTransaction {
             multiplicity *;
         }
 	}
+	
+	
+//*********************************************
+//PaymentPlan
+//*********************************************
+class paymentPlan.PaymentPlan{
+	String paymentPlanId;
+	LocalDate creationDate;
+	String reason;
+	PaymentPlanStateType state;
+	String stateReason;
+	String propertiesJsonMap;
+}
+	relation PaymentPlanDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlan playsRole paymentPlans {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanDebtaccount{
+		paymentPlan.PaymentPlan playsRole paymentPlans {
+			multiplicity *;
+		}
+		
+		debt.DebtAccount playsRole debtAccount {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation PaymentPlanEmolumentDebitEntry{
+		paymentPlan.PaymentPlan playsRole emolumentPaymentPlan {
+			multiplicity 0..1;
+		}
+		
+		document.DebitEntry playsRole emolument {
+			multiplicity 0..1;
+		}
+	}
+	//*********************************************
+	// Interests are in PaymentPlanInstallment relation
+	//*********************************************
+	//relation PaymentPlanInterestDebitEntry{
+	//	paymentPlan.PaymentPlan playsRole interestPaymentPlan {
+	//		multiplicity 0..1;
+	//	}
+	//	
+	//	document.DebitEntry playsRole interest {
+	//		multiplicity 0..1;
+	//	}
+	//}
+	relation PaymentPlanPaymentPlanRevision{
+		paymentPlan.PaymentPlan playsRole paymentPlanOriginal {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.PaymentPlan playsRole paymentPlanRevisions {
+			multiplicity *;
+		}
+	}
+
+
+class paymentPlan.Installment {
+	LocalizedString description;
+	LocalDate dueDate;
+	String propertiesJsonMap;
+}
+
+	relation InstallmentDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.Installment playsRole installments {
+			multiplicity *;
+		}
+	}
+	//*********************************************
+	// Verify existance of interestRate in installments
+	//*********************************************
+	//relation InstallmentInterestRate{
+	//	paymentPlan.Installment playsRole installment {
+	//		multiplicity 0..1;
+	//	}
+	//	
+	//	tariff.InterestRate playsRole interestRate {
+	//		multiplicity 0..1;
+	//	}
+	//}
+	//*********************************************
+	// Need branch of Online payments
+	//*********************************************
+	//relation InstallmentPaymentRequest{
+	//	paymentPlan.Installment playsRole installment {
+	//		multiplicity *;
+	//	}
+	//	
+	//	payments.PaymentRequest playsRole paymentRequest {
+	//		multiplicity *;
+	//	}
+	//}
+	
+	relation PaymentPlanInstallment{
+		paymentPlan.PaymentPlan playsRole paymentPlan {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.Installment playsRole installments {
+			multiplicity *;
+		}
+	}
+	relation MultipleEntriesPaymentCodeInstallment {
+        paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+    
+        paymentcodes.MultipleEntriesPaymentCode playsRole paymentCodes{
+            multiplicity *;
+        }
+    }
+    
+	relation ForwardPaymentInstallments {
+		forwardpayments.ForwardPayment playsRole forwardPayments {
+			multiplicity *;
+		}
+		
+		paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+	}
+	
+	
+class paymentPlan.InstallmentEntry{
+	BigDecimalT amount;
+}	
+	relation InstallmentEntryDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.InstallmentEntry playsRole installmentEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation InstallmentEntryDebitEntry{
+		paymentPlan.InstallmentEntry playsRole installmentEntry {
+			multiplicity *;
+		}
+		
+		document.DebitEntry playsRole debitEntry {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation InstallmentInstallmentEntry{
+		paymentPlan.Installment playsRole installment {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.InstallmentEntry playsRole installmentEntries {
+			multiplicity *;
+		}
+	}
+	
+	
+	
+class paymentPlan.InstallmentSettlementEntry{
+	BigDecimalT amount;
+}	
+	relation InstallmentSettlementEntryDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation InstallmentSettlementEntrySettlementEntry{
+		document.SettlementEntry playsRole settlementEntry {
+			multiplicity 1..1;
+		}
+		
+		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation InstallmentSettlementEntryInstallmentEntry{
+		paymentPlan.InstallmentEntry playsRole installmentEntry {
+			multiplicity 1..1;
+		}
+		
+		paymentPlan.InstallmentSettlementEntry playsRole installmentSettlementEntries {
+			multiplicity *;
+		}
+	}
+
+class paymentPlan.PaymentPlanSettings{
+	Boolean active;
+	LocalizedString installmentDescriptionFormat;
+	Boolean interestCalculationOfDebitsInPlans;
+	Integer numberOfPaymentPlansActives;
+}	
+	relation PaymentPlanSettingsDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanSettingsTreasurySettings {
+		settings.TreasurySettings playsRole treasurySettings {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanSettingsProduct {
+		Product playsRole emolumentProduct {
+			multiplicity 0..1;
+		}
+	
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation PaymentCodePoolPaymentPlanSettings {
+		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
+			multiplicity *; 
+		}
+	}
+	
+	
+class paymentPlan.PaymentPlanNumberGenerator {
+	LocalizedString name;
+	String prefix;
+	Integer initialValue;
+	Integer actualValue;
+}
+
+	relation PaymentPlanNumberGeneratorRootDomainObject {
+		 paymentPlan.PaymentPlanNumberGenerator playsRole paymentPlanNumberGenerators {
+		 	 multiplicity *; 
+		}
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot { 
+			multiplicity 1..1; 
+		}
+	}
+	
+	relation PaymentPlanNumberGeneratorPaymentPlanSettings {
+		paymentPlan.PaymentPlanNumberGenerator playsRole numberGenerators { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
+			multiplicity *; 
+		}
+	}
+
+class paymentPlan.paymentPlanValidator.PaymentPlanValidator{
+}
+	relation PaymentPlanValidatorDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentPlan.paymentPlanValidator.PaymentPlanValidator playsRole paymentPlanValidators {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanValidatorPaymentPlan{
+		paymentPlan.PaymentPlan playsRole paymentPlans {
+			multiplicity *;
+		}
+		
+		paymentPlan.paymentPlanValidator.PaymentPlanValidator playsRole paymentPlanValidators {
+			multiplicity *;
+		}
+	}
+
+class paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
+	LocalizedString name;
+	Boolean active;
+	Boolean conjunction;
+}
+	relation PaymentPlanGroupValidatorPaymentPlanValidator{
+		paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator playsRole parentValidator {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.paymentPlanValidator.PaymentPlanValidator playsRole childValidators {
+			multiplicity *;
+		}
+	}
+class paymentPlan.paymentPlanValidator.WithoutNonConsecutiveInstallmentsOverdueValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
+	Integer numberDaysToTakeEffect;
+	Integer numberInstallments;
+}
+
+class paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
+	Integer numberDaysToTakeEffect;
+	Integer numberInstallments;
+}
+

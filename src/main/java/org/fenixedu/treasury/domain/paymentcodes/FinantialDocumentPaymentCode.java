@@ -2,6 +2,7 @@ package org.fenixedu.treasury.domain.paymentcodes;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -31,7 +33,8 @@ import pt.ist.fenixframework.FenixFramework;
 public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_Base {
 
     @Override
-    // Check: The only invocation is PaymentReferenceCode::processPayment which is already Atomic
+    // Check: The only invocation is PaymentReferenceCode::processPayment which is
+    // already Atomic
     // @Atomic
     public Set<SettlementNote> processPayment(final String username, final BigDecimal amountToPay, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments) {
@@ -39,7 +42,8 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
         final Set<InvoiceEntry> invoiceEntriesToPay = getInvoiceEntriesSet().stream()
                 .sorted((x, y) -> y.getOpenAmount().compareTo(x.getOpenAmount())).collect(Collectors.toSet());
 
-        return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, invoiceEntriesToPay);
+        return internalProcessPayment(username, amountToPay, whenRegistered, sibsTransactionId, comments, invoiceEntriesToPay,
+                Collections.emptySet());
     }
 
     @Override
@@ -82,7 +86,7 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
 
     private void checkRules() {
         //
-        //CHANGE_ME add more busines validations
+        // CHANGE_ME add more busines validations
         //
         if (getFinantialDocument() == null) {
             throw new TreasuryDomainException("error.FinantialDocumentPaymentCode.finantialDocument.required");
@@ -119,19 +123,22 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
             }
         }
 
-        //CHANGE_ME In order to validate UNIQUE restrictions
-        //if (findByFinantialDocument(getFinantialDocument().count()>1)
-        //{
-        //  throw new TreasuryDomainException("error.FinantialDocumentPaymentCode.finantialDocument.duplicated");
-        //} 
-        //if (findByPaymentReferenceCode(getPaymentReferenceCode().count()>1)
-        //{
-        //  throw new TreasuryDomainException("error.FinantialDocumentPaymentCode.paymentReferenceCode.duplicated");
-        //} 
-        //if (findByValid(getValid().count()>1)
-        //{
-        //  throw new TreasuryDomainException("error.FinantialDocumentPaymentCode.valid.duplicated");
-        //} 
+        // CHANGE_ME In order to validate UNIQUE restrictions
+        // if (findByFinantialDocument(getFinantialDocument().count()>1)
+        // {
+        // throw new
+        // TreasuryDomainException("error.FinantialDocumentPaymentCode.finantialDocument.duplicated");
+        // }
+        // if (findByPaymentReferenceCode(getPaymentReferenceCode().count()>1)
+        // {
+        // throw new
+        // TreasuryDomainException("error.FinantialDocumentPaymentCode.paymentReferenceCode.duplicated");
+        // }
+        // if (findByValid(getValid().count()>1)
+        // {
+        // throw new
+        // TreasuryDomainException("error.FinantialDocumentPaymentCode.valid.duplicated");
+        // }
     }
 
     @Atomic
@@ -147,11 +154,12 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
 
-        //add more logical tests for checking deletion rules
-        //if (getXPTORelation() != null)
-        //{
-        //    blockers.add(BundleUtil.getString(Bundle.APPLICATION, "error.FinantialDocumentPaymentCode.cannot.be.deleted"));
-        //}
+        // add more logical tests for checking deletion rules
+        // if (getXPTORelation() != null)
+        // {
+        // blockers.add(BundleUtil.getString(Bundle.APPLICATION,
+        // "error.FinantialDocumentPaymentCode.cannot.be.deleted"));
+        // }
     }
 
     @Atomic
@@ -186,13 +194,13 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
 
     public static Stream<FinantialDocumentPaymentCode> findAll() {
         Set<FinantialDocumentPaymentCode> entries = new HashSet<FinantialDocumentPaymentCode>();
-        for(FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
+        for (FinantialInstitution finantialInstitution : FinantialInstitution.findAll().collect(Collectors.toSet())) {
             findAll(finantialInstitution).collect(Collectors.toCollection(() -> entries));
         }
-        
+
         return entries.stream();
     }
-    
+
     public static Stream<FinantialDocumentPaymentCode> findAll(final FinantialInstitution finantialInstitution) {
         Set<FinantialDocumentPaymentCode> entries = new HashSet<FinantialDocumentPaymentCode>();
         for (PaymentCodePool pool : finantialInstitution.getPaymentCodePoolsSet()) {
@@ -261,6 +269,11 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     public Set<Product> getReferencedProducts() {
         return getFinantialDocument().getFinantialDocumentEntriesSet().stream().map(DebitEntry.class::cast)
                 .map(d -> d.getProduct()).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Installment> getInstallmentsSet() {
+        return Collections.emptySet();
     }
 
 }

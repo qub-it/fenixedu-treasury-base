@@ -1,15 +1,15 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
  *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
  *
- * 
+ *
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -39,8 +39,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -160,20 +158,21 @@ public class DebitNote extends DebitNote_Base {
         checkRules();
     }
 
+    @Override
     @Atomic
     public void closeDocument(boolean markDocumentToExport) {
         setDocumentDueDate(maxDebitEntryDueDate());
-        
+
         super.closeDocument(markDocumentToExport);
     }
-    
+
     private LocalDate maxDebitEntryDueDate() {
-        final LocalDate maxDate = getDebitEntries().max(DebitEntry.COMPARE_BY_DUE_DATE).map(DebitEntry::getDueDate)
-                .orElse(getDocumentDueDate());
-        
+        final LocalDate maxDate =
+                getDebitEntries().max(DebitEntry.COMPARE_BY_DUE_DATE).map(DebitEntry::getDueDate).orElse(getDocumentDueDate());
+
         return maxDate.isAfter(getDocumentDate().toLocalDate()) ? maxDate : getDocumentDate().toLocalDate();
     }
-    
+
     // @formatter:off
     /* ********
      * SERVICES
@@ -215,18 +214,18 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
-    public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount, 
+    public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate,
             String originDocumentNumber, String documentObservations) {
         final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
                 documentDate, documentDueDate, originDocumentNumber);
         debitNote.setDocumentObservations(documentObservations);
-        
+
         debitEntry.setFinantialDocument(debitNote);
-        
+
         return debitNote;
     }
-    
+
     public static DebitNote copyDebitNote(final DebitNote debitNoteToCopy, final boolean copyDocumentDate,
             final boolean copyCloseDate, final boolean applyExemptions) {
         final DebitNote result = DebitNote.create(debitNoteToCopy.getDebtAccount(), debitNoteToCopy.getPayorDebtAccount(),
@@ -337,6 +336,10 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void anullDebitNoteWithCreditNote(String reason, boolean anullGeneratedInterests) {
 
+        if(getDebitEntriesSet().stream().anyMatch(d -> d.getOpenPaymentPlan() != null)) {
+            throw new TreasuryDomainException("error.DebitNote.anullDebitNoteWithCreditNote.cannot.anull.debt.with.open.paymentPlan");
+        }
+        
         if (this.getFinantialDocumentEntriesSet().size() > 0 && this.isClosed()) {
 
             final DateTime now = new DateTime();
@@ -487,6 +490,10 @@ public class DebitNote extends DebitNote_Base {
             throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.payor.same.as.debt.account");
         }
 
+        if (getDebitEntriesSet().stream().anyMatch(entry -> entry.isInOpenPaymentPlan())) {
+            throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.debitEntry.in.active.paymentPlan");
+        }
+
         if (isClosed()) {
             // Check if debit entries has settlement entries
             for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
@@ -512,7 +519,7 @@ public class DebitNote extends DebitNote_Base {
         return updatingDebitNote;
     }
 
-    // TODO: Debit entries are not copied well, it misses curricularCourse, evaluationSeason and 
+    // TODO: Debit entries are not copied well, it misses curricularCourse, evaluationSeason and
     // executionSemester
     private DebitNote anullAndCopyDebitNote(final String reason) {
         if (!isClosed()) {

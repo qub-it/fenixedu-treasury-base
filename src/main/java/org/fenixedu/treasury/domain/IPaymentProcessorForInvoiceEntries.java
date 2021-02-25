@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -21,6 +22,9 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -42,56 +46,70 @@ public interface IPaymentProcessorForInvoiceEntries {
     public Set<Customer> getReferencedCustomers();
 
     public BigDecimal getPayableAmount();
-    
+
     public DateTime getPaymentRequestDate();
-    
+
     public String getPaymentRequestStateDescription();
-    
+
     public String getPaymentTypeDescription();
-    
+
     public PaymentMethod getPaymentMethod();
-    
+
     public Set<InvoiceEntry> getInvoiceEntriesSet();
-    
+
+    public Set<Installment> getInstallmentsSet();
+
     public String fillPaymentEntryMethodId();
-    
+
     public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway();
-    
+
     public String getSibsOppwaMerchantTransactionId();
-    
+
     public String getSibsOppwaTransactionId();
-    
+
     default public boolean isMbwayRequest() {
         return false;
     }
-    
+
     default public boolean isPaymentCodeTarget() {
         return false;
     }
-    
+
     default public boolean isForwardPayment() {
         return false;
     }
-    
+
+    default public boolean payAllDebitEntriesInterests() {
+        return false;
+    }
+
     default public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(String username,
             BigDecimal amount, DateTime paymentDate, String originDocumentNumber, String comments,
-            Set<InvoiceEntry> invoiceEntriesToPay,
+            Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction) {
 
         final TreeSet<InvoiceEntry> sortedInvoiceEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
         sortedInvoiceEntriesToPay.addAll(invoiceEntriesToPay);
 
-        //Process the payment of pending invoiceEntries
-        //1. Find the InvoiceEntries
-        //2. Create the SEttlementEntries and the SEttlementNote
-        //2.1 create the "InterestRate entries"
-        //2.2 if there is pending amount, pay the interest rate
-        //3. If there is pending amount, try to pay a Pending DebitEntries
-        //3.1 create the interestRate entries for pending debit entries
-        //3.2 if there is pending amount, try to pay interesrtRate for pending debit entries
-        //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
-        //5. Close the SettlementNote
-        //6. Create a SibsTransactionDetail
+        final TreeSet<InstallmentEntry> sortedInstallmentEntryToPay =
+                Sets.newTreeSet(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR);
+
+        sortedInstallmentEntryToPay.addAll(
+                installmentsToPay.stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).collect(Collectors.toSet()));
+
+        // Process the payment of pending invoiceEntries
+        // 1. Find the InvoiceEntries
+        // 2. Create the SEttlementEntries and the SEttlementNote
+        // 2.1 create the "InterestRate entries"
+        // 2.2 if there is pending amount, pay the interest rate
+        // 3. If there is pending amount, try to pay a Pending DebitEntries
+        // 3.1 create the interestRate entries for pending debit entries
+        // 3.2 if there is pending amount, try to pay interesrtRate for pending debit
+        // entries
+        // 4. If there is money for more, create a "pending" payment (CreditNote) for
+        // being used later
+        // 5. Close the SettlementNote
+        // 6. Create a SibsTransactionDetail
         BigDecimal availableAmount = amount;
 
         List<DebitEntry> interestRateEntries = new ArrayList<DebitEntry>();
@@ -100,10 +118,10 @@ public interface IPaymentProcessorForInvoiceEntries {
         SettlementNote settlementNote =
                 SettlementNote.create(referenceDebtAccount, docNumberSeries, new DateTime(), paymentDate, comments, null);
 
-        //######################################
-        //1. Find the InvoiceEntries
-        //2. Create the SEttlementEntries and the SEttlementNote
-        //######################################
+        // ######################################
+        // 1. Find the InvoiceEntries
+        // 2. Create the SEttlementEntries and the SEttlementNote
+        // ######################################
 
         if (getReferencedCustomers().size() == 1) {
             for (InvoiceEntry entry : sortedInvoiceEntriesToPay) {
@@ -129,15 +147,32 @@ public interface IPaymentProcessorForInvoiceEntries {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
 
-                        //check if the amount to pay in the Debit Entry 
+                        // check if the amount to pay in the Debit Entry exceeds the availableAmount
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
 
                         if (debitEntry.getOpenAmount().equals(amountToPay)) {
-                            //######################################
-                            //2.1 create the "InterestRate entries"
-                            //######################################
+                            if (payAllDebitEntriesInterests()) {
+                                for (DebitEntry interestDebitEntry : debitEntry.getInterestDebitEntriesSet()) {
+                                    if (interestDebitEntry.isAnnulled()) {
+                                        continue;
+                                    }
+
+                                    if (!interestDebitEntry.isInDebt()) {
+                                        continue;
+                                    }
+
+                                    if (sortedInvoiceEntriesToPay.contains(interestDebitEntry)) {
+                                        continue;
+                                    }
+
+                                    interestRateEntries.add(interestDebitEntry);
+                                }
+                            }
+                            // ######################################
+                            // 2.1 create the "InterestRate entries"
+                            // ######################################
                             InterestRateBean calculateUndebitedInterestValue =
                                     debitEntry.calculateUndebitedInterestValue(paymentDate.toLocalDate());
                             if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
@@ -147,52 +182,107 @@ public interface IPaymentProcessorForInvoiceEntries {
                             }
                         }
 
-                        SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
+                        SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay,
+                                entry.getDescription(), paymentDate, true);
 
-                        //Update the amount to Pay
+                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
+
+                        // Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
 
                     } else if (entry.isCreditNoteEntry()) {
                         SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate,
                                 true);
-                        //update the amount to Pay
+                        // update the amount to Pay
                         availableAmount = availableAmount.add(amountToPay);
                     }
                 } else {
-                    //Ignore since the "open amount" is ZERO
+                    // Ignore since the "open amount" is ZERO
                 }
             }
+            
+            for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
+                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    break;
+                }
 
-            //######################################
-            //2.2 if there is pending amount, pay the interest rate
-            //######################################
-            //if we created interestRateEntries then we must close them in a document and try to pay with availableAmount
+                BigDecimal installmentAmountToPay = entry.getOpenAmount();
+                if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
+                    DebitEntry debitEntry = entry.getDebitEntry();
+
+                    if (debitEntry.getFinantialDocument() == null) {
+                        final DocumentNumberSeries documentNumberSeries =
+                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+                                        getDebtAccount().getFinantialInstitution()).get();
+                        final DebitNote debitNote =
+                                DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
+                        debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
+                    }
+
+                    if (debitEntry.getFinantialDocument().isPreparing()) {
+                        debitEntry.getFinantialDocument().closeDocument();
+                    }
+
+                    // check if the amount to pay in the installment entry exceeds the available amount
+                    if (installmentAmountToPay.compareTo(availableAmount) > 0) {
+                        installmentAmountToPay = availableAmount;
+                    }
+                    SettlementEntry settlementEntry = settlementNote.getSettlementEntryByDebitEntry(debitEntry);
+                    if (settlementEntry == null) {
+                        settlementEntry = SettlementEntry.create(debitEntry, settlementNote, installmentAmountToPay,
+                                debitEntry.getDescription(), paymentDate, false);
+                    } else {
+                        settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
+                    }
+                    InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
+                    entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+
+                    // Update the amount to Pay
+                    availableAmount = availableAmount.subtract(installmentAmountToPay);
+
+                } else {
+                    // Ignore since the "open amount" is ZERO
+                }
+            }
+            // ######################################
+            // 2.2 if there is pending amount, pay the interest rate
+            // ######################################
+            // if we created interestRateEntries then we must close them in a document and
+            // try to pay with availableAmount
             if (interestRateEntries.size() > 0) {
-                //Create a DebitNote for the Interests DebitEntries
+                // Create a DebitNote for the Interests DebitEntries
                 DebitNote interestNote =
                         DebitNote.create(referenceDebtAccount, this.getDocumentSeriesInterestDebits(), paymentDate);
                 for (DebitEntry interestEntry : interestRateEntries) {
-                    interestEntry.setFinantialDocument(interestNote);
+                    if(interestEntry.getFinantialDocument() != null) {
+                        if(interestEntry.getFinantialDocument().isPreparing()) {
+                            interestEntry.getFinantialDocument().closeDocument();
+                        }
+                    } else {
+                        interestEntry.setFinantialDocument(interestNote);
+                    }
                 }
+                
                 interestNote.closeDocument();
 
-                //if "availableAmount" still exists, then we must check if there is any InterestRate to pay
+                // if "availableAmount" still exists, then we must check if there is any
+                // InterestRate to pay
                 if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
                     for (DebitEntry interestEntry : interestRateEntries) {
-                        //Check if there is enough amount to Pay
+                        // Check if there is enough amount to Pay
                         if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
                             break;
                         }
 
                         BigDecimal amountToPay = interestEntry.getOpenAmount();
-                        //check if the amount to pay in the Debit Entry 
+                        // check if the amount to pay in the debit entry exceeds the available amount
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
 
                         SettlementEntry newSettlementEntry = SettlementEntry.create(interestEntry, settlementNote, amountToPay,
                                 interestEntry.getDescription(), paymentDate, true);
-                        //Update the amount to Pay
+                        // Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
                     }
                 }
@@ -200,20 +290,22 @@ public interface IPaymentProcessorForInvoiceEntries {
             }
         }
 
-        //######################################
-        //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
-        //######################################
+        // ######################################
+        // 4. If there is money for more, create a "pending" payment (CreditNote) for
+        // being used later
+        // ######################################
 
-        //if "availableAmount" still exists, then we must create a "pending Payment" or "CreditNote"
+        // if "availableAmount" still exists, then we must create a "pending Payment" or
+        // "CreditNote"
         if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
             settlementNote.createAdvancedPaymentCreditNote(availableAmount,
                     treasuryBundle("label.PaymentCodeTarget.advancedpayment") + comments + "-" + originDocumentNumber,
                     originDocumentNumber);
         }
 
-        //######################################
-        //5. Close the SettlementNote
-        //######################################
+        // ######################################
+        // 5. Close the SettlementNote
+        // ######################################
 
         final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
 
@@ -225,32 +317,41 @@ public interface IPaymentProcessorForInvoiceEntries {
 
     default public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
-            final Set<InvoiceEntry> invoiceEntriesToPay,
+            final Set<InvoiceEntry> invoiceEntriesToPay, final Set<Installment> installmentsToPay,
             Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction) {
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             throw new RuntimeException("invalid call");
         }
 
-        // Check if invoiceEntriesToPay have mixed invoice entries of certified in legacy erp and not
+        // Check if invoiceEntriesToPay have mixed invoice entries of certified in
+        // legacy erp and not
         SettlementNote.checkMixingOfInvoiceEntriesExportedInLegacyERP(invoiceEntriesToPay);
 
-        // If all invoice entries are not exported in legacy ERP then invoke the internalProcessPaymentInNormalPaymentMixingLegacyInvoices
+        // If all invoice entries are not exported in legacy ERP then invoke the
+        // internalProcessPaymentInNormalPaymentMixingLegacyInvoices
         if (invoiceEntriesToPay.stream()
                 .allMatch(e -> e.getFinantialDocument() == null || !e.getFinantialDocument().isExportedInLegacyERP())) {
             return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, invoiceEntriesToPay, additionalPropertiesMapFunction);
+                    comments, invoiceEntriesToPay, installmentsToPay, additionalPropertiesMapFunction);
         }
 
         final TreeSet<InvoiceEntry> sortedInvoiceEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
         sortedInvoiceEntriesToPay.addAll(invoiceEntriesToPay);
 
-        //Process the payment of pending invoiceEntries
-        //1. Find the InvoiceEntries
-        //2. Create the SEttlementEntries and the SEttlementNote
-        //2.1 create the "InterestRate entries"
-        //3. Close the SettlementNote
-        //4. If there is money for more, create a "pending" payment (CreditNote) in different settlement note for being used later
-        //6. Create a SibsTransactionDetail
+        final TreeSet<InstallmentEntry> sortedInstallmentEntryToPay =
+                Sets.newTreeSet(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR);
+
+        sortedInstallmentEntryToPay.addAll(
+                installmentsToPay.stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).collect(Collectors.toSet()));
+
+        // Process the payment of pending invoiceEntries
+        // 1. Find the InvoiceEntries
+        // 2. Create the SEttlementEntries and the SEttlementNote
+        // 2.1 create the "InterestRate entries"
+        // 3. Close the SettlementNote
+        // 4. If there is money for more, create a "pending" payment (CreditNote) in
+        // different settlement note for being used later
+        // 6. Create a SibsTransactionDetail
         BigDecimal availableAmount = amount;
 
         final DebtAccount referenceDebtAccount = this.getDebtAccount();
@@ -258,10 +359,10 @@ public interface IPaymentProcessorForInvoiceEntries {
         final SettlementNote settlementNote =
                 SettlementNote.create(referenceDebtAccount, docNumberSeries, new DateTime(), paymentDate, comments, null);
 
-        //######################################
-        //1. Find the InvoiceEntries
-        //2. Create the SEttlementEntries and the SEttlementNote
-        //######################################
+        // ######################################
+        // 1. Find the InvoiceEntries
+        // 2. Create the SEttlementEntries and the SEttlementNote
+        // ######################################
 
         if (getReferencedCustomers().size() == 1) {
             for (final InvoiceEntry entry : sortedInvoiceEntriesToPay) {
@@ -278,15 +379,15 @@ public interface IPaymentProcessorForInvoiceEntries {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
 
-                        //check if the amount to pay in the Debit Entry 
+                        // check if the amount to pay in the Debit Entry
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
 
                         if (debitEntry.getOpenAmount().equals(amountToPay)) {
-                            //######################################
-                            //2.1 create the "InterestRate entries"
-                            //######################################
+                            // ######################################
+                            // 2.1 create the "InterestRate entries"
+                            // ######################################
                             InterestRateBean calculateUndebitedInterestValue =
                                     debitEntry.calculateUndebitedInterestValue(paymentDate.toLocalDate());
                             if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
@@ -295,30 +396,69 @@ public interface IPaymentProcessorForInvoiceEntries {
                             }
                         }
 
-                        SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
+                        SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
 
-                        //Update the amount to Pay
+                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
+                        
+                        // Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
 
                     } else if (entry.isCreditNoteEntry()) {
                         SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate,
                                 true);
-                        //update the amount to Pay
+                        // update the amount to Pay
                         availableAmount = availableAmount.add(amountToPay);
                     }
                 } else {
-                    //Ignore since the "open amount" is ZERO
+                    // Ignore since the "open amount" is ZERO
                 }
             }
         }
 
+        for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
+            if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                break;
+            }
+
+            BigDecimal installmentAmountToPay = entry.getOpenAmount();
+            if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
+                DebitEntry debitEntry = entry.getDebitEntry();
+
+                if (debitEntry.getFinantialDocument().isPreparing()) {
+                    debitEntry.getFinantialDocument().closeDocument();
+                }
+
+                // check if the amount to pay in the installment entry exceeds the available amount
+                if (installmentAmountToPay.compareTo(availableAmount) > 0) {
+                    installmentAmountToPay = availableAmount;
+                }
+                
+                SettlementEntry settlementEntry = settlementNote.getSettlementEntryByDebitEntry(debitEntry);
+                if (settlementEntry == null) {
+                    settlementEntry = SettlementEntry.create(debitEntry, settlementNote, installmentAmountToPay,
+                            debitEntry.getDescription(), paymentDate, false);
+                } else {
+                    settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
+                }
+                
+                InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
+                entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+
+                // Update the amount to Pay
+                availableAmount = availableAmount.subtract(installmentAmountToPay);
+
+            } else {
+                // Ignore since the "open amount" is ZERO
+            }
+        }
+        
         if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
             availableAmount = BigDecimal.ZERO;
         }
 
-        //######################################
-        //3. Close the SettlementNote
-        //######################################
+        // ######################################
+        // 3. Close the SettlementNote
+        // ######################################
 
         final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
 
@@ -328,13 +468,16 @@ public interface IPaymentProcessorForInvoiceEntries {
 
         final Set<SettlementNote> result = Sets.newHashSet(settlementNote);
 
-        //###########################################################################################
-        //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
-        // which must be settled in different SettlementNote so the advancepayment can be integrated and
+        // ###########################################################################################
+        // 4. If there is money for more, create a "pending" payment (CreditNote) for
+        // being used later
+        // which must be settled in different SettlementNote so the advancepayment can
+        // be integrated and
         // use with new certified invoices
-        //###########################################################################################
+        // ###########################################################################################
 
-        //if "availableAmount" still exists, then we must create a "pending Payment" or "CreditNote"
+        // if "availableAmount" still exists, then we must create a "pending Payment" or
+        // "CreditNote"
         if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
             final SettlementNote advancedPaymentSettlementNote =
                     SettlementNote.create(referenceDebtAccount, docNumberSeries, new DateTime(), paymentDate, comments, null);
@@ -361,7 +504,8 @@ public interface IPaymentProcessorForInvoiceEntries {
 
     }
 
-    public static Set<Customer> getReferencedCustomers(final Set<InvoiceEntry> invoiceEntrySet) {
+    public static Set<Customer> getReferencedCustomers(final Set<InvoiceEntry> invoiceEntrySet,
+            final Set<Installment> installments) {
         final Set<Customer> result = Sets.newHashSet();
         for (final InvoiceEntry entry : invoiceEntrySet) {
             if (entry.getFinantialDocument() != null && ((Invoice) entry.getFinantialDocument()).isForPayorDebtAccount()) {
@@ -370,6 +514,14 @@ public interface IPaymentProcessorForInvoiceEntries {
             }
 
             result.add(entry.getDebtAccount().getCustomer());
+        }
+
+        for (final Installment entry : installments) {
+            result.addAll(entry.getInstallmentEntriesSet().stream().map(e -> e.getDebitEntry())
+                    .map(deb -> (deb.getFinantialDocument() != null && ((Invoice) deb.getFinantialDocument())
+                            .isForPayorDebtAccount()) ? ((Invoice) deb.getFinantialDocument()).getPayorDebtAccount()
+                                    .getCustomer() : deb.getDebtAccount().getCustomer())
+                    .collect(Collectors.toSet()));
         }
 
         return result;

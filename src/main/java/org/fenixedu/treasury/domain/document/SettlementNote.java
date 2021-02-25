@@ -1,15 +1,15 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
  *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
  *
- * 
+ *
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -33,15 +33,14 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,8 +49,11 @@ import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.CreditEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
@@ -148,23 +150,24 @@ public class SettlementNote extends SettlementNote_Base {
                 }
             }
         }
-        
-        // Ensure the settlement entries do not settle the same invoice entry twice or more
+
+        // Ensure the settlement entries do not settle the same invoice entry twice or
+        // more
         {
             final Map<InvoiceEntry, LongAdder> map = new HashMap<>();
             getSettlemetEntriesSet().forEach(se -> {
                 map.putIfAbsent(se.getInvoiceEntry(), new LongAdder());
                 map.get(se.getInvoiceEntry()).increment();
             });
-            
+
             for (Entry<InvoiceEntry, LongAdder> entry : map.entrySet()) {
-                if(entry.getValue().intValue() > 1) {
+                if (entry.getValue().intValue() > 1) {
                     throw new TreasuryDomainException("error.SettlementNote.checkRules.invoiceEntries.not.unique");
                 }
             }
         }
     }
-    
+
     public void markAsUsedInBalanceTransfer() {
         setUsedInBalanceTransfer(true);
     }
@@ -197,9 +200,9 @@ public class SettlementNote extends SettlementNote_Base {
 
     @Override
     public boolean isDeletable() {
-        //We can only "delete" a settlement note if is in "Preparing"
+        // We can only "delete" a settlement note if is in "Preparing"
         if (this.isPreparing()) {
-            //if is preparing, the AdvancedPaymentCreditNote if exists, must be deletable
+            // if is preparing, the AdvancedPaymentCreditNote if exists, must be deletable
             if (getAdvancedPaymentCreditNote() != null) {
                 return getAdvancedPaymentCreditNote().isDeletable();
             }
@@ -250,7 +253,7 @@ public class SettlementNote extends SettlementNote_Base {
 
         return currentStatus.isFinalStatus() && currentStatus.isRejectedStatus();
     }
-    
+
     public boolean isUsedInBalanceTransfer() {
         return getUsedInBalanceTransfer();
     }
@@ -288,8 +291,8 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     public void processSettlementNoteCreation(SettlementNoteBean bean) {
         processInterestEntries(bean);
-        closeDebitNotes(bean);
-        closeCreditNotes(bean);
+        processDebtEntries(bean);
+        processCreditEntries(bean);
         if (bean.isReimbursementNote()) {
             processReimbursementEntries(bean);
         } else {
@@ -368,9 +371,8 @@ public class SettlementNote extends SettlementNote_Base {
         for (InterestEntryBean interestEntryBean : bean.getInterestEntries()) {
             DebitNote interestDebitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, new DateTime());
 
-            DebitEntry interestDebitEntry =
-                    interestEntryBean.getDebitEntry().createInterestRateDebitEntry(interestEntryBean.getInterest(),
-                            new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
+            DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
+                    interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
 
             if (interestEntryBean.isIncluded()) {
                 interestDebitNote.closeDocument();
@@ -380,7 +382,7 @@ public class SettlementNote extends SettlementNote_Base {
         }
     }
 
-    private void closeCreditNotes(SettlementNoteBean bean) {
+    private void processCreditEntries(SettlementNoteBean bean) {
         for (CreditEntryBean creditEntryBean : bean.getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 CreditEntry creditEntry = creditEntryBean.getCreditEntry();
@@ -409,30 +411,70 @@ public class SettlementNote extends SettlementNote_Base {
         }
     }
 
-    private void closeDebitNotes(SettlementNoteBean bean) {
+    private void processDebtEntries(SettlementNoteBean bean) {
         DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
                 .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
 
         List<DebitEntry> untiedDebitEntries = new ArrayList<DebitEntry>();
-        for (DebitEntryBean debitEntryBean : bean.getDebitEntries()) {
+        for (DebitEntryBean debitEntryBean : bean.getDebitEntriesByType(DebitEntryBean.class)) {
             if (debitEntryBean.isIncluded()) {
-                if (debitEntryBean.getDebitEntry().getFinantialDocument() == null) {
-                    untiedDebitEntries.add(debitEntryBean.getDebitEntry());
-                } else {
-                    if (!debitEntryBean.getDebitEntry().getFinantialDocument().isClosed()) {
-                        debitEntryBean.getDebitEntry().getFinantialDocument().closeDocument();
-                    }
+                DebitEntry debitEntry = debitEntryBean.getDebitEntry();
+                if (debitEntry.getFinantialDocument() == null) {
+                    untiedDebitEntries.add(debitEntry);
+                } else if (!debitEntry.getFinantialDocument().isClosed()) {
+                    debitEntry.getFinantialDocument().closeDocument();
                 }
-                SettlementEntry.create(debitEntryBean, this, bean.getDate().toDateTimeAtStartOfDay());
+                SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
+                        bean.getDate().toDateTimeAtStartOfDay());
+                
+                InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
             }
         }
+        for (InstallmentPaymenPlanBean installmentPaymenPlanBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
+            if (installmentPaymenPlanBean.isIncluded()) {
+                BigDecimal restToPay = installmentPaymenPlanBean.getSettledAmount();
+
+                for (InstallmentEntry installmentEntry : installmentPaymenPlanBean.getInstallment()
+                        .getSortedOpenInstallmentEntries()) {
+                    if (TreasuryConstants.isZero(restToPay)) {
+                        break;
+                    }
+                    BigDecimal debtAmount = restToPay.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry
+                            .getOpenAmount() : restToPay;
+                    restToPay = restToPay.subtract(debtAmount);
+                    if (!TreasuryConstants.isPositive(debtAmount)) {
+                        continue;
+                    }
+                    if (installmentEntry.getDebitEntry().getFinantialDocument() == null) {
+                        untiedDebitEntries.add(installmentEntry.getDebitEntry());
+                    } else if (!installmentEntry.getDebitEntry().getFinantialDocument().isClosed()) {
+                        installmentEntry.getDebitEntry().getFinantialDocument().closeDocument();
+                    }
+                    SettlementEntry settlementEntry = getSettlementEntryByDebitEntry(installmentEntry.getDebitEntry());
+                    if (settlementEntry == null) {
+                        settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this,
+                                bean.getDate().toDateTimeAtStartOfDay());
+                    } else {
+                        settlementEntry.setAmount(settlementEntry.getAmount().add(debtAmount));
+                    }
+                    InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
+                }
+                installmentPaymenPlanBean.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+            }
+
+        }
+
         if (untiedDebitEntries.size() != 0) {
             DebitNote debitNote =
                     DebitNote.create(bean.getDebtAccount(), debitNoteSeries, bean.getDate().toDateTimeAtStartOfDay());
             debitNote.addDebitNoteEntries(untiedDebitEntries);
             debitNote.closeDocument();
         }
+    }
+
+    public SettlementEntry getSettlementEntryByDebitEntry(DebitEntry debitEntry) {
+        return getSettlemetEntriesSet().stream().filter(se -> se.getInvoiceEntry().equals(debitEntry)).findFirst().orElse(null);
     }
 
     public Stream<SettlementEntry> getSettlemetEntries() {
@@ -475,15 +517,15 @@ public class SettlementNote extends SettlementNote_Base {
             if (getAdvancedPaymentCreditNote() != null && getAdvancedPaymentCreditNote().hasValidSettlementEntries()) {
                 throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.advanced.payment.settled");
             }
-            
-            if(isUsedInBalanceTransfer()) {
+
+            if (isUsedInBalanceTransfer()) {
                 throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.balance.transfer");
             }
 
             setState(FinantialDocumentStateType.ANNULED);
             setAnnulledReason(anulledReason);
 
-            // Settlement note can never free entries 
+            // Settlement note can never free entries
             if (markDocumentToExport) {
                 this.markDocumentToExport();
             }
@@ -512,7 +554,8 @@ public class SettlementNote extends SettlementNote_Base {
     @Override
     public void closeDocument(boolean markDocumentToExport) {
 
-        //Validate the settlement entries can be used, since multiple entries to the same settlement Note
+        // Validate the settlement entries can be used, since multiple entries to the
+        // same settlement Note
         for (SettlementEntry settlementEntry : getSettlemetEntriesSet()) {
             if (TreasuryConstants.isGreaterThan(settlementEntry.getAmount(), settlementEntry.getInvoiceEntry().getOpenAmount())) {
                 throw new TreasuryDomainException("error.SettlementNote.invalid.settlement.entry.amount.for.invoice.entry");
@@ -538,31 +581,31 @@ public class SettlementNote extends SettlementNote_Base {
 
         super.closeDocument(markDocumentToExport);
 
-        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-            // Mark this settlement note if there is at least one invoice exported in legacy ERP
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+            // Mark this settlement note if there is at least one invoice exported in legacy
+            // ERP
             boolean atLeastOneInvoiceEntryExportedInLegacyERP = getSettlemetEntries()
-                .filter(s -> s.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP())
-                .count() > 0;
-                
-            if(atLeastOneInvoiceEntryExportedInLegacyERP) {
-                if(!isExportedInLegacyERP()) {
+                    .filter(s -> s.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP()).count() > 0;
+
+            if (atLeastOneInvoiceEntryExportedInLegacyERP) {
+                if (!isExportedInLegacyERP()) {
                     setExportedInLegacyERP(true);
                     setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
                 }
-                
+
                 getSettlemetEntries().forEach(s -> {
-                    if(s.getCloseDate() == null || !s.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE.minusSeconds(1))) {
+                    if (s.getCloseDate() == null || !s.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE.minusSeconds(1))) {
                         s.setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
                     }
                 });
-                
-                if(getAdvancedPaymentCreditNote() != null && !getAdvancedPaymentCreditNote().isExportedInLegacyERP() ) {
+
+                if (getAdvancedPaymentCreditNote() != null && !getAdvancedPaymentCreditNote().isExportedInLegacyERP()) {
                     getAdvancedPaymentCreditNote().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
                     getAdvancedPaymentCreditNote().setExportedInLegacyERP(true);
                 }
             }
         }
-        
+
         checkRules();
     }
 
@@ -611,8 +654,7 @@ public class SettlementNote extends SettlementNote_Base {
                         treasuryBundle("error.SettlementNote.reimbursement.rejected.reason"));
             }
 
-            anullDocument(treasuryBundle("label.ReimbursementProcessStatusType.annuled.reimbursement.by.annuled.process"),
-                    false);
+            anullDocument(treasuryBundle("label.ReimbursementProcessStatusType.annuled.reimbursement.by.annuled.process"), false);
 
             markDocumentToExport();
         }
@@ -659,7 +701,7 @@ public class SettlementNote extends SettlementNote_Base {
         if (FinantialDocumentType.findForCreditNote() == null) {
             throw new TreasuryDomainException("error.SettlementNote.non-existing.credit.note.document.type");
         }
-        //Create the CreditNote for this amount and
+        // Create the CreditNote for this amount and
         DocumentNumberSeries documentNumberSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), this.getDocumentNumberSeries().getSeries());
 
@@ -710,32 +752,31 @@ public class SettlementNote extends SettlementNote_Base {
             }
         }
 
-        if(getAdvancedPaymentCreditNote() != null) {
+        if (getAdvancedPaymentCreditNote() != null) {
             if (getAdvancedPaymentCreditNote().isForPayorDebtAccount()) {
                 result.add(getAdvancedPaymentCreditNote().getPayorDebtAccount().getCustomer());
             } else {
                 result.add(getAdvancedPaymentCreditNote().getDebtAccount().getCustomer());
             }
         }
-        
 
         return result;
     }
 
     @Override
     protected SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
-        final SortedSet<SettlementEntry> result = Sets.newTreeSet(SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
-        
+        final SortedSet<SettlementEntry> result =
+                Sets.newTreeSet(SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+
         result.addAll(getFinantialDocumentEntriesSet().stream().map(SettlementEntry.class::cast).collect(Collectors.toSet()));
-        
-        if(result.size() != getFinantialDocumentEntriesSet().size()) {
+
+        if (result.size() != getFinantialDocumentEntriesSet().size()) {
             throw new RuntimeException("error");
         }
 
         return result;
     }
 
-    
     // @formatter:off
     /* ********
      * SERVICES
@@ -764,7 +805,7 @@ public class SettlementNote extends SettlementNote_Base {
 
         settlementNote.processSettlementNoteCreation(bean);
         settlementNote.closeDocument();
-        
+
         return settlementNote;
     }
 
@@ -812,48 +853,44 @@ public class SettlementNote extends SettlementNote_Base {
     public static Stream<SettlementNote> findByState(final FinantialDocumentStateType state) {
         return findAll().filter(i -> state.equals(i.getState()));
     }
-    
+
     public static void checkMixingOfInvoiceEntriesExportedInLegacyERP(final Set<InvoiceEntry> invoiceEntries) {
-        if(!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+        if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return;
         }
-        
+
         // Find at least one that is exported in legacy ERP
-        final boolean atLeastOneExportedInLegacyERP = invoiceEntries.stream()
-                .filter(i -> i.getFinantialDocument() != null)
-                .filter(i -> i.getFinantialDocument().isExportedInLegacyERP())
-                .count() > 0;
-                
-                
-        if(atLeastOneExportedInLegacyERP) {
+        final boolean atLeastOneExportedInLegacyERP = invoiceEntries.stream().filter(i -> i.getFinantialDocument() != null)
+                .filter(i -> i.getFinantialDocument().isExportedInLegacyERP()).count() > 0;
+
+        if (atLeastOneExportedInLegacyERP) {
             boolean notExportedInLegacyERP = invoiceEntries.stream()
                     .anyMatch(i -> i.getFinantialDocument() == null || !i.getFinantialDocument().isExportedInLegacyERP());
 
-            if(notExportedInLegacyERP) {
+            if (notExportedInLegacyERP) {
                 throw new TreasuryDomainException("error.SettlementNote.debit.entry.mixed.exported.in.legacy.erp.not.allowed");
             }
         }
-            
+
     }
-    
+
     public static void checkMixingOfInvoiceEntriesExportedInLegacyERP(final List<ISettlementInvoiceEntryBean> invoiceEntryBeans) {
-        if(!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+        if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return;
         }
-        
+
         // Find at least one that is exported in legacy ERP
-        final boolean atLeastOneExportedInLegacyERP = invoiceEntryBeans.stream()
-                .filter(i -> i.getInvoiceEntry() != null)
+        final boolean atLeastOneExportedInLegacyERP = invoiceEntryBeans.stream().filter(i -> i.getInvoiceEntry() != null)
                 .filter(i -> i.getInvoiceEntry().getFinantialDocument() != null)
-                .filter(i -> i.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP())
-                .count() > 0;
-                
-        if(atLeastOneExportedInLegacyERP) {
+                .filter(i -> i.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP()).count() > 0;
+
+        if (atLeastOneExportedInLegacyERP) {
             // Ensure all debit entries has finantial documents and exported in legacy erp
             boolean notExportedInLegacyERP = invoiceEntryBeans.stream()
-                    .anyMatch(i -> i.getInvoiceEntry() == null || i.getInvoiceEntry().getFinantialDocument() == null || !i.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP());
-            
-            if(notExportedInLegacyERP) {
+                    .anyMatch(i -> i.getInvoiceEntry() == null || i.getInvoiceEntry().getFinantialDocument() == null
+                            || !i.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP());
+
+            if (notExportedInLegacyERP) {
                 throw new TreasuryDomainException("error.SettlementNote.debit.entry.mixed.exported.in.legacy.erp.not.allowed");
             }
         }

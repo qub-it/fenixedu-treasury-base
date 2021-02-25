@@ -28,6 +28,7 @@
 package org.fenixedu.treasury.domain.debt;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
@@ -42,6 +43,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentcodes.FinantialDocumentPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
@@ -55,15 +57,15 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class DebtAccount extends DebtAccount_Base {
 
-    public static final Comparator<DebtAccount> COMPARATOR_BY_CUSTOMER_NAME_IGNORE_CASE = (o1, o2) ->  {
+    public static final Comparator<DebtAccount> COMPARATOR_BY_CUSTOMER_NAME_IGNORE_CASE = (o1, o2) -> {
         int c = Customer.COMPARE_BY_NAME_IGNORE_CASE.compare(o1.getCustomer(), o2.getCustomer());
-        
+
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     public static final Comparator<DebtAccount> COMPARATOR_BY_FINANTIAL_INSTITUTION_NAME = (o1, o2) -> {
         int c = FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
-        
+
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
@@ -102,15 +104,15 @@ public class DebtAccount extends DebtAccount_Base {
 
         return getFinantialInstitution().getCurrency().getValueWithScale(amount);
     }
-    
+
     public BigDecimal getTotalInDebtForAllDebtAccountsOfSameFinantialInstitution() {
         BigDecimal result = BigDecimal.ZERO;
         for (final Customer customer : getCustomer().getAllCustomers()) {
-            if(DebtAccount.findUnique(getFinantialInstitution(), customer).isPresent()) {
+            if (DebtAccount.findUnique(getFinantialInstitution(), customer).isPresent()) {
                 result = result.add(DebtAccount.findUnique(getFinantialInstitution(), customer).get().getTotalInDebt());
             }
         }
-        
+
         return result;
     }
 
@@ -121,29 +123,26 @@ public class DebtAccount extends DebtAccount_Base {
                 continue;
             }
 
-            result.addAll(
-                    MultipleEntriesPaymentCode.findUsedByDebitEntry((DebitEntry) invoiceEntry).collect(Collectors.toSet()));
+            result.addAll(MultipleEntriesPaymentCode.findUsedByDebitEntry((DebitEntry) invoiceEntry).collect(Collectors.toSet()));
 
             if (invoiceEntry.getFinantialDocument() != null) {
-                result
-                        .addAll(FinantialDocumentPaymentCode.findUsedByFinantialDocument(invoiceEntry.getFinantialDocument())
-                                .collect(Collectors.<PaymentCodeTarget> toSet()));
+                result.addAll(FinantialDocumentPaymentCode.findUsedByFinantialDocument(invoiceEntry.getFinantialDocument())
+                        .collect(Collectors.<PaymentCodeTarget> toSet()));
             }
         }
-        
+
         return result;
     }
 
     public boolean isClosed() {
         return getClosed();
     }
-    
+
     @Atomic
     public void transferBalanceForActiveDebtAccount() {
         if (getCustomer().isActive()) {
             throw new TreasuryDomainException("error.DebtAccount.transfer.from.must.not.be.active");
         }
-
 
         Optional<DebtAccount> activeDebtAccount =
                 DebtAccount.findUnique(getFinantialInstitution(), getCustomer().getActiveCustomer());
@@ -154,13 +153,12 @@ public class DebtAccount extends DebtAccount_Base {
 
         transferBalance(activeDebtAccount.get());
     }
-    
+
     @Atomic
     public void transferBalance(final DebtAccount destinyDebtAccount) {
         new BalanceTransferService(this, destinyDebtAccount).transferBalance();
     }
 
-    
     // @formatter:off
     /* ********
      * SERVICES
@@ -259,13 +257,14 @@ public class DebtAccount extends DebtAccount_Base {
 
     public BigDecimal calculateTotalPendingInterestAmountForAllDebtAccountsOfSameFinantialInstitution() {
         BigDecimal result = BigDecimal.ZERO;
-        
+
         for (Customer customer : getCustomer().getAllCustomers()) {
-            if(DebtAccount.findUnique(getFinantialInstitution(), customer).isPresent()) {
-                result = result.add(DebtAccount.findUnique(getFinantialInstitution(), customer).get().calculatePendingInterestAmount());
+            if (DebtAccount.findUnique(getFinantialInstitution(), customer).isPresent()) {
+                result = result
+                        .add(DebtAccount.findUnique(getFinantialInstitution(), customer).get().calculatePendingInterestAmount());
             }
         }
-        
+
         return result;
     }
 
@@ -302,6 +301,29 @@ public class DebtAccount extends DebtAccount_Base {
     public boolean hasPreparingSettlementNotes() {
         return getPendingInvoiceEntriesSet().stream().anyMatch(ie -> ie.getSettlementEntriesSet().stream()
                 .anyMatch(se -> se.getFinantialDocument() != null && se.getFinantialDocument().isPreparing()));
+    }
+
+    public Set<PaymentPlan> getActivePaymentPlansSet() {
+        return getPaymentPlansSet().stream().filter(plan -> plan.getState().isOpen()).collect(Collectors.toSet());
+
+    }
+
+    public Collection<? extends PaymentCodeTarget> getUsedPaymentCodeTargetOfPendingInstallments() {
+        final Set<PaymentCodeTarget> result = Sets.newHashSet();
+        for (final PaymentPlan paymentPlan : getActivePaymentPlansSet()) {
+            result.addAll(paymentPlan.getInstallmentsSet().stream().flatMap(inst -> inst.getPaymentCodesSet().stream())
+                    .filter(pay -> pay.getPaymentReferenceCode().isUsed()).collect(Collectors.toSet()));
+        }
+        return result;
+
+    }
+
+    public Set<PaymentPlan> getPaymentPlansNotCompliantSet(LocalDate when) {
+        return getActivePaymentPlansSet().stream().filter(plan -> !plan.isCompliant(when)).collect(Collectors.toSet());
+    }
+
+    public Set<PaymentPlan> getPaymentPlansNotCompliantSet() {
+        return getPaymentPlansNotCompliantSet(LocalDate.now());
     }
 
 }
