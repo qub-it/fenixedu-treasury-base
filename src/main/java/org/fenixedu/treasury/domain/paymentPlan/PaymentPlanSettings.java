@@ -8,7 +8,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 
-import jvstm.Atomic;
+import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentPlanSettings extends PaymentPlanSettings_Base {
@@ -104,5 +104,18 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
 
     public Boolean isActive() {
         return Boolean.TRUE.equals(getActive());
+    }
+
+    @Atomic
+    public void delete() {
+        if (getActive().booleanValue()) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.active.cannot.be.deleted");
+        }
+        setDomainRoot(null);
+        setTreasurySettings(null);
+        setEmolumentProduct(null);
+        setNumberGenerators(null);
+        setPaymentCodePool(null);
+        super.deleteDomainObject();
     }
 }

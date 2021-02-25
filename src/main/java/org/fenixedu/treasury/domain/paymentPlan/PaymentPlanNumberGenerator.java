@@ -49,4 +49,13 @@ public class PaymentPlanNumberGenerator extends PaymentPlanNumberGenerator_Base 
     public String getNextNumberPreview() {
         return getPrefixToGenerateNumber() + (getActualValue() == null ? getInitialValue() : getActualValue() + 1);
     }
+
+    public void delete() {
+        if (!getPaymentPlanSettingsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.PaymentPlanNumberGenerator.in.settings.cannot.be.deleted");
+        }
+        setDomainRoot(null);
+        super.deleteDomainObject();
+    }
+
 }
