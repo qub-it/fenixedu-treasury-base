@@ -9,6 +9,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -51,18 +52,28 @@ public class BalanceTransferService {
     private DebtAccount destinyDebtAccount;
 
     private Map<DebitEntry, DebitEntry> conversionMap;
-    private Map<DebitEntry, SettlementEntry> settlementOfDebitEntry;
+    private Map<DebitEntry, SettlementEntry> settlementOfDebitEntryMap;
 
+    private Set<PaymentPlan> openPaymentPlans;
+    
     public BalanceTransferService(final DebtAccount objectDebtAccount, final DebtAccount destinyDebtAccount) {
         this.objectDebtAccount = objectDebtAccount;
         this.destinyDebtAccount = destinyDebtAccount;
         this.conversionMap = new HashMap<>();
-        this.settlementOfDebitEntry = new HashMap<>();
-
+        this.settlementOfDebitEntryMap = new HashMap<>();
+        this.openPaymentPlans = objectDebtAccount.getActivePaymentPlansSet();
     }
 
     @Atomic
     public void transferBalance() {
+        // Change open payment plans temporarly, to annul debit entries
+        this.openPaymentPlans.forEach(p -> {
+            //update object payment Plan
+            p.setState(PaymentPlanStateType.TRANSFERRED);
+            p.setStateReason(treasuryBundle("label.BalanceTransferService.paymentPlan.reason",
+                    destinyDebtAccount.getCustomer().getFiscalNumber()));
+        });
+        
         final BigDecimal initialGlobalBalance = objectDebtAccount.getCustomer().getGlobalBalance();
 
         final FinantialInstitution finantialInstitution = objectDebtAccount.getFinantialInstitution();
@@ -106,14 +117,14 @@ public class BalanceTransferService {
     }
 
     private void transferPaymentPlans() {
-        for (PaymentPlan objectPaymentPlan : objectDebtAccount.getActivePaymentPlansSet()) {
+        for (PaymentPlan objectPaymentPlan : this.openPaymentPlans) {
             // Create destiny PaymentPlan
             PaymentPlan destinyPaymentPlan = new PaymentPlan();
             destinyPaymentPlan.setCreationDate(objectPaymentPlan.getCreationDate());
             destinyPaymentPlan.setDebtAccount(destinyDebtAccount);
             destinyPaymentPlan.setReason(objectPaymentPlan.getReason());
             destinyPaymentPlan.setPaymentPlanId(PaymentPlanSettings.getActiveInstance().getNumberGenerators().generateNumber());
-            destinyPaymentPlan.setState(objectPaymentPlan.getState());
+            destinyPaymentPlan.setState(PaymentPlanStateType.OPEN);
             destinyPaymentPlan.getPaymentPlanValidatorsSet().addAll(objectPaymentPlan.getPaymentPlanValidatorsSet());
             destinyPaymentPlan.setEmolument(conversionMap.get(objectPaymentPlan.getEmolument()));
 
@@ -135,7 +146,7 @@ public class BalanceTransferService {
                     InstallmentEntry.create(destinyDebitEntry, objectInstallmentEntry.getOpenAmount(), destinyInstallment);
 
                     //Create SettlementEntry for object InstallmentEntry
-                    SettlementEntry settlementEntry = settlementOfDebitEntry.get(objectInstallmentEntry.getDebitEntry());
+                    SettlementEntry settlementEntry = settlementOfDebitEntryMap.get(objectInstallmentEntry.getDebitEntry());
                     if (settlementEntry != null) {
                         InstallmentSettlementEntry.create(objectInstallmentEntry, settlementEntry,
                                 objectInstallmentEntry.getOpenAmount());
@@ -143,19 +154,16 @@ public class BalanceTransferService {
                 }
             }
 
-            //update object payment Plan
-            objectPaymentPlan.setState(PaymentPlanStateType.TRANSFERRED);
-            objectPaymentPlan.setStateReason(treasuryBundle("label.BalanceTransferService.paymentPlan.reason",
-                    destinyDebtAccount.getCustomer().getFiscalNumber()));
+            destinyPaymentPlan.createPaymentReferenceCode();
 
             //Add Revision to Payment Plan
             objectPaymentPlan.addPaymentPlanRevisions(destinyPaymentPlan);
 
+            
             //Validate Rules
             objectPaymentPlan.checkRules();
             destinyPaymentPlan.checkRules();
         }
-
     }
 
     private void transferCreditEntry(final CreditEntry invoiceEntry) {
@@ -306,10 +314,8 @@ public class BalanceTransferService {
                 }
 
                 //paymentPlan
-                if (debitEntry.getOpenPaymentPlan() != null) {
-                    conversionMap.put(debitEntry, destinyDebitEntry);
-                    settlementOfDebitEntry.put(debitEntry, destinySettlementEntry);
-                }
+                conversionMap.put(debitEntry, destinyDebitEntry);
+                settlementOfDebitEntryMap.put(debitEntry, destinySettlementEntry);
             }
 
             settlementNote.markAsUsedInBalanceTransfer();
@@ -365,6 +371,7 @@ public class BalanceTransferService {
                     debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());
 
             //paymentPlan
+            conversionMap.put(debitEntry, newDebitEntry);
 
         }
 

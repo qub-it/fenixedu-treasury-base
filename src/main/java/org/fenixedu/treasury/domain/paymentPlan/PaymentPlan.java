@@ -78,7 +78,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         checkRules();
     }
 
-    private void createPaymentReferenceCode() {
+    public void createPaymentReferenceCode() {
         PaymentCodePool paymentCodePool = PaymentPlanSettings.getActiveInstance().getPaymentCodePool();
 
         if (paymentCodePool == null) {
