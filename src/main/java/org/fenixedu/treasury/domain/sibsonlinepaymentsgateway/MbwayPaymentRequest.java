@@ -428,9 +428,4 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         return getSibsReferenceId();
     }
 
-    @Override
-    public Set<Installment> getInstallmentsSet() {
-        return Collections.emptySet();
-    }
-
 }
