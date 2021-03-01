@@ -1,3 +1,4 @@
+6.0.0 (01-03-2021)
 - New Fixture: Payment plans for debit entries
 - Improvement: Hinder debit entries exported in legacy ERP, being associated with payment plans in restricted payment mode
 
