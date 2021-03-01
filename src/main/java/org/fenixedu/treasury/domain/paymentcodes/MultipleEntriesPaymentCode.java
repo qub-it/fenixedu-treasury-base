@@ -298,4 +298,40 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
         return findWithDebitEntries(debitEntries).filter(p -> p.getPaymentReferenceCode().isUsed());
     }
 
+    public static Stream<MultipleEntriesPaymentCode> findNewByInstallment(final Installment installment) {
+        return findByInstallment(installment).filter(p -> p.getPaymentReferenceCode().isNew());
+    }
+
+    public static Stream<MultipleEntriesPaymentCode> findUsedByInstallment(final Installment installment) {
+        return findByInstallment(installment).filter(p -> p.getPaymentReferenceCode().isUsed());
+    }
+
+    public static Stream<MultipleEntriesPaymentCode> findByInstallment(final Installment installment) {
+        return installment.getPaymentCodesSet().stream();
+    }
+
+    public static Stream<MultipleEntriesPaymentCode> findNewByInstallmentsSet(final Set<Installment> installments) {
+        return findWithInstallment(installments).filter(p -> p.getPaymentReferenceCode().isNew());
+    }
+
+    public static Stream<MultipleEntriesPaymentCode> findUsedByInstallmentsSet(final Set<Installment> installments) {
+        return findWithInstallment(installments).filter(p -> p.getPaymentReferenceCode().isUsed());
+    }
+
+    public static Stream<MultipleEntriesPaymentCode> findWithInstallment(final Set<Installment> installments) {
+        final Set<MultipleEntriesPaymentCode> paymentCodes =
+                installments.stream().map(d -> d.getPaymentCodesSet()).flatMap(p -> p.stream()).collect(Collectors.toSet());
+
+        final Set<MultipleEntriesPaymentCode> result = Sets.newHashSet();
+        for (final MultipleEntriesPaymentCode code : paymentCodes) {
+            if (!Sets.symmetricDifference(code.getInstallmentsSet(), installments).isEmpty()) {
+                continue;
+            }
+
+            result.add(code);
+        }
+
+        return result.stream();
+    }
+
 }

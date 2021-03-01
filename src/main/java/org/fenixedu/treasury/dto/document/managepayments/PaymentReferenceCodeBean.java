@@ -72,6 +72,7 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     public PaymentReferenceCodeBean() {
         usePaymentAmountWithInterests = false;
         useCustomPaymentAmount = false;
+        selectedDebitEntries = new ArrayList<>();
         selectedInstallments = new ArrayList<>();
     }
 
@@ -86,14 +87,23 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     }
 
     public void updateAmountOnSelectedDebitEntries() {
-        this.paymentAmount = this.selectedDebitEntries.stream()
+        BigDecimal paymentAmountDebitEnries = this.selectedDebitEntries.stream()
                 .map(e -> isUsePaymentAmountWithInterests() ? e.getOpenAmountWithInterests() : e.getOpenAmount())
                 .reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO);
+        BigDecimal paymentAmountInstallments =
+                this.selectedInstallments.stream().map(e -> e.getOpenAmount()).reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO);
+
+        this.paymentAmount = paymentAmountDebitEnries.add(paymentAmountInstallments);
     }
 
     public List<DebitEntry> getOpenDebitEntries() {
         return DebitEntry.find(debtAccount).filter(x -> !x.isAnnulled() && TreasuryConstants.isPositive(x.getOpenAmount()))
                 .sorted(DebitEntry.COMPARE_BY_EXTERNAL_ID).collect(Collectors.<DebitEntry> toList());
+    }
+
+    public List<Installment> getOpenInstallments() {
+        return debtAccount.getActivePaymentPlansSet().stream().flatMap(i -> i.getSortedOpenInstallments().stream())
+                .sorted(Installment.COMPARE_BY_DUEDATE).collect(Collectors.<Installment> toList());
     }
 
     public PaymentCodePool getPaymentCodePool() {

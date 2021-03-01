@@ -9,6 +9,7 @@ import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommun
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
@@ -27,167 +28,167 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class SibsOnlinePaymentsGatewayPaymentCodeGenerator implements IPaymentCodeGenerator {
 
-	private PaymentCodePool paymentCodePool;
+    private PaymentCodePool paymentCodePool;
 
-	public SibsOnlinePaymentsGatewayPaymentCodeGenerator(final PaymentCodePool paymentCodePool) {
-		this.paymentCodePool = paymentCodePool;
-	}
+    public SibsOnlinePaymentsGatewayPaymentCodeGenerator(final PaymentCodePool paymentCodePool) {
+        this.paymentCodePool = paymentCodePool;
+    }
 
-	@Override
-	@Atomic(mode = TxMode.READ)
-	public PaymentReferenceCode createPaymentReferenceCode(final DebtAccount debtAccount,
-			final PaymentReferenceCodeBean bean) {
+    @Override
+    @Atomic(mode = TxMode.READ)
+    public PaymentReferenceCode createPaymentReferenceCode(final DebtAccount debtAccount, final PaymentReferenceCodeBean bean) {
 
-		final BigDecimal paymentAmount = bean.getPaymentAmount();
+        final BigDecimal paymentAmount = bean.getPaymentAmount();
 
-		final PaymentReferenceCode paymentReferenceCode = generateNewCodeFor(debtAccount, paymentAmount,
-				new LocalDate(),
-				new LocalDate().plusMonths(
-						paymentCodePool.getSibsOnlinePaymentsGateway().getNumberOfMonthsToExpirePaymentReferenceCode()),
-				Sets.newHashSet(bean.getSelectedDebitEntries()));
+        final PaymentReferenceCode paymentReferenceCode = generateNewCodeFor(debtAccount, paymentAmount, new LocalDate(),
+                new LocalDate().plusMonths(
+                        paymentCodePool.getSibsOnlinePaymentsGateway().getNumberOfMonthsToExpirePaymentReferenceCode()),
+                Sets.newHashSet(bean.getSelectedDebitEntries()), Sets.newHashSet(bean.getSelectedInstallments()));
 
-		return paymentReferenceCode;
-	}
+        return paymentReferenceCode;
+    }
 
-	private PaymentReferenceCode generateNewCodeFor(final DebtAccount debtAccount, final BigDecimal amount,
-			LocalDate validFrom, LocalDate validTo, Set<DebitEntry> selectedDebitEntries) {
-		if (!Boolean.TRUE.equals(this.paymentCodePool.getActive())) {
-			throw new TreasuryDomainException(
-					"error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.paymentCodePool.not.active");
-		}
+    private PaymentReferenceCode generateNewCodeFor(final DebtAccount debtAccount, final BigDecimal amount, LocalDate validFrom,
+            LocalDate validTo, Set<DebitEntry> selectedDebitEntries, Set<Installment> selectedInstallments) {
+        if (!Boolean.TRUE.equals(this.paymentCodePool.getActive())) {
+            throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.paymentCodePool.not.active");
+        }
 
-		for (DebitEntry debitEntry : selectedDebitEntries) {
-			final long activePaymentCodesOnDebitEntryCount = MultipleEntriesPaymentCode.findNewByDebitEntry(debitEntry)
-					.count() + MultipleEntriesPaymentCode.findUsedByDebitEntry(debitEntry).count();
+        for (DebitEntry debitEntry : selectedDebitEntries) {
+            final long activePaymentCodesOnDebitEntryCount = MultipleEntriesPaymentCode.findNewByDebitEntry(debitEntry).count()
+                    + MultipleEntriesPaymentCode.findUsedByDebitEntry(debitEntry).count();
 
-			if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
-				throw new TreasuryDomainException(
-						"error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
-						debitEntry.getDescription());
-			}
-		}
+            if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
+                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
+                        debitEntry.getDescription());
+            }
+        }
 
-		final SibsOnlinePaymentsGateway sibsGateway = this.paymentCodePool.getSibsOnlinePaymentsGateway();
-		final String merchantTransactionId = sibsGateway.generateNewMerchantTransactionId();
+        for (Installment installment : selectedInstallments) {
+            final long activePaymentCodesOnDebitEntryCount = MultipleEntriesPaymentCode.findNewByInstallment(installment).count()
+                    + MultipleEntriesPaymentCode.findUsedByInstallment(installment).count();
 
-		final SibsOnlinePaymentsGatewayLog log = createLog(sibsGateway, debtAccount);
+            if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
+                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
+                        installment.getDescription().getContent());
+            }
+        }
 
-		try {
+        final SibsOnlinePaymentsGateway sibsGateway = this.paymentCodePool.getSibsOnlinePaymentsGateway();
+        final String merchantTransactionId = sibsGateway.generateNewMerchantTransactionId();
 
-			FenixFramework.atomic(() -> {
-				log.saveMerchantTransactionId(merchantTransactionId);
-				log.logRequestSendDate();
-			});
+        final SibsOnlinePaymentsGatewayLog log = createLog(sibsGateway, debtAccount);
 
-			final MbCheckoutResultBean checkoutResultBean = sibsGateway.generateMBPaymentReference(amount,
-					validFrom.toDateTimeAtStartOfDay(), validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1),
-					merchantTransactionId);
+        try {
 
-			final String sibsReferenceId = checkoutResultBean.getTransactionId();
-			FenixFramework.atomic(() -> {
-				log.logRequestReceiveDateAndData(checkoutResultBean.getTransactionId(),
-						checkoutResultBean.isOperationSuccess(), false,
-						checkoutResultBean.getPaymentGatewayResultCode(),
-						checkoutResultBean.getOperationResultDescription());
-				log.saveRequestAndResponsePayload(checkoutResultBean.getRequestLog(),
-						checkoutResultBean.getResponseLog());
-				log.savePaymentTypeAndBrand(
-						checkoutResultBean.getPaymentType() != null ? checkoutResultBean.getPaymentType().name() : null,
-						checkoutResultBean.getPaymentBrand() != null ? checkoutResultBean.getPaymentBrand().name()
-								: null);
-			});
+            FenixFramework.atomic(() -> {
+                log.saveMerchantTransactionId(merchantTransactionId);
+                log.logRequestSendDate();
+            });
 
-			if (!checkoutResultBean.isOperationSuccess()) {
-				throw new TreasuryDomainException(
-						"error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
-			}
+            final MbCheckoutResultBean checkoutResultBean =
+                    sibsGateway.generateMBPaymentReference(amount, validFrom.toDateTimeAtStartOfDay(),
+                            validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1), merchantTransactionId);
 
-			final String paymentCode = checkoutResultBean.getPaymentReference();
+            final String sibsReferenceId = checkoutResultBean.getTransactionId();
+            FenixFramework.atomic(() -> {
+                log.logRequestReceiveDateAndData(checkoutResultBean.getTransactionId(), checkoutResultBean.isOperationSuccess(),
+                        false, checkoutResultBean.getPaymentGatewayResultCode(),
+                        checkoutResultBean.getOperationResultDescription());
+                log.saveRequestAndResponsePayload(checkoutResultBean.getRequestLog(), checkoutResultBean.getResponseLog());
+                log.savePaymentTypeAndBrand(
+                        checkoutResultBean.getPaymentType() != null ? checkoutResultBean.getPaymentType().name() : null,
+                        checkoutResultBean.getPaymentBrand() != null ? checkoutResultBean.getPaymentBrand().name() : null);
+            });
 
-			if (Strings.isNullOrEmpty(paymentCode)) {
-				throw new TreasuryDomainException(
-						"error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.reference.not.empty");
-			}
+            if (!checkoutResultBean.isOperationSuccess()) {
+                throw new TreasuryDomainException(
+                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
+            }
 
-			if (PaymentReferenceCode.findByReferenceCode(this.paymentCodePool.getEntityReferenceCode(), paymentCode,
-					this.paymentCodePool.getFinantialInstitution()).count() >= 1) {
-				throw new TreasuryDomainException("error.PaymentReferenceCode.referenceCode.duplicated");
-			}
+            final String paymentCode = checkoutResultBean.getPaymentReference();
 
-			if (!StringUtils.isEmpty(merchantTransactionId)) {
-				if (PaymentReferenceCode.findBySibsMerchantTransactionId(merchantTransactionId).count() >= 1) {
-					throw new TreasuryDomainException(
-							"error.PaymentReferenceCode.sibsMerchantTransaction.found.duplicated");
-				}
-			}
+            if (Strings.isNullOrEmpty(paymentCode)) {
+                throw new TreasuryDomainException(
+                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.reference.not.empty");
+            }
 
-			if (!StringUtils.isEmpty(sibsReferenceId)) {
-				if (PaymentReferenceCode.findBySibsReferenceId(sibsReferenceId).count() >= 1) {
-					throw new TreasuryDomainException("error.PaymentReferenceCode.sibsReferenceId.found.duplicated");
-				}
-			}
+            if (PaymentReferenceCode.findByReferenceCode(this.paymentCodePool.getEntityReferenceCode(), paymentCode,
+                    this.paymentCodePool.getFinantialInstitution()).count() >= 1) {
+                throw new TreasuryDomainException("error.PaymentReferenceCode.referenceCode.duplicated");
+            }
 
-			return createPaymentReferenceCodeInstance(amount, validFrom, validTo, log, paymentCode,
-					merchantTransactionId, sibsReferenceId, selectedDebitEntries);
-		} catch (final Exception e) {
-			final boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
+            if (!StringUtils.isEmpty(merchantTransactionId)) {
+                if (PaymentReferenceCode.findBySibsMerchantTransactionId(merchantTransactionId).count() >= 1) {
+                    throw new TreasuryDomainException("error.PaymentReferenceCode.sibsMerchantTransaction.found.duplicated");
+                }
+            }
 
-			saveExceptionLog(log, e, isOnlinePaymentsGatewayException);
+            if (!StringUtils.isEmpty(sibsReferenceId)) {
+                if (PaymentReferenceCode.findBySibsReferenceId(sibsReferenceId).count() >= 1) {
+                    throw new TreasuryDomainException("error.PaymentReferenceCode.sibsReferenceId.found.duplicated");
+                }
+            }
 
-			if (e instanceof TreasuryDomainException) {
-				throw (TreasuryDomainException) e;
-			} else {
-				String message = isOnlinePaymentsGatewayException
-						? "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.gateway.communication"
-						: "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.unknown";
+            return createPaymentReferenceCodeInstance(amount, validFrom, validTo, log, paymentCode, merchantTransactionId,
+                    sibsReferenceId, selectedDebitEntries, selectedInstallments);
+        } catch (final Exception e) {
+            final boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
 
-				throw new TreasuryDomainException(e, message);
-			}
+            saveExceptionLog(log, e, isOnlinePaymentsGatewayException);
 
-		}
-	}
+            if (e instanceof TreasuryDomainException) {
+                throw (TreasuryDomainException) e;
+            } else {
+                String message =
+                        isOnlinePaymentsGatewayException ? "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.gateway.communication" : "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.unknown";
 
-	@Atomic(mode = TxMode.WRITE)
-	private void saveExceptionLog(final SibsOnlinePaymentsGatewayLog log, final Exception e,
-			final boolean isOnlinePaymentsGatewayException) {
-		log.logRequestReceiveDateAndData(null, false, false, null, null);
-		log.markExceptionOccuredAndSaveLog(e);
+                throw new TreasuryDomainException(e, message);
+            }
 
-		if (isOnlinePaymentsGatewayException) {
-			log.saveRequestAndResponsePayload(((OnlinePaymentsGatewayCommunicationException) e).getRequestLog(),
-					((OnlinePaymentsGatewayCommunicationException) e).getResponseLog());
-		}
-	}
+        }
+    }
 
-	@Atomic(mode = TxMode.WRITE)
-	private PaymentReferenceCode createPaymentReferenceCodeInstance(final BigDecimal amount, final LocalDate validFrom,
-			final LocalDate validTo, final SibsOnlinePaymentsGatewayLog log, final String paymentCode,
-			final String sibsMerchantTransactionId, final String sibsReferenceId,
-			final Set<DebitEntry> selectedDebitEntries) throws Exception {
-		log.savePaymentCode(paymentCode);
+    @Atomic(mode = TxMode.WRITE)
+    private void saveExceptionLog(final SibsOnlinePaymentsGatewayLog log, final Exception e,
+            final boolean isOnlinePaymentsGatewayException) {
+        log.logRequestReceiveDateAndData(null, false, false, null, null);
+        log.markExceptionOccuredAndSaveLog(e);
 
-		PaymentReferenceCode paymentReferenceCode = PaymentReferenceCode.createForSibsOnlinePaymentGateway(paymentCode,
-				validFrom, validTo, PaymentReferenceCodeStateType.USED, this.paymentCodePool, amount,
-				sibsMerchantTransactionId, sibsReferenceId);
+        if (isOnlinePaymentsGatewayException) {
+            log.saveRequestAndResponsePayload(((OnlinePaymentsGatewayCommunicationException) e).getRequestLog(),
+                    ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog());
+        }
+    }
 
-		paymentReferenceCode.createPaymentTargetTo(selectedDebitEntries, java.util.Collections.emptySet(), amount);
-		return paymentReferenceCode;
-	}
+    @Atomic(mode = TxMode.WRITE)
+    private PaymentReferenceCode createPaymentReferenceCodeInstance(final BigDecimal amount, final LocalDate validFrom,
+            final LocalDate validTo, final SibsOnlinePaymentsGatewayLog log, final String paymentCode,
+            final String sibsMerchantTransactionId, final String sibsReferenceId, final Set<DebitEntry> selectedDebitEntries,
+            Set<Installment> selectedInstallments) throws Exception {
+        log.savePaymentCode(paymentCode);
 
-	@Atomic(mode = TxMode.WRITE)
-	private SibsOnlinePaymentsGatewayLog createLog(final SibsOnlinePaymentsGateway sibsGateway,
-			final DebtAccount debtAccount) {
-		return SibsOnlinePaymentsGatewayLog.createLogForRequestPaymentCode(sibsGateway, debtAccount);
-	}
+        PaymentReferenceCode paymentReferenceCode = PaymentReferenceCode.createForSibsOnlinePaymentGateway(paymentCode, validFrom,
+                validTo, PaymentReferenceCodeStateType.USED, this.paymentCodePool, amount, sibsMerchantTransactionId,
+                sibsReferenceId);
 
-	@Override
-	public PaymentCodePool getReferenceCodePool() {
-		return this.paymentCodePool;
-	}
+        paymentReferenceCode.createPaymentTargetTo(selectedDebitEntries, selectedInstallments, amount);
+        return paymentReferenceCode;
+    }
 
-	@Override
-	public boolean isSibsMerchantTransactionAndReferenceIdRequired() {
-		return true;
-	}
+    @Atomic(mode = TxMode.WRITE)
+    private SibsOnlinePaymentsGatewayLog createLog(final SibsOnlinePaymentsGateway sibsGateway, final DebtAccount debtAccount) {
+        return SibsOnlinePaymentsGatewayLog.createLogForRequestPaymentCode(sibsGateway, debtAccount);
+    }
+
+    @Override
+    public PaymentCodePool getReferenceCodePool() {
+        return this.paymentCodePool;
+    }
+
+    @Override
+    public boolean isSibsMerchantTransactionAndReferenceIdRequired() {
+        return true;
+    }
 
 }
