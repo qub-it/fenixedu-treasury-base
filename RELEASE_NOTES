@@ -1,3 +1,6 @@
+- New Fixture: Support payment plan installments in MBWay
+- Bug Fix: First create MbwayPaymentRequest and then request sibs transaction id, to avoid orphan sibs requests
+
 6.0.1 (01-03-2021)
 - Bug Fix: Remove method overriding relation in MbwayPaymentRequest
 
