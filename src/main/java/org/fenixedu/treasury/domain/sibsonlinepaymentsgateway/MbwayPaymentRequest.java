@@ -45,14 +45,15 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected MbwayPaymentRequest(final SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway, final DebtAccount debtAccount,
-            final Set<InvoiceEntry> invoiceEntries, final BigDecimal payableAmount, final String phoneNumber,
-            final String sibsMerchantTransactionId, final String sibsReferenceId) {
+    protected MbwayPaymentRequest(SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
+            Set<InvoiceEntry> invoiceEntries, Set<Installment> installments, BigDecimal payableAmount, String phoneNumber,
+            String sibsMerchantTransactionId, String sibsReferenceId) {
         this();
 
         setSibsOnlinePaymentsGateway(sibsOnlinePaymentsGateway);
         setDebtAccount(debtAccount);
         getInvoiceEntriesSet().addAll(invoiceEntries);
+        getInstallmentsSet().addAll(installments);
         setPayableAmount(payableAmount);
         setPhoneNumber(phoneNumber);
         setSibsMerchantTransactionId(sibsMerchantTransactionId);
@@ -152,10 +153,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
 
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet(), Collections.emptySet(), additionalPropertiesMapFunction);
+                    comments, getInvoiceEntriesSet(), getInstallmentsSet(), additionalPropertiesMapFunction);
         } else {
             return internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet(), Collections.emptySet(), additionalPropertiesMapFunction);
+                    comments, getInvoiceEntriesSet(), getInstallmentsSet(), additionalPropertiesMapFunction);
         }
     }
 
@@ -269,9 +270,9 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     /* ************ */
 
     @Atomic(mode = TxMode.READ)
-    public static MbwayPaymentRequest create(final SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway,
-            final DebtAccount debtAccount, final Set<InvoiceEntry> invoiceEntries, final String countryPrefix,
-            final String localPhoneNumber) {
+    public static MbwayPaymentRequest create(SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway,
+            DebtAccount debtAccount, Set<InvoiceEntry> invoiceEntries, Set<Installment> installments, String countryPrefix,
+            String localPhoneNumber) {
 
         if (!SibsOnlinePaymentsGateway.isMbwayServiceActive(debtAccount.getFinantialInstitution())) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.not.active");
@@ -329,7 +330,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
                         "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
             }
 
-            return createMbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, invoiceEntries, phoneNumber, payableAmount,
+            return createMbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, invoiceEntries, installments, phoneNumber, payableAmount,
                     merchantTransactionId, sibsReferenceId);
 
         } catch (Exception e) {
@@ -380,10 +381,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
     }
 
     @Atomic(mode = TxMode.WRITE)
-    private static MbwayPaymentRequest createMbwayPaymentRequest(final SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway,
-            final DebtAccount debtAccount, final Set<InvoiceEntry> invoiceEntries, final String phoneNumber,
-            final BigDecimal payableAmount, final String merchantTransactionId, final String sibsReferenceId) {
-        return new MbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, invoiceEntries, payableAmount, phoneNumber,
+    private static MbwayPaymentRequest createMbwayPaymentRequest(SibsOnlinePaymentsGateway sibsOnlinePaymentsGateway,
+            DebtAccount debtAccount, Set<InvoiceEntry> invoiceEntries, Set<Installment> installments, String phoneNumber,
+            BigDecimal payableAmount, String merchantTransactionId, String sibsReferenceId) {
+        return new MbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, invoiceEntries, installments, payableAmount, phoneNumber,
                 merchantTransactionId, sibsReferenceId);
     }
 

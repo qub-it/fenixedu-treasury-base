@@ -2550,7 +2550,16 @@ class paymentPlan.Installment {
             multiplicity *;
         }
 	}
-	
+    
+	relation MbwayPaymentRequestInstallment {
+        paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+    
+        sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequests {
+            multiplicity *;
+        }
+    }
 	
 class paymentPlan.InstallmentEntry{
 	BigDecimalT amount;
