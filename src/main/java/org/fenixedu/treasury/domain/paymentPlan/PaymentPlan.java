@@ -24,7 +24,7 @@ import org.fenixedu.treasury.domain.paymentPlan.beans.InstallmentBean;
 import org.fenixedu.treasury.domain.paymentPlan.beans.PaymentPlanBean;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
-import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -79,7 +79,7 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public void createPaymentReferenceCode() {
-        PaymentCodePool paymentCodePool = PaymentPlanSettings.getActiveInstance().getPaymentCodePool();
+        DigitalPaymentPlatform paymentCodePool = PaymentPlanSettings.getActiveInstance().getDigitalPaymentPlatform();
 
         if (paymentCodePool == null) {
             throw new IllegalArgumentException(TreasuryConstants.treasuryBundle("error.paymentPlan.paymentCodePool.required"));
@@ -87,7 +87,6 @@ public class PaymentPlan extends PaymentPlan_Base {
 
         for (Installment installment : getInstallmentsSet()) {
             PaymentReferenceCodeBean bean = new PaymentReferenceCodeBean(paymentCodePool, getDebtAccount());
-            bean.setPaymentCodePool(paymentCodePool);
             bean.setUsePaymentAmountWithInterests(false);
             bean.setSelectedInstallments(List.of(installment));
             bean.setSelectedDebitEntries(Collections.emptyList());

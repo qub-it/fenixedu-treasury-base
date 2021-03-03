@@ -29,13 +29,13 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
-public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
+public class MbwayRequest extends MbwayRequest_Base {
 
-    public MbwayPaymentRequest() {
+    public MbwayRequest() {
         super();
     }
 
-    protected MbwayPaymentRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+    protected MbwayRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             BigDecimal payableAmount, String phoneNumber, String sibsGatewayMerchantTransactionId,
             String sibsGatewayTransactionId) {
         this();
@@ -54,7 +54,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
     @Override
     public void checkRules() {
         super.checkRules();
-        
+
         if (StringUtils.isEmpty(getPhoneNumber())) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.phoneNumber.required");
         }
@@ -114,7 +114,8 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
             return FenixFramework.atomic(() -> {
                 final Set<SettlementNote> settlementNotes =
                         processPayment(paidAmount, paymentDate, bean.getTransactionId(), bean.getMerchantTransactionId());
-                PaymentTransaction transaction = PaymentTransaction.create(this, bean.getTransactionId(), paymentDate, paidAmount, settlementNotes);
+                PaymentTransaction transaction =
+                        PaymentTransaction.create(this, bean.getTransactionId(), paymentDate, paidAmount, settlementNotes);
                 return transaction;
             });
         } catch (Exception e) {
@@ -134,7 +135,7 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
     public String fillPaymentEntryMethodId() {
         return null;
     }
-    
+
     @Override
     public PaymentReferenceCodeStateType getCurrentState() {
         return super.getState();
@@ -164,24 +165,22 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
     /* * SERVICES * */
     /* ************ */
 
-    public static Stream<MbwayPaymentRequest> findAll() {
-        return PaymentRequest.findAll().filter(p -> p instanceof MbwayPaymentRequest).map(MbwayPaymentRequest.class::cast);
+    public static Stream<MbwayRequest> findAll() {
+        return PaymentRequest.findAll().filter(p -> p instanceof MbwayRequest).map(MbwayRequest.class::cast);
     }
 
-    public static Stream<MbwayPaymentRequest> findBySibsGatewayMerchantTransactionId(
-            String sibsGatewayMerchantTransactionId) {
+    public static Stream<MbwayRequest> findBySibsGatewayMerchantTransactionId(String sibsGatewayMerchantTransactionId) {
         return PaymentRequest.findBySibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId)
-                .filter(p -> p instanceof MbwayPaymentRequest).map(MbwayPaymentRequest.class::cast);
+                .filter(p -> p instanceof MbwayRequest).map(MbwayRequest.class::cast);
     }
 
-    public static Optional<MbwayPaymentRequest> findUniqueBySibsGatewayMerchantTransactionId(
-            String sibsGatewayMerchantTransactionId) {
+    public static Optional<MbwayRequest> findUniqueBySibsGatewayMerchantTransactionId(String sibsGatewayMerchantTransactionId) {
         return findBySibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId).findAny();
     }
-    
+
     public static Stream<? extends PaymentRequest> findBySibsGatewayTransactionId(String sibsGatewayTransactionId) {
-        return PaymentRequest.findBySibsGatewayTransactionId(sibsGatewayTransactionId)
-                .filter(p -> p instanceof MbwayPaymentRequest).map(MbwayPaymentRequest.class::cast);
+        return PaymentRequest.findBySibsGatewayTransactionId(sibsGatewayTransactionId).filter(p -> p instanceof MbwayRequest)
+                .map(MbwayRequest.class::cast);
     }
 
     public static Optional<? extends PaymentRequest> findUniqueBySibsGatewayTransactionId(String sibsGatewayTransactionId) {
@@ -189,13 +188,13 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
     }
 
     @Atomic(mode = TxMode.READ)
-    public static MbwayPaymentRequest create(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
+    public static MbwayRequest create(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
             Set<DebitEntry> debitEntries, String countryPrefix, String localPhoneNumber) {
 
         if (getReferencedCustomers(debitEntries).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
-        
+
         if (StringUtils.isEmpty(countryPrefix)) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.required");
         }
@@ -242,8 +241,8 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
                         "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
             }
 
-            MbwayPaymentRequest mbwayPaymentRequest = createMbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount,
-                    debitEntries, phoneNumber, payableAmount, merchantTransactionId, checkoutResultBean.getTransactionId());
+            MbwayRequest mbwayPaymentRequest = createMbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries,
+                    phoneNumber, payableAmount, merchantTransactionId, checkoutResultBean.getTransactionId());
 
             FenixFramework.atomic(() -> {
                 log.setPaymentRequest(mbwayPaymentRequest);
@@ -285,10 +284,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
     }
 
     @Atomic(mode = TxMode.WRITE)
-    private static MbwayPaymentRequest createMbwayPaymentRequest(SibsPaymentsGateway sibsOnlinePaymentsGateway,
-            DebtAccount debtAccount, Set<DebitEntry> debitEntries, String phoneNumber, BigDecimal payableAmount,
-            String sibsGatewayMerchantTransactionId, String sibsGatewayTransactionId) {
-        return new MbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries, payableAmount, phoneNumber,
+    private static MbwayRequest createMbwayPaymentRequest(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
+            Set<DebitEntry> debitEntries, String phoneNumber, BigDecimal payableAmount, String sibsGatewayMerchantTransactionId,
+            String sibsGatewayTransactionId) {
+        return new MbwayRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries, payableAmount, phoneNumber,
                 sibsGatewayMerchantTransactionId, sibsGatewayTransactionId);
     }
 

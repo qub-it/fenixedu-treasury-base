@@ -2767,7 +2767,93 @@ class sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog {
 			multiplicity *;
 		}
 	}
+//Deprecated
+class sibsonlinepaymentsgateway.MbwayPaymentRequest {
+	DateTime creationDate;
+	String phoneNumber;
+	String sibsMerchantTransactionId;
+	String sibsReferenceId;
+	PaymentReferenceCodeStateType state;
+	BigDecimalT payableAmount;
+}
+	
+	relation MbwayPaymentRequestDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequests {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayPaymentRequestDebtAccount {
+		debt.DebtAccount playsRole debtAccount {
+			multiplicity 1..1;
+		}
+	
+		sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequests {
+			multiplicity *;
+		}
+	}
 
+    relation MbwayPaymentRequestInvoiceEntry {
+        document.InvoiceEntry playsRole invoiceEntries {
+            multiplicity *;
+        }
+    
+		sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequests {
+			multiplicity *;
+		}
+    }
+    
+    relation MbwayPaymentRequestSibsOnlinePaymentsGateway {
+    	sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway playsRole sibsOnlinePaymentsGateway {
+    		multiplicity 1..1;
+    	}
+    
+		sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequests {
+			multiplicity *;
+		}
+    }
+// Deprecated
+class sibsonlinepaymentsgateway.MbwayTransaction {
+	DateTime creationDate;
+	DateTime paymentDate;
+	String sibsTransactionId;
+	BigDecimalT amount;
+}
+	
+	relation MbwayPaymentTransactionDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		sibsonlinepaymentsgateway.MbwayTransaction playsRole mbwayPaymentTransactions {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayTransactionMbwayPaymentRequest {
+		sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequest {
+			multiplicity 1..1;
+		}
+		
+		sibsonlinepaymentsgateway.MbwayTransaction playsRole mbwayTransactions {
+			multiplicity *;
+		}
+	}
+
+	relation MbwayPaymentTransactionSettlementNote {
+		sibsonlinepaymentsgateway.MbwayTransaction playsRole mbwayPaymentTransaction {
+			multiplicity 0..1;
+		}
+		
+        document.SettlementNote playsRole settlementNotes {
+            multiplicity *;
+        }
+	}
+	
 class sibspaymentsgateway.MbwayPaymentRequest extends payments.PaymentRequest {
 	String phoneNumber;
 	PaymentReferenceCodeStateType state;
@@ -2844,18 +2930,6 @@ class paymentPlan.PaymentPlan{
 			multiplicity 0..1;
 		}
 	}
-	//*********************************************
-	// Interests are in PaymentPlanInstallment relation
-	//*********************************************
-	//relation PaymentPlanInterestDebitEntry{
-	//	paymentPlan.PaymentPlan playsRole interestPaymentPlan {
-	//		multiplicity 0..1;
-	//	}
-	//	
-	//	document.DebitEntry playsRole interest {
-	//		multiplicity 0..1;
-	//	}
-	//}
 	relation PaymentPlanPaymentPlanRevision{
 		paymentPlan.PaymentPlan playsRole paymentPlanOriginal {
 			multiplicity 0..1;
@@ -2882,30 +2956,6 @@ class paymentPlan.Installment {
 			multiplicity *;
 		}
 	}
-	//*********************************************
-	// Verify existance of interestRate in installments
-	//*********************************************
-	//relation InstallmentInterestRate{
-	//	paymentPlan.Installment playsRole installment {
-	//		multiplicity 0..1;
-	//	}
-	//	
-	//	tariff.InterestRate playsRole interestRate {
-	//		multiplicity 0..1;
-	//	}
-	//}
-	//*********************************************
-	// Need branch of Online payments
-	//*********************************************
-	//relation InstallmentPaymentRequest{
-	//	paymentPlan.Installment playsRole installment {
-	//		multiplicity *;
-	//	}
-	//	
-	//	payments.PaymentRequest playsRole paymentRequest {
-	//		multiplicity *;
-	//	}
-	//}
 	
 	relation PaymentPlanInstallment{
 		paymentPlan.PaymentPlan playsRole paymentPlan {
@@ -2916,6 +2966,8 @@ class paymentPlan.Installment {
 			multiplicity *;
 		}
 	}
+	
+	//Deprecated
 	relation MultipleEntriesPaymentCodeInstallment {
         paymentPlan.Installment playsRole installments {
             multiplicity *;
@@ -2926,6 +2978,7 @@ class paymentPlan.Installment {
         }
     }
     
+    //Deprecated
 	relation ForwardPaymentInstallments {
 		forwardpayments.ForwardPayment playsRole forwardPayments {
 			multiplicity *;
@@ -2946,6 +2999,15 @@ class paymentPlan.Installment {
         }
     }
 	
+	relation PaymentRequestInstallments {
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+		
+		paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }	
+	}
 class paymentPlan.InstallmentEntry{
 	BigDecimalT amount;
 }	
@@ -3050,8 +3112,19 @@ class paymentPlan.PaymentPlanSettings{
 		}
 	}
 	
+	//Deprecated
 	relation PaymentCodePoolPaymentPlanSettings {
 		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
+			multiplicity *; 
+		}
+	}
+		
+	relation DigitalPaymentPlatformPaymentPlanSettings {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform { 
 			multiplicity 0..1; 
 		}
 		

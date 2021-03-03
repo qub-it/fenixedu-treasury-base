@@ -28,6 +28,7 @@ import com.google.common.collect.Maps;
 
 import pt.ist.fenixframework.Atomic;
 
+@Deprecated
 public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base implements IPaymentProcessorForInvoiceEntries {
 
     public PaymentCodeTarget() {

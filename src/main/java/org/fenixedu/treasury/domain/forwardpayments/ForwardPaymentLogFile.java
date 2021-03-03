@@ -1,6 +1,5 @@
 package org.fenixedu.treasury.domain.forwardpayments;
 
-
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.io.domain.IGenericFile;
@@ -11,6 +10,7 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements IGenericFile {
 
     public static final String CONTENT_TYPE = "text/plain";
@@ -50,7 +50,7 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
         this.setForwardPaymentLogsForResponse(null);
 
         services.deleteFile(this);
-        
+
         super.deleteDomainObject();
     }
 
@@ -65,7 +65,7 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
         final ForwardPaymentLogFile logFile = new ForwardPaymentLogFile(
                 String.format("requestBody_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), log.getExternalId()), content);
         logFile.setForwardPaymentLogsForRequest(log);
-        
+
         return logFile;
     }
 
@@ -76,7 +76,7 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
 
         return logFile;
     }
-    
+
     public static ForwardPaymentLogFile createForException(final ForwardPaymentLog log, final byte[] content) {
         final ForwardPaymentLogFile logFile = new ForwardPaymentLogFile(
                 String.format("exceptionLog_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), log.getExternalId()), content);

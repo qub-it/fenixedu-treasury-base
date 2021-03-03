@@ -36,6 +36,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPaymentProcessorForInvoiceEntries {
 
     public MbwayPaymentRequest() {
