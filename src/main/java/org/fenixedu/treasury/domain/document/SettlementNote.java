@@ -108,7 +108,7 @@ public class SettlementNote extends SettlementNote_Base {
         return getDocumentNumberSeries().getFinantialDocumentType() == FinantialDocumentType.findForReimbursementNote();
     }
 
-    protected BigDecimal checkDiferenceInAmount() {
+    public BigDecimal checkDiferenceInAmount() {
         BigDecimal result = this.getTotalDebitAmount().subtract(this.getTotalCreditAmount());
 
         if (this.getAdvancedPaymentCreditNote() != null) {
@@ -122,7 +122,7 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         super.checkRules();
 
         if (getPaymentDate().isAfter(getDocumentDate())) {
@@ -764,7 +764,7 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Override
-    protected SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
+    public SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
         final SortedSet<SettlementEntry> result =
                 Sets.newTreeSet(SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
 

@@ -1,3 +1,5 @@
+- Refactor: Set methods of Settlement to public, to be used in importation module
+
 6.1.0 (01-03-2021)
 - New Fixture: Support payment plan installments in MBWay
 - Bug Fix: First create MbwayPaymentRequest and then request sibs transaction id, to avoid orphan sibs requests

@@ -264,7 +264,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         closeDocument(true);
     }
     
-    protected abstract SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
+    public abstract SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
 
     @Atomic
     public void closeDocument(boolean markDocumentToExport) {

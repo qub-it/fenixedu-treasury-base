@@ -189,7 +189,7 @@ public abstract class Invoice extends Invoice_Base {
     }
     
     @Override
-    protected SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
+    public SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
         final SortedSet<InvoiceEntry> result = Sets.newTreeSet(InvoiceEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
         
         result.addAll(getFinantialDocumentEntriesSet().stream().map(InvoiceEntry.class::cast).collect(Collectors.toSet()));
