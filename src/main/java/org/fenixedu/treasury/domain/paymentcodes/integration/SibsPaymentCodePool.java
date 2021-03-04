@@ -14,6 +14,7 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
@@ -56,7 +57,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
         setSourceInstitutionId(sourceInstitutionId);
         setDestinationInstitutionId(destinationInstitutionId);
-        
+
         setNextReferenceCode(minReferenceCode);
 
         if (isUseCheckDigit() && !isGenerateReferenceCodeOnDemand()) {
@@ -147,41 +148,52 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     @Override
-    public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries) {
+    public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
         if (!isActive()) {
             throw new RuntimeException("payment code pool not active");
         }
 
         LocalDate now = new LocalDate();
-        LocalDate validTo = debitEntries.stream().map(d -> d.getDueDate()).max(LocalDate::compareTo).orElse(now);
-        
-        if(validTo.isBefore(now)) {
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+
+        if (validTo.isBefore(now)) {
             validTo = now;
         }
-        
-        BigDecimal payableAmount = debitEntries.stream().map(DebitEntry::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return createPaymentRequest(debtAccount, debitEntries, validTo, payableAmount);
+        BigDecimal payableAmountDebitEntries =
+                debitEntries.stream().map(DebitEntry::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountInstallments =
+                installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
     @Override
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            LocalDate interestsCalculationDate) {
+            Set<Installment> installments, LocalDate interestsCalculationDate) {
         if (!isActive()) {
             throw new RuntimeException("payment code pool not active");
         }
 
         LocalDate now = new LocalDate();
-        LocalDate validTo = debitEntries.stream().map(d -> d.getDueDate()).max(LocalDate::compareTo).orElse(now);
-        
-        if(validTo.isBefore(now)) {
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+        if (validTo.isBefore(now)) {
             validTo = now;
         }
-        
-        BigDecimal payableAmount = debitEntries.stream().map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return createPaymentRequest(debtAccount, debitEntries, validTo, payableAmount);
+        BigDecimal payableAmountDebitEntries = debitEntries.stream()
+                .map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountInstallments =
+                installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
     public Set<SibsReferenceCode> createReferenceCodesInAdvance(int numberOfPaymentsCodesToCreate) {
@@ -226,6 +238,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
                 .filter(x -> !x.getValidTo().isBefore(localDate));
     }
 
+    @Override
     public void delete() {
         super.delete();
 
@@ -237,18 +250,18 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     @Atomic
-    private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, LocalDate validTo,
-            BigDecimal payableAmount) {
+    private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
 
-        checkMaxActiveSibsPaymentRequests(debitEntries);
+        checkMaxActiveSibsPaymentRequests(debitEntries, installments);
 
         SibsReferenceCode code = isUseCheckDigit() ? generateCheckDigitPaymentCode(payableAmount,
                 validTo) : generateSequentialPaymentCode(payableAmount, validTo);
 
-        return SibsPaymentRequest.create(code, debtAccount, debitEntries, payableAmount);
+        return SibsPaymentRequest.create(code, debtAccount, debitEntries, installments, payableAmount);
     }
 
-    private void checkMaxActiveSibsPaymentRequests(Set<DebitEntry> debitEntries) {
+    private void checkMaxActiveSibsPaymentRequests(Set<DebitEntry> debitEntries, Set<Installment> installments) {
         for (DebitEntry debitEntry : debitEntries) {
             long numActiveSibsPaymentRequests =
                     debitEntry.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
@@ -259,6 +272,18 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
             if (numActiveSibsPaymentRequests >= 2) {
                 throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
                         debitEntry.getDescription());
+            }
+        }
+        for (Installment installment : installments) {
+            long numActiveSibsPaymentRequests =
+                    installment.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
+                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
+                                    || r.getState() == PaymentReferenceCodeStateType.USED)
+                            .count();
+
+            if (numActiveSibsPaymentRequests >= 2) {
+                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
+                        installment.getDescription().getContent());
             }
         }
     }
@@ -378,7 +403,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
                 maxReferenceCode, minAmount, maxAmount, validFrom, validTo, useCheckDigit, generateReferenceCodeOnDemand,
                 sourceInstitutionId, destinationInstitutionId);
     }
-    
+
     public static String getPresentationName() {
         return TreasuryConstants.treasuryBundle("label.SibsPaymentCodePool.presentationName");
     }

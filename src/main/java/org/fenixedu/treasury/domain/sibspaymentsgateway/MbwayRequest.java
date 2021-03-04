@@ -16,6 +16,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
@@ -36,11 +37,12 @@ public class MbwayRequest extends MbwayRequest_Base {
     }
 
     protected MbwayRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            BigDecimal payableAmount, String phoneNumber, String sibsGatewayMerchantTransactionId,
+            Set<Installment> installments, BigDecimal payableAmount, String phoneNumber, String sibsGatewayMerchantTransactionId,
             String sibsGatewayTransactionId) {
         this();
 
-        this.init(platform, debtAccount, debitEntries, payableAmount, TreasurySettings.getInstance().getMbWayPaymentMethod());
+        this.init(platform, debtAccount, debitEntries, installments, payableAmount,
+                TreasurySettings.getInstance().getMbWayPaymentMethod());
 
         setPhoneNumber(phoneNumber);
         setSibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId);
@@ -189,9 +191,9 @@ public class MbwayRequest extends MbwayRequest_Base {
 
     @Atomic(mode = TxMode.READ)
     public static MbwayRequest create(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
-            Set<DebitEntry> debitEntries, String countryPrefix, String localPhoneNumber) {
+            Set<DebitEntry> debitEntries, Set<Installment> installments, String countryPrefix, String localPhoneNumber) {
 
-        if (getReferencedCustomers(debitEntries).size() > 1) {
+        if (getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
 
@@ -213,8 +215,11 @@ public class MbwayRequest extends MbwayRequest_Base {
 
         String phoneNumber = String.format("%s#%s", countryPrefix, localPhoneNumber);
 
-        BigDecimal payableAmount =
+        BigDecimal payableAmountDebitEntries =
                 debitEntries.stream().map(e -> e.getOpenAmountWithInterests()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountInstallments =
+                installments.stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
 
         String merchantTransactionId = sibsOnlinePaymentsGateway.generateNewMerchantTransactionId();
 
@@ -242,7 +247,7 @@ public class MbwayRequest extends MbwayRequest_Base {
             }
 
             MbwayRequest mbwayPaymentRequest = createMbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries,
-                    phoneNumber, payableAmount, merchantTransactionId, checkoutResultBean.getTransactionId());
+                    installments, phoneNumber, payableAmount, merchantTransactionId, checkoutResultBean.getTransactionId());
 
             FenixFramework.atomic(() -> {
                 log.setPaymentRequest(mbwayPaymentRequest);
@@ -285,9 +290,9 @@ public class MbwayRequest extends MbwayRequest_Base {
 
     @Atomic(mode = TxMode.WRITE)
     private static MbwayRequest createMbwayPaymentRequest(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
-            Set<DebitEntry> debitEntries, String phoneNumber, BigDecimal payableAmount, String sibsGatewayMerchantTransactionId,
-            String sibsGatewayTransactionId) {
-        return new MbwayRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries, payableAmount, phoneNumber,
+            Set<DebitEntry> debitEntries, Set<Installment> installments, String phoneNumber, BigDecimal payableAmount,
+            String sibsGatewayMerchantTransactionId, String sibsGatewayTransactionId) {
+        return new MbwayRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries, installments, payableAmount, phoneNumber,
                 sibsGatewayMerchantTransactionId, sibsGatewayTransactionId);
     }
 

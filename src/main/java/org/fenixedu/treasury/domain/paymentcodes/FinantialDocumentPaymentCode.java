@@ -30,6 +30,7 @@ import com.google.common.collect.Sets;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_Base {
 
     @Override

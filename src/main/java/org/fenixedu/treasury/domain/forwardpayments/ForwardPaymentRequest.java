@@ -15,13 +15,14 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.exceptions.ForwardPaymentAlreadyPayedException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
-import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -32,28 +33,30 @@ import com.google.common.collect.Maps;
 
 public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
 
-    private static final Comparator<? super ForwardPaymentRequest> ORDER_COMPARATOR = 
-            (o1, o2) -> Long.compare(o1.getOrderNumber(), o2.getOrderNumber()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
+    private static final Comparator<? super ForwardPaymentRequest> ORDER_COMPARATOR = (o1,
+            o2) -> Long.compare(o1.getOrderNumber(), o2.getOrderNumber()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
 
     public ForwardPaymentRequest() {
         super();
     }
 
     protected ForwardPaymentRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            BigDecimal payableAmount) {
+            Set<Installment> installments, BigDecimal payableAmount) {
         this();
-        this.init(platform, debtAccount, debitEntries, payableAmount, TreasurySettings.getInstance().getCreditCardPaymentMethod());
-        
+        this.init(platform, debtAccount, debitEntries, installments, payableAmount,
+                TreasurySettings.getInstance().getCreditCardPaymentMethod());
+
         setState(ForwardPaymentStateType.CREATED);
         setOrderNumber(lastForwardPayment().isPresent() ? lastForwardPayment().get().getOrderNumber() + 1 : 1);
-        
+
         checkRules();
     }
 
+    @Override
     public void checkRules() {
         super.checkRules();
-        
-        if(getOrderNumber() <= 0) {
+
+        if (getOrderNumber() <= 0) {
             throw new TreasuryDomainException("error.ForwardPaymentRequest.orderNumber.invalid");
         }
     }
@@ -65,7 +68,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     public boolean isActive() {
         return getState() != ForwardPaymentStateType.REJECTED;
     }
-    
+
     @Override
     public ForwardPaymentStateType getCurrentState() {
         return getState();
@@ -108,11 +111,16 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return null;
     }
 
+    @Override
+    protected boolean payAllDebitEntriesInterests() {
+        return true;
+    }
+
     public PaymentRequestLog reject(String operationCode, String statusCode, String errorMessage, String requestBody,
             String responseBody) {
         setState(ForwardPaymentStateType.REJECTED);
 
-        PaymentRequestLog log =  getDigitalPaymentPlatform().log(this, statusCode, errorMessage, requestBody, responseBody);
+        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, errorMessage, requestBody, responseBody);
         log.setOperationCode(operationCode);
         log.setOperationSuccess(false);
         log.setTransactionWithPayment(false);
@@ -122,28 +130,30 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return log;
     }
 
-    public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
+    public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
         setState(ForwardPaymentStateType.REQUESTED);
         PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
         log.setOperationCode(operationCode);
 
         checkRules();
-        
+
         return log;
     }
 
-    public PaymentRequestLog advanceToAuthenticatedState(String statusCode, String statusMessage, String requestBody, String responseBody) {
+    public PaymentRequestLog advanceToAuthenticatedState(String statusCode, String statusMessage, String requestBody,
+            String responseBody) {
         setState(ForwardPaymentStateType.AUTHENTICATED);
         PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
         log.setOperationCode("advanceToAuthenticatedState");
-        
+
         checkRules();
-        
+
         return log;
     }
 
-    public PaymentRequestLog advanceToAuthorizedState(String statusCode, String errorMessage, String requestBody, String responseBody) {
+    public PaymentRequestLog advanceToAuthorizedState(String statusCode, String errorMessage, String requestBody,
+            String responseBody) {
         if (!isActive()) {
             throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
         }
@@ -161,12 +171,13 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         log.setOperationCode("advanceToAuthorizedState");
 
         checkRules();
-        
+
         return log;
     }
 
-    public PaymentRequestLog advanceToPaidState(String statusCode, String statusMessage, BigDecimal paidAmount, DateTime transactionDate,
-            String transactionId, String authorizationNumber, String requestBody, String responseBody, String justification) {
+    public PaymentRequestLog advanceToPaidState(String statusCode, String statusMessage, BigDecimal paidAmount,
+            DateTime transactionDate, String transactionId, String authorizationNumber, String requestBody, String responseBody,
+            String justification) {
 
         if (!isActive()) {
             throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
@@ -205,7 +216,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         paymentTransaction.setJustification(justification);
 
         checkRules();
-        
+
         return log;
     }
 
@@ -235,7 +246,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
      * ********
      * SERVICES
      * ********
-     * 
+     *
      */
     // @formatter:on
 
@@ -256,14 +267,16 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     public static ForwardPaymentRequest create(SettlementNoteBean bean,
             Function<ForwardPaymentRequest, String> successUrlFunction,
             Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
-        Set<DebitEntry> debitEntries = bean.getIncludedInvoiceEntryBeans().stream()
-                .map(ISettlementInvoiceEntryBean::getInvoiceEntry)
-                .filter(i -> i != null)
-                .map(DebitEntry.class::cast)
-                .collect(Collectors.toSet());
-        
+        Set<DebitEntry> debitEntries =
+                bean.getIncludedInvoiceEntryBeans().stream().map(ISettlementInvoiceEntryBean::getInvoiceEntry)
+                        .filter(i -> i != null).map(DebitEntry.class::cast).collect(Collectors.toSet());
+
+        Set<Installment> installments =
+                bean.getIncludedInvoiceEntryBeans().stream().filter(i -> i instanceof InstallmentPaymenPlanBean && i.isIncluded())
+                        .map(InstallmentPaymenPlanBean.class::cast).map(ib -> ib.getInstallment()).collect(Collectors.toSet());
+
         ForwardPaymentRequest request = new ForwardPaymentRequest(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
-                debitEntries, bean.getTotalAmountToPay());
+                debitEntries, installments, bean.getTotalAmountToPay());
 
         request.setForwardPaymentSuccessUrl(successUrlFunction.apply(request));
         request.setForwardPaymentInsuccessUrl(insuccessUrlFunction.apply(request));

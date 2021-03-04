@@ -22,11 +22,9 @@ import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.beans.InstallmentBean;
 import org.fenixedu.treasury.domain.paymentPlan.beans.PaymentPlanBean;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.dto.document.managepayments.PaymentReferenceCodeBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -62,8 +60,6 @@ public class PaymentPlan extends PaymentPlan_Base {
         boolean hasEmolument = !TreasuryConstants.isZero(paymentPlanBean.getEmolumentAmount());
         boolean hasInterest = !TreasuryConstants.isZero(paymentPlanBean.getInterestAmount());
         if (hasEmolument || hasInterest) {
-            Optional<DebitNote> debitNote = null;
-
             if (hasEmolument) {
                 createEmolument(paymentPlanBean, debtAccount, endDate, creationDate);
             }
@@ -86,21 +82,18 @@ public class PaymentPlan extends PaymentPlan_Base {
         }
 
         for (Installment installment : getInstallmentsSet()) {
-            PaymentReferenceCodeBean bean = new PaymentReferenceCodeBean(paymentCodePool, getDebtAccount());
-            bean.setUsePaymentAmountWithInterests(false);
-            bean.setSelectedInstallments(List.of(installment));
-            bean.setSelectedDebitEntries(Collections.emptyList());
-            PaymentReferenceCode.createPaymentReferenceCodeForMultipleDebitEntries(getDebtAccount(), bean);
+            paymentCodePool.getSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(), Collections.emptySet(),
+                    Set.of(installment));
         }
     }
 
     private void annulPaymentReferenceCodeFromDebitEntries(List<DebitEntry> list) {
         for (DebitEntry entry : list) {
-            Set<MultipleEntriesPaymentCode> paymentCodesSet = entry.getPaymentCodesSet().stream()
-                    .filter(s -> !s.getPaymentReferenceCode().isProcessed()).collect(Collectors.toSet());
-            for (MultipleEntriesPaymentCode paymentCode : paymentCodesSet) {
-                if (paymentCode.getInvoiceEntriesSet().size() == 1 && paymentCode.getInstallmentsSet().isEmpty()) {
-                    paymentCode.getPaymentReferenceCode().anullPaymentReferenceCode();
+            Set<SibsPaymentRequest> paymentCodesSet =
+                    entry.getSibsPaymentRequests().stream().filter(s -> !s.isInPaidState()).collect(Collectors.toSet());
+            for (SibsPaymentRequest paymentCode : paymentCodesSet) {
+                if (paymentCode.getDebitEntriesSet().size() == 1 && paymentCode.getInstallmentsSet().isEmpty()) {
+                    paymentCode.anull();
                 }
             }
         }
@@ -108,7 +101,6 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     @Atomic
     public static PaymentPlan createPaymentPlan(PaymentPlanBean paymentPlanBean) {
-
         return new PaymentPlan(paymentPlanBean);
     }
 
@@ -208,19 +200,6 @@ public class PaymentPlan extends PaymentPlan_Base {
             BigDecimal rest = BigDecimal.ZERO.add(installmentBean.getInstallmentAmmount());
             while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
                 DebitEntry debitEntry = keys.get(0);
-//                if (debitEntry.getDebitNote() == null) {
-//                    DebitNote debitNote =
-//                            DebitNote
-//                                    .create(paymentPlanBean.getDebtAccount(),
-//                                            DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-//                                                    paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
-//                                            getCreationDate());
-//                    debitEntry.setFinantialDocument(debitNote);
-//                }
-//
-//                if (!debitEntry.getDebitNote().isClosed()) {
-//                    debitEntry.getDebitNote().closeDocument();
-//                }
 
                 BigDecimal debitAmount = mapDebitEntries.get(debitEntry);
                 if (TreasuryConstants.isGreaterThan(debitAmount, rest)) {
@@ -251,7 +230,6 @@ public class PaymentPlan extends PaymentPlan_Base {
         Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime()).orElse(null);
 
         DebitEntry emolument = createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
-//        debitNote.get().closeDocument();
 
         setEmolument(emolument);
     }
@@ -279,8 +257,6 @@ public class PaymentPlan extends PaymentPlan_Base {
 
                 DebitEntry interest =
                         createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
-
-//                debitNote.get().closeDocument();
 
                 debitEntry.addInterestDebitEntries(interest);
                 paymentPlanBean.getDebitEntries().add(interest);

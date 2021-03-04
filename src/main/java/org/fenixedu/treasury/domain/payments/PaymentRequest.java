@@ -1,6 +1,5 @@
 package org.fenixedu.treasury.domain.payments;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
@@ -19,7 +18,6 @@ import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.document.AdvancedPaymentCreditNote;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
@@ -30,6 +28,9 @@ import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
+import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -56,7 +57,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     protected void init(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            BigDecimal payableAmount, PaymentMethod paymentMethod) {
+            Set<Installment> installments, BigDecimal payableAmount, PaymentMethod paymentMethod) {
 
         // Ensure debit entries have payable amount
         for (DebitEntry debitEntry : debitEntries) {
@@ -65,13 +66,19 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             }
         }
 
-        if (getReferencedCustomers(debitEntries).size() > 1) {
+        for (Installment installment : installments) {
+            if (!TreasuryConstants.isPositive(installment.getOpenAmount())) {
+                throw new TreasuryDomainException("error.PaymentRequest.debit.entry.open.amount.must.be.greater.than.zero");
+            }
+        }
+        if (getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
 
         setDigitalPaymentPlatform(platform);
         setDebtAccount(debtAccount);
         getDebitEntriesSet().addAll(debitEntries);
+        getInstallmentsSet().addAll(installments);
         setPayableAmount(payableAmount);
         setPaymentMethod(paymentMethod);
 
@@ -133,11 +140,15 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     public abstract boolean isInAnnuledState();
 
     public Set<Customer> getReferencedCustomers() {
-        return getReferencedCustomers(getDebitEntriesSet());
+        return getReferencedCustomers(getDebitEntriesSet(), getInstallmentsSet());
     }
 
     public Set<Product> getReferencedProducts() {
         return getDebitEntriesSet().stream().map(d -> d.getProduct()).collect(Collectors.toSet());
+    }
+
+    protected boolean payAllDebitEntriesInterests() {
+        return false;
     }
 
     public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(BigDecimal paidAmount,
@@ -146,6 +157,12 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
 
         final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
         sortedDebitEntriesToPay.addAll(getDebitEntriesSet());
+
+        final TreeSet<InstallmentEntry> sortedInstallmentEntryToPay =
+                Sets.newTreeSet(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR);
+
+        sortedInstallmentEntryToPay.addAll(
+                getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).collect(Collectors.toSet()));
 
         //Process the payment of pending invoiceEntries
         //1. Find the InvoiceEntries
@@ -200,12 +217,29 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
 
-                        //check if the amount to pay in the Debit Entry 
+                        //check if the amount to pay in the Debit Entry
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
 
                         if (debitEntry.getOpenAmount().equals(amountToPay)) {
+                            if (payAllDebitEntriesInterests()) {
+                                for (DebitEntry interestDebitEntry : debitEntry.getInterestDebitEntriesSet()) {
+                                    if (interestDebitEntry.isAnnulled()) {
+                                        continue;
+                                    }
+
+                                    if (!interestDebitEntry.isInDebt()) {
+                                        continue;
+                                    }
+
+                                    if (sortedDebitEntriesToPay.contains(interestDebitEntry)) {
+                                        continue;
+                                    }
+
+                                    interestRateEntries.add(interestDebitEntry);
+                                }
+                            }
                             //######################################
                             //2.1 create the "InterestRate entries"
                             //######################################
@@ -218,7 +252,10 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                             }
                         }
 
-                        SettlementEntry.create(entry, settlementNote, amountToPay, entry.getDescription(), paymentDate, true);
+                        SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay,
+                                entry.getDescription(), paymentDate, true);
+
+                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
 
                         //Update the amount to Pay
                         availableAmount = availableAmount.subtract(amountToPay);
@@ -233,7 +270,49 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                     //Ignore since the "open amount" is ZERO
                 }
             }
+            for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
+                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    break;
+                }
 
+                BigDecimal installmentAmountToPay = entry.getOpenAmount();
+                if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
+                    DebitEntry debitEntry = entry.getDebitEntry();
+
+                    if (debitEntry.getFinantialDocument() == null) {
+                        final DocumentNumberSeries documentNumberSeries =
+                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+                                        getDebtAccount().getFinantialInstitution()).get();
+                        final DebitNote debitNote =
+                                DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
+                        debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
+                    }
+
+                    if (debitEntry.getFinantialDocument().isPreparing()) {
+                        debitEntry.getFinantialDocument().closeDocument();
+                    }
+
+                    // check if the amount to pay in the installment entry exceeds the available amount
+                    if (installmentAmountToPay.compareTo(availableAmount) > 0) {
+                        installmentAmountToPay = availableAmount;
+                    }
+                    SettlementEntry settlementEntry = settlementNote.getSettlementEntryByDebitEntry(debitEntry);
+                    if (settlementEntry == null) {
+                        settlementEntry = SettlementEntry.create(debitEntry, settlementNote, installmentAmountToPay,
+                                debitEntry.getDescription(), paymentDate, false);
+                    } else {
+                        settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
+                    }
+                    InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
+                    entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+
+                    // Update the amount to Pay
+                    availableAmount = availableAmount.subtract(installmentAmountToPay);
+
+                } else {
+                    // Ignore since the "open amount" is ZERO
+                }
+            }
             //######################################
             //2.2 if there is pending amount, pay the interest rate
             //######################################
@@ -242,7 +321,13 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                 //Create a DebitNote for the Interests DebitEntries
                 DebitNote interestNote = DebitNote.create(referenceDebtAccount, docNumberSeriesForDebitNotes, paymentDate);
                 for (DebitEntry interestEntry : interestRateEntries) {
-                    interestEntry.setFinantialDocument(interestNote);
+                    if (interestEntry.getFinantialDocument() != null) {
+                        if (interestEntry.getFinantialDocument().isPreparing()) {
+                            interestEntry.getFinantialDocument().closeDocument();
+                        }
+                    } else {
+                        interestEntry.setFinantialDocument(interestNote);
+                    }
                 }
                 interestNote.closeDocument();
 
@@ -255,7 +340,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                         }
 
                         BigDecimal amountToPay = interestEntry.getOpenAmount();
-                        //check if the amount to pay in the Debit Entry 
+                        //check if the amount to pay in the Debit Entry
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
@@ -280,8 +365,9 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                     treasuryBundleI18N("label.SettlementNote.advancedpayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
                     paymentDate.toString(TreasuryConstants.DATE_FORMAT));
 
-            settlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments, originDocumentNumber);
-            
+            settlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments,
+                    originDocumentNumber);
+
             settlementNote.getAdvancedPaymentCreditNote().setDocumentObservations(comments);
         }
 
@@ -356,7 +442,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                             debitEntry.getFinantialDocument().closeDocument();
                         }
 
-                        //check if the amount to pay in the Debit Entry 
+                        //check if the amount to pay in the Debit Entry
                         if (amountToPay.compareTo(availableAmount) > 0) {
                             amountToPay = availableAmount;
                         }
@@ -418,12 +504,13 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                     docNumberSeriesForPayments, new DateTime(), paymentDate, originDocumentNumber, null);
 
             advancedPaymentSettlementNote.setDocumentObservations(comments);
-            
+
             final String advancedPaymentCreditNoteComments = String.format("%s [%s]",
                     treasuryBundleI18N("label.SettlementNote.advancedpayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
                     paymentDate.toString(TreasuryConstants.DATE_FORMAT));
-            
-            advancedPaymentSettlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments, originDocumentNumber);
+
+            advancedPaymentSettlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments,
+                    originDocumentNumber);
             advancedPaymentSettlementNote.getAdvancedPaymentCreditNote().setDocumentObservations(comments);
 
             PaymentEntry.create(getPaymentMethod(), advancedPaymentSettlementNote, availableAmount, fillPaymentEntryMethodId(),
@@ -444,7 +531,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
 
     }
 
-    public static Set<Customer> getReferencedCustomers(Set<DebitEntry> debitEntrySet) {
+    public static Set<Customer> getReferencedCustomers(Set<DebitEntry> debitEntrySet, Set<Installment> installments) {
         final Set<Customer> result = Sets.newHashSet();
 
         for (final InvoiceEntry entry : debitEntrySet) {
@@ -454,6 +541,14 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             }
 
             result.add(entry.getDebtAccount().getCustomer());
+        }
+
+        for (final Installment entry : installments) {
+            result.addAll(entry.getInstallmentEntriesSet().stream().map(e -> e.getDebitEntry())
+                    .map(deb -> (deb.getFinantialDocument() != null && ((Invoice) deb.getFinantialDocument())
+                            .isForPayorDebtAccount()) ? ((Invoice) deb.getFinantialDocument()).getPayorDebtAccount()
+                                    .getCustomer() : deb.getDebtAccount().getCustomer())
+                    .collect(Collectors.toSet()));
         }
 
         return result;
@@ -479,6 +574,13 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         PaymentRequestLog log = getDigitalPaymentPlatform().log(this);
         log.logException(e);
 
+        return log;
+    }
+
+    public PaymentRequestLog logException(Exception e, String statusCode, String statusMessage, String requestBody,
+            String responseBody) {
+        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
+        log.logException(e);
         return log;
     }
 

@@ -33,6 +33,7 @@ import com.google.common.collect.Sets;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base {
 
     public static final int MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY = 2;
