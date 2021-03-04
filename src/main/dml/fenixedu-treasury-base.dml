@@ -214,6 +214,7 @@ class document.TreasuryDocumentTemplateFile /* implements IGenericFile */ {
 }
 	
 	relation TreasuryDocumentTemplateFileDomainRoot {
+	    
 	    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
 	        multiplicity 1..1;
 	    }
@@ -221,9 +222,11 @@ class document.TreasuryDocumentTemplateFile /* implements IGenericFile */ {
 	    document.TreasuryDocumentTemplateFile playsRole treasuryDocumentTemplateFiles {
 	        multiplicity *;
 	    }
+	    
 	}
 	
 	relation TreasuryDocumentTemplateFileDocumentTemplate {
+	    
 	    document.TreasuryDocumentTemplate playsRole treasuryDocumentTemplate {
 	        multiplicity 1..1;
 	    }

@@ -78,6 +78,7 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
@@ -533,11 +534,11 @@ public class DebitEntry extends DebitEntry_Base {
 
         SettlementEntry.create(creditEntry, settlementNote, creditEntry.getOpenAmount(),
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
-        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(), reasonDescription + ": " + getDescription(),
-                now, false);
-        
+        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(),
+                reasonDescription + ": " + getDescription(), now, false);
+
         InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
-        
+
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                 && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.exportedInLegacyERP.not.same");
@@ -921,10 +922,10 @@ public class DebitEntry extends DebitEntry_Base {
     public Set<SibsPaymentRequest> getSibsPaymentRequests() {
         return getSibsPaymentRequestsSet();
     }
-    
+
     public Set<SibsPaymentRequest> getSibsPaymentRequestsSet() {
-        return getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                .map(SibsPaymentRequest.class::cast).collect(Collectors.toSet());
+        return getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest).map(SibsPaymentRequest.class::cast)
+                .collect(Collectors.toSet());
     }
 
     @Atomic
@@ -1035,6 +1036,7 @@ public class DebitEntry extends DebitEntry_Base {
 
     /**
      * Return all installments of open payment plans
+     *
      * @return
      */
     // TODO Rename method imply the returning value installments entries that are not paid, of open payment plan
@@ -1042,4 +1044,26 @@ public class DebitEntry extends DebitEntry_Base {
         return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().getState().isOpen())
                 .sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR).collect(Collectors.toList());
     }
+
+    @Deprecated
+    @Override
+    public void addForwardPayments(ForwardPayment forwardPayments) {
+        // TODO Auto-generated method stub
+        super.addForwardPayments(forwardPayments);
+    }
+
+    @Deprecated
+    @Override
+    public void removeForwardPayments(ForwardPayment forwardPayments) {
+        // TODO Auto-generated method stub
+        super.removeForwardPayments(forwardPayments);
+    }
+
+    @Deprecated
+    @Override
+    public Set<ForwardPayment> getForwardPaymentsSet() {
+        // TODO Auto-generated method stub
+        return super.getForwardPaymentsSet();
+    }
+
 }
