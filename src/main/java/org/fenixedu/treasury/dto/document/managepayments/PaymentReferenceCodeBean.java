@@ -34,12 +34,14 @@ import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.dto.ITreasuryBean;
 import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.LocalDate;
 
 public class PaymentReferenceCodeBean implements ITreasuryBean {
 
@@ -76,8 +78,8 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     }
 
     public PaymentReferenceCodeBean(final DigitalPaymentPlatform digitalPaymentPlatform, final DebtAccount debtAccount) {
-	this();        
-	this.paymentCodePool = digitalPaymentPlatform;
+        this();
+        this.paymentCodePool = digitalPaymentPlatform;
         this.debtAccount = debtAccount;
 
         this.paymentCodePoolDataSource =

@@ -2857,41 +2857,10 @@ class sibsonlinepaymentsgateway.MbwayTransaction {
         }
 	}
 	
-class sibspaymentsgateway.MbwayPaymentRequest extends payments.PaymentRequest {
+class sibspaymentsgateway.MbwayRequest extends payments.PaymentRequest {
 	String phoneNumber;
 	PaymentReferenceCodeStateType state;
 }
-	
-	relation MbwayPaymentTransactionDomainRoot {
-		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-			multiplicity 1..1;
-		}
-	
-		sibsonlinepaymentsgateway.MbwayTransaction playsRole mbwayPaymentTransactions {
-			multiplicity *;
-		}
-	}
-	
-	relation MbwayTransactionMbwayPaymentRequest {
-		sibsonlinepaymentsgateway.MbwayPaymentRequest playsRole mbwayPaymentRequest {
-			multiplicity 1..1;
-		}
-		
-		sibsonlinepaymentsgateway.MbwayTransaction playsRole mbwayTransactions {
-			multiplicity *;
-		}
-	}
-
-	relation MbwayPaymentTransactionSettlementNote {
-		sibsonlinepaymentsgateway.MbwayTransaction playsRole mbwayPaymentTransaction {
-			multiplicity 0..1;
-		}
-		
-        document.SettlementNote playsRole settlementNotes {
-            multiplicity *;
-        }
-	}
-	
 	
 //*********************************************
 //PaymentPlan
