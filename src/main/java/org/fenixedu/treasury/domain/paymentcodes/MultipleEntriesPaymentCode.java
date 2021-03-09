@@ -132,11 +132,11 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
 
     @Override
     public String getDescription() {
-        //TODO Remove UI form domain method
         final StringBuilder builder = new StringBuilder();
         for (FinantialDocumentEntry entry : getOrderedInvoiceEntries()) {
             builder.append(entry.getDescription()).append("\n");
         }
+        
         for (Installment entry : getInstallmentsSet().stream().sorted(Installment.COMPARE_BY_DUEDATE)
                 .collect(Collectors.toList())) {
             builder.append(entry.getDescription().getContent()).append(":\n");
@@ -144,7 +144,8 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
                 builder.append("-" + installmentEntry.getDebitEntry().getDescription()).append("\n");
             }
         }
-        return builder.toString();
+        
+        return builder.toString().trim();
     }
 
     @Override
