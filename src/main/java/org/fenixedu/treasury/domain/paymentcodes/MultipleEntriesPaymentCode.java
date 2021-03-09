@@ -135,13 +135,13 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
         //TODO Remove UI form domain method
         final StringBuilder builder = new StringBuilder();
         for (FinantialDocumentEntry entry : getOrderedInvoiceEntries()) {
-            builder.append(entry.getDescription()).append(" <br>");
+            builder.append(entry.getDescription()).append("\n");
         }
         for (Installment entry : getInstallmentsSet().stream().sorted(Installment.COMPARE_BY_DUEDATE)
                 .collect(Collectors.toList())) {
-            builder.append(entry.getDescription().getContent()).append(": <br>");
+            builder.append(entry.getDescription().getContent()).append(":\n");
             for (InstallmentEntry installmentEntry : entry.getInstallmentEntriesSet()) {
-                builder.append("-" + installmentEntry.getDebitEntry().getDescription()).append(" <br>");
+                builder.append("-" + installmentEntry.getDebitEntry().getDescription()).append("\n");
             }
         }
         return builder.toString();

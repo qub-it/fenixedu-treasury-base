@@ -141,6 +141,7 @@ public class SIBSImportationLineDTO {
             }
         }
 
+        // TODO: Iterate over debit entries and separate them by \n
         sb.append(getPaymentCode().getTargetPayment().getDescription());
         return sb.toString();
     }

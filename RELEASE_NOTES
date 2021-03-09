@@ -1,3 +1,5 @@
+- Bug Fix: Fix description of MultipleEntriesPaymentCode
+
 6.1.1 (07-03-2021)
 - Refactor: Set methods of Settlement to public, to be used in importation module
 
