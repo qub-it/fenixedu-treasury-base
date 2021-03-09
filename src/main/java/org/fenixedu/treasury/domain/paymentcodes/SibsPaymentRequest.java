@@ -3,6 +3,7 @@ package org.fenixedu.treasury.domain.paymentcodes;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -117,7 +118,11 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     }
 
     public String getDescription() {
-        return String.join("\n", getOrderedDebitEntries().stream().map(DebitEntry::getDescription).collect(Collectors.toList()));
+        List<String> descriptions =
+                getOrderedDebitEntries().stream().map(DebitEntry::getDescription).collect(Collectors.toList());
+        descriptions
+                .addAll(getOrderedInstallments().stream().map(i -> i.getDescription().getContent()).collect(Collectors.toList()));
+        return String.join("\n", descriptions);
     }
 
     public String getFormattedCode() {
@@ -139,7 +144,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     public PaymentTransaction processPayment(BigDecimal paidAmount, DateTime paymentDate, String sibsTransactionId,
             String sibsImportationFilename, String sibsMerchantTransactionId, DateTime whenProcessedBySibs,
             SibsReportFile sibsReportFile, boolean checkSibsTransactionIdDuplication) {
-        String entityReferenceCode = getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
 
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, getReferenceCode(), paymentDate)) {
             return null;
@@ -216,7 +221,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
                     "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.payment.date");
         }
 
-        String entityReferenceCode = getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, getReferenceCode(), paymentDate)) {
             FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
             return null;
@@ -239,7 +244,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     }
 
     private Map<String, String> fillPaymentEntryPropertiesMap(final String sibsTransactionId) {
-        String entityReferenceCode = this.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = this.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
         final Map<String, String> paymentEntryPropertiesMap = new HashMap<>();
 
         paymentEntryPropertiesMap.put("ReferenceCode", getReferenceCode());
@@ -267,7 +272,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     public static Stream<SibsPaymentRequest> find(String entityReferenceCode, String referenceCode) {
         return findAll()
                 .filter(p -> entityReferenceCode
-                        .equals(p.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode()))
+                        .equals(p.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode()))
                 .filter(p -> referenceCode.equals(p.getReferenceCode()));
     }
 

@@ -30,7 +30,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         this();
 
         String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
 
         String referenceCode = sibsPaymentRequest.getReferenceCode();
         String transactionId =
@@ -51,7 +51,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         this();
 
         String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
 
         String transactionId =
                 String.format("%s-%s-%s", entityReferenceCode, referenceCode, getPaymentDate().toString(DATE_TIME_FORMAT));
@@ -119,7 +119,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
             DateTime paymentDate, BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, 
             Set<SettlementNote> settlementNotes) {
         String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
         String referenceCode = sibsPaymentRequest.getReferenceCode();
         
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, referenceCode, paymentDate)) {
@@ -134,7 +134,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     public static SibsPaymentCodeTransaction create(SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
             BigDecimal paidAmount, String referenceCode, String sibsTransactionId, Set<SettlementNote> settlementNotes) {
         String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode();
+                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
 
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, referenceCode, paymentDate)) {
             throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.transaction.duplicate", entityReferenceCode,

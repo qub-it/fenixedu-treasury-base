@@ -132,7 +132,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         final ForwardPaymentStateType previousState = forwardPayment.getCurrentState();
 
         final ForwardPaymentStatusBean paymentStatusBean =
-                forwardPayment.getDigitalPaymentPlatform().getForwardPaymentPlatformService().paymentStatus(forwardPayment);
+                forwardPayment.getDigitalPaymentPlatform().castToForwardPaymentPlatformService().paymentStatus(forwardPayment);
 
         if (!forwardPayment.getState().isInStateToPostProcessPayment()) {
             throw new TreasuryDomainException("error.ManageForwardPayments.forwardPayment.not.created.nor.requested",

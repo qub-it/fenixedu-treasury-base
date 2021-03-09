@@ -82,7 +82,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         }
 
         for (Installment installment : getInstallmentsSet()) {
-            paymentCodePool.getSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(), Collections.emptySet(),
+            paymentCodePool.castToSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(), Collections.emptySet(),
                     Set.of(installment));
         }
     }

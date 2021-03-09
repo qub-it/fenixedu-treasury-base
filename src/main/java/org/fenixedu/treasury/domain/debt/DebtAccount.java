@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.debt;
 
-
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
@@ -70,8 +69,6 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
-import org.fenixedu.treasury.domain.paymentcodes.FinantialDocumentPaymentCode;
-import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
@@ -146,10 +143,18 @@ public class DebtAccount extends DebtAccount_Base {
 
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
         return getPendingInvoiceEntriesSet().stream().filter(e -> e.isDebitNoteEntry()).map(DebitEntry.class::cast)
-            .flatMap(d -> d.getPaymentRequestsSet().stream()).filter(p -> p instanceof SibsPaymentRequest)
-            .map(SibsPaymentRequest.class::cast)
-            .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED || p.getState() == PaymentReferenceCodeStateType.USED)
-            .collect(Collectors.toSet());
+                .flatMap(d -> d.getPaymentRequestsSet().stream()).filter(p -> p instanceof SibsPaymentRequest)
+                .map(SibsPaymentRequest.class::cast).filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
+                        || p.getState() == PaymentReferenceCodeStateType.USED)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingInstallments() {
+        return getActivePaymentPlansSet().stream().flatMap(p -> p.getSortedOpenInstallments().stream())
+                .flatMap(d -> d.getPaymentRequestsSet().stream()).filter(p -> p instanceof SibsPaymentRequest)
+                .map(SibsPaymentRequest.class::cast).filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
+                        || p.getState() == PaymentReferenceCodeStateType.USED)
+                .collect(Collectors.toSet());
     }
 
     public boolean isClosed() {
@@ -252,8 +257,8 @@ public class DebtAccount extends DebtAccount_Base {
 
     public boolean isDeletable() {
         return this.getFinantialDocumentsSet().isEmpty() && getInvoiceEntrySet().isEmpty() && getInvoiceSet().isEmpty()
-                && getPayorDebitEntriesSet().isEmpty() && getForwardPaymentsSet().isEmpty()
-                && getPaymentRequestsSet().isEmpty() && getTreasuryEventsSet().isEmpty();
+                && getPayorDebitEntriesSet().isEmpty() && getForwardPaymentsSet().isEmpty() && getPaymentRequestsSet().isEmpty()
+                && getTreasuryEventsSet().isEmpty();
     }
 
     @Atomic

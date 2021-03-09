@@ -123,8 +123,11 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     public LocalDate getDueDate() {
-        return getDebitEntriesSet().stream().filter(d -> !d.isAnnulled()).map(InvoiceEntry::getDueDate).sorted().findFirst()
-                .orElse(null);
+        Set<LocalDate> map = getDebitEntriesSet().stream().filter(d -> !d.isAnnulled()).map(InvoiceEntry::getDueDate)
+                .collect(Collectors.toSet());
+        map.addAll(getInstallmentsSet().stream().filter(i -> i.getPaymentPlan().getState().isOpen()).map(Installment::getDueDate)
+                .collect(Collectors.toSet()));
+        return map.stream().sorted().findFirst().orElse(null);
     }
 
     public abstract String fillPaymentEntryMethodId();
@@ -557,6 +560,13 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     public Set<DebitEntry> getOrderedDebitEntries() {
         final TreeSet<DebitEntry> result = new TreeSet<DebitEntry>(DebitEntry.COMPARE_BY_EXTERNAL_ID);
         getDebitEntriesSet().stream().collect(Collectors.toCollection(() -> result));
+
+        return result;
+    }
+
+    public Set<Installment> getOrderedInstallments() {
+        final TreeSet<Installment> result = new TreeSet<Installment>(Installment.COMPARE_BY_DUEDATE);
+        getInstallmentsSet().stream().collect(Collectors.toCollection(() -> result));
 
         return result;
     }

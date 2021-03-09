@@ -78,11 +78,11 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         return isActive() && optional.isPresent() && optional.get().isActive();
     }
 
-    public ISibsPaymentCodePoolService getSibsPaymentCodePoolService() {
+    public ISibsPaymentCodePoolService castToSibsPaymentCodePoolService() {
         return (ISibsPaymentCodePoolService) this;
     }
 
-    public IForwardPaymentPlatformService getForwardPaymentPlatformService() {
+    public IForwardPaymentPlatformService castToForwardPaymentPlatformService() {
         return (IForwardPaymentPlatformService) this;
     }
 

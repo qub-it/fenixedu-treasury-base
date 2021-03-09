@@ -146,7 +146,7 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
 
     public static Stream<SibsReferenceCode> findByReferenceCode(String entityReferenceCode, String referenceCode) {
         return findAll()
-                .filter(p -> entityReferenceCode.equals(p.getDigitalPaymentPlatform().getSibsPaymentCodePoolService().getEntityReferenceCode()))
+                .filter(p -> entityReferenceCode.equals(p.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode()))
                 .filter(p -> referenceCode.equals(p.getReferenceCode()));
     }
 
