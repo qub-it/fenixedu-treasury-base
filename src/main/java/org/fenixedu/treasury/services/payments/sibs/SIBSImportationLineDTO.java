@@ -77,20 +77,7 @@ public class SIBSImportationLineDTO {
             return null;
         }
 
-        StringBuilder sb = new StringBuilder();
-        if (getPaymentCode().getTargetPayment().getSettlementNotesSet() != null) {
-            final Set<SettlementNote> noteSet = getPaymentCode().getTargetPayment().getSettlementNotesSet().stream()
-                    .filter(x -> x.getDocumentDate().equals(this.getTransactionWhenRegistered())).collect(Collectors.toSet());
-            if (!noteSet.isEmpty()) {
-                sb.append("Nota de Pagamento: "
-                        + String.join(", ", noteSet.stream().map(s -> s.getUiDocumentNumber()).collect(Collectors.toSet()))
-                        + "\n");
-            }
-        }
-
-        // TODO: Iterate over debit entries and separate them by \n
-        sb.append(getPaymentCode().getTargetPayment().getDescription());
-        return sb.toString();
+        return this.paymentCode.getSibsPaymentRequest().getDescription();
     }
 
     public SIBSImportationFileDTO getSibsImportationFileDTO() {
