@@ -1,3 +1,5 @@
+- Bug Fix: Before create payment reference code and payment target, ensure any debit entry or installment does not have more than two ative references
+
 6.1.2 (10-03-2021)
 - Bug Fix: Fix description of MultipleEntriesPaymentCode
 

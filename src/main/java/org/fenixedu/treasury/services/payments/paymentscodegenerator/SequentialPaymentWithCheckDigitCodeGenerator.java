@@ -31,7 +31,10 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
+import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
@@ -111,6 +114,27 @@ public class SequentialPaymentWithCheckDigitCodeGenerator implements IPaymentCod
 	@Atomic
 	public PaymentReferenceCode createPaymentReferenceCode(final DebtAccount debtAccount,
 			final PaymentReferenceCodeBean bean) {
+	    
+        for (DebitEntry debitEntry : bean.getSelectedDebitEntries()) {
+            final long activePaymentCodesOnDebitEntryCount = MultipleEntriesPaymentCode.findNewByDebitEntry(debitEntry).count()
+                    + MultipleEntriesPaymentCode.findUsedByDebitEntry(debitEntry).count();
+
+            if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
+                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
+                        debitEntry.getDescription());
+            }
+        }
+
+        for (Installment installment : bean.getSelectedInstallments()) {
+            final long activePaymentCodesOnDebitEntryCount = MultipleEntriesPaymentCode.findNewByInstallment(installment).count()
+                    + MultipleEntriesPaymentCode.findUsedByInstallment(installment).count();
+
+            if (activePaymentCodesOnDebitEntryCount >= MultipleEntriesPaymentCode.MAX_PAYMENT_CODES_FOR_DEBIT_ENTRY) {
+                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
+                        installment.getDescription().getContent());
+            }
+        }
+	    
 		final PaymentReferenceCode paymentReferenceCode = generateNewCodeFor(bean.getPaymentAmount(),
 				bean.getBeginDate(), bean.getEndDate(), bean.getPaymentCodePool().getIsFixedAmount());
 

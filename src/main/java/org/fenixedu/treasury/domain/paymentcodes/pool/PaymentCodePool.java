@@ -412,4 +412,8 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         return !this.getUseCheckDigit();
     }
 
+    public static boolean isReferenceCodesActiveForStudentPortal(FinantialInstitution finantialInstitution) {
+        return PaymentCodePool.findByActive(true, finantialInstitution).findFirst().isPresent() && 
+                "502488603".equals(finantialInstitution.getCode());
+    }
 }
