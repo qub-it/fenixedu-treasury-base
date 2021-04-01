@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements IGenericFile {
 
     public static final String CONTENT_TYPE = "text/plain";

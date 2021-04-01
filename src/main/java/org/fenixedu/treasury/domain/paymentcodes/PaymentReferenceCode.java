@@ -59,6 +59,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated()
 public class PaymentReferenceCode extends PaymentReferenceCode_Base {
     private static final int LENGTH_REFERENCE_CODE = 9;
     private static final BigDecimal SIBS_IGNORE_MAX_AMOUNT = BigDecimal.ZERO;

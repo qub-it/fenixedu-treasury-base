@@ -78,10 +78,12 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -857,6 +859,18 @@ public class DebitEntry extends DebitEntry_Base {
             return getOpenAmount().add(getPendingInterestAmount());
         }
     }
+    
+    public BigDecimal getOpenAmountWithInterestsAtDate(LocalDate date) {
+        if (isAnnulled()) {
+            return BigDecimal.ZERO;
+        }
+
+        if (TreasuryConstants.isEqual(getOpenAmount(), BigDecimal.ZERO)) {
+            return getOpenAmount();
+        } else {
+            return getOpenAmount().add(getPendingInterestAmount(date));
+        }
+    }
 
     @Atomic
     public void clearInterestRate() {
@@ -903,6 +917,15 @@ public class DebitEntry extends DebitEntry_Base {
 
     public DebitNote getDebitNote() {
         return (DebitNote) getFinantialDocument();
+    }
+
+    public Set<SibsPaymentRequest> getSibsPaymentRequests() {
+        return getSibsPaymentRequestsSet();
+    }
+
+    public Set<SibsPaymentRequest> getSibsPaymentRequestsSet() {
+        return getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest).map(SibsPaymentRequest.class::cast)
+                .collect(Collectors.toSet());
     }
 
     @Atomic
@@ -1013,6 +1036,7 @@ public class DebitEntry extends DebitEntry_Base {
 
     /**
      * Return all installments of open payment plans
+     *
      * @return
      */
     // TODO Rename method imply the returning value installments entries that are not paid, of open payment plan
@@ -1020,4 +1044,23 @@ public class DebitEntry extends DebitEntry_Base {
         return getInstallmentEntrySet().stream().filter(i -> i.getInstallment().getPaymentPlan().getState().isOpen())
                 .sorted(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR).collect(Collectors.toList());
     }
+
+    @Deprecated
+    @Override
+    public void addForwardPayments(ForwardPayment forwardPayments) {
+        super.addForwardPayments(forwardPayments);
+    }
+
+    @Deprecated
+    @Override
+    public void removeForwardPayments(ForwardPayment forwardPayments) {
+        super.removeForwardPayments(forwardPayments);
+    }
+
+    @Deprecated
+    @Override
+    public Set<ForwardPayment> getForwardPaymentsSet() {
+        return super.getForwardPaymentsSet();
+    }
+
 }

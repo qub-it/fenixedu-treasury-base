@@ -55,13 +55,6 @@ public class SibsSpreadsheetRowReportBean implements SpreadsheetRow {
             row.createCell(i++).setCellValue(line.getPersonName());
             row.createCell(i++).setCellValue(line.getDescription());
             
-            /* TODO: Appears to be empty. Check if it is needed
-            for (int j = 0; j < line.getNumberOfTransactions(); j++) {
-                row.createCell(i++).setCellValue(line.getTransactionDescription(j));
-                row.createCell(i++).setCellValue(line.getTransactionAmount(j).toPlainString());
-            }
-            */
-
             return;
         } catch (final Exception e) {
             e.printStackTrace();

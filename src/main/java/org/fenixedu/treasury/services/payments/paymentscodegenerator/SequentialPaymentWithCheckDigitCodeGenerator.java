@@ -45,6 +45,7 @@ import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
+@Deprecated
 public class SequentialPaymentWithCheckDigitCodeGenerator implements IPaymentCodeGenerator {
 
 	private final PaymentCodePool referenceCodePool;

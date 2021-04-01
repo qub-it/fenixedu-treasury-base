@@ -14,6 +14,7 @@ import org.joda.time.DateTime;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class SibsTransactionDetail extends SibsTransactionDetail_Base {
 
     protected SibsTransactionDetail() {

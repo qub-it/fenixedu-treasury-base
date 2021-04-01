@@ -109,7 +109,6 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     @Atomic
     public static PaymentPlan createPaymentPlan(PaymentPlanBean paymentPlanBean) {
-
         return new PaymentPlan(paymentPlanBean);
     }
 
@@ -209,19 +208,6 @@ public class PaymentPlan extends PaymentPlan_Base {
             BigDecimal rest = BigDecimal.ZERO.add(installmentBean.getInstallmentAmmount());
             while (TreasuryConstants.isGreaterThan(rest, BigDecimal.ZERO)) {
                 DebitEntry debitEntry = keys.get(0);
-//                if (debitEntry.getDebitNote() == null) {
-//                    DebitNote debitNote =
-//                            DebitNote
-//                                    .create(paymentPlanBean.getDebtAccount(),
-//                                            DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-//                                                    paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
-//                                            getCreationDate());
-//                    debitEntry.setFinantialDocument(debitNote);
-//                }
-//
-//                if (!debitEntry.getDebitNote().isClosed()) {
-//                    debitEntry.getDebitNote().closeDocument();
-//                }
 
                 BigDecimal debitAmount = mapDebitEntries.get(debitEntry);
                 if (TreasuryConstants.isGreaterThan(debitAmount, rest)) {
@@ -252,7 +238,6 @@ public class PaymentPlan extends PaymentPlan_Base {
         Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime()).orElse(null);
 
         DebitEntry emolument = createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
-//        debitNote.get().closeDocument();
 
         setEmolument(emolument);
     }
@@ -280,8 +265,6 @@ public class PaymentPlan extends PaymentPlan_Base {
 
                 DebitEntry interest =
                         createDebitEntry(debtAccount, debitNote, description, amount, creationDate, endDate, product, vat);
-
-//                debitNote.get().closeDocument();
 
                 debitEntry.addInterestDebitEntries(interest);
                 paymentPlanBean.getDebitEntries().add(interest);

@@ -529,13 +529,271 @@ class tariff.GlobalInterestRate {
     boolean applyPaymentMonth;
     boolean applyInFirstWorkday;
 }
+
+/* -------------------------
+ * Digital Payment Platforms
+ * -------------------------
+ */
+
+class payments.integration.DigitalPaymentPlatform {
+	String name;
+	boolean active;
+	String migrationCode;
+}
+
+	relation DigitalPaymentPlatformDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatforms {
+			multiplicity *;
+		}
+	}
+	
+	relation DigitalPaymentPlatformFinantialInstitution {
+		FinantialInstitution playsRole finantialInstitution {
+			multiplicity 1..1;
+		}
+	
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatforms {
+			multiplicity *;
+		}
+	}
+
+class payments.integration.DigitalPaymentPlatformPaymentMode {
+	boolean active;
+	String logosSmallImageFileId;
+	String logosBigImageFileId;
+}
+
+	relation DigitalPaymentPlatformPaymentModeDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.integration.DigitalPaymentPlatformPaymentMode playsRole digitalPaymentPlatformPaymentModes {
+			multiplicity *;
+		}
+	}
+	
+	relation DigitalPaymentPlatformPaymentModes {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform {
+			multiplicity 1..1;
+		}		
+
+		payments.integration.DigitalPaymentPlatformPaymentMode playsRole digitalPaymentPlatformPaymentModes {
+			multiplicity *;
+		}
+	}
+	
+	relation DigitalPaymentPlatformPaymentModePaymentMethod {
+		PaymentMethod playsRole paymentMethod {
+			multiplicity 1..1;
+		}
+
+		payments.integration.DigitalPaymentPlatformPaymentMode playsRole digitalPaymentPlatformPaymentModes {
+			multiplicity *;
+		}
+	}
+
+class payments.PaymentRequest {
+	DateTime requestDate;
+	String responsibleUsername;	
+	BigDecimalT payableAmount;
+	String transactionId;
+	String merchantTransactionId;
+	String migrationCode;
+}
+
+	relation PaymentRequestDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+	}
+
+	relation DigitalPaymentPlatformPaymentRequest {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform {
+			multiplicity 1..1;
+		}		
+	
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentRequestPaymentMethod {
+		PaymentMethod playsRole paymentMethod {
+			multiplicity 1..1;
+		}
+
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentRequestDebtAccount {
+		debt.DebtAccount playsRole debtAccount {
+			multiplicity 1..1;
+		}
+				
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentRequestDebitEntries {
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+		
+		document.DebitEntry playsRole debitEntries {
+			multiplicity *;
+		}		
+	}
+	
+class payments.PaymentTransaction {
+	DateTime creationDate;
+	String responsibleUsername;
+	String transactionId;
+	DateTime paymentDate;
+	BigDecimalT paidAmount;
+	String justification;
+	String migrationCode;
+}
+
+	relation PaymentTransactionDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.PaymentTransaction playsRole paymentTransactions {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentRequestPaymentTransaction {
+		payments.PaymentRequest playsRole paymentRequest {
+			multiplicity 1..1;
+		}
+		
+		payments.PaymentTransaction playsRole paymentTransactions {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentTransactionSettlementNote {
+		payments.PaymentTransaction playsRole paymentTransaction {
+			multiplicity 0..1;
+		}
+
+		document.SettlementNote playsRole settlementNotes {
+			multiplicity *;
+		}
+	}
+
+class payments.PaymentRequestLog {
+	DateTime creationDate;
+	String responsibleUsername;	
+	String stateCode;
+	LocalizedString stateDescription;
+	String operationCode;
+	String statusCode;
+	String statusMessage;
+	boolean operationSuccess;
+	boolean transactionWithPayment;
+	boolean exceptionOccured;
+	String authorizationId;
+	DateTime authorizationDate;
+	String migrationCode;
+}
+	
+	relation PaymentRequestLogDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.PaymentRequestLog playsRole paymentRequestLogs {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentRequestPaymentRequestLog {
+		payments.PaymentRequest playsRole paymentRequest {
+			multiplicity 0..1;
+		}
+		
+		payments.PaymentRequestLog playsRole paymentRequestLogs {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentTransactionPaymentRequestLog {
+		payments.PaymentTransaction playsRole paymentTransaction {
+			multiplicity 0..1;
+		}
+		
+		payments.PaymentRequestLog playsRole paymentRequestLog {
+			multiplicity 0..1;
+		}
+	}
+	
+class payments.PaymentRequestLogFile /* implements IGenericFile */  {
+	String fileId;
+	DateTime creationDate;
+	String creator;
+}
+	
+	relation integration.PaymentRequestLogFileDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.PaymentRequestLogFile playsRole paymentRequestLogFiles {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentRequestLogInputLogFile {
+		payments.PaymentRequestLog playsRole paymentRequestLogForRequest {
+			multiplicity 0..1;
+		}	
+	
+		payments.PaymentRequestLogFile playsRole requestLogFile {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation PaymentRequestLogOutputLogFile {
+		payments.PaymentRequestLog playsRole paymentRequestLogForResponse {
+			multiplicity 0..1;
+		}	
+	
+		payments.PaymentRequestLogFile playsRole responseLogFile {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation PaymentRequestLogExceptionLogFile {
+		payments.PaymentRequestLog playsRole paymentRequestLogForException {
+			multiplicity 0..1;
+		}	
+	
+		payments.PaymentRequestLogFile playsRole exceptionLogFile {
+			multiplicity 0..1;
+		}
+	}
+
 /* ----
  * SIBS
  * ----
  */
 
-class paymentcodes.SibsConfiguration extends integration.Configuration
-{
+class paymentcodes.SibsConfiguration extends integration.Configuration {
     //No fields for now...
     String entityReferenceCode;
     String sourceInstitutionId;
@@ -545,20 +803,63 @@ class paymentcodes.SibsConfiguration extends integration.Configuration
 }
 
  relation SibsConfigurationFinantialInstitution {
-       FinantialInstitution playsRole finantialInstitution
-       {
+       FinantialInstitution playsRole finantialInstitution {
            multiplicity 1..1;
        }
        
-       paymentcodes.SibsConfiguration playsRole sibsConfiguration
-       {
+       paymentcodes.SibsConfiguration playsRole sibsConfiguration {
            multiplicity 0..1;
        }
     }
 
+class paymentcodes.SibsPaymentRequest extends payments.PaymentRequest {
+	String entityReferenceCode;
+	String referenceCode;
+	PaymentReferenceCodeStateType state;
+}
 
-class paymentcodes.PaymentReferenceCode
-{
+class paymentcodes.SibsReferenceCode {
+	String entityReferenceCode;
+	String referenceCode;
+	LocalDate validFrom;
+	LocalDate validTo;
+	BigDecimalT maxAmount;
+	BigDecimalT minAmount;
+	String migrationCode;
+}
+
+	relation SibsReferenceCodeDomainRoot {
+	    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+	        multiplicity 1..1;
+	    }
+		
+		paymentcodes.SibsReferenceCode playsRole sibsReferenceCodes {
+			multiplicity *;
+		}
+	}
+	
+	relation SibsPaymentRequestSibsReferenceCode {
+		paymentcodes.SibsPaymentRequest playsRole sibsPaymentRequest {
+			multiplicity 0..1;
+		}
+		
+		paymentcodes.SibsReferenceCode playsRole sibsReferenceCode {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation DigitalPaymentPlatformSibsReferenceCode {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform {
+			multiplicity 1..1;
+		}
+		
+		paymentcodes.SibsReferenceCode playsRole sibsReferenceCodes {
+			multiplicity *;
+		}
+	}
+
+// Deprecated
+class paymentcodes.PaymentReferenceCode {
        String referenceCode;
        LocalDate beginDate;
        LocalDate endDate;
@@ -570,7 +871,23 @@ class paymentcodes.PaymentReferenceCode
        String sibsReferenceId;
 }
 
-class paymentcodes.pool.PaymentCodePool  {
+class paymentcodes.integration.SibsPaymentCodePool extends payments.integration.DigitalPaymentPlatform {
+	String entityReferenceCode;
+	long minReferenceCode;
+	long maxReferenceCode;
+	BigDecimalT minAmount;
+	BigDecimalT maxAmount;
+	LocalDate validFrom;
+	LocalDate validTo;
+	boolean useCheckDigit;
+	long nextReferenceCode;
+	boolean generateReferenceCodeOnDemand;
+    String sourceInstitutionId;
+    String destinationInstitutionId;
+}
+
+// Deprecated
+class paymentcodes.pool.PaymentCodePool {
 	String name;
 	String entityReferenceCode;
 	Long minReferenceCode;
@@ -723,21 +1040,30 @@ class paymentcodes.pool.PaymentCodeGeneratorInstance {
 		
 	}
 
-     class paymentcodes.SibsTransactionDetail  {
-        String comments;
-        DateTime whenProcessed;
-        DateTime whenRegistered;
-        BigDecimalT amountPayed;
-        String sibsEntityReferenceCode;
-        String sibsPaymentReferenceCode;
-        String sibsTransactionId;
-        String debtAccountId;
-        String customerId;
-		String businessIdentification;
-		String fiscalNumber;
-		String customerName; 
-		String settlementDocumentNumber;
-    }
+class paymentcodes.SibsPaymentCodeTransaction extends payments.PaymentTransaction {
+	String comments;
+	DateTime sibsProcessingDate;
+	String sibsEntityReferenceCode;
+	String sibsPaymentReferenceCode;
+	String sibsTransactionId;
+}
+
+// Deprecated
+class paymentcodes.SibsTransactionDetail  {
+	String comments;
+	DateTime whenProcessed;
+	DateTime whenRegistered;
+	BigDecimalT amountPayed;
+	String sibsEntityReferenceCode;
+	String sibsPaymentReferenceCode;
+	String sibsTransactionId;
+	String debtAccountId;
+	String customerId;
+	String businessIdentification;
+	String fiscalNumber;
+	String customerName; 
+	String settlementDocumentNumber;
+}
     
     	relation SibsTransactionDetailDomainRoot {
 		    .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
@@ -789,6 +1115,16 @@ class paymentcodes.pool.PaymentCodeGeneratorInstance {
 				multiplicity *;
 			}
 		}
+		
+		relation SibsPaymentCodeTransactionSibsReportFile {
+			paymentcodes.SibsReportFile playsRole sibsReportFile {
+				multiplicity 0..1;
+			}
+			
+			paymentcodes.SibsPaymentCodeTransaction playsRole sibsPaymentCodeTransactions {
+				multiplicity *;
+			}		   
+		}
 
 	class paymentcodes.SibsInputFile /* implements IGenericFile */ {
 		String fileId;
@@ -804,7 +1140,7 @@ class paymentcodes.pool.PaymentCodeGeneratorInstance {
 			}
 	      
 			FinantialInstitution playsRole finantialInstitution {
-				multiplicity 1..1;
+				multiplicity 0..1;
 			}
 			
 		}
@@ -835,7 +1171,7 @@ class paymentcodes.pool.PaymentCodeGeneratorInstance {
 			}
 			      
 			FinantialInstitution playsRole finantialInstitution {
-				multiplicity 1..1;
+				multiplicity 0..1;
 			}      
 		}
 
@@ -941,7 +1277,7 @@ relation ERPConfigurationFinantialInstitution
 relation ERPConfigurationSeries
 {
     document.Series playsRole paymentsIntegrationSeries {
-        multiplicity 1..1;
+        multiplicity 0..1;
     }
     
     integration.ERPConfiguration playsRole erpIntegrationConfiguration
@@ -997,62 +1333,93 @@ relation ERPImportOperationFinantialDocument {
 
 class settings.TreasurySettings {
 	boolean restrictPaymentMixingLegacyInvoices;
+	String forwardPaymentReturnDefaultURL;
 }
 
-relation TreasurySettingsBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
+	relation TreasurySettingsBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		settings.TreasurySettings playsRole treasurySettings {
+			multiplicity *;
+		}
 	}
 	
-	settings.TreasurySettings playsRole treasurySettings {
-		multiplicity *;
-	}
-}
-
-relation TreasurySettingsInterestProduct {
-    
-    settings.TreasurySettings playsRole treasurySettings {
-        multiplicity 0..1;
-    }
-    
-    Product playsRole interestProduct {
-        multiplicity 0..1;
-    }
-}
-
-relation TreasurySettingsAdvancePaymentProduct {
-    
-    settings.TreasurySettings playsRole advancePaymentTreasurySettings {
-        multiplicity 0..1;
-    }
-    
-    Product playsRole advancePaymentProduct {
-        multiplicity 0..1;
-    }
-}
-
-
-relation TreasurySettingsCurrency {
-	
-	settings.TreasurySettings playsRole treasurySettings {
-		multiplicity 0..1;
+	relation TreasurySettingsInterestProduct {
+	    
+	    settings.TreasurySettings playsRole treasurySettings {
+	        multiplicity 0..1;
+	    }
+	    
+	    Product playsRole interestProduct {
+	        multiplicity 0..1;
+	    }
 	}
 	
-	Currency playsRole defaultCurrency {
-		multiplicity 0..1;
-	}
-}
-
-relation TreasurySettingsTransferBalanceProduct {
-	settings.TreasurySettings playsRole transferBalanceTreasurySettings {
-		multiplicity 0..1;
+	relation TreasurySettingsAdvancePaymentProduct {
+	    
+	    settings.TreasurySettings playsRole advancePaymentTreasurySettings {
+	        multiplicity 0..1;
+	    }
+	    
+	    Product playsRole advancePaymentProduct {
+	        multiplicity 0..1;
+	    }
 	}
 	
-    Product playsRole transferBalanceProduct {
-        multiplicity 0..1;
-    }
-}
+	
+	relation TreasurySettingsCurrency {
+		
+		settings.TreasurySettings playsRole treasurySettings {
+			multiplicity 0..1;
+		}
+		
+		Currency playsRole defaultCurrency {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation TreasurySettingsTransferBalanceProduct {
+		settings.TreasurySettings playsRole transferBalanceTreasurySettings {
+			multiplicity 0..1;
+		}
+		
+	    Product playsRole transferBalanceProduct {
+	        multiplicity 0..1;
+	    }
+	}
 
+	relation TreasurySettingsCreditCardPaymentMethod {
+		settings.TreasurySettings playsRole {
+			multiplicity 0..1;
+		}
+		
+		PaymentMethod playsRole creditCardPaymentMethod {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation TreasurySettingsMbWayPaymentMethod {
+		settings.TreasurySettings playsRole {
+			multiplicity 0..1;
+		}
+		
+		PaymentMethod playsRole mbWayPaymentMethod {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation TreasurySettingsMbPaymentMethod {
+		settings.TreasurySettings playsRole {
+			multiplicity 0..1;
+		}
+		
+		PaymentMethod playsRole mbPaymentMethod {
+			multiplicity 0..1;
+		}
+	}
+	
 /*************
  * RELATIONS *
  *************/
@@ -1908,6 +2275,23 @@ relation InterestRateTariff {
  * ****************
  */
 
+class forwardpayments.implementations.TPAVirtualImplementationPlatform extends payments.integration.DigitalPaymentPlatform {
+	String paymentURL;
+	String virtualTPAMOXXURL;
+	String virtualTPAMerchantId;
+	String virtualTPAId;
+	String virtualTPAKeyStoreName;
+	String virtualTPACertificateAlias;
+	String virtualTPACertificatePassword;
+}
+
+class forwardpayments.payline.PaylineConfiguration extends payments.integration.DigitalPaymentPlatform {
+	String paymentURL;
+	String paylineMerchantId;
+	String paylineMerchantAccessKey;
+	String paylineContractNumber;
+}
+
 class forwardpayments.ForwardPaymentConfiguration {
 	boolean active;
 	String name;
@@ -1995,6 +2379,27 @@ class forwardpayments.ForwardPaymentConfigurationFile /* implements IGenericFile
        }
 	}
 
+	relation TPAVirtualImplementationVirtualTPACertificate {
+		forwardpayments.implementations.TPAVirtualImplementationPlatform playsRole {
+			multiplicity *;
+		}
+			
+		forwardpayments.ForwardPaymentConfigurationFile playsRole virtualTPACertificate {
+			multiplicity 0..1;
+		}
+	}
+
+class forwardpayments.ForwardPaymentRequest extends payments.PaymentRequest {
+	long orderNumber;
+	ForwardPaymentStateType state;
+	String forwardPaymentSuccessUrl;
+	String forwardPaymentInsuccessUrl;
+	String returnForwardPaymentUrlChecksum;
+	String redirectUrl;
+	String checkoutId;
+}
+
+// deprecated
 class forwardpayments.ForwardPayment {
 	ForwardPaymentStateType currentState;
 	String rejectionCode;
@@ -2002,10 +2407,10 @@ class forwardpayments.ForwardPayment {
 	DateTime whenOccured;
 	BigDecimalT amount;
 	BigDecimalT payedAmount;
-	DateTime authorizationDate;
-	DateTime transactionDate;
 	String transactionId;
+	DateTime transactionDate;
 	String authorizationId;
+	DateTime authorizationDate;
 	String forwardPaymentSuccessUrl;
 	String forwardPaymentInsuccessUrl;
 	String returnForwardPaymentUrlChecksum;
@@ -2195,7 +2600,18 @@ class FiscalYear {
  * SibsOnlinePaymentsGateway
  * *************************	
  */
- 
+
+class sibspaymentsgateway.integration.SibsPaymentsGateway extends payments.integration.DigitalPaymentPlatform {
+	String sibsEntityId;
+	String sibsEndpointUrl;
+	String bearerToken;
+	String aesKey;
+	String entityReferenceCode;
+	SibsOnlinePaymentsGatewayEnviromentMode enviromentMode;
+	int numberOfMonthsToExpirePaymentReferenceCode;
+	boolean sendBillingDataInOnlinePayment;
+}
+
 class sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway {
 	String sibsEntityId;
 	String sibsEndpointUrl;
@@ -2259,6 +2675,31 @@ class sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway {
 		}
 	}
 	
+class sibspaymentsgateway.SibsPaymentsGatewayLog extends payments.PaymentRequestLog {
+	
+	String sibsGatewayMerchantTransactionId;
+	String sibsGatewayTransactionId;
+	String sibsGatewayReferenceId;
+	String paymentCode;
+	String referenceId;
+	
+	String paymentType;
+	String paymentBrand;
+	
+	BigDecimalT amount;
+	DateTime paymentDate;
+
+	DateTime requestSendDate;
+	DateTime requestReceiveDate;
+	
+	String notificationInitializationVector;
+	String notificationAuthTag;
+	String notificationEncryptedPayloadFileId;
+	
+	boolean sibsTransactionDuplicated;
+}
+
+// deprecated
 class sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog {
 	String operationCode;
 	DateTime creationDate;
@@ -2332,6 +2773,7 @@ class sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayLog {
 		}
 	}
 
+// Deprecated
 class sibsonlinepaymentsgateway.MbwayPaymentRequest {
 	DateTime creationDate;
 	String phoneNumber;
@@ -2381,6 +2823,7 @@ class sibsonlinepaymentsgateway.MbwayPaymentRequest {
 		}
     }
 
+// Deprecated
 class sibsonlinepaymentsgateway.MbwayTransaction {
 	DateTime creationDate;
 	DateTime paymentDate;
@@ -2413,11 +2856,15 @@ class sibsonlinepaymentsgateway.MbwayTransaction {
 			multiplicity 0..1;
 		}
 		
-        document.SettlementNote playsRole settlementNotes {
-            multiplicity *;
-        }
+		document.SettlementNote playsRole settlementNotes {
+			multiplicity *;
+		}
 	}
 	
+class sibspaymentsgateway.MbwayRequest extends payments.PaymentRequest {
+	String phoneNumber;
+	PaymentReferenceCodeStateType state;
+}
 	
 //*********************************************
 //PaymentPlan
@@ -2459,18 +2906,7 @@ class paymentPlan.PaymentPlan{
 			multiplicity 0..1;
 		}
 	}
-	//*********************************************
-	// Interests are in PaymentPlanInstallment relation
-	//*********************************************
-	//relation PaymentPlanInterestDebitEntry{
-	//	paymentPlan.PaymentPlan playsRole interestPaymentPlan {
-	//		multiplicity 0..1;
-	//	}
-	//	
-	//	document.DebitEntry playsRole interest {
-	//		multiplicity 0..1;
-	//	}
-	//}
+
 	relation PaymentPlanPaymentPlanRevision{
 		paymentPlan.PaymentPlan playsRole paymentPlanOriginal {
 			multiplicity 0..1;
@@ -2497,30 +2933,6 @@ class paymentPlan.Installment {
 			multiplicity *;
 		}
 	}
-	//*********************************************
-	// Verify existance of interestRate in installments
-	//*********************************************
-	//relation InstallmentInterestRate{
-	//	paymentPlan.Installment playsRole installment {
-	//		multiplicity 0..1;
-	//	}
-	//	
-	//	tariff.InterestRate playsRole interestRate {
-	//		multiplicity 0..1;
-	//	}
-	//}
-	//*********************************************
-	// Need branch of Online payments
-	//*********************************************
-	//relation InstallmentPaymentRequest{
-	//	paymentPlan.Installment playsRole installment {
-	//		multiplicity *;
-	//	}
-	//	
-	//	payments.PaymentRequest playsRole paymentRequest {
-	//		multiplicity *;
-	//	}
-	//}
 	
 	relation PaymentPlanInstallment{
 		paymentPlan.PaymentPlan playsRole paymentPlan {
@@ -2531,6 +2943,8 @@ class paymentPlan.Installment {
 			multiplicity *;
 		}
 	}
+	
+	// deprecated
 	relation MultipleEntriesPaymentCodeInstallment {
         paymentPlan.Installment playsRole installments {
             multiplicity *;
@@ -2541,6 +2955,7 @@ class paymentPlan.Installment {
         }
     }
     
+    // deprecated
 	relation ForwardPaymentInstallments {
 		forwardpayments.ForwardPayment playsRole forwardPayments {
 			multiplicity *;
@@ -2561,7 +2976,17 @@ class paymentPlan.Installment {
         }
     }
 	
-class paymentPlan.InstallmentEntry{
+	relation PaymentRequestInstallments {
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+		
+		paymentPlan.Installment playsRole installments {
+			multiplicity *;
+		}	
+	}
+	
+class paymentPlan.InstallmentEntry {
 	BigDecimalT amount;
 }	
 	relation InstallmentEntryDomainRoot {
@@ -2665,6 +3090,7 @@ class paymentPlan.PaymentPlanSettings{
 		}
 	}
 	
+	// Deprecated	
 	relation PaymentCodePoolPaymentPlanSettings {
 		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool { 
 			multiplicity 0..1; 
@@ -2675,6 +3101,15 @@ class paymentPlan.PaymentPlanSettings{
 		}
 	}
 	
+	relation DigitalPaymentPlatformPaymentPlanSettings {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
+			multiplicity *; 
+		}
+	}
 	
 class paymentPlan.PaymentPlanNumberGenerator {
 	LocalizedString name;

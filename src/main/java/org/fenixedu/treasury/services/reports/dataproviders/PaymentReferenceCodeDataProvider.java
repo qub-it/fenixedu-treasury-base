@@ -29,7 +29,6 @@ public class PaymentReferenceCodeDataProvider extends AbstractDataProvider imple
 
     @Override
     public void registerFieldsAndImages(IDocumentFieldsData arg0) {
-        // TODO Auto-generated method stub
     }
 
     public PaymentReferenceCode getPaymentCode() {

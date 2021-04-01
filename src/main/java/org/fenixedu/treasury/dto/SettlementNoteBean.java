@@ -32,6 +32,7 @@ import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -88,6 +89,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     private String finantialTransactionReference;
 
     private boolean advancePayment;
+
+    private DigitalPaymentPlatform digitalPaymentPlatform;
 
     public SettlementNoteBean() {
         creditEntries = new ArrayList<CreditEntryBean>();
@@ -621,6 +624,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public void setFinantialTransactionReferenceYear(String finantialTransactionReferenceYear) {
         this.finantialTransactionReferenceYear = finantialTransactionReferenceYear;
+    }
+
+    public DigitalPaymentPlatform getDigitalPaymentPlatform() {
+        return digitalPaymentPlatform;
+    }
+
+    public void setDigitalPaymentPlatform(DigitalPaymentPlatform digitalPaymentPlatform) {
+        this.digitalPaymentPlatform = digitalPaymentPlatform;
     }
 
     // @formatter:off

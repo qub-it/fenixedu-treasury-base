@@ -35,6 +35,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
 
     private static final int DEFAULT_NUM_MONTHS_PAYMENT_REFERENCE_CODE_EXPIRATION = 12;

@@ -118,4 +118,17 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
         setPaymentCodePool(null);
         super.deleteDomainObject();
     }
+
+    @Deprecated
+    @Override
+    public void setPaymentCodePool(PaymentCodePool paymentCodePool) {
+        super.setPaymentCodePool(paymentCodePool);
+    }
+
+    @Deprecated
+    @Override
+    public PaymentCodePool getPaymentCodePool() {
+        return super.getPaymentCodePool();
+    }
+
 }

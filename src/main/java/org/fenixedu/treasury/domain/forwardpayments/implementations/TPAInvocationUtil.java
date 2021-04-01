@@ -51,6 +51,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.qubit.solution.fenixedu.bennu.webservices.domain.keystore.DomainKeyStore;
 
+@Deprecated
 public class TPAInvocationUtil {
 
     private static final class PropInfo {

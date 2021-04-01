@@ -1,4 +1,5 @@
 - Improvement: Payment Plan now accept only one installment
+- Refactor: Digital Payment Platform domain model
 
 6.1.3 (21-03-2021)
 - Bug Fix: Before create payment reference code and payment target, ensure any debit entry or installment does not have more than two ative references

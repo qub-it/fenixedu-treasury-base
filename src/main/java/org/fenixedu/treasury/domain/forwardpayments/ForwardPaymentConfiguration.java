@@ -18,6 +18,7 @@ import com.google.common.base.Strings;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class ForwardPaymentConfiguration extends ForwardPaymentConfiguration_Base {
 
     private static final Logger logger = LoggerFactory.getLogger(ForwardPaymentConfiguration.class);

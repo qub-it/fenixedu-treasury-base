@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
+@Deprecated
 public class SequentialPaymentCodeGenerator implements IPaymentCodeGenerator {
 
     private final PaymentCodePool referenceCodePool;

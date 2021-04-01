@@ -51,6 +51,7 @@ import com.google.common.base.Strings;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class PaymentCodePool extends PaymentCodePool_Base {
 
     public static Comparator<PaymentCodePool> COMPARATOR_BY_FINANTIAL_INSTITUTION_AND_NAME = (o1, o2) -> {
@@ -190,6 +191,7 @@ public class PaymentCodePool extends PaymentCodePool_Base {
     }
 
     @Atomic
+    @Deprecated
     public void edit(final String name, final Boolean active, DocumentNumberSeries seriesToUseInPayments,
             PaymentMethod paymentMethod) {
         setName(name);
@@ -356,6 +358,7 @@ public class PaymentCodePool extends PaymentCodePool_Base {
     }
 
     @Atomic
+    @Deprecated
     public void update(final FinantialInstitution finantialInstitution, final String name, final String entityReferenceCode,
             final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount, final LocalDate validFrom,
             final LocalDate validTo, final Boolean active, final Boolean useCheckDigit, final DocumentNumberSeries seriesToUseInPayments,

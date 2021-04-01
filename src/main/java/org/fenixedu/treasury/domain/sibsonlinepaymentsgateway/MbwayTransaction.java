@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class MbwayTransaction extends MbwayTransaction_Base {
 
     public MbwayTransaction() {

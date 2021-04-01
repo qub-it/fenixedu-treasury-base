@@ -37,6 +37,7 @@ import com.google.common.base.Strings;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class SibsConfiguration extends SibsConfiguration_Base {
 
     protected SibsConfiguration() {

@@ -879,7 +879,7 @@ public class SettlementNote extends SettlementNote_Base {
         return findAll().filter(i -> state.equals(i.getState()));
     }
 
-    public static void checkMixingOfInvoiceEntriesExportedInLegacyERP(final Set<InvoiceEntry> invoiceEntries) {
+    public static void checkMixingOfInvoiceEntriesExportedInLegacyERP(final Set<? extends InvoiceEntry> invoiceEntries) {
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return;
         }
