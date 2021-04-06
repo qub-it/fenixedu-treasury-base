@@ -55,6 +55,7 @@ package org.fenixedu.treasury.domain.sibspaymentsgateway;
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
@@ -89,6 +90,13 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
         setSibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId);
 
         checkRules();
+    }
+
+    public SibsPaymentsGatewayLog(PaymentRequest paymentRequest, String statusCode, LocalizedString statusDescription) {
+        this();
+        setPaymentRequest(paymentRequest);
+        setStateCode(statusCode);
+        setStateDescription(statusDescription);
     }
 
     private void checkRules() {
@@ -150,11 +158,11 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
     public void saveMerchantTransactionId(String merchantTransactionId) {
         setSibsGatewayMerchantTransactionId(merchantTransactionId);
     }
-    
+
     public void saveTransactionId(String transactionId) {
         setSibsGatewayTransactionId(transactionId);
     }
-    
+
     public void saveReferenceId(String referenceId) {
         setSibsGatewayReferenceId(referenceId);
     }
@@ -168,14 +176,15 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
     // @formatter:on
 
     public static Stream<SibsPaymentsGatewayLog> findAll() {
-        return PaymentRequestLog.findAll().filter(p -> p instanceof SibsPaymentsGatewayLog).map(SibsPaymentsGatewayLog.class::cast);
+        return PaymentRequestLog.findAll().filter(p -> p instanceof SibsPaymentsGatewayLog)
+                .map(SibsPaymentsGatewayLog.class::cast);
     }
-    
+
     public static SibsPaymentsGatewayLog createForSibsPaymentRequest(String sibsGatewayMerchantTransactionId) {
         SibsPaymentsGatewayLog log = new SibsPaymentsGatewayLog(REQUEST_PAYMENT_CODE, sibsGatewayMerchantTransactionId);
         log.setStateCode(PaymentReferenceCodeStateType.UNUSED.getCode());
         log.setStateDescription(PaymentReferenceCodeStateType.UNUSED.getDescriptionI18N());
-        
+
         return log;
     }
 
@@ -193,11 +202,15 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
 
     public static SibsPaymentsGatewayLog create(PaymentRequest paymentRequest, String sibsGatewayMerchantTransactionId) {
         SibsPaymentsGatewayLog log = new SibsPaymentsGatewayLog();
-        
+
         log.setPaymentRequest(paymentRequest);
         log.setSibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId);
-        
+
         return log;
     }
 
+    public static SibsPaymentsGatewayLog createPaymentRequestLog(PaymentRequest paymentRequest, String statusCode,
+            LocalizedString statusDescription) {
+        return new SibsPaymentsGatewayLog(paymentRequest, statusCode, statusDescription);
+    }
 }
