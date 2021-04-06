@@ -60,14 +60,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
+import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentConfiguration;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -426,15 +427,28 @@ public class TPAVirtualImplementationPlatform extends TPAVirtualImplementationPl
         throw new TreasuryDomainException("label.ManageForwardPayments.postProcessPayment.not.supported.yet");
     }
 
-    @Override
-    public List<ForwardPaymentStatusBean> verifyPaymentStatus(ForwardPaymentRequest forwardPayment) {
-        return Collections.singletonList(paymentStatus(forwardPayment));
-    }
-    
     /* SERVICES */
     
     public static final TPAVirtualImplementationPlatform create(FinantialInstitution finantialInstitution, String name) {
         // TODO: just to compile
         return null; // new TPAVirtualImplementation(finantialInstitution, name);
     }
+
+    @Override
+    public ForwardPaymentRequest createForwardPaymentRequest(SettlementNoteBean bean,
+            Function<ForwardPaymentRequest, String> successUrlFunction,
+            Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
+        throw new RuntimeException("Not implemented");
+    }
+
 }

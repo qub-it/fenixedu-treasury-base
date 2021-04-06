@@ -75,7 +75,6 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
-import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentConfiguration;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
@@ -168,25 +167,25 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
         setMbwayActive(mbwayActive);
         setNumberOfMonthsToExpirePaymentReferenceCode(numberOfMonthsToExpirePaymentReferenceCode);
     }
-    
+
     public void delete() {
-        if(!getSibsOnlinePaymentsGatewayLogsSet().isEmpty()) {
+        if (!getSibsOnlinePaymentsGatewayLogsSet().isEmpty()) {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.delete.not.possible.due.to.existing.requests");
         }
-        
+
         super.setDomainRoot(null);
         super.setForwardPaymentConfiguration(null);
         super.setMbwayDocumentSeries(null);
         super.setMbwayPaymentMethod(null);
         super.setPaymentCodePool(null);
-        
+
         super.deleteDomainObject();
     }
-    
+
     public boolean isSendBillingDataInOnlinePayment() {
         return getSendBillingDataInOnlinePayment();
     }
-    
+
     @Override
     @Deprecated
     public String getMerchantTransactionIdPrefix() {
@@ -227,43 +226,39 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     }
 
     @Atomic(mode = TxMode.READ)
-    public CheckoutResultBean prepareCheckout(final DebtAccount debtAccount, final String merchantTransactionId, 
-            final BigDecimal amount, final String returnUrl,
-            final SibsBillingAddressBean billingAddressBean)
+    public CheckoutResultBean prepareCheckout(final DebtAccount debtAccount, final String merchantTransactionId,
+            final BigDecimal amount, final String returnUrl, final SibsBillingAddressBean billingAddressBean)
             throws OnlinePaymentsGatewayCommunicationException {
         final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
 
         final PrepareCheckoutInputBean bean = new PrepareCheckoutInputBean(amount, merchantTransactionId, returnUrl,
                 new DateTime(), new DateTime().plusDays(7));
-        
-        if(isSendBillingDataInOnlinePayment()) {
+
+        if (isSendBillingDataInOnlinePayment()) {
             String customerEmail = debtAccount.getCustomer().getEmail();
-            
-            bean.fillBillingData(
-                    /* debtAccount.getCustomer().getName() */ null, 
-                    billingAddressBean.getAddressCountryCode(), 
+
+            bean.fillBillingData(/* debtAccount.getCustomer().getName() */ null, billingAddressBean.getAddressCountryCode(),
                     limitTextSize(billingAddressBean.getCity(), SECURE_3D_MAX_CITY_SIZE),
-                    limitTextSize(billingAddressBean.getAddress(), SECURE_3D_MAX_ADDRESS_SIZE), 
-                    limitTextSize(billingAddressBean.getZipCode(), SECURE_3D_MAX_ZIP_CODE),
-                    customerEmail);
+                    limitTextSize(billingAddressBean.getAddress(), SECURE_3D_MAX_ADDRESS_SIZE),
+                    limitTextSize(billingAddressBean.getZipCode(), SECURE_3D_MAX_ZIP_CODE), customerEmail);
         }
-        
+
         bean.setUseCreditCard(true);
 
         CheckoutResultBean resultBean = gatewayService.prepareOnlinePaymentCheckout(bean);
 
         return resultBean;
     }
-    
+
     private static final int SECURE_3D_MAX_CITY_SIZE = 50;
     private static final int SECURE_3D_MAX_ADDRESS_SIZE = 50;
     private static final int SECURE_3D_MAX_ZIP_CODE = 16;
 
     private String limitTextSize(String text, int maxSize) {
-        if(text == null) {
+        if (text == null) {
             return null;
         }
-        
+
         return text.substring(0, Integer.min(text.length(), maxSize));
     }
 
@@ -350,6 +345,7 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     }
 
     public static Stream<SibsOnlinePaymentsGateway> findByMerchantIdPrefix(final String merchantIdPrefix) {
+
         return findAll().filter(e -> merchantIdPrefix.toLowerCase().equals(e.getMerchantTransactionIdPrefix().toLowerCase()));
     }
 

@@ -336,4 +336,16 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return request;
     }
 
+    public static ForwardPaymentRequest create(DigitalPaymentPlatform plataform, DebtAccount debtAccount,
+            Set<DebitEntry> debitEntries, Set<Installment> installments, BigDecimal amount,
+            Function<ForwardPaymentRequest, String> successUrlFunction,
+            Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
+
+        ForwardPaymentRequest request = new ForwardPaymentRequest(plataform, debtAccount, debitEntries, installments, amount);
+
+        request.setForwardPaymentSuccessUrl(successUrlFunction.apply(request));
+        request.setForwardPaymentInsuccessUrl(insuccessUrlFunction.apply(request));
+
+        return request;
+    }
 }
