@@ -65,9 +65,9 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentRequestLog extends PaymentRequestLog_Base {
 
-    public static final Comparator<PaymentRequestLog> COMPARE_BY_CREATION_DATE = 
-            (o1, o2) -> o1.getCreationDate().compareTo(o2.getCreationDate()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
-    
+    public static final Comparator<PaymentRequestLog> COMPARE_BY_CREATION_DATE = (o1,
+            o2) -> o1.getCreationDate().compareTo(o2.getCreationDate()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
+
     public PaymentRequestLog() {
         super();
 
@@ -90,10 +90,10 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
     }
 
     public void saveRequest(String requestBody) {
-        if(requestBody == null) {
+        if (requestBody == null) {
             return;
         }
-        
+
         try {
             String filename = String.format("request_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), getExternalId());
             setRequestLogFile(PaymentRequestLogFile.create(filename, requestBody.getBytes("UTF-8")));
@@ -103,10 +103,10 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
     }
 
     public void saveResponse(String responseBody) {
-        if(responseBody == null) {
+        if (responseBody == null) {
             return;
         }
-        
+
         try {
             String filename = String.format("response_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), getExternalId());
             setResponseLogFile(PaymentRequestLogFile.create(filename, responseBody.getBytes("UTF-8")));
@@ -134,7 +134,7 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
 
     // @formatter:off
     /*
-     * 
+     *
      * ********
      * SERVICES
      * ********
@@ -144,9 +144,8 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
     public static Stream<? extends PaymentRequestLog> findAll() {
         return FenixFramework.getDomainRoot().getPaymentRequestLogsSet().stream();
     }
-    
+
     public static PaymentRequestLog create(PaymentRequest request, String stateCode, LocalizedString stateDescription) {
         return new PaymentRequestLog(request, stateCode, stateDescription);
     }
-
 }
