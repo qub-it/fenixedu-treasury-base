@@ -60,14 +60,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
+import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentConfiguration;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -133,13 +134,13 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
     public TPAVirtualImplementation() {
         super();
     }
-    
+
     protected TPAVirtualImplementation(FinantialInstitution finantialInstitution, String name) {
         this();
-        
+
         super.init(finantialInstitution, name, false);
     }
-    
+
     @Override
     public IForwardPaymentController getForwardPaymentController(ForwardPaymentRequest forwardPayment) {
         return IForwardPaymentController.getForwardPaymentController(forwardPayment);
@@ -178,7 +179,8 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
 
             if (!isAuthorizationSuccess(responseMap)) {
                 final String responseCode = responseCode(responseMap);
-                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap), json(responseMap));
+                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap),
+                        json(responseMap));
                 return false;
             }
 
@@ -194,7 +196,8 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
 
             if (!isPaymentStatusSuccess(responseMap)) {
                 final String responseCode = responseCode(responseMap);
-                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap), json(responseMap));
+                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap),
+                        json(responseMap));
                 return false;
             }
 
@@ -210,11 +213,13 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
 
             if (!isPaymentSuccess(responseMap)) {
                 final String responseCode = responseCode(responseMap);
-                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap), json(responseMap));
+                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap),
+                        json(responseMap));
                 return false;
             } else {
                 final String responseCode = responseCode(responseMap);
-                forwardPayment.getDigitalPaymentPlatform().log(forwardPayment, responseCode, errorMessage(responseMap), json(requestMap), json(responseMap));
+                forwardPayment.getDigitalPaymentPlatform().log(forwardPayment, responseCode, errorMessage(responseMap),
+                        json(requestMap), json(responseMap));
             }
 
             resultCode = Integer.parseInt(responseMap.get(C016));
@@ -226,7 +231,8 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
 
             if (!isPaymentStatusSuccess(responseMap)) {
                 final String responseCode = responseCode(responseMap);
-                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap), json(responseMap));
+                forwardPayment.reject("processPayment", responseCode, errorMessage(responseMap), json(requestMap),
+                        json(responseMap));
                 return false;
             }
 
@@ -241,7 +247,8 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
             return true;
         }
 
-        forwardPayment.reject("processPayment", String.valueOf(resultCode), errorMessage(responseMap), json(requestMap), json(responseMap));
+        forwardPayment.reject("processPayment", String.valueOf(resultCode), errorMessage(responseMap), json(requestMap),
+                json(responseMap));
 
         return false;
     }
@@ -421,14 +428,27 @@ public class TPAVirtualImplementation extends TPAVirtualImplementation_Base impl
         throw new TreasuryDomainException("label.ManageForwardPayments.postProcessPayment.not.supported.yet");
     }
 
-    @Override
-    public List<ForwardPaymentStatusBean> verifyPaymentStatus(ForwardPaymentRequest forwardPayment) {
-        return Collections.singletonList(paymentStatus(forwardPayment));
-    }
-    
     /* SERVICES */
-    
+
     public static final TPAVirtualImplementation create(FinantialInstitution finantialInstitution, String name) {
         return new TPAVirtualImplementation(finantialInstitution, name);
     }
+
+    @Override
+    public ForwardPaymentRequest createForwardPaymentRequest(SettlementNoteBean bean,
+            Function<ForwardPaymentRequest, String> successUrlFunction,
+            Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
+        throw new RuntimeException("Not implemented");
+    }
+
 }

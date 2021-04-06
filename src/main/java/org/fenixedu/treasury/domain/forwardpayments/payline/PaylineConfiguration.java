@@ -58,9 +58,11 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.servlet.http.HttpSession;
 
+import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
@@ -70,6 +72,7 @@ import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaym
 import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessPaymentStatusBean;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -215,11 +218,6 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                 paymentStatusBean.getResponseBody(), justification);
 
         return new PostProcessPaymentStatusBean(paymentStatusBean, previousState, true);
-    }
-
-    @Override
-    public List<ForwardPaymentStatusBean> verifyPaymentStatus(ForwardPaymentRequest forwardPayment) {
-        return Collections.singletonList(paymentStatus(forwardPayment));
     }
 
     public void edit(String name, boolean active, String paymentURL, String paylineMerchantId, String paylineMerchantAccessKey,
@@ -370,6 +368,23 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
     public static String getPresentationName() {
         return TreasuryConstants.treasuryBundle("label.PaylineConfiguration.presentationName");
+    }
+
+    @Override
+    public ForwardPaymentRequest createForwardPaymentRequest(SettlementNoteBean bean,
+            Function<ForwardPaymentRequest, String> successUrlFunction,
+            Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
+        return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getSibsGatewayTransactionId()));
     }
 
 }

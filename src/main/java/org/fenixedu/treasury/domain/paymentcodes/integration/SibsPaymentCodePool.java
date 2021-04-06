@@ -54,6 +54,7 @@ package org.fenixedu.treasury.domain.paymentcodes.integration;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -62,6 +63,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -70,6 +72,8 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
+import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
+import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -309,8 +313,11 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
         SibsReferenceCode code = isUseCheckDigit() ? generateCheckDigitPaymentCode(payableAmount,
                 validTo) : generateSequentialPaymentCode(payableAmount, validTo);
+        SibsPaymentRequest paymentRequest =
+                SibsPaymentRequest.create(code, debtAccount, debitEntries, installments, payableAmount);
 
-        return SibsPaymentRequest.create(code, debtAccount, debitEntries, installments, payableAmount);
+        paymentRequest.setEntityReferenceCode(getEntityReferenceCode());
+        return paymentRequest;
     }
 
     private void checkMaxActiveSibsPaymentRequests(Set<DebitEntry> debitEntries, Set<Installment> installments) {
@@ -458,5 +465,25 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
     public static String getPresentationName() {
         return TreasuryConstants.treasuryBundle("label.SibsPaymentCodePool.presentationName");
+    }
+
+    @Override
+    public PaymentTransaction processPaymentReferenceCodeTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean) {
+        return processPaymentReferenceCodeTransaction(log, bean);
+    }
+
+    @Override
+    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public PaymentRequestLog createLogForWebhookNotification() {
+        return null;
+    }
+
+    @Override
+    public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean) {
+
     }
 }
