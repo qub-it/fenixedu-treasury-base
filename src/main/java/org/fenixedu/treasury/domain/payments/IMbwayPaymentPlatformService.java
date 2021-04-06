@@ -50,7 +50,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.domain.paymentcodes.integration;
+package org.fenixedu.treasury.domain.payments;
 
 import java.util.List;
 import java.util.Set;
@@ -59,30 +59,19 @@ import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
-import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
-import org.fenixedu.treasury.domain.payments.PaymentTransaction;
-import org.joda.time.LocalDate;
+import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 
-public interface ISibsPaymentCodePoolService {
+public interface IMbwayPaymentPlatformService {
 
-    public String getName();
+    public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
-    public String getExternalId();
-
-    public String getEntityReferenceCode();
-
-    public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            Set<Installment> installments);
-
-    public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            Set<Installment> installments, LocalDate interestsCalculationDate);
-
-    public PaymentTransaction processPaymentReferenceCodeTransaction(final PaymentRequestLog log, DigitalPlatformResultBean bean);
-
-    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
+    public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
+            String countryPrefix, String localPhoneNumber);
 
     public PaymentRequestLog createLogForWebhookNotification();
 
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
+
+    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
+
 }
