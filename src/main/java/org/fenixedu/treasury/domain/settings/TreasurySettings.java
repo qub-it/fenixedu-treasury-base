@@ -52,6 +52,7 @@
  */
 package org.fenixedu.treasury.domain.settings;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -106,8 +107,9 @@ public class TreasurySettings extends TreasurySettings_Base {
 
     @Override
     public void setCreditCardPaymentMethod(PaymentMethod creditCardPaymentMethod) {
-        Set<DigitalPaymentPlatformPaymentMode> platforms =
-                getCreditCardPaymentMethod().getDigitalPaymentPlatformPaymentModesSet();
+        Set<DigitalPaymentPlatformPaymentMode> platforms = getCreditCardPaymentMethod() != null ? getCreditCardPaymentMethod()
+                .getDigitalPaymentPlatformPaymentModesSet() : Collections.emptySet();
+
         super.setCreditCardPaymentMethod(creditCardPaymentMethod);
         for (DigitalPaymentPlatformPaymentMode platform : platforms) {
             platform.setPaymentMethod(creditCardPaymentMethod);
@@ -117,7 +119,8 @@ public class TreasurySettings extends TreasurySettings_Base {
 
     @Override
     public void setMbPaymentMethod(PaymentMethod mbPaymentMethod) {
-        Set<DigitalPaymentPlatformPaymentMode> platforms = getMbPaymentMethod().getDigitalPaymentPlatformPaymentModesSet();
+        Set<DigitalPaymentPlatformPaymentMode> platforms = getMbPaymentMethod() != null ? getMbPaymentMethod()
+                .getDigitalPaymentPlatformPaymentModesSet() : Collections.emptySet();
         super.setMbPaymentMethod(mbPaymentMethod);
         for (DigitalPaymentPlatformPaymentMode platform : platforms) {
             platform.setPaymentMethod(mbPaymentMethod);
@@ -126,7 +129,9 @@ public class TreasurySettings extends TreasurySettings_Base {
 
     @Override
     public void setMbWayPaymentMethod(PaymentMethod mbWayPaymentMethod) {
-        Set<DigitalPaymentPlatformPaymentMode> platforms = getMbWayPaymentMethod().getDigitalPaymentPlatformPaymentModesSet();
+        Set<DigitalPaymentPlatformPaymentMode> platforms = getMbWayPaymentMethod() != null ? getMbWayPaymentMethod()
+                .getDigitalPaymentPlatformPaymentModesSet() : Collections.emptySet();
+
         super.setMbWayPaymentMethod(mbWayPaymentMethod);
         for (DigitalPaymentPlatformPaymentMode platform : platforms) {
             platform.setPaymentMethod(mbWayPaymentMethod);
