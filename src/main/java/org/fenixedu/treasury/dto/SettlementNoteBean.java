@@ -86,6 +86,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -143,6 +144,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     private boolean advancePayment;
 
     private DigitalPaymentPlatform digitalPaymentPlatform;
+
+    private SibsBillingAddressBean addressBean;
 
     public SettlementNoteBean() {
         init();
@@ -702,6 +705,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
      * ************
      */
     // @formatter:on
+
+    public SibsBillingAddressBean getAddressBean() {
+        return addressBean;
+    }
+
+    public void setAddressBean(SibsBillingAddressBean addressBean) {
+        this.addressBean = addressBean;
+    }
 
     public class DebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 

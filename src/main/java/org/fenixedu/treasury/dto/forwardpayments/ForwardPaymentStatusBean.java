@@ -105,6 +105,10 @@ public class ForwardPaymentStatusBean {
         return getStateType() != null && getStateType().isPayed();
     }
 
+    public boolean isInRejectedState() {
+        return getStateType() != null && getStateType().isRejected();
+    }
+
     public boolean isAbleToRegisterPostPayment(ForwardPaymentRequest forwardPayment) {
         return forwardPayment.isInStateToPostProcessPayment() && getStateType() != null && getStateType().isPayed();
     }
