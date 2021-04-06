@@ -821,6 +821,7 @@ class paymentcodes.SibsConfiguration extends integration.Configuration {
     }
 
 class paymentcodes.SibsPaymentRequest extends payments.PaymentRequest {
+<<<<<<< HEAD
 	String entityReferenceCode;
 	String referenceCode;
 	PaymentReferenceCodeStateType state;
@@ -3189,5 +3190,39 @@ class paymentPlan.paymentPlanValidator.WithoutNonConsecutiveInstallmentsOverdueV
 class paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 	Integer numberDaysToTakeEffect;
 	Integer numberInstallments;
+}
+
+
+
+/******************
+* MEO wallet
+******************/
+
+
+class meowallet.MeoWallet extends payments.integration.DigitalPaymentPlatform {
+	String authorizationAPIToken;
+	String endpointUrl;
+	
+	//ReferenceCode só se não for ilimitada
+	//int numberOfMonthsToExpirePaymentReferenceCode;
+}
+
+class meowallet.MeoWalletLog extends payments.PaymentRequestLog {
+	
+	String extCustomerId;
+	String extInvoiceId;
+	String meoWalletId;
+	
+	String paymentType;
+	String paymentMethod;
+	String paymentStatus;
+	
+	DateTime requestSendDate;
+	DateTime requestReceiveDate;
+	DateTime paymentDate;
+	
+	BigDecimalT amount;	
+	
+	boolean transactionDuplicated;
 }
 
