@@ -61,26 +61,20 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.onlinepaymentsgateway.api.MbWayCheckoutResultBean;
-import org.fenixedu.onlinepaymentsgateway.api.PaymentStateBean;
-import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
+import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
-import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.domain.sibspaymentsgateway.integration.SibsPaymentsGateway;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
-import pt.ist.fenixframework.FenixFramework;
 
 public class MbwayRequest extends MbwayRequest_Base {
 
@@ -88,17 +82,16 @@ public class MbwayRequest extends MbwayRequest_Base {
         super();
     }
 
-    protected MbwayRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            Set<Installment> installments, BigDecimal payableAmount, String phoneNumber, String sibsGatewayMerchantTransactionId,
-            String sibsGatewayTransactionId) {
+    protected MbwayRequest(IMbwayPaymentPlatformService platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments, BigDecimal payableAmount, String phoneNumber, String merchantTransactionId) {
         this();
 
-        this.init(platform, debtAccount, debitEntries, installments, payableAmount,
+        this.init((DigitalPaymentPlatform) platform, debtAccount, debitEntries, installments, payableAmount,
                 TreasurySettings.getInstance().getMbWayPaymentMethod());
 
         setPhoneNumber(phoneNumber);
-        setSibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId);
-        setSibsGatewayTransactionId(sibsGatewayTransactionId);
+        setSibsGatewayMerchantTransactionId(merchantTransactionId);
+//        setSibsGatewayTransactionId(transactionId);
 
         setState(PaymentReferenceCodeStateType.USED);
 
@@ -119,7 +112,7 @@ public class MbwayRequest extends MbwayRequest_Base {
     }
 
     @Atomic
-    private Set<SettlementNote> processPayment(final BigDecimal paidAmount, DateTime paymentDate, String sibsTransactionId,
+    public Set<SettlementNote> processPayment(final BigDecimal paidAmount, DateTime paymentDate, String sibsTransactionId,
             String comments) {
         Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
                 (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);
@@ -132,48 +125,6 @@ public class MbwayRequest extends MbwayRequest_Base {
         } else {
             return internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(paidAmount, paymentDate, sibsTransactionId,
                     comments, additionalPropertiesMapFunction);
-        }
-    }
-
-    @Atomic(mode = TxMode.READ)
-    public PaymentTransaction processMbwayTransaction(SibsPaymentsGatewayLog log, PaymentStateBean bean) {
-        if (!bean.getMerchantTransactionId().equals(getSibsGatewayMerchantTransactionId())) {
-            throw new TreasuryDomainException(
-                    "error.MbwayPaymentRequest.processMbwayTransaction.merchantTransactionId.not.equal");
-        }
-
-        final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = bean.getPaymentDate();
-
-        FenixFramework.atomic(() -> {
-            log.savePaymentInfo(paidAmount, paymentDate);
-        });
-
-        if (paidAmount == null || !TreasuryConstants.isPositive(paidAmount)) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.invalid.amount");
-        }
-
-        if (paymentDate == null) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.invalid.payment.date");
-        }
-
-        if (PaymentTransaction.isTransactionDuplicate(bean.getTransactionId())) {
-            FenixFramework.atomic(() -> {
-                log.markAsDuplicatedTransaction();
-            });
-            return null;
-        }
-
-        try {
-            return FenixFramework.atomic(() -> {
-                final Set<SettlementNote> settlementNotes =
-                        processPayment(paidAmount, paymentDate, bean.getTransactionId(), bean.getMerchantTransactionId());
-                PaymentTransaction transaction =
-                        PaymentTransaction.create(this, bean.getTransactionId(), paymentDate, paidAmount, settlementNotes);
-                return transaction;
-            });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -215,6 +166,10 @@ public class MbwayRequest extends MbwayRequest_Base {
         return getState() == PaymentReferenceCodeStateType.ANNULLED;
     }
 
+    public void anull() {
+        setState(PaymentReferenceCodeStateType.ANNULLED);
+    }
+
     /* ************ */
     /* * SERVICES * */
     /* ************ */
@@ -241,111 +196,12 @@ public class MbwayRequest extends MbwayRequest_Base {
         return findBySibsGatewayTransactionId(sibsGatewayTransactionId).findAny();
     }
 
-    @Atomic(mode = TxMode.READ)
-    public static MbwayRequest create(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
-            Set<DebitEntry> debitEntries, Set<Installment> installments, String countryPrefix, String localPhoneNumber) {
-
-        if (getReferencedCustomers(debitEntries, installments).size() > 1) {
-            throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
-        }
-
-        if (StringUtils.isEmpty(countryPrefix)) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.required");
-        }
-
-        if (StringUtils.isEmpty(localPhoneNumber)) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.required");
-        }
-
-        if (!countryPrefix.matches("\\d+")) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.number.format.required");
-        }
-
-        if (!localPhoneNumber.matches("\\d+")) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.format.required");
-        }
-
-        String phoneNumber = String.format("%s#%s", countryPrefix, localPhoneNumber);
-
-        BigDecimal payableAmountDebitEntries =
-                debitEntries.stream().map(e -> e.getOpenAmountWithInterests()).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal payableAmountInstallments =
-                installments.stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
-
-        String merchantTransactionId = sibsOnlinePaymentsGateway.generateNewMerchantTransactionId();
-
-        SibsPaymentsGatewayLog log = createLog(merchantTransactionId);
-
-        try {
-            FenixFramework.atomic(() -> {
-                log.logRequestSendDate();
-            });
-
-            final MbWayCheckoutResultBean checkoutResultBean =
-                    sibsOnlinePaymentsGateway.generateMbwayReference(payableAmount, merchantTransactionId, phoneNumber);
-
-            FenixFramework.atomic(() -> {
-                log.logRequestReceiveDateAndData(checkoutResultBean.getTransactionId(), checkoutResultBean.isOperationSuccess(),
-                        false, checkoutResultBean.getPaymentGatewayResultCode(),
-                        checkoutResultBean.getOperationResultDescription());
-                log.saveRequest(checkoutResultBean.getRequestLog());
-                log.saveResponse(checkoutResultBean.getResponseLog());
-            });
-
-            if (!checkoutResultBean.isOperationSuccess()) {
-                throw new TreasuryDomainException(
-                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
-            }
-
-            MbwayRequest mbwayPaymentRequest = createMbwayPaymentRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries,
-                    installments, phoneNumber, payableAmount, merchantTransactionId, checkoutResultBean.getTransactionId());
-
-            FenixFramework.atomic(() -> {
-                log.setPaymentRequest(mbwayPaymentRequest);
-                log.setStateCode(mbwayPaymentRequest.getState().name());
-                log.setStateDescription(mbwayPaymentRequest.getState().getDescriptionI18N());
-            });
-
-            return mbwayPaymentRequest;
-
-        } catch (Exception e) {
-            boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
-
-            FenixFramework.atomic(() -> {
-
-                log.logRequestReceiveDateAndData(null, false, false, null, null);
-                log.logException(e);
-
-                if (isOnlinePaymentsGatewayException) {
-                    OnlinePaymentsGatewayCommunicationException onlineException = (OnlinePaymentsGatewayCommunicationException) e;
-                    log.saveRequest(onlineException.getRequestLog());
-                    log.saveResponse(onlineException.getResponseLog());
-                }
-            });
-
-            if (e instanceof TreasuryDomainException) {
-                throw (TreasuryDomainException) e;
-            } else {
-                final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
-                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
-
-                throw new TreasuryDomainException(e, message);
-            }
-        }
-    }
-
     @Atomic(mode = TxMode.WRITE)
-    private static SibsPaymentsGatewayLog createLog(String sibsGatewayMerchantTransactionId) {
-        return SibsPaymentsGatewayLog.createForMbwayPaymentRequest(sibsGatewayMerchantTransactionId);
-    }
-
-    @Atomic(mode = TxMode.WRITE)
-    private static MbwayRequest createMbwayPaymentRequest(SibsPaymentsGateway sibsOnlinePaymentsGateway, DebtAccount debtAccount,
+    public static MbwayRequest create(IMbwayPaymentPlatformService paymentPlatform, DebtAccount debtAccount,
             Set<DebitEntry> debitEntries, Set<Installment> installments, String phoneNumber, BigDecimal payableAmount,
-            String sibsGatewayMerchantTransactionId, String sibsGatewayTransactionId) {
-        return new MbwayRequest(sibsOnlinePaymentsGateway, debtAccount, debitEntries, installments, payableAmount, phoneNumber,
-                sibsGatewayMerchantTransactionId, sibsGatewayTransactionId);
+            String merchantTransactionId) {
+        return new MbwayRequest(paymentPlatform, debtAccount, debitEntries, installments, payableAmount, phoneNumber,
+                merchantTransactionId);
     }
 
 }
