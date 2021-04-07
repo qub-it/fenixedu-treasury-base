@@ -82,7 +82,7 @@ public class PaymentPlanBean {
     }
 
     private double getDaysBeweenInstallments() {
-        return Days.daysBetween(startDate, endDate).getDays() / (nbInstallments - 1.00);
+        return nbInstallments == 1 ? 0 : Days.daysBetween(startDate, endDate).getDays() / (nbInstallments - 1.00);
     }
 
     private BigDecimal getInstallmentAmmount() {
