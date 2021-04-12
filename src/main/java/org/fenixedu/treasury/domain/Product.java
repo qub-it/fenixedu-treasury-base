@@ -130,7 +130,8 @@ public class Product extends Product_Base {
     public void edit(final String code, final LocalizedString name, final LocalizedString unitOfMeasure, boolean active,
             final boolean legacy, final int tuitionInstallmentOrder, VatType vatType, final ProductGroup productGroup,
             final List<FinantialInstitution> finantialInstitutions, VatExemptionReason vatExemptionReason) {
-        setCode(code);
+        // TODO: Code should not be editable
+//        setCode(code);
         setName(name);
         setUnitOfMeasure(unitOfMeasure);
         setActive(active);
