@@ -1,6 +1,6 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
@@ -8,7 +8,7 @@
  *
  * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
  *
- * 
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -43,7 +44,6 @@ import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.springframework.util.StringUtils;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -66,7 +66,7 @@ public class TreasuryConstants {
     public static final DateTime INFINITY_DATE = new DateTime().plusYears(500);
 
     public static final BigDecimal DEFAULT_QUANTITY = BigDecimal.ONE;
-    
+
     @Deprecated
     // TODO: Replace with a solution provided by the platform
     public static final Locale DEFAULT_LANGUAGE = new Locale("PT");
@@ -97,7 +97,6 @@ public class TreasuryConstants {
     public static LocalizedString getDefaultProductUnitDescription() {
         return treasuryBundleI18N("label.TreasuryConstants.default.product.unit.description");
     }
-    
 
     // @formatter:off
     /* *************
@@ -179,7 +178,7 @@ public class TreasuryConstants {
     public static BigDecimal rationalVatRate(final InvoiceEntry entry) {
         return divide(entry.getVatRate(), BigDecimal.valueOf(100));
     }
-    
+
     // @formatter:off
     /**************
      * DATE UTILS *
@@ -216,17 +215,16 @@ public class TreasuryConstants {
 
     public static DateTime parseDateTime(String strValue, String pattern) {
         DateTimeFormatter dateTimePattern = DateTimeFormat.forPattern(pattern);
-        
+
         return dateTimePattern.parseDateTime(strValue);
     }
-    
+
     public static LocalDate parseLocalDate(String strValue, String pattern) {
         DateTimeFormatter dateTimePattern = DateTimeFormat.forPattern(pattern);
-        
+
         return dateTimePattern.parseLocalDate(strValue);
     }
-    
-    
+
     // @formatter:off
     /****************
      * STRING UTILS *
@@ -236,41 +234,41 @@ public class TreasuryConstants {
     public static boolean stringNormalizedContains(final String text, final String compound) {
         final String textNormalized = Normalizer.normalize(text.toLowerCase(), Normalizer.Form.NFC);
         final String compoundNormalized = Normalizer.normalize(compound.toLowerCase(), Normalizer.Form.NFC);
-        
+
         return textNormalized.contains(compoundNormalized);
     }
-    
+
     public static boolean matchNames(final String value, final String searchTerms) {
         final List<String> valuesArray = Lists.<String> newArrayList(value.split("\\s+"));
         final List<String> searchTermsArray = Lists.<String> newArrayList(searchTerms.split("\\s+"));
-        
-        if(valuesArray.isEmpty() && !searchTermsArray.isEmpty()) {
+
+        if (valuesArray.isEmpty() && !searchTermsArray.isEmpty()) {
             return false;
         }
-        
+
         for (final String term : searchTermsArray) {
-            if(!valuesArray.contains(term)) {
+            if (!valuesArray.stream().anyMatch(str -> str.contains(term))) {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     public static String firstAndLastWords(final String value) {
-        if(Strings.isNullOrEmpty(value)) {
+        if (Strings.isNullOrEmpty(value)) {
             return value;
         }
-        
+
         final List<String> wordsList = Splitter.onPattern("\\s+").splitToList(value.trim());
-        
-        if(wordsList.size() == 1) {
+
+        if (wordsList.size() == 1) {
             return value;
         }
-        
+
         return wordsList.get(0) + " " + wordsList.get(wordsList.size() - 1);
     }
-    
+
     public static String json(final Object obj) {
         GsonBuilder builder = new GsonBuilder();
         builder.addSerializationExclusionStrategy(new ExclusionStrategy() {
@@ -292,7 +290,7 @@ public class TreasuryConstants {
 
         return builder.create().toJson(obj);
     }
-    
+
     // @formatter:off
     /**********
      * BUNDLE *
@@ -302,7 +300,7 @@ public class TreasuryConstants {
     public static String treasuryBundle(final String key, final String... args) {
         return BundleUtil.getString(TreasuryConstants.BUNDLE, key, args);
     }
-    
+
     public static String treasuryBundle(final Locale locale, final String key, final String... args) {
         return BundleUtil.getString(TreasuryConstants.BUNDLE, locale, key, args);
     }
@@ -328,12 +326,11 @@ public class TreasuryConstants {
 
         return originDocumentNumber.length() <= ORIGIN_DOCUMENT_LIMIT;
     }
-    
-    
+
     // @formatter:off
     /***********
      * JSON UTILS
-     *********** 
+     ***********
      */
     // @formatter:on
 
@@ -351,7 +348,7 @@ public class TreasuryConstants {
         if (StringUtils.isEmpty(propertiesMapJson)) {
             return new HashMap<String, String>();
         }
-        
+
         final GsonBuilder builder = new GsonBuilder();
 
         final Gson gson = builder.create();
@@ -361,6 +358,4 @@ public class TreasuryConstants {
         return gson.fromJson(propertiesMapJson, stringStringMapType);
     }
 
-    
 }
-
