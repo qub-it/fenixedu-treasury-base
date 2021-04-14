@@ -1,3 +1,4 @@
+7.0.2 (14-04-2021)
 - Bug Fix: Beside checking if SibsPaymentRequest have debitEntries, check if it have installments also
 
 7.0.1 (12-04-2021)
