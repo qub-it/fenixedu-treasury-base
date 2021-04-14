@@ -308,7 +308,8 @@ public class SIBSPaymentsImporter {
             return Collections.emptySet();
         }
 
-        if (codeToProcess.getSibsPaymentRequest().getDebitEntriesSet().isEmpty()) {
+        if (codeToProcess.getSibsPaymentRequest().getDebitEntriesSet().isEmpty()
+                && codeToProcess.getSibsPaymentRequest().getInstallmentsSet().isEmpty()) {
             result.addMessage("error.manager.SIBS.code.exists.but.not.attributed.to.any.target", detailLine.getCode());
             return Collections.emptySet();
         }
@@ -326,8 +327,8 @@ public class SIBSPaymentsImporter {
             String sibsImportationFilename, LocalDate whenProcessedBySibs, SibsReportFile reportFile,
             SibsPaymentRequest codeToProcess) {
         PaymentTransaction paymentTransaction = codeToProcess.processPayment(detailLine.getAmount(),
-                detailLine.getWhenOccuredTransaction(), detailLine.getSibsTransactionId(), sibsImportationFilename,
-                null, whenProcessedBySibs.toDateTimeAtStartOfDay(), reportFile, false);
+                detailLine.getWhenOccuredTransaction(), detailLine.getSibsTransactionId(), sibsImportationFilename, null,
+                whenProcessedBySibs.toDateTimeAtStartOfDay(), reportFile, false);
 
         return paymentTransaction.getSettlementNotesSet();
     }
