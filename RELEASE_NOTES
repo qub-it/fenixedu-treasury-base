@@ -1,7 +1,8 @@
-7.0.3 (14-04-2021)
-- Bug Fix: Correction on search customer by name
 - Bug Fix: Fix ERP customer address city field exportation
 - Improvement: Replace translation for SibsReferenceCode UNUSED state
+
+7.0.3 (14-04-2021)
+- Bug Fix: Correction on search customer by name
 
 7.0.2 (14-04-2021)
 - Bug Fix: Beside checking if SibsPaymentRequest have debitEntries, check if it have installments also
