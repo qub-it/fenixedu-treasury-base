@@ -1336,7 +1336,7 @@ public class SAPExporter implements IERPExporter {
                 .getCustomerAddressDetail() : MORADA_DESCONHECIDO);
 
         address.setCity(
-                !Strings.isNullOrEmpty(customer.getCustomerRegion()) ? customer.getCustomerRegion() : MORADA_DESCONHECIDO);
+                !Strings.isNullOrEmpty(customer.getCustomerCity()) ? customer.getCustomerCity() : MORADA_DESCONHECIDO);
 
         address.setPostalCode(
                 !Strings.isNullOrEmpty(customer.getCustomerZipCode()) ? customer.getCustomerZipCode() : "");
