@@ -22,9 +22,9 @@ import pt.ist.fenixframework.FenixFramework;
 
 public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base {
 
-    public static final Comparator<DigitalPaymentPlatform> COMPARE_BY_NAME = (o1, o2) -> 
-        o1.getName().compareTo(o2.getName()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
-    
+    public static final Comparator<DigitalPaymentPlatform> COMPARE_BY_NAME =
+            (o1, o2) -> o1.getName().compareTo(o2.getName()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
+
     protected DigitalPaymentPlatform() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -129,7 +129,7 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
     public PaymentRequestLog logException(PaymentRequest paymentRequest, Exception e) {
         PaymentRequestLog log = log(paymentRequest);
         log.logException(e);
-
+    
         return log;
     }
     */
@@ -182,10 +182,9 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         return find(finantialInstitution).filter(d -> d.isForwardPaymentServiceSupported())
                 .filter(d -> active == d.isActive(creditCardPaymentMethod));
     }
-    
+
     public static Stream<? extends DigitalPaymentPlatform> find(FinantialInstitution finantialInstitution,
             PaymentMethod paymentMethod, boolean active) {
         return find(finantialInstitution).filter(d -> active == d.isActive(paymentMethod));
     }
-
 }
