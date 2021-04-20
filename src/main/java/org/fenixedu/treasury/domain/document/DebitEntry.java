@@ -58,6 +58,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -642,16 +643,35 @@ public class DebitEntry extends DebitEntry_Base {
 
     /**
      * Differs from getLastSettlementDate in obtaining payment date only from
-     * settlement notes with payment entries
+     * settlement notes that do not credit this debitEntry
      *
      * @return
      */
 
     public DateTime getLastPaymentDate() {
-        Optional<SettlementNote> settlementNote = getSettlementEntriesSet().stream()
-                .filter(s -> !s.getFinantialDocument().isAnnulled()
-                        && !((SettlementNote) s.getFinantialDocument()).getPaymentEntriesSet().isEmpty())
-                .map(s -> ((SettlementNote) s.getFinantialDocument())).max(Comparator.comparing(SettlementNote::getPaymentDate));
+        Set<SettlementNote> settlementNotesToConsiderSet = new HashSet<SettlementNote>();
+        for (SettlementEntry debitEntrySettlementEntry : getSettlementEntriesSet()) {
+            SettlementNote note = (SettlementNote) debitEntrySettlementEntry.getFinantialDocument();
+
+            // Do not consider annuled settlement notes 
+            if(note.isAnnulled()) {
+                continue;
+            }
+            
+            // Do not consider settlements with own credits
+            if(note.getSettlemetEntriesSet().stream()
+                .filter(se -> se != debitEntrySettlementEntry)
+                .filter(se -> se.getInvoiceEntry().isCreditNoteEntry())
+                .filter(se -> ((CreditEntry) se.getInvoiceEntry()).getDebitEntry() == this)
+                .anyMatch(se -> TreasuryConstants.isGreaterOrEqualThan(se.getAmount(), debitEntrySettlementEntry.getAmount()))) {
+                continue;
+            }
+                
+            settlementNotesToConsiderSet.add(note);
+        }
+        
+        Optional<SettlementNote> settlementNote = 
+                settlementNotesToConsiderSet.stream().max(Comparator.comparing(SettlementNote::getPaymentDate));
 
         if (!settlementNote.isPresent()) {
             return null;
