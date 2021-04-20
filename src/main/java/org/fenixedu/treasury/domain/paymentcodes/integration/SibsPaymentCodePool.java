@@ -139,11 +139,6 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         setSourceInstitutionId(sourceInstitutionId);
         setDestinationInstitutionId(destinationInstitutionId);
 
-        getSibsReferenceCodesSet().forEach(s -> {
-            s.setValidFrom(validFrom);
-            s.setValidTo(validTo);
-        });
-
         checkRules();
     }
 
