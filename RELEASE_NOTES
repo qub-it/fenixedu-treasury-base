@@ -1,3 +1,5 @@
+- Bug Fix: Translate missing labels in english, related to SIBS processing
+
 7.0.5 (21-04-2021)
 - Bug Fix: Infering debit entry last payment date, in which only consider settlements that do not credit own debit entry
 - Improvement: Do not change automatically valid interval dates of sibs reference codes, when editing sibs payment code pool
