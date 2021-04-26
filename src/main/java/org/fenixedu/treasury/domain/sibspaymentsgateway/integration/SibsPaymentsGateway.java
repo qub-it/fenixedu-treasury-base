@@ -222,7 +222,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public String getPaymentURL(ForwardPaymentRequest request) {
-        return getSibsEndpointUrl() + "/paymentWidgets.js?checkoutId=" + request.getSibsGatewayCheckoutId();
+        return getSibsEndpointUrl() + "/paymentWidgets.js?checkoutId=" + request.getCheckoutId();
     }
 
     @Atomic(mode = TxMode.READ)
@@ -382,13 +382,13 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             if (!StringUtils.isEmpty(forwardPayment.getTransactionId())) {
                 paymentStateBean = getPaymentStatusBySibsTransactionId(forwardPayment.getTransactionId());
             } else {
-                List<PaymentStateBean> paymentStateBeanList =
+                List<? extends DigitalPlatformResultBean> paymentStateBeanList =
                         getPaymentTransactionsReportListByMerchantId(forwardPayment.getMerchantTransactionId());
                 if (paymentStateBeanList.size() != 1) {
                     throw new TreasuryDomainException(ERROR_UNEXPECTED_NUMBER_TRANSACTIONS_BY_MERCHANT_TRANSACTION_ID);
                 }
 
-                paymentStateBean = paymentStateBeanList.get(0);
+                paymentStateBean = (PaymentStateBean) paymentStateBeanList.get(0);
             }
 
             final String requestLog = paymentStateBean.getRequestLog();
@@ -922,7 +922,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             }
 
             FenixFramework.atomic(() -> {
-                mbwayPaymentRequest.setSibsGatewayTransactionId(checkoutResultBean.getTransactionId());
+                mbwayPaymentRequest.setTransactionId(checkoutResultBean.getTransactionId());
                 log.setPaymentRequest(mbwayPaymentRequest);
                 log.setStateCode(mbwayPaymentRequest.getState().name());
                 log.setStateDescription(mbwayPaymentRequest.getState().getDescriptionI18N());
@@ -959,7 +959,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     @Atomic(mode = TxMode.READ)
     public PaymentTransaction processPaymentReferenceCodeTransaction(final SibsPaymentsGatewayLog log, PaymentStateBean bean) {
         SibsPaymentRequest paymentRequest = (SibsPaymentRequest) log.getPaymentRequest();
-        if (!bean.getMerchantTransactionId().equals(paymentRequest.getSibsGatewayMerchantTransactionId())) {
+        if (!bean.getMerchantTransactionId().equals(paymentRequest.getMerchantTransactionId())) {
             throw new TreasuryDomainException(
                     "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.merchantTransactionId.not.equal");
         }
@@ -1003,7 +1003,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     public PaymentTransaction processMbwayTransaction(SibsPaymentsGatewayLog log, PaymentStateBean bean) {
         MbwayRequest request = (MbwayRequest) log.getPaymentRequest();
 
-        if (!bean.getMerchantTransactionId().equals(request.getSibsGatewayMerchantTransactionId())) {
+        if (!bean.getMerchantTransactionId().equals(request.getMerchantTransactionId())) {
             throw new TreasuryDomainException(
                     "error.MbwayPaymentRequest.processMbwayTransaction.merchantTransactionId.not.equal");
         }
@@ -1102,7 +1102,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
         try {
             PaymentStateBean paymentStatusBySibsCheckoutId =
-                    getPaymentStatusBySibsCheckoutId(forwardPayment.getSibsGatewayCheckoutId());
+                    getPaymentStatusBySibsCheckoutId(forwardPayment.getCheckoutId());
             return postProcessPayment(forwardPayment, "", Optional.of(paymentStatusBySibsCheckoutId.getTransactionId()));
         } catch (OnlinePaymentsGatewayCommunicationException e) {
             return null;

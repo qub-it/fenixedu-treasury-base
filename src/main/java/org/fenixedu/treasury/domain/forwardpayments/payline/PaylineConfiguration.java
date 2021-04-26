@@ -383,7 +383,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
     @Override
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
-        return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getSibsGatewayTransactionId()));
+        return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getTransactionId()));
     }
 
 }

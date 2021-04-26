@@ -821,7 +821,6 @@ class paymentcodes.SibsConfiguration extends integration.Configuration {
     }
 
 class paymentcodes.SibsPaymentRequest extends payments.PaymentRequest {
-<<<<<<< HEAD
 	String entityReferenceCode;
 	String referenceCode;
 	PaymentReferenceCodeStateType state;

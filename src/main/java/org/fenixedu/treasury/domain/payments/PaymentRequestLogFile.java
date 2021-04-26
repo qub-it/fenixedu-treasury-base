@@ -55,7 +55,6 @@ package org.fenixedu.treasury.domain.payments;
 import java.io.InputStream;
 
 import org.apache.commons.beanutils.PropertyUtils;
-import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -102,7 +101,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public byte[] getContent() {
         try {
-            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
             if(file != null) {
                 return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
@@ -117,7 +116,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public long getSize() {
         try {
-            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
             if(file != null) {
                 return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
@@ -132,7 +131,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public DateTime getCreationDate() {
         try {
-            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
             if(file != null) {
                 return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
@@ -147,7 +146,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public String getFilename() {
         try {
-            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
             if(file != null) {
                 return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
@@ -162,7 +161,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public InputStream getStream() {
         try {
-            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
             if(file != null) {
                 return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
@@ -177,7 +176,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public String getContentType() {
         try {
-            GenericFile file = (GenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
             if(file != null) {
                 return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);

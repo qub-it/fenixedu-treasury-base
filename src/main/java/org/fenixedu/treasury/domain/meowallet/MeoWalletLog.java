@@ -59,6 +59,8 @@ import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.joda.time.DateTime;
 
+import pt.ist.fenixframework.Atomic;
+
 public class MeoWalletLog extends MeoWalletLog_Base {
 
     public static final String REQUEST_PAYMENT_CODE = "mbPaymentRequest";
@@ -146,6 +148,7 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         return new MeoWalletLog(paymentRequest, code, localizedName);
     }
 
+    @Atomic
     public static MeoWalletLog createForTransationReport(String merchantTransationId) {
         return new MeoWalletLog(REQUEST_TRANSACTION_REPORT, merchantTransationId, null);
     }
