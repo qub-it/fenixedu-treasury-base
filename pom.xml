@@ -147,12 +147,10 @@
 	</dependencies>
 
 	<pluginRepositories>
-<!--
                 <pluginRepository>
                         <id>fenix-iscte-iul-artifact-repository</id>
                         <url>${iscte.fenix-repo.url}</url>
 		</pluginRepository>
--->
 		<pluginRepository>
 			<id>qubIT-repo</id>
 			<url>https://repository.qub-it.com/nexus/content/groups/qubITRepo</url>
@@ -160,12 +158,10 @@
 	</pluginRepositories>
 
 	<repositories>
-<!--
                 <repository>
                         <id>fenix-iscte-iul-artifact-repository</id>
                         <url>${iscte.fenix-repo.url}</url>
 		</repository>
--->
 		<repository>
 			<id>qubIT-repo-public</id>
 			<url>https://repository.qub-it.com/nexus/content/groups/public</url>
