@@ -259,28 +259,4 @@ public class MeoWalletService {
         return responseLog;
     }
 
-    public static void main(String[] args) {
-        MeoWalletService s =
-                new MeoWalletService("https://services.sandbox.meowallet.pt/api/v2", "cff93a7e627d658bf92af83d682d6e560f75f4ad");
-//        new MeoWalletService("https://services.sandbox.meowallet.pt/api/v2", "fc1ab8af2ef3074c4201f6ea78dab490c35c7cce");
-//        MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMBPaymentBean(BigDecimal.ONE, "externalId", "customerId",
-//                "name", List.of(new MeoWalletPaymentItemBean(1, "item", BigDecimal.ONE)));
-//        MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMbwayPaymentBean(BigDecimal.ONE, "externalId", "customerId",
-//                "name", "937531680", List.of(new MeoWalletPaymentItemBean(1, "item", BigDecimal.ONE)));
-        MeoWalletPaymentBean payment = MeoWalletPaymentBean.createForwardPaymentBean(BigDecimal.ONE, "name",
-                List.of(new MeoWalletPaymentItemBean(1, "item", BigDecimal.ONE)));
-        MeoWalletCheckoutBean bean = new MeoWalletCheckoutBean(payment,
-                "http://localhost:8080/fenix/api/forwardPayment/success?forwardPaymentId=1222211",
-                "http://localhost:8080/fenix/api/forwardPayment/insuccess?forwardPaymentId=1222211", "externalId2", "customerId2",
-                new String[] { "UNICRE", "PAYPAL", "MBWAY", "WALLET" });
-        try {
-//            s.generateMbwayReference(payment);
-//            s.generateMBPaymentReference(payment);
-            s.prepareOnlinePaymentCheckout(bean);
-        } catch (OnlinePaymentsGatewayCommunicationException e) {
-            e.printStackTrace();
-        }
-
-    }
-
 }
