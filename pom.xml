@@ -21,7 +21,9 @@
 		<fenix.framework.version>2.8.0</fenix.framework.version>
 		<qubEdu.framework.version>3.4.12-iscte-fork</qubEdu.framework.version>
 		<version.pt.ist.standards>1.1.0-SNAPSHOT</version.pt.ist.standards>
+		<!--
 		<iscte.fenix-repo.url>file:///home/omnis-dev/development/workspaces/iscte/fenix-iscte-iul-artifact-repository</iscte.fenix-repo.url>
+		-->
 	</properties>
 
 	<dependencyManagement>
@@ -145,10 +147,12 @@
 	</dependencies>
 
 	<pluginRepositories>
+<!--
                 <pluginRepository>
                         <id>fenix-iscte-iul-artifact-repository</id>
                         <url>${iscte.fenix-repo.url}</url>
-                </pluginRepository>
+		</pluginRepository>
+-->
 		<pluginRepository>
 			<id>qubIT-repo</id>
 			<url>https://repository.qub-it.com/nexus/content/groups/qubITRepo</url>
@@ -156,10 +160,12 @@
 	</pluginRepositories>
 
 	<repositories>
+<!--
                 <repository>
                         <id>fenix-iscte-iul-artifact-repository</id>
                         <url>${iscte.fenix-repo.url}</url>
-                </repository>
+		</repository>
+-->
 		<repository>
 			<id>qubIT-repo-public</id>
 			<url>https://repository.qub-it.com/nexus/content/groups/public</url>
