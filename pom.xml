@@ -171,10 +171,14 @@
 	</repositories>
 	
 	<distributionManagement>
-		<repository>
-			<id>fenix-iscte-iul-artifact-repository</id>
-			<url>${iscte.fenix-repo.url}</url>
-		</repository>
+                <repository>
+                        <id>qubIT-repo</id>
+                        <url>https://repository.qub-it.com/nexus/content/repositories/releases/</url>
+                </repository>
+                <snapshotRepository>
+                        <id>qubIT-repo</id>
+                        <url>https://repository.qub-it.com/nexus/content/repositories/snapshots/</url>
+                </snapshotRepository>
 	</distributionManagement>
 
 	<build>
