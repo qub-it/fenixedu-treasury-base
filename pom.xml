@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.qubit.terra.build</groupId>
 		<artifactId>qub-maven-fullstack-build</artifactId>
-		<version>1.3.13</version>
+		<version>1.5.5</version>
 	</parent>
 
 	<groupId>com.qubit.solution.qubEdu.module</groupId>
