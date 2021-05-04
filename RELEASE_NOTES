@@ -1,3 +1,4 @@
+7.0.7 (04-05-2021)
 - Bug Fix: Before accessing treasuryFile property value of IGenericFile, check if property exists
 
 7.0.6 (04-05-2021)
