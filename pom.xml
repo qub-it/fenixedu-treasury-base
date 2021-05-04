@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.qubit.terra.build</groupId>
 		<artifactId>qub-maven-fullstack-build</artifactId>
-		<version>1.5.5</version>
+		<version>1.3.13</version>
 	</parent>
 
 	<groupId>com.qubit.solution.qubEdu.module</groupId>
@@ -21,9 +21,7 @@
 		<fenix.framework.version>2.8.0</fenix.framework.version>
 		<qubEdu.framework.version>3.4.12-iscte-fork</qubEdu.framework.version>
 		<version.pt.ist.standards>1.1.0-SNAPSHOT</version.pt.ist.standards>
-		<!--
 		<iscte.fenix-repo.url>file:///home/omnis-dev/development/workspaces/iscte/fenix-iscte-iul-artifact-repository</iscte.fenix-repo.url>
-		-->
 	</properties>
 
 	<dependencyManagement>
@@ -127,8 +125,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.fenixedu</groupId>
-			<artifactId>online-payments-gateway</artifactId>
-			<version>1.2.2</version>
+			<artifactId>online-payments-gateway-iscte</artifactId>
+			<version>1.2.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.xml.ws</groupId>
