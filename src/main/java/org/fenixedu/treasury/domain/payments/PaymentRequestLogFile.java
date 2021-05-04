@@ -63,7 +63,7 @@ import org.joda.time.DateTime;
 import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements IGenericFile {
-    
+
     public static final String CONTENT_TYPE = "application/octet-stream";
 
     public PaymentRequestLogFile() {
@@ -72,7 +72,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
         this.setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
     }
-    
+
     protected PaymentRequestLogFile(String filename, byte[] content) {
         this();
         final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
@@ -101,10 +101,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public byte[] getContent() {
         try {
-            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
+                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
-            if(file != null) {
-                return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
+                if (file != null) {
+                    return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
+                }
             }
             
             return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(getFileId());
@@ -116,10 +118,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public long getSize() {
         try {
-            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
+                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
-            if(file != null) {
-                return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
+                if (file != null) {
+                    return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
+                }
             }
             
             return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(getFileId());
@@ -131,10 +135,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public DateTime getCreationDate() {
         try {
-            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
+                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
-            if(file != null) {
-                return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
+                if (file != null) {
+                    return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
+                }
             }
             
             return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(getFileId());
@@ -146,10 +152,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public String getFilename() {
         try {
-            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
+                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
-            if(file != null) {
-                return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
+                if (file != null) {
+                    return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
+                }
             }
             
             return TreasuryPlataformDependentServicesFactory.implementation().getFilename(getFileId());
@@ -161,10 +169,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public InputStream getStream() {
         try {
-            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
+                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
-            if(file != null) {
-                return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
+                if (file != null) {
+                    return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
+                }
             }
             
             return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(getFileId());
@@ -176,10 +186,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public String getContentType() {
         try {
-            IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
+                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
 
-            if(file != null) {
-                return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
+                if (file != null) {
+                    return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
+                }
             }
             
             return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(getFileId());
@@ -187,7 +199,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
             throw new RuntimeException(e);
         }
     }
-    
+
     // @formatter:off
     /*
      * 
@@ -196,7 +208,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
      * ********
      */
     // @formatter:on
-    
+
     public static PaymentRequestLogFile create(String filename, byte[] content) {
         return new PaymentRequestLogFile(filename, content);
     }
