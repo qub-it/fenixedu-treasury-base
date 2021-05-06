@@ -56,6 +56,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.meowallet.MeoWallet;
 import org.joda.time.DateTime;
 
 public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
@@ -321,7 +322,12 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
 
     @Override
     public boolean isPaid() {
-        return getStatus().equals("COMPLETED");
+        return MeoWallet.STATUS_COMPLETED.equals(getStatus());
+    }
+    
+    @Override
+    public boolean isOperationSuccess() {
+        return !MeoWallet.STATUS_FAIL.equals(getStatus());
     }
 
     @Override

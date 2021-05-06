@@ -105,12 +105,12 @@ public class MeoWalletWebhooksController {
         MeoWalletCallbackBean bean = s.fromJson(body, MeoWalletCallbackBean.class);
 
         final MeoWalletLog log = createLog();
-        System.out.println("Recebi um pedido :D ");
+        
         try {
 
             FenixFramework.atomic(() -> {
                 log.logRequestReceiveDateAndData(bean.getOperation_id(), "Notification", bean.getEvent(), bean.getAmount(),
-                        bean.getOperation_status(), !bean.getOperation_status().equals("FAIL"));
+                        bean.getOperation_status(), !MeoWallet.STATUS_FAIL.equals(bean.getOperation_status()));
             });
 
             response.setStatus(HttpServletResponse.SC_OK);
@@ -118,6 +118,8 @@ public class MeoWalletWebhooksController {
             FenixFramework.atomic(() -> {
                 log.setExtInvoiceId(bean.getExt_invoiceid());
                 log.setMeoWalletId(bean.getOperation_id());
+                
+                log.setTransactionWithPayment(MeoWallet.STATUS_COMPLETED.equals(bean.getOperation_status()));
             });
 
             // Find payment code

@@ -124,14 +124,14 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         setRequestSendDate(new DateTime());
     }
 
-    public void logRequestReceiveDateAndData(String id, String type, String method, BigDecimal amount, String status, boolean b) {
+    public void logRequestReceiveDateAndData(String id, String type, String method, BigDecimal amount, String status, boolean operationSucess) {
         setRequestReceiveDate(new DateTime());
         setMeoWalletId(id);
         setPaymentType(type);
         setPaymentMethod(method);
         setAmount(amount);
         setStatusCode(status);
-        setOperationSuccess(b);
+        setOperationSuccess(operationSucess);
     }
 
     public void savePaymentInfo(BigDecimal paidAmount, DateTime paymentDate) {

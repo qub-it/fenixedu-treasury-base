@@ -68,6 +68,8 @@ public class TreasuryAccessControlAPI {
         TreasuryAccessControl.getInstance().unregisterExtension(extension);
     }
 
+    @Deprecated
+    // Replace with isFrontOfficeMember
     public static boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution) {
         return TreasuryAccessControl.getInstance().isAllowToModifyInvoices(username, finantialInstitution);
     }

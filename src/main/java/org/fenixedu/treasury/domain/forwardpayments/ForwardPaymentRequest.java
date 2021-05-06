@@ -266,6 +266,8 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         PaymentTransaction paymentTransaction =
                 PaymentTransaction.create(this, transactionId, transactionDate, paidAmount, resultSettlementNotes);
         paymentTransaction.setJustification(justification);
+        
+        log.setPaymentTransaction(paymentTransaction);
 
         checkRules();
 

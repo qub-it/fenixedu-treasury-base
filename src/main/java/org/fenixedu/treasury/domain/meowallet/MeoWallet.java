@@ -113,6 +113,9 @@ public class MeoWallet extends MeoWallet_Base
     private static final String RETURN_FORWARD_PAYMENT_URI = "/returnforwardpayment";
     public static final String RETURN_FORWARD_PAYMENT_URL = CONTROLLER_URL + RETURN_FORWARD_PAYMENT_URI;
 
+    public static final String STATUS_FAIL = "FAIL";
+    public static final String STATUS_COMPLETED = "COMPLETED";
+
     public MeoWallet() {
         super();
     }
@@ -218,7 +221,7 @@ public class MeoWallet extends MeoWallet_Base
 
             FenixFramework.atomic(() -> {
                 log.logRequestReceiveDateAndData(paymentBean.getId(), paymentBean.getType(), paymentBean.getMethod(),
-                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals("FAIL"));
+                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals(STATUS_FAIL));
 
                 log.saveRequest(paymentBean.getRequestLog());
                 log.saveResponse(paymentBean.getResponseLog());
@@ -296,11 +299,12 @@ public class MeoWallet extends MeoWallet_Base
             MeoWalletPaymentBean result = getMeoWalletService().getCallbackReportByTransactionId(request.getTransactionId());
 
             PaymentTransaction transaction = null;
-            if (result.getStatus().equals("COMPLETED")) {
+            if (result.getStatus().equals(STATUS_COMPLETED)) {
                 try {
                     transaction = FenixFramework.atomic(() -> {
                         log.logRequestReceiveDateAndData(result.getId(), result.getType(), result.getMethod(), paidAmount,
                                 result.getStatus(), true);
+
                         log.setStateCode(PaymentReferenceCodeStateType.PROCESSED.name());
                         log.savePaymentInfo(paidAmount, paymentDate);
                         log.saveRequest(result.getRequestLog());
@@ -309,17 +313,21 @@ public class MeoWallet extends MeoWallet_Base
                                 request.processPayment(paidAmount, paymentDate, bean.getOperation_id(), bean.getExt_invoiceid());
                         PaymentTransaction paymentTransaction = PaymentTransaction.create(request, bean.getOperation_id(),
                                 paymentDate, paidAmount, settlementNotes);
+
+                        log.setPaymentTransaction(paymentTransaction);
+
                         return paymentTransaction;
                     });
                 } catch (Exception e) {
                     FenixFramework.atomic(() -> log.logException(e));
                     throw new RuntimeException(e);
                 }
-            } else if (result.getStatus().equals("FAIL")) {
+            } else if (result.getStatus().equals(STATUS_FAIL)) {
                 FenixFramework.atomic(() -> {
                     log.logRequestReceiveDateAndData(result.getId(), result.getType(), result.getMethod(), paidAmount,
-                            result.getStatus(), true);
-                    log.setStateCode(PaymentReferenceCodeStateType.PROCESSED.name());
+                            result.getStatus(), false);
+
+                    log.setStateCode(PaymentReferenceCodeStateType.ANNULLED.name());
                     log.saveRequest(result.getRequestLog());
                     log.saveResponse(result.getResponseLog());
                     request.anull();
@@ -420,7 +428,7 @@ public class MeoWallet extends MeoWallet_Base
             final String sibsReferenceId = paymentBean.getId();
             FenixFramework.atomic(() -> {
                 log.logRequestReceiveDateAndData(paymentBean.getId(), paymentBean.getType(), paymentBean.getMethod(),
-                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals("FAIL"));
+                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals(STATUS_FAIL));
 
                 log.saveRequest(paymentBean.getRequestLog());
                 log.saveResponse(paymentBean.getResponseLog());
@@ -525,7 +533,7 @@ public class MeoWallet extends MeoWallet_Base
                     getMeoWalletService().getCallbackReportByTransactionId(paymentRequest.getTransactionId());
 
             PaymentTransaction transaction = null;
-            if (result.getStatus().equals("COMPLETED")) {
+            if (result.getStatus().equals(STATUS_COMPLETED)) {
                 try {
                     transaction = FenixFramework.atomic(() -> {
                         log.logRequestReceiveDateAndData(result.getId(), result.getPaymentType(), result.getMethod(), paidAmount,
@@ -533,11 +541,12 @@ public class MeoWallet extends MeoWallet_Base
                         PaymentTransaction processPayment = paymentRequest.processPayment(paidAmount, result.getPaymentDate(),
                                 result.getId(), null, result.getExt_invoiceid(), result.getModified_date(), null, true);
 
-                        log.setTransactionWithPayment(true);
                         log.setStateCode(PaymentReferenceCodeStateType.PROCESSED.name());
                         log.savePaymentInfo(paidAmount, paymentDate);
                         log.saveRequest(result.getRequestLog());
                         log.saveResponse(result.getResponseLog());
+
+                        log.setPaymentTransaction(processPayment);
                         return processPayment;
                     });
                 } catch (Exception e) {
@@ -545,10 +554,11 @@ public class MeoWallet extends MeoWallet_Base
                     throw new RuntimeException(e);
                 }
 
-            } else if (result.getStatus().equals("FAIL")) {
+            } else if (result.getStatus().equals(STATUS_FAIL)) {
                 FenixFramework.atomic(() -> {
                     log.logRequestReceiveDateAndData(result.getId(), result.getPaymentType(), result.getMethod(), paidAmount,
                             result.getStatus(), false);
+
                     log.setStateCode(PaymentReferenceCodeStateType.ANNULLED.name());
                     log.saveRequest(result.getRequestLog());
                     log.saveResponse(result.getResponseLog());
@@ -722,9 +732,9 @@ public class MeoWallet extends MeoWallet_Base
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayForwardImplementation.unknown.payment.state");
         }
 
-        if (operationResultType.equals("COMPLETED")) {
+        if (operationResultType.equals(STATUS_COMPLETED)) {
             return ForwardPaymentStateType.PAYED;
-        } else if (operationResultType.equals("FAIL")) {
+        } else if (operationResultType.equals(STATUS_FAIL)) {
             return ForwardPaymentStateType.REJECTED;
         }
 
@@ -912,17 +922,15 @@ public class MeoWallet extends MeoWallet_Base
     }
 
     @Override
-    public void fillLogForWebhookNotification(PaymentRequestLog paymentRequestLog,
-            DigitalPlatformResultBean digitalPlatformResultBean) {
+    public void fillLogForWebhookNotification(PaymentRequestLog paymentRequestLog, DigitalPlatformResultBean bean) {
         MeoWalletLog log = (MeoWalletLog) paymentRequestLog;
 
-        MeoWalletCallbackBean bean = (MeoWalletCallbackBean) digitalPlatformResultBean;
         FenixFramework.atomic(() -> {
-            log.logRequestReceiveDateAndData(bean.getOperation_id(), "Notification", bean.getEvent(), bean.getAmount(),
-                    bean.getOperation_status(), !bean.getOperation_status().equals("FAIL"));
+            log.logRequestReceiveDateAndData(bean.getTransactionId(), "Notification", bean.getPaymentType(), bean.getAmount(),
+                    bean.getPaymentResultCode(), !STATUS_FAIL.equals(bean.getPaymentResultCode()));
 
-            log.setExtInvoiceId(bean.getExt_invoiceid());
-            log.setMeoWalletId(bean.getOperation_id());
+            log.setExtInvoiceId(bean.getMerchantTransactionId());
+            log.setMeoWalletId(bean.getTransactionId());
         });
 
     }
@@ -948,7 +956,7 @@ public class MeoWallet extends MeoWallet_Base
                 log.saveResponse(response);
                 log.setMeoWalletId(operationId);
             });
-            
+
             return resultCheckoutBean;
         } catch (Exception e) {
             FenixFramework.atomic(() -> log.logException(e));

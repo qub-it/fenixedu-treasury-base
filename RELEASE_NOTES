@@ -1,3 +1,7 @@
+- Bug Fix: Fix some issues in Meo Wallet
+- Refactor: Create constants to some communication format keys used in MeoWallet
+- Bug Fix: Translate some labels
+
 7.0.7 (04-05-2021)
 - Bug Fix: Before accessing treasuryFile property value of IGenericFile, check if property exists
 
