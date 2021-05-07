@@ -61,6 +61,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.meowallet.MeoWallet;
@@ -90,7 +91,7 @@ public class MeoWalletWebhooksController {
     @POST
     @Path(MeoWalletWebhooksController.NOTIFICATION_URI)
     @Consumes(MediaType.APPLICATION_JSON)
-    public void notification(String body, @Context HttpServletRequest httpRequest, @Context HttpServletResponse response) {
+    public Response notification(String body, @Context HttpServletRequest httpRequest, @Context HttpServletResponse response) {
         MeoWalletLog log = createLog();
 
         FenixFramework.atomic(() -> {
@@ -150,10 +151,8 @@ public class MeoWalletWebhooksController {
                 digitalPaymentPlatform.processMbwayTransaction(log, bean);
             }
 
-            response.setStatus(HttpServletResponse.SC_OK);
+            return Response.ok().build();
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-
             logger.error(e.getLocalizedMessage(), e);
             
             if (log != null) {
@@ -170,7 +169,7 @@ public class MeoWalletWebhooksController {
                 }
             }
             
-            
+            return Response.serverError().build();
         }
     }
 
