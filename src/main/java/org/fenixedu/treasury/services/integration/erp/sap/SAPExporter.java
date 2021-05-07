@@ -1350,7 +1350,7 @@ public class SAPExporter implements IERPExporter {
 //            return "EL";
 //        }
 
-        return countryCode;
+        return countryCode.toUpperCase();
     }
 
     public static AddressStructure convertAddressToSAFTAddress(final ERPCustomerFieldsBean customer) {
