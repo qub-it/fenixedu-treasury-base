@@ -262,20 +262,20 @@ public class MeoWallet extends MeoWallet_Base
 
     @Override
     public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean) {
-        return processMbwayTransaction((MeoWalletLog) log, (MeoWalletCallbackBean) bean);
+        return processMbwayTransaction((MeoWalletLog) log, bean);
     }
 
     @Atomic(mode = TxMode.READ)
-    public PaymentTransaction processMbwayTransaction(MeoWalletLog log, MeoWalletCallbackBean bean) {
+    public PaymentTransaction processMbwayTransaction(MeoWalletLog log, DigitalPlatformResultBean bean) {
         MbwayRequest request = (MbwayRequest) log.getPaymentRequest();
 
-        if (!bean.getExt_invoiceid().equals(request.getMerchantTransactionId())) {
+        if (!bean.getMerchantTransactionId().equals(request.getMerchantTransactionId())) {
             throw new TreasuryDomainException(
                     "error.MbwayPaymentRequest.processMbwayTransaction.merchantTransactionId.not.equal");
         }
 
         final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = bean.getModified_date();
+        final DateTime paymentDate = bean.getPaymentDate();
 
         if (paidAmount == null || !TreasuryConstants.isPositive(paidAmount)) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.invalid.amount");
@@ -285,10 +285,11 @@ public class MeoWallet extends MeoWallet_Base
             throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.invalid.payment.date");
         }
 
-        if (PaymentTransaction.isTransactionDuplicate(bean.getOperation_id())) {
+        if (PaymentTransaction.isTransactionDuplicate(bean.getTransactionId())) {
             FenixFramework.atomic(() -> {
                 log.markAsDuplicatedTransaction();
             });
+
             return null;
         }
 
@@ -296,22 +297,17 @@ public class MeoWallet extends MeoWallet_Base
             FenixFramework.atomic(() -> {
                 log.logRequestSendDate();
             });
-            MeoWalletPaymentBean result = getMeoWalletService().getCallbackReportByTransactionId(request.getTransactionId());
 
             PaymentTransaction transaction = null;
-            if (result.getStatus().equals(STATUS_COMPLETED)) {
+            if (STATUS_COMPLETED.equals(bean.getPaymentResultCode())) {
                 try {
                     transaction = FenixFramework.atomic(() -> {
-                        log.logRequestReceiveDateAndData(result.getId(), result.getType(), result.getMethod(), paidAmount,
-                                result.getStatus(), true);
-
                         log.setStateCode(PaymentReferenceCodeStateType.PROCESSED.name());
                         log.savePaymentInfo(paidAmount, paymentDate);
-                        log.saveRequest(result.getRequestLog());
-                        log.saveResponse(result.getResponseLog());
-                        final Set<SettlementNote> settlementNotes =
-                                request.processPayment(paidAmount, paymentDate, bean.getOperation_id(), bean.getExt_invoiceid());
-                        PaymentTransaction paymentTransaction = PaymentTransaction.create(request, bean.getOperation_id(),
+
+                        final Set<SettlementNote> settlementNotes = request.processPayment(paidAmount, paymentDate,
+                                bean.getTransactionId(), bean.getMerchantTransactionId());
+                        PaymentTransaction paymentTransaction = PaymentTransaction.create(request, bean.getTransactionId(),
                                 paymentDate, paidAmount, settlementNotes);
 
                         log.setPaymentTransaction(paymentTransaction);
@@ -322,25 +318,20 @@ public class MeoWallet extends MeoWallet_Base
                     FenixFramework.atomic(() -> log.logException(e));
                     throw new RuntimeException(e);
                 }
-            } else if (result.getStatus().equals(STATUS_FAIL)) {
+            } else if (STATUS_FAIL.equals(bean.getPaymentResultCode())) {
                 FenixFramework.atomic(() -> {
-                    log.logRequestReceiveDateAndData(result.getId(), result.getType(), result.getMethod(), paidAmount,
-                            result.getStatus(), false);
-
                     log.setStateCode(PaymentReferenceCodeStateType.ANNULLED.name());
-                    log.saveRequest(result.getRequestLog());
-                    log.saveResponse(result.getResponseLog());
+
                     request.anull();
                 });
             }
 
             return transaction;
-        } catch (OnlinePaymentsGatewayCommunicationException e) {
+        } catch (Exception e) {
             FenixFramework.atomic(() -> {
-                log.logRequestReceiveDateAndData(null, null, null, null, null, false);
-                log.saveRequest(e.getRequestLog());
-                log.saveResponse(e.getResponseLog());
+                log.logException(e);
             });
+
             throw new RuntimeException(e);
         }
     }
@@ -474,33 +465,43 @@ public class MeoWallet extends MeoWallet_Base
 
     @Override
     public PaymentTransaction processPaymentReferenceCodeTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean) {
-        return processPaymentReferenceCodeTransaction((MeoWalletLog) log, (MeoWalletCallbackBean) bean);
+        return processPaymentReferenceCodeTransaction((MeoWalletLog) log, bean);
     }
 
     @Atomic(mode = TxMode.READ)
-    public PaymentTransaction processPaymentReferenceCodeTransaction(final MeoWalletLog log, MeoWalletCallbackBean bean) {
+    public PaymentTransaction processPaymentReferenceCodeTransaction(final MeoWalletLog log, DigitalPlatformResultBean bean) {
         SibsPaymentRequest paymentRequest = (SibsPaymentRequest) log.getPaymentRequest();
-        if (!bean.getExt_invoiceid().equals(paymentRequest.getMerchantTransactionId())) {
+        if (!bean.getMerchantTransactionId().equals(paymentRequest.getMerchantTransactionId())) {
             throw new TreasuryDomainException(
                     "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.merchantTransactionId.not.equal");
         }
 
-        if (!bean.getMb_entity().equals(paymentRequest.getEntityReferenceCode())) {
+        String mbEntity = null;
+        String mbRef = null;
+
+        if (bean instanceof MeoWalletCallbackBean) {
+            mbEntity = ((MeoWalletCallbackBean) bean).getMb_entity();
+            mbRef = ((MeoWalletCallbackBean) bean).getMb_ref();
+        } else if (bean instanceof MeoWalletPaymentBean) {
+            mbEntity = ((MeoWalletPaymentBean) bean).getMb().getEntity();
+            mbRef = ((MeoWalletPaymentBean) bean).getMb().getRef();
+        }
+
+        if (!mbEntity.equals(paymentRequest.getEntityReferenceCode())) {
             throw new TreasuryDomainException(
                     "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.entityReferenceCode.not.equal");
         }
-        if (!bean.getMb_ref().equals(paymentRequest.getReferenceCode())) {
+
+        if (!mbRef.equals(paymentRequest.getReferenceCode())) {
             throw new TreasuryDomainException(
                     "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.referenceCode.not.equal");
         }
-        FenixFramework.atomic(() -> {
-            log.setPaymentRequest(paymentRequest);
-        });
 
         final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = bean.getModified_date();
+        final DateTime paymentDate = bean.getPaymentDate();
 
         FenixFramework.atomic(() -> {
+            log.setPaymentRequest(paymentRequest);
             log.savePaymentInfo(paidAmount, paymentDate);
         });
 
@@ -519,7 +520,7 @@ public class MeoWallet extends MeoWallet_Base
             return null;
         }
 
-        if (PaymentTransaction.isTransactionDuplicate(bean.getOperation_id())) {
+        if (PaymentTransaction.isTransactionDuplicate(bean.getTransactionId())) {
             FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
             return null;
         }
@@ -529,46 +530,42 @@ public class MeoWallet extends MeoWallet_Base
                 log.logRequestSendDate();
             });
 
-            MeoWalletPaymentBean result =
-                    getMeoWalletService().getCallbackReportByTransactionId(paymentRequest.getTransactionId());
-
             PaymentTransaction transaction = null;
-            if (result.getStatus().equals(STATUS_COMPLETED)) {
+            if (STATUS_COMPLETED.equals(bean.getPaymentResultCode())) {
                 try {
                     transaction = FenixFramework.atomic(() -> {
-                        log.logRequestReceiveDateAndData(result.getId(), result.getPaymentType(), result.getMethod(), paidAmount,
-                                result.getStatus(), true);
-                        PaymentTransaction processPayment = paymentRequest.processPayment(paidAmount, result.getPaymentDate(),
-                                result.getId(), null, result.getExt_invoiceid(), result.getModified_date(), null, true);
+                        PaymentTransaction processPayment =
+                                paymentRequest.processPayment(paidAmount, bean.getPaymentDate(), bean.getTransactionId(), null,
+                                        bean.getMerchantTransactionId(), bean.getPaymentDate(), null, true);
 
                         log.setStateCode(PaymentReferenceCodeStateType.PROCESSED.name());
                         log.savePaymentInfo(paidAmount, paymentDate);
-                        log.saveRequest(result.getRequestLog());
-                        log.saveResponse(result.getResponseLog());
 
                         log.setPaymentTransaction(processPayment);
                         return processPayment;
                     });
                 } catch (Exception e) {
-                    FenixFramework.atomic(() -> log.logException(e));
+                    FenixFramework.atomic(() -> {
+                        log.logException(e);
+                    });
+
                     throw new RuntimeException(e);
                 }
 
-            } else if (result.getStatus().equals(STATUS_FAIL)) {
+            } else if (STATUS_FAIL.equals(bean.getPaymentResultCode())) {
                 FenixFramework.atomic(() -> {
-                    log.logRequestReceiveDateAndData(result.getId(), result.getPaymentType(), result.getMethod(), paidAmount,
-                            result.getStatus(), false);
-
                     log.setStateCode(PaymentReferenceCodeStateType.ANNULLED.name());
-                    log.saveRequest(result.getRequestLog());
-                    log.saveResponse(result.getResponseLog());
+
                     paymentRequest.anull();
                 });
             }
 
             return transaction;
-        } catch (OnlinePaymentsGatewayCommunicationException e) {
-            FenixFramework.atomic(() -> log.logException(e));
+        } catch (Exception e) {
+            FenixFramework.atomic(() -> {
+                log.logException(e);
+            });
+
             throw new RuntimeException(e);
         }
     }

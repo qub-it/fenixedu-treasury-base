@@ -68,16 +68,16 @@ import org.joda.time.LocalDate;
 import pt.ist.fenixframework.FenixFramework;
 
 public class SibsReferenceCode extends SibsReferenceCode_Base {
-    
+
     public SibsReferenceCode() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
     }
-    
+
     public SibsReferenceCode(SibsPaymentCodePool sibsPaymentCodePool, String referenceCode, LocalDate validFrom,
             LocalDate validTo, BigDecimal minAmount, BigDecimal maxAmount) {
         this();
-        
+
         setDigitalPaymentPlatform(sibsPaymentCodePool);
         setEntityReferenceCode(sibsPaymentCodePool.castToSibsPaymentCodePoolService().getEntityReferenceCode());
         setReferenceCode(referenceCode);
@@ -85,37 +85,37 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         setValidTo(validTo);
         setMinAmount(minAmount);
         setMaxAmount(maxAmount);
-        
+
         checkRules();
     }
 
     public void checkRules() {
-        
-        if(getDomainRoot() == null) {
+
+        if (getDomainRoot() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.domainRoot.required");
         }
-        
-        if(StringUtils.isEmpty(getReferenceCode())) {
+
+        if (StringUtils.isEmpty(getReferenceCode())) {
             throw new TreasuryDomainException("error.SibsReferenceCode.referenceCode.required");
         }
-        
-        if(getValidFrom() == null) {
+
+        if (getValidFrom() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.validFrom.required");
         }
-        
-        if(getValidTo() == null) {
+
+        if (getValidTo() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.validTo.required");
         }
-        
-        if(getMinAmount() == null) {
+
+        if (getMinAmount() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.minAmount.required");
         }
-        
-        if(getMaxAmount() == null) {
+
+        if (getMaxAmount() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.maxAmount.required");
         }
 
-        if(findByReferenceCode(getDigitalPaymentPlatform().getEntityReferenceCode(), getReferenceCode()).count() > 1) {
+        if (findByReferenceCode(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
             throw new TreasuryDomainException("error.SibsReferenceCode.referenceCode.duplicate");
         }
     }
@@ -136,10 +136,10 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     }
 
     public PaymentReferenceCodeStateType getState() {
-        if(getSibsPaymentRequest() == null) {
+        if (getSibsPaymentRequest() == null) {
             return PaymentReferenceCodeStateType.UNUSED;
         }
-        
+
         return getSibsPaymentRequest().getState();
     }
 
@@ -164,24 +164,24 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         DateTime validToDateTime = getValidTo().plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
         return new Interval(validFromDateTime, validToDateTime);
     }
-    
+
     @Override
     public SibsPaymentCodePool getDigitalPaymentPlatform() {
         return (SibsPaymentCodePool) super.getDigitalPaymentPlatform();
     }
-    
+
     public DebtAccount getDebtAccount() {
-        if(getSibsPaymentRequest() != null) {
+        if (getSibsPaymentRequest() != null) {
             return getSibsPaymentRequest().getDebtAccount();
         }
-        
+
         return null;
     }
-    
+
     public void delete() {
         super.setDomainRoot(null);
         super.setDigitalPaymentPlatform(null);
-        
+
         super.deleteDomainObject();
     }
 
@@ -199,7 +199,7 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
 
     public static Stream<SibsReferenceCode> findByReferenceCode(String entityReferenceCode, String referenceCode) {
         return findAll()
-                .filter(p -> entityReferenceCode.equals(p.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode()))
+                .filter(p -> entityReferenceCode.equals(p.getEntityReferenceCode()))
                 .filter(p -> referenceCode.equals(p.getReferenceCode()));
     }
 

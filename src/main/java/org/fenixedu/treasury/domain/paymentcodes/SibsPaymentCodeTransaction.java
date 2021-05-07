@@ -78,12 +78,10 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     }
 
     protected SibsPaymentCodeTransaction(SibsReportFile reportFile, SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
-            BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate,
-            Set<SettlementNote> settlementNotes) {
+            BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, Set<SettlementNote> settlementNotes) {
         this();
 
-        String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
 
         String referenceCode = sibsPaymentRequest.getReferenceCode();
         String transactionId =
@@ -103,8 +101,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
             String referenceCode, String sibsTransactionId, Set<SettlementNote> settlementNotes) {
         this();
 
-        String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
 
         String transactionId =
                 String.format("%s-%s-%s", entityReferenceCode, referenceCode, getPaymentDate().toString(DATE_TIME_FORMAT));
@@ -133,9 +130,10 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
                     getSibsEntityReferenceCode(), getSibsPaymentReferenceCode(),
                     getPaymentDate().toString(TreasuryConstants.DATE_TIME_FORMAT_YYYY_MM_DD));
         }
-        
-        if(getPaymentRequest().getDigitalPaymentPlatform() instanceof SibsPaymentsGateway) {
-            if (!StringUtils.isEmpty(getSibsTransactionId()) && findBySibsGatewayTransactionId(getSibsTransactionId()).count() > 1) {
+
+        if (getPaymentRequest().getDigitalPaymentPlatform() instanceof SibsPaymentsGateway) {
+            if (!StringUtils.isEmpty(getSibsTransactionId())
+                    && findBySibsGatewayTransactionId(getSibsTransactionId()).count() > 1) {
                 throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.sibsTransactionId.duplicate",
                         getSibsTransactionId());
             }
@@ -163,8 +161,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     private static Stream<SibsPaymentCodeTransaction> find(String entityReferenceCode, String referenceCode,
             DateTime paymentDate) {
         return findAll().filter(x -> entityReferenceCode.equals(x.getSibsEntityReferenceCode())
-                && referenceCode.equals(x.getSibsPaymentReferenceCode()) 
-                && paymentDate.equals(x.getPaymentDate()));
+                && referenceCode.equals(x.getSibsPaymentReferenceCode()) && paymentDate.equals(x.getPaymentDate()));
     }
 
     public static Stream<SibsPaymentCodeTransaction> findBySibsGatewayTransactionId(String sibsTransactionId) {
@@ -176,25 +173,23 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     }
 
     public static SibsPaymentCodeTransaction create(SibsReportFile reportFile, SibsPaymentRequest sibsPaymentRequest,
-            DateTime paymentDate, BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, 
+            DateTime paymentDate, BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate,
             Set<SettlementNote> settlementNotes) {
-        String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
         String referenceCode = sibsPaymentRequest.getReferenceCode();
-        
+
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, referenceCode, paymentDate)) {
             throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.transaction.duplicate", entityReferenceCode,
                     referenceCode, paymentDate.toString(TreasuryConstants.DATE_TIME_FORMAT_YYYY_MM_DD));
         }
 
-        return new SibsPaymentCodeTransaction(reportFile, sibsPaymentRequest, paymentDate, paidAmount,
-                sibsTransactionId, sibsProcessingDate, settlementNotes);
+        return new SibsPaymentCodeTransaction(reportFile, sibsPaymentRequest, paymentDate, paidAmount, sibsTransactionId,
+                sibsProcessingDate, settlementNotes);
     }
 
     public static SibsPaymentCodeTransaction create(SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
             BigDecimal paidAmount, String referenceCode, String sibsTransactionId, Set<SettlementNote> settlementNotes) {
-        String entityReferenceCode =
-                sibsPaymentRequest.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
+        String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
 
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, referenceCode, paymentDate)) {
             throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.transaction.duplicate", entityReferenceCode,

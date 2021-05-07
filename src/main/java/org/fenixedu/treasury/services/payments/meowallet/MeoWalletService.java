@@ -186,26 +186,33 @@ public class MeoWalletService {
     }
 
     public MeoWalletPaymentBean getCallbackReportByTransactionId(String id) throws OnlinePaymentsGatewayCommunicationException {
-        String path = OPERATION_PATH + "/" + id;
-        String requestLog = id;
-        String responseLog = processGetService(path);
-
         try {
+            String path = OPERATION_PATH + "/" + id;
+            String requestLog = id;
+            String responseLog = processGetService(path);
+            
             MeoWalletPaymentBean result = getGson().fromJson(responseLog, MeoWalletPaymentBean.class);
+
             result.setRequestLog(requestLog);
             result.setResponseLog(responseLog);
+            
             return result;
-
-        } catch (WebApplicationException var23) {
-            responseLog = var23.getResponse().readEntity(String.class);
-            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+        } catch (Exception e) {
+            String responseLog = null;
+            if(e instanceof WebApplicationException) {
+                responseLog = ((WebApplicationException) e).getResponse().readEntity(String.class);
+            }
+            
+            throw new OnlinePaymentsGatewayCommunicationException(null, responseLog, e);
         }
     }
 
-    public void verifyCallback(MeoWalletCallbackBean bean) {
+    public boolean verifyCallback(String webhookBody) {
         String path = "callback/verify";
-        String requestLog = getGson().toJson(bean);
-        processPost(path, requestLog);
+        
+        String value = processPost(path, webhookBody);
+        
+        return "true".equals(value);
     }
 
     public List<MeoWalletPaymentBean> getPaymentTransactionReportByMerchantTransactionId(String merchantTransationId)

@@ -1,4 +1,5 @@
 - Bug Fix: Capitalize country code in exportation for ERP
+- Bug Fix: Improve communication with MeoWallet and fix bugs related to settlement registration
 
 7.0.8 (06-05-2021)
 - Bug Fix: Fix some issues in Meo Wallet

@@ -66,6 +66,7 @@ import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommun
 import org.fenixedu.treasury.domain.meowallet.MeoWallet;
 import org.fenixedu.treasury.domain.meowallet.MeoWalletLog;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
 import org.joda.time.DateTime;
@@ -82,76 +83,79 @@ import pt.ist.fenixframework.FenixFramework;
 
 @Path("/wallet_callback")
 public class MeoWalletWebhooksController {
-//Servelet
-//RequestMapping jax.
-
     private static final Logger logger = LoggerFactory.getLogger(MeoWalletWebhooksController.class);
 
-//    public static final String CONTROLLER_URL = "/treasury/document/payments/onlinepaymentsgateway";
-
-//    private static final String NOTIFICATION_URI = "/notification";
     private static final String NOTIFICATION_URI = "/";
-//    public static final String NOTIFICATION_URL = CONTROLLER_URL + NOTIFICATION_URI;
 
     @POST
     @Path(MeoWalletWebhooksController.NOTIFICATION_URI)
     @Consumes(MediaType.APPLICATION_JSON)
     public void notification(String body, @Context HttpServletRequest httpRequest, @Context HttpServletResponse response) {
+        MeoWalletLog log = createLog();
+
+        FenixFramework.atomic(() -> {
+            log.saveRequest(body);
+        });
 
         Gson s = new GsonBuilder()
                 .registerTypeAdapter(DateTime.class,
                         (JsonDeserializer<DateTime>) (json, typeOfT, context) -> new DateTime(json.getAsString()))
                 .setPrettyPrinting().create();
+
         MeoWalletCallbackBean bean = s.fromJson(body, MeoWalletCallbackBean.class);
 
-        final MeoWalletLog log = createLog();
-        
+        FenixFramework.atomic(() -> {
+            log.logRequestReceiveDateAndData(bean.getOperation_id(), "Notification", bean.getEvent(), bean.getAmount(),
+                    bean.getOperation_status(), !MeoWallet.STATUS_FAIL.equals(bean.getOperation_status()));
+
+            log.setExtInvoiceId(bean.getExt_invoiceid());
+            log.setMeoWalletId(bean.getOperation_id());
+            log.setTransactionWithPayment(MeoWallet.STATUS_COMPLETED.equals(bean.getOperation_status()));
+        });
+
         try {
 
-            FenixFramework.atomic(() -> {
-                log.logRequestReceiveDateAndData(bean.getOperation_id(), "Notification", bean.getEvent(), bean.getAmount(),
-                        bean.getOperation_status(), !MeoWallet.STATUS_FAIL.equals(bean.getOperation_status()));
-            });
-
-            response.setStatus(HttpServletResponse.SC_OK);
-
-            FenixFramework.atomic(() -> {
-                log.setExtInvoiceId(bean.getExt_invoiceid());
-                log.setMeoWalletId(bean.getOperation_id());
-                
-                log.setTransactionWithPayment(MeoWallet.STATUS_COMPLETED.equals(bean.getOperation_status()));
-            });
-
-            // Find payment code
-            final Optional<SibsPaymentRequest> referenceCodeOptional = Optional.ofNullable(
-                    SibsPaymentRequest.findBySibsGatewayMerchantTransactionId(bean.getExt_invoiceid()).findFirst().orElse(null));
+            final Optional<SibsPaymentRequest> referenceCodeOptional =
+                    SibsPaymentRequest.findBySibsGatewayMerchantTransactionId(bean.getExt_invoiceid()).findFirst();
 
             final Optional<MbwayRequest> mbwayPaymentRequestOptional =
                     MbwayRequest.findUniqueBySibsGatewayMerchantTransactionId(bean.getExt_invoiceid());
 
             if (referenceCodeOptional.isPresent()) {
+                MeoWallet digitalPaymentPlatform = (MeoWallet) referenceCodeOptional.get().getDigitalPaymentPlatform();
+                
+                if(!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
+                    throw new Exception("callback not verified");
+                }
+                
                 final SibsPaymentRequest paymentReferenceCode = referenceCodeOptional.get();
                 FenixFramework.atomic(() -> {
                     log.setPaymentRequest(paymentReferenceCode);
                 });
-                MeoWallet digitalPaymentPlatform = (MeoWallet) paymentReferenceCode.getDigitalPaymentPlatform();
+
                 digitalPaymentPlatform.processPaymentReferenceCodeTransaction(log, bean);
-                digitalPaymentPlatform.getMeoWalletService().verifyCallback(bean);
+
             } else if (mbwayPaymentRequestOptional.isPresent()) {
+                MeoWallet digitalPaymentPlatform = (MeoWallet) mbwayPaymentRequestOptional.get().getDigitalPaymentPlatform();
+                
+                if(!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
+                    throw new Exception("callback not verified");
+                }
+                
                 MbwayRequest mbwayRequest = mbwayPaymentRequestOptional.get();
-                MeoWallet digitalPaymentPlatform = (MeoWallet) mbwayRequest.getDigitalPaymentPlatform();
                 FenixFramework.atomic(() -> {
                     log.setPaymentRequest(mbwayRequest);
                 });
+
                 digitalPaymentPlatform.processMbwayTransaction(log, bean);
-                response.setStatus(HttpServletResponse.SC_OK);
-                digitalPaymentPlatform.getMeoWalletService().verifyCallback(bean);
             }
 
             response.setStatus(HttpServletResponse.SC_OK);
-        } catch (
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
-        Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            
             if (log != null) {
                 FenixFramework.atomic(() -> {
                     log.logException(e);
@@ -165,10 +169,8 @@ public class MeoWalletWebhooksController {
                     });
                 }
             }
-
-            logger.error(e.getLocalizedMessage(), e);
-
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            
+            
         }
     }
 

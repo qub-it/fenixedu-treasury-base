@@ -317,7 +317,7 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
 
     @Override
     public DateTime getPaymentDate() {
-        return getPaymentDate();
+        return this.modified_date;
     }
 
     @Override
