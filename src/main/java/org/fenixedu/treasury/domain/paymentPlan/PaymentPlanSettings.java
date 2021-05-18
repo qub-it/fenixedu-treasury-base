@@ -57,8 +57,6 @@ import java.util.stream.Stream;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
-import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 
 import pt.ist.fenixframework.Atomic;
@@ -74,8 +72,7 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
     }
 
     private PaymentPlanSettings(LocalizedString installmentDescriptionFormat, Boolean interestCalculationOfDebitsInPlans,
-            Product emolumentProduct, Integer numberOfPaymentPlansActives, PaymentPlanNumberGenerator numberGenerator,
-            DigitalPaymentPlatform digitalPaymentPlatform) {
+            Product emolumentProduct, Integer numberOfPaymentPlansActives, PaymentPlanNumberGenerator numberGenerator) {
         this();
 
         setInstallmentDescriptionFormat(installmentDescriptionFormat);
@@ -84,7 +81,7 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
 
         setNumberOfPaymentPlansActives(numberOfPaymentPlansActives);
         setNumberGenerators(numberGenerator);
-        setDigitalPaymentPlatform(digitalPaymentPlatform);
+//        setDigitalPaymentPlatform(digitalPaymentPlatform);
 
         checkRules();
     }
@@ -127,9 +124,9 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
     @Atomic
     public static PaymentPlanSettings create(LocalizedString installmentDescriptionFormat,
             Boolean interestCalculationOfDebitsInPlans, Product emolumentProduct, Integer numberOfPaymentPlansActives,
-            PaymentPlanNumberGenerator numberGenerator, DigitalPaymentPlatform digitalPaymentPlatform) {
+            PaymentPlanNumberGenerator numberGenerator) {
         return new PaymentPlanSettings(installmentDescriptionFormat, interestCalculationOfDebitsInPlans, emolumentProduct,
-                numberOfPaymentPlansActives, numberGenerator, digitalPaymentPlatform);
+                numberOfPaymentPlansActives, numberGenerator);
     }
 
     @Override
@@ -161,27 +158,12 @@ public class PaymentPlanSettings extends PaymentPlanSettings_Base {
         if (getActive().booleanValue()) {
             throw new TreasuryDomainException("error.PaymentPlanSettings.active.cannot.be.deleted");
         }
-        
+
         setDomainRoot(null);
         setTreasurySettings(null);
         setEmolumentProduct(null);
         setNumberGenerators(null);
-        setPaymentCodePool(null);
-        setDigitalPaymentPlatform(null);
-        
+
         super.deleteDomainObject();
     }
-
-    @Deprecated
-    @Override
-    public void setPaymentCodePool(PaymentCodePool paymentCodePool) {
-        super.setPaymentCodePool(paymentCodePool);
-    }
-
-    @Deprecated
-    @Override
-    public PaymentCodePool getPaymentCodePool() {
-        return super.getPaymentCodePool();
-    }
-
 }

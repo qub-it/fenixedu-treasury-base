@@ -244,5 +244,4 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
             PaymentMethod paymentMethod, boolean active) {
         return find(finantialInstitution).filter(d -> active == d.isActive(paymentMethod));
     }
-
 }

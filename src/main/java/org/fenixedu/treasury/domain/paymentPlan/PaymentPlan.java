@@ -127,7 +127,8 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public void createPaymentReferenceCode() {
-        DigitalPaymentPlatform paymentCodePool = PaymentPlanSettings.getActiveInstance().getDigitalPaymentPlatform();
+
+        DigitalPaymentPlatform paymentCodePool = getDebtAccount().getFinantialInstitution().getDefaultDigitalPaymentPlatform();
 
         if (paymentCodePool == null) {
             throw new IllegalArgumentException(TreasuryConstants.treasuryBundle("error.paymentPlan.paymentCodePool.required"));

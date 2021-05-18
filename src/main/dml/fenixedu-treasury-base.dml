@@ -569,6 +569,19 @@ class payments.integration.DigitalPaymentPlatform {
 		}
 	}
 
+	relation DefaultDigitalPaymentPlatformFinantialInstitution {
+		payments.integration.DigitalPaymentPlatform playsRole defaultDigitalPaymentPlatform {
+			multiplicity 0..1;
+		}
+		
+		FinantialInstitution playsRole defaultFinantialInstitution{
+			multiplicity 0..1;
+		}
+	
+		
+	}
+
+
 class payments.integration.DigitalPaymentPlatformPaymentMode {
 	boolean active;
 	String logosSmallImageFileId;
@@ -3097,7 +3110,7 @@ class paymentPlan.PaymentPlanSettings{
 			multiplicity 0..1;
 		}
 	}
-	
+	/**
 	// Deprecated	
 	relation PaymentCodePoolPaymentPlanSettings {
 		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool { 
@@ -3118,7 +3131,7 @@ class paymentPlan.PaymentPlanSettings{
 			multiplicity *; 
 		}
 	}
-	
+	**/
 class paymentPlan.PaymentPlanNumberGenerator {
 	LocalizedStringT name;
 	String prefix;
