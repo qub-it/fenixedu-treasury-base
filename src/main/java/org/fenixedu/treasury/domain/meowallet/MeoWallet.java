@@ -761,7 +761,7 @@ public class MeoWallet extends MeoWallet_Base
                     resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
                     resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
 
-            result.editTransactionDetails(resultCheckoutBean.getId(), resultCheckoutBean.getPayment().getDate(),
+            result.editTransactionDetails(resultCheckoutBean.getId(), resultCheckoutBean.getPayment().getModified_date(),
                     resultCheckoutBean.getPayment().getAmount());
 
             return result;
