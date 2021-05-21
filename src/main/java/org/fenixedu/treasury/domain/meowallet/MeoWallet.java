@@ -818,8 +818,8 @@ public class MeoWallet extends MeoWallet_Base
                     resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
                     resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
 
-            result.editTransactionDetails(resultCheckoutBean.getPayment().getId(), resultCheckoutBean.getPayment().getDate(),
-                    resultCheckoutBean.getPayment().getAmount());
+            result.editTransactionDetails(resultCheckoutBean.getPayment().getId(),
+                    resultCheckoutBean.getPayment().getModified_date(), resultCheckoutBean.getPayment().getAmount());
 
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
                     .contains(result.getStateType())) {
