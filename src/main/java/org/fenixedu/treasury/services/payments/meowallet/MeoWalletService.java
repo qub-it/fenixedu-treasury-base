@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.services.payments.meowallet;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -69,10 +68,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.fenixedu.onlinepaymentsgateway.api.SIBSOnlinePaymentsGatewayService;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
-import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCheckoutBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentBean;
-import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentItemBean;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.logging.LoggingFeature.Verbosity;
 import org.joda.time.DateTime;
@@ -86,6 +83,7 @@ import com.qubit.terra.framework.tools.gson.serializers.DateTimeSerializer;
 
 public class MeoWalletService {
 
+    private static final String WALLETS_METHODS = "wallets/methods";
     private static final String PAYMENT_PATH = "payment";
     private static final String MB_PAY_PATH = "mb/pay";
     private static final String WS_ACCESS_TOKEN_HEADER = "Authorization";
@@ -167,7 +165,7 @@ public class MeoWalletService {
         }
     }
 
-    public MeoWalletCheckoutBean getForwardPaymentTransactionReportByTransactionId(String id)
+    public MeoWalletCheckoutBean getForwardPaymentTransactionReportByCheckoutId(String id)
             throws OnlinePaymentsGatewayCommunicationException {
         String path = CHECKOUT_PATH + "/" + id;
         String requestLog = id;
@@ -190,28 +188,28 @@ public class MeoWalletService {
             String path = OPERATION_PATH + "/" + id;
             String requestLog = id;
             String responseLog = processGetService(path);
-            
+
             MeoWalletPaymentBean result = getGson().fromJson(responseLog, MeoWalletPaymentBean.class);
 
             result.setRequestLog(requestLog);
             result.setResponseLog(responseLog);
-            
+
             return result;
         } catch (Exception e) {
             String responseLog = null;
-            if(e instanceof WebApplicationException) {
+            if (e instanceof WebApplicationException) {
                 responseLog = ((WebApplicationException) e).getResponse().readEntity(String.class);
             }
-            
+
             throw new OnlinePaymentsGatewayCommunicationException(null, responseLog, e);
         }
     }
 
     public boolean verifyCallback(String webhookBody) {
         String path = "callback/verify";
-        
+
         String value = processPost(path, webhookBody);
-        
+
         return "true".equals(value);
     }
 
@@ -232,7 +230,6 @@ public class MeoWalletService {
                 list.add(result);
             }
             return list;
-
         } catch (WebApplicationException var23) {
             responseLog = var23.getResponse().readEntity(String.class);
             throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
@@ -264,6 +261,30 @@ public class MeoWalletService {
                 .post(Entity.json(requestLog)).readEntity(String.class);
 
         return responseLog;
+    }
+
+    public String[] getMethodsExceptIncluded(String[] includes) throws OnlinePaymentsGatewayCommunicationException {
+        String path = WALLETS_METHODS;
+
+        String responseLog = processGetService(path);
+        try {
+            List<String> list = new ArrayList<String>();
+            Gson gson = getGson();
+            JsonArray jsonArray = gson.fromJson(responseLog, JsonObject.class).getAsJsonArray("methods");
+            for (JsonElement jsonElement : jsonArray) {
+                list.add(jsonElement.getAsString());
+            }
+            for (String include : includes) {
+                list.remove(include);
+            }
+            String[] stockArr = new String[list.size()];
+            stockArr = list.toArray(stockArr);
+
+            return stockArr;
+
+        } catch (WebApplicationException var23) {
+            throw new OnlinePaymentsGatewayCommunicationException("Error on get methods", "Error on get methods", var23);
+        }
     }
 
 }

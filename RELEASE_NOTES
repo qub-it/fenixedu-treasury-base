@@ -1,3 +1,6 @@
+- Bug Fix: Meo Wallet payment exclude method add MB
+- Bug Fix: Meo Wallet Forward payment callback save payment
+
 7.1.0 (20-05-2021)
 - Improvement: Use default payment platform to Automatic rules and Academic services
 

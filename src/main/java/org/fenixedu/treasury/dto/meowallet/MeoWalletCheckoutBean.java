@@ -92,8 +92,8 @@ public class MeoWalletCheckoutBean {
         this.payment = paymentBean;
         this.url_confirm = successURL;
         this.url_cancel = insuccessUrl;
-        this.ext_invoiceid = extInvoiceId;
-        this.ext_customerid = extCustomerId;
+        paymentBean.setExt_invoiceid(extInvoiceId);
+        paymentBean.setExt_customerid(extCustomerId);
         this.exclude = exclude;
     }
 

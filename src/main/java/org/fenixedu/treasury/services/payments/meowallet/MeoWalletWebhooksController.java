@@ -65,10 +65,10 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.meowallet.MeoWallet;
 import org.fenixedu.treasury.domain.meowallet.MeoWalletLog;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
-import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
 import org.joda.time.DateTime;
@@ -119,11 +119,13 @@ public class MeoWalletWebhooksController {
 
             Optional<SibsPaymentRequest> referenceCodeOptional = Optional.ofNullable(null);
             Optional<MbwayRequest> mbwayPaymentRequestOptional = Optional.ofNullable(null);
+            Optional<ForwardPaymentRequest> forwardPaymentRequesteOptional = Optional.ofNullable(null);
 
             if (!StringUtils.isEmpty(bean.getExt_invoiceid())) {
                 referenceCodeOptional =
                         SibsPaymentRequest.findBySibsGatewayMerchantTransactionId(bean.getExt_invoiceid()).findFirst();
                 mbwayPaymentRequestOptional = MbwayRequest.findUniqueBySibsGatewayMerchantTransactionId(bean.getExt_invoiceid());
+                forwardPaymentRequesteOptional = ForwardPaymentRequest.findUniqueByMerchantTransactionId(bean.getExt_invoiceid());
             }
 
             if (referenceCodeOptional.isPresent()) {
@@ -143,7 +145,7 @@ public class MeoWalletWebhooksController {
             } else if (mbwayPaymentRequestOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) mbwayPaymentRequestOptional.get().getDigitalPaymentPlatform();
 
-                if(!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
+                if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
                     throw new Exception("callback not verified");
                 }
 
@@ -153,10 +155,23 @@ public class MeoWalletWebhooksController {
                 });
 
                 digitalPaymentPlatform.processMbwayTransaction(log, bean);
+            } else if (forwardPaymentRequesteOptional.isPresent()) {
+                MeoWallet digitalPaymentPlatform = (MeoWallet) forwardPaymentRequesteOptional.get().getDigitalPaymentPlatform();
+
+                if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
+                    throw new Exception("callback not verified");
+                }
+
+                ForwardPaymentRequest forwardPaymentRequest = forwardPaymentRequesteOptional.get();
+                FenixFramework.atomic(() -> {
+                    log.setPaymentRequest(forwardPaymentRequest);
+                });
+                digitalPaymentPlatform.processForwardPayment(log, bean);
             } else {
                 FenixFramework.atomic(() -> {
-                    log.logRequestReceiveDateAndData(bean.getTransactionId(), "Notification", bean.getPaymentType(), bean.getAmount(),
-                            bean.getPaymentResultCode(), !MeoWallet.STATUS_FAIL.equals(bean.getPaymentResultCode()));
+                    log.logRequestReceiveDateAndData(bean.getTransactionId(), "Notification", bean.getPaymentType(),
+                            bean.getAmount(), bean.getPaymentResultCode(),
+                            !MeoWallet.STATUS_FAIL.equals(bean.getPaymentResultCode()));
                 });
             }
 

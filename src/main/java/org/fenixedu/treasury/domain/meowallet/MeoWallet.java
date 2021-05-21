@@ -658,11 +658,11 @@ public class MeoWallet extends MeoWallet_Base
             MeoWalletCheckoutBean checkoutBean = new MeoWalletCheckoutBean(paymentBean,
                     forwardPayment.getForwardPaymentSuccessUrl(), forwardPayment.getForwardPaymentInsuccessUrl(),
                     merchantTransactionId, forwardPayment.getDebtAccount().getCustomer().getExternalId(),
-                    new String[] { "UNICRE", "PAYPAL", "MBWAY", "WALLET" });
+                    getMeoWalletService().getMethodsExceptIncluded(getIncludeMethod().split(",")));
 
             final MeoWalletCheckoutBean resultCheckoutBean = getMeoWalletService().prepareOnlinePaymentCheckout(checkoutBean);
             FenixFramework.atomic(() -> {
-                forwardPayment.setTransactionId(resultCheckoutBean.getId());
+                forwardPayment.setCheckoutId(resultCheckoutBean.getId());
                 forwardPayment.setRedirectUrl(resultCheckoutBean.getUrl_redirect());
             });
             DateTime requestReceiveDate = new DateTime();
@@ -752,7 +752,7 @@ public class MeoWallet extends MeoWallet_Base
     public ForwardPaymentStatusBean paymentStatus(ForwardPaymentRequest forwardPayment) {
         try {
             MeoWalletCheckoutBean resultCheckoutBean =
-                    getMeoWalletService().getForwardPaymentTransactionReportByTransactionId(forwardPayment.getCheckoutId());
+                    getMeoWalletService().getForwardPaymentTransactionReportByCheckoutId(forwardPayment.getCheckoutId());
 
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(resultCheckoutBean.getPayment().getStatus());
@@ -804,16 +804,10 @@ public class MeoWallet extends MeoWallet_Base
             return new PostProcessPaymentStatusBean(statusBean, forwardPayment.getState(), false);
         }
 
-        if (!forwardPayment.getState().isInStateToPostProcessPayment()) {
-            throw new TreasuryDomainException("error.ManageForwardPayments.forwardPayment.not.created.nor.requested",
-                    String.valueOf(forwardPayment.getOrderNumber()));
-        }
-
         try {
             DateTime requestSendDate = new DateTime();
-
             MeoWalletCheckoutBean resultCheckoutBean =
-                    getMeoWalletService().getForwardPaymentTransactionReportByTransactionId(specificTransactionId.get());
+                    getMeoWalletService().getForwardPaymentTransactionReportByCheckoutId(specificTransactionId.get());
 
             DateTime requestReceiveDate = new DateTime();
 
@@ -824,7 +818,7 @@ public class MeoWallet extends MeoWallet_Base
                     resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
                     resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
 
-            result.editTransactionDetails(resultCheckoutBean.getId(), resultCheckoutBean.getPayment().getDate(),
+            result.editTransactionDetails(resultCheckoutBean.getPayment().getId(), resultCheckoutBean.getPayment().getDate(),
                     resultCheckoutBean.getPayment().getAmount());
 
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
@@ -834,37 +828,22 @@ public class MeoWallet extends MeoWallet_Base
             }
 
             // First of all save sibsTransactionId
-            FenixFramework.atomic(() -> {
-                forwardPayment.setTransactionId(result.getTransactionId());
-            });
 
             PostProcessPaymentStatusBean returnBean =
                     new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
 
-            if (result.isInPayedState()) {
-                FenixFramework.atomic(() -> {
-                    MeoWalletLog log = (MeoWalletLog) forwardPayment.advanceToPaidState(result.getStatusCode(),
-                            result.getStatusMessage(), result.getPayedAmount(), result.getTransactionDate(),
-                            result.getTransactionId(), null, result.getRequestBody(), result.getResponseBody(), "");
+            returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands(resultCheckoutBean.getPayment().getMethod());
 
-                    log.setRequestSendDate(requestSendDate);
-                    log.setRequestReceiveDate(requestReceiveDate);
-                    log.setMeoWalletId(result.getTransactionId());
-                    log.savePaymentInfo(result.getPayedAmount(), result.getTransactionDate());
-                    log.setPaymentMethod(resultCheckoutBean.getPayment().getMethod());
-                });
+            MeoWalletLog log = FenixFramework.atomic(() -> {
+                MeoWalletLog log2 = new MeoWalletLog("processPaymentStatus", resultCheckoutBean.getPayment().getExt_invoiceid(),
+                        resultCheckoutBean.getPayment().getExt_customerid());
+                log2.setRequestSendDate(requestSendDate);
+                log2.setRequestReceiveDate(requestReceiveDate);
+                log2.setPaymentRequest(forwardPayment);
+                return log2;
+            });
 
-            } else if (result.isInRejectedState()) {
-                FenixFramework.atomic(() -> {
-                    MeoWalletLog log = (MeoWalletLog) forwardPayment.reject("postProcessPayment", result.getStatusCode(),
-                            result.getStatusMessage(), result.getRequestBody(), result.getResponseBody());
-
-                    log.setRequestSendDate(requestSendDate);
-                    log.setRequestReceiveDate(requestReceiveDate);
-                    log.setMeoWalletId(result.getTransactionId());
-                });
-
-            }
+            processPaymentStatus(log, forwardPayment, returnBean);
 
             return returnBean;
         } catch (final Exception e) {
@@ -963,7 +942,99 @@ public class MeoWallet extends MeoWallet_Base
 
     @Override
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
-        return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getTransactionId()));
+        return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getCheckoutId()));
+    }
+
+    public PostProcessPaymentStatusBean processForwardPayment(MeoWalletLog log, MeoWalletCallbackBean bean) {
+
+        ForwardPaymentRequest forwardPayment = (ForwardPaymentRequest) log.getPaymentRequest();
+
+        try {
+
+            final ForwardPaymentStateType stateType = translateForwardPaymentStateType(bean.getOperation_status());
+
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, bean.getOperation_status(), bean.getOperation_status(), "", "");
+
+            result.editTransactionDetails(bean.getOperation_id(), bean.getModified_date(), bean.getAmount());
+            if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
+                    .contains(result.getStateType())) {
+                // Do nothing
+                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
+            }
+
+            PostProcessPaymentStatusBean returnBean =
+                    new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
+            returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands(bean.getMethod());
+
+            processPaymentStatus(log, forwardPayment, returnBean);
+
+            return returnBean;
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                PaymentRequestLog log2 = forwardPayment.logException(e);
+                if (!StringUtils.isEmpty(requestBody)) {
+                    log.saveRequest(requestBody);
+                }
+
+                if (!StringUtils.isEmpty(responseBody)) {
+                    log.saveResponse(responseBody);
+                }
+            });
+
+            throw new TreasuryDomainException(e,
+                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
+        }
+    }
+
+    @Atomic
+    private void processPaymentStatus(MeoWalletLog log, ForwardPaymentRequest forwardPayment,
+            PostProcessPaymentStatusBean returnBean) {
+        ForwardPaymentStatusBean result = returnBean.getForwardPaymentStatusBean();
+
+        log.setStateCode(result.getStatusCode());
+        log.setStateDescription(result.getStateType().getLocalizedName());
+        log.setStatusMessage(result.getStatusMessage());
+
+        if (forwardPayment.getState().isPayed() || forwardPayment.getState().isRejected()) {
+            log.setTransactionWithPayment(forwardPayment.getState().isPayed());
+            log.setOperationCode("processDuplicated");
+            log.setOperationSuccess(true);
+            return;
+        }
+
+        forwardPayment.setTransactionId(result.getTransactionId());
+        if (result.isInPayedState()) {
+            PaymentTransaction paymentTransaction = forwardPayment.advanceToPaidState(result.getStatusCode(),
+                    result.getPayedAmount(), result.getTransactionDate(), result.getTransactionId(), null);
+
+            log.setOperationCode("advanceToPaidState");
+            log.setOperationSuccess(true);
+            log.setTransactionWithPayment(true);
+            log.setPaymentTransaction(paymentTransaction);
+            log.saveRequest(result.getRequestBody());
+            log.saveResponse(result.getResponseBody());
+
+            log.setMeoWalletId(result.getTransactionId());
+            log.savePaymentInfo(result.getPayedAmount(), result.getTransactionDate());
+            log.setPaymentMethod(result.getSibsOnlinePaymentBrands());
+
+        } else if (result.isInRejectedState()) {
+            forwardPayment.reject();
+
+            log.setOperationCode("postProcessPayment");
+            log.setOperationSuccess(false);
+            log.setTransactionWithPayment(false);
+            log.setMeoWalletId(result.getTransactionId());
+        }
     }
 
 }

@@ -3214,9 +3214,7 @@ class paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueVali
 class meowallet.MeoWallet extends payments.integration.DigitalPaymentPlatform {
 	String authorizationAPIToken;
 	String endpointUrl;
-	
-	//ReferenceCode só se não for ilimitada
-	//int numberOfMonthsToExpirePaymentReferenceCode;
+	String includeMethod;
 }
 
 class meowallet.MeoWalletLog extends payments.PaymentRequestLog {

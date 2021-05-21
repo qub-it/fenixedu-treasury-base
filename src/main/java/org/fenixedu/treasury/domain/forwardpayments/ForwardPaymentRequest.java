@@ -168,6 +168,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return true;
     }
 
+    @Deprecated
     public PaymentRequestLog reject(String operationCode, String statusCode, String errorMessage, String requestBody,
             String responseBody) {
         setState(ForwardPaymentStateType.REJECTED);
@@ -180,6 +181,12 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         checkRules();
 
         return log;
+    }
+
+    public void reject() {
+        setState(ForwardPaymentStateType.REJECTED);
+
+        checkRules();
     }
 
     public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage,
@@ -227,6 +234,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return log;
     }
 
+    @Deprecated
     public PaymentRequestLog advanceToPaidState(String statusCode, String statusMessage, BigDecimal paidAmount,
             DateTime transactionDate, String transactionId, String authorizationNumber, String requestBody, String responseBody,
             String justification) {
@@ -266,12 +274,50 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         PaymentTransaction paymentTransaction =
                 PaymentTransaction.create(this, transactionId, transactionDate, paidAmount, resultSettlementNotes);
         paymentTransaction.setJustification(justification);
-        
+
         log.setPaymentTransaction(paymentTransaction);
 
         checkRules();
 
         return log;
+    }
+
+    public PaymentTransaction advanceToPaidState(String statusCode, BigDecimal paidAmount, DateTime transactionDate,
+            String transactionId, String justification) {
+
+        if (!isActive()) {
+            throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
+        }
+
+        if (isInPaidState()) {
+            throw new ForwardPaymentAlreadyPayedException("error.ForwardPayment.already.payed");
+        }
+
+        if (!getPaymentTransactionsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.ForwardPayment.with.settlement.note.already.associated");
+        }
+
+        setState(ForwardPaymentStateType.PAYED);
+
+        Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
+                (o) -> fillPaymentEntryPropertiesMap(transactionId, transactionDate, statusCode);
+
+        Set<SettlementNote> resultSettlementNotes = null;
+        if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+            resultSettlementNotes = internalProcessPaymentInNormalPaymentMixingLegacyInvoices(paidAmount, transactionDate,
+                    String.valueOf(getOrderNumber()), transactionId, additionalPropertiesMapFunction);
+        } else {
+            resultSettlementNotes = internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(paidAmount, transactionDate,
+                    String.valueOf(getOrderNumber()), transactionId, additionalPropertiesMapFunction);
+        }
+
+        PaymentTransaction paymentTransaction =
+                PaymentTransaction.create(this, transactionId, transactionDate, paidAmount, resultSettlementNotes);
+        paymentTransaction.setJustification(justification);
+
+        checkRules();
+
+        return paymentTransaction;
     }
 
     private Map<String, String> fillPaymentEntryPropertiesMap(String transactionId, DateTime transactionDate, String statusCode) {
@@ -349,5 +395,9 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         request.setForwardPaymentInsuccessUrl(insuccessUrlFunction.apply(request));
 
         return request;
+    }
+
+    public static Optional<ForwardPaymentRequest> findUniqueByMerchantTransactionId(String merchantTransactionId) {
+        return findAll().filter(pr -> pr.getMerchantTransactionId().equals(merchantTransactionId)).findFirst();
     }
 }
