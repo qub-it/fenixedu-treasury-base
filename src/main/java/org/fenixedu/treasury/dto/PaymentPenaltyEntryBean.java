@@ -133,9 +133,9 @@ public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITr
         return false;
     }
 
-//    @Override
-//    public boolean isForPaymentPenalty() {
-//        return true;
-//    }
+    @Override
+    public boolean isForPaymentPenalty() {
+        return true;
+    }
 
 }
