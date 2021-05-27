@@ -113,6 +113,16 @@ class PaymentMethod {
 	boolean availableForPaymentInApplication;
 }
 
+	relation PaymentMethodBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		PaymentMethod playsRole paymentMethods {
+			multiplicity *;
+		}
+	}
+
 class integration.Configuration
 {
     boolean active;
@@ -374,19 +384,72 @@ class document.PaymentEntry {
 	String propertiesJsonMap;
 }
 
+	relation PaymentEntryBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		document.PaymentEntry playsRole paymentEntries {
+			multiplicity *;
+		}
+	}
+
+	relation PaymentEntrySettlementNote {
+		document.SettlementNote playsRole settlementNote {
+			multiplicity 1..1;
+		}
+	
+		document.PaymentEntry playsRole paymentEntries {
+			multiplicity *;
+		}
+	}	
+
+	relation PaymentEntryPaymentMode {
+		PaymentMethod playsRole paymentMethod {
+			multiplicity 1..1;
+		}
+		
+		document.PaymentEntry playsRole paymentEntries {
+			multiplicity *;
+		}
+	}
+
 class document.ReimbursementEntry {
 	BigDecimalT reimbursedAmount;
 	String reimbursementMethodId;
+	String propertiesJsonMap;
 }
 
+	relation ReimbursementEntryBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		document.ReimbursementEntry playsRole reimbursementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation ReimbursementEntrySettlementNote {
+		document.SettlementNote playsRole settlementNote {
+			multiplicity 1..1;
+		}
+	
+		document.ReimbursementEntry playsRole reimbursementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation ReimbursementEntryPaymentMode {
+	    PaymentMethod playsRole paymentMethod {
+	        multiplicity 1..1;
+	    }
+	    
+	    document.ReimbursementEntry playsRole reimbursementEntries {
+	        multiplicity *;
+	    }
+	}
 
-/*
-class debt.DebitEntrySuspensionRequest {
-}
-
-class debt.DebitEntrySuspensionRequestEntry {
-}
-*/
 
 /*************
 * ACCESS CONTROL
@@ -1601,16 +1664,6 @@ relation CurrencyBennu {
 	}
 }
 
-relation PaymentMethodBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
-	}
-	
-	PaymentMethod playsRole paymentMethods {
-		multiplicity *;
-	}
-}
-
 relation TreasuryOperationLogBennu {
     .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
@@ -2074,68 +2127,8 @@ relation SettlementNoteAdvancedPaymentCreditNote{
 
 /* --- PaymentEntry --- */
 
-relation PaymentEntryBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
-	}
-	
-	document.PaymentEntry playsRole paymentEntries {
-		multiplicity *;
-	}
-}
-
-relation PaymentEntrySettlementNote {
-	document.SettlementNote playsRole settlementNote {
-		multiplicity 1..1;
-	}
-
-	document.PaymentEntry playsRole paymentEntries {
-		multiplicity *;
-	}
-}
-
-relation PaymentEntryPaymentMode {
-	PaymentMethod playsRole paymentMethod {
-		multiplicity 1..1;
-	}
-	
-	document.PaymentEntry playsRole paymentEntries {
-		multiplicity *;
-	}
-}
-
 
 /* --- ReimbursementEntry --- */
-
-relation ReimbursementEntryBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
-	}
-	
-	document.ReimbursementEntry playsRole reimbursementEntries {
-		multiplicity *;
-	}
-}
-
-relation ReimbursementEntrySettlementNote {
-	document.SettlementNote playsRole settlementNote {
-		multiplicity 1..1;
-	}
-
-	document.ReimbursementEntry playsRole reimbursementEntries {
-		multiplicity *;
-	}
-}
-
-relation ReimbursementEntryPaymentMode {
-    PaymentMethod playsRole paymentMethod {
-        multiplicity 1..1;
-    }
-    
-    document.ReimbursementEntry playsRole reimbursementEntries {
-        multiplicity *;
-    }
-}
 
 class document.reimbursement.ReimbursementProcessStatusType {
 	String code;
@@ -3236,3 +3229,44 @@ class meowallet.MeoWalletLog extends payments.PaymentRequestLog {
 	boolean transactionDuplicated;
 }
 
+
+/*************************
+* PaymentMethodReference *
+**************************/
+
+class PaymentMethodReference {
+	String name;
+	String paymentReferenceId;
+	boolean paymentMethodReferenceActive;
+	boolean defaultReference;
+}
+	
+	relation PaymentMethodReferenceDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentMethodReferencePaymentMethod {
+		PaymentMethod playsRole paymentMethod {
+			multiplicity 1..1;
+		}
+		
+		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentMethodReferenceFinantialInstitution {
+		FinantialInstitution playsRole finantialInstitution {
+			multiplicity 1..1;
+		}	
+		
+		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}

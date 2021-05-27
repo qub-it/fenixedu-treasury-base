@@ -54,9 +54,12 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.PaymentMethod;
+import org.fenixedu.treasury.domain.PaymentMethodReference;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
@@ -70,21 +73,30 @@ public class PaymentEntry extends PaymentEntry_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected PaymentEntry(final PaymentMethod paymentMethod, final SettlementNote settlementNote, 
-            final BigDecimal payedAmount, final String paymentMethodId, final Map<String, String> propertiesMap) {
+    protected PaymentEntry(final PaymentMethod paymentMethod, final SettlementNote settlementNote, final BigDecimal payedAmount,
+            final String paymentMethodId, final Map<String, String> propertiesMap) {
         this();
         init(paymentMethod, settlementNote, payedAmount, paymentMethodId, propertiesMap);
     }
 
-    protected void init(final PaymentMethod paymentMethod, final SettlementNote settlementNote, 
-            final BigDecimal payedAmount, final String paymentMethodId, final Map<String, String> propertiesMap) {
+    protected void init(final PaymentMethod paymentMethod, final SettlementNote settlementNote, final BigDecimal payedAmount,
+            final String paymentMethodId, final Map<String, String> propertiesMap) {
         setPaymentMethod(paymentMethod);
         setSettlementNote(settlementNote);
         setPayedAmount(payedAmount);
         setPaymentMethodId(paymentMethodId);
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
-        
-        
+
+        if (StringUtils.isEmpty(getPaymentMethodId()) && PaymentMethodReference.isPaymentMethodReferencesApplied()) {
+            // Apply default payment method reference if exists
+            Optional<PaymentMethodReference> defaultMethodReference = PaymentMethodReference.findUniqueDefaultPaymentMethodReference(getPaymentMethod(),
+                    getSettlementNote().getDebtAccount().getFinantialInstitution());
+            
+            if(defaultMethodReference.isPresent()) {
+                setPaymentMethodId(defaultMethodReference.get().getPaymentReferenceId());
+            }
+        }
+
         checkRules();
     }
 

@@ -191,6 +191,10 @@ public class SettlementNote extends SettlementNote_Base {
                 }
             }
         }
+        
+        if(getPaymentEntriesSet().size() > 1) {
+            throw new TreasuryDomainException("error.SettlementNote.only.one.payment.method.is.supported");
+        }
     }
 
     public void markAsUsedInBalanceTransfer() {
