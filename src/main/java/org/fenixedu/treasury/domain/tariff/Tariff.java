@@ -30,9 +30,9 @@ package org.fenixedu.treasury.domain.tariff;
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
+import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -178,7 +178,15 @@ public abstract class Tariff extends Tariff_Base {
 
         super.deleteDomainObject();
     }
+    
+    public abstract BigDecimal amountToPay();
 
+    /**
+     * Return if the tariff is specificed without any additional parameters for matching like degreeType, degree, cycle, and so on...
+     * @return
+     */
+    public abstract boolean isBroadTariffForFinantialEntity();
+    
     // @formatter: off
     /************
      * UTILS *

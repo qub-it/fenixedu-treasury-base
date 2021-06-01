@@ -3196,3 +3196,66 @@ class paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueVali
 	Integer numberInstallments;
 }
 
+/*
+ * PaymentPenalty - refactored from fenixedu-academic-treasury-base
+ */
+
+class paymentpenalty.PaymentPenaltyTaxSettings {
+	Boolean active;
+	LocalizedString emolumentDescription;
+	Boolean createPaymentCode;
+	Boolean applyPenaltyOnDebitsWithoutInterest;
+}
+
+	relation PaymentPenaltyTaxSettingsDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettings {
+			multiplicity *;
+		}
+	}
+
+	relation PaymentPenaltyTaxSettingsProduct {
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettingsForPenaltyProduct {
+			multiplicity *;
+		}
+	
+		.org.fenixedu.treasury.domain.Product playsRole penaltyProduct {
+			multiplicity 1..1;
+		}
+	}
+	
+	relation PaymentPenaltyTaxSettingsProductsToTax {
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettingsForTargetProduct {
+			multiplicity 0..1;
+		}
+		
+		.org.fenixedu.treasury.domain.Product playsRole targetProducts {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPenaltyTaxSettingsFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 1..1;
+		}		
+	
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettings {
+			multiplicity *;
+		}
+	}
+	
+class paymentpenalty.PaymentPenaltyTaxTreasuryEvent extends event.TreasuryEvent {
+}
+
+	relation PaymentPenaltyTaxTreasuryEventDebitEntry {
+		.org.fenixedu.treasury.domain.document.DebitEntry playsRole originDebitEntry {
+			multiplicity 1..1;
+		}
+		
+		paymentpenalty.PaymentPenaltyTaxTreasuryEvent playsRole paymentPenaltyTaxTreasuryEvent {
+			multiplicity *;
+		}
+	}
