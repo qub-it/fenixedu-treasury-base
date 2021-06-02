@@ -69,7 +69,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -83,7 +82,6 @@ import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
-import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
@@ -99,6 +97,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import pt.ist.fenixframework.Atomic;
+//import sun.text.normalizer.ICUBinary.Authenticate;
 
 public class DebitEntry extends DebitEntry_Base {
 
@@ -177,6 +176,7 @@ public class DebitEntry extends DebitEntry_Base {
             final DateTime entryDateTime) {
         init(debitNote, debtAccount, treasuryEvent, product, vat, amount, dueDate, propertiesMap, description, quantity,
                 interestRate, entryDateTime);
+
     }
 
     @Override
@@ -272,9 +272,7 @@ public class DebitEntry extends DebitEntry_Base {
             return new InterestRateBean();
         }
 
-        if (PaymentPlanSettings.getActiveInstance() != null
-                && !PaymentPlanSettings.getActiveInstance().getInterestCalculationOfDebitsInPlans() && isInOpenPaymentPlan()
-                && getOpenPaymentPlan().isCompliant(whenToCalculate)) {
+        if (isInOpenPaymentPlan() && getOpenPaymentPlan().isCompliant(whenToCalculate)) {
             return new InterestRateBean();
         }
 
@@ -535,11 +533,11 @@ public class DebitEntry extends DebitEntry_Base {
 
         SettlementEntry.create(creditEntry, settlementNote, creditEntry.getOpenAmount(),
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
-        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(), reasonDescription + ": " + getDescription(),
-                now, false);
-        
+        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(),
+                reasonDescription + ": " + getDescription(), now, false);
+
         InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
-        
+
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                 && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.exportedInLegacyERP.not.same");
@@ -653,24 +651,23 @@ public class DebitEntry extends DebitEntry_Base {
         for (SettlementEntry debitEntrySettlementEntry : getSettlementEntriesSet()) {
             SettlementNote note = (SettlementNote) debitEntrySettlementEntry.getFinantialDocument();
 
-            // Do not consider annuled settlement notes 
-            if(note.isAnnulled()) {
+            // Do not consider annuled settlement notes
+            if (note.isAnnulled()) {
                 continue;
             }
-            
+
             // Do not consider settlements with own credits
-            if(note.getSettlemetEntriesSet().stream()
-                .filter(se -> se != debitEntrySettlementEntry)
-                .filter(se -> se.getInvoiceEntry().isCreditNoteEntry())
-                .filter(se -> ((CreditEntry) se.getInvoiceEntry()).getDebitEntry() == this)
-                .anyMatch(se -> TreasuryConstants.isGreaterOrEqualThan(se.getAmount(), debitEntrySettlementEntry.getAmount()))) {
+            if (note.getSettlemetEntriesSet().stream().filter(se -> se != debitEntrySettlementEntry)
+                    .filter(se -> se.getInvoiceEntry().isCreditNoteEntry())
+                    .filter(se -> ((CreditEntry) se.getInvoiceEntry()).getDebitEntry() == this).anyMatch(se -> TreasuryConstants
+                            .isGreaterOrEqualThan(se.getAmount(), debitEntrySettlementEntry.getAmount()))) {
                 continue;
             }
-                
+
             settlementNotesToConsiderSet.add(note);
         }
-        
-        Optional<SettlementNote> settlementNote = 
+
+        Optional<SettlementNote> settlementNote =
                 settlementNotesToConsiderSet.stream().max(Comparator.comparing(SettlementNote::getPaymentDate));
 
         if (!settlementNote.isPresent()) {
@@ -710,7 +707,8 @@ public class DebitEntry extends DebitEntry_Base {
         propertiesMap.put(
                 TreasuryEvent.TreasuryEventKeys.COPY_DEBIT_ENTRY_RESPONSIBLE.getDescriptionI18N()
                         .getContent(TreasuryConstants.DEFAULT_LANGUAGE),
-                Authenticate.getUser() != null ? Authenticate.getUser().getUsername() : "");
+                TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+//                Authenticated.getUser() != null ? Authenticate.getUser().getUsername() : "");
 
         final DebitEntry result = DebitEntry.create(Optional.ofNullable(debitNoteToAssociate), debitEntryToCopy.getDebtAccount(),
                 debitEntryToCopy.getTreasuryEvent(), debitEntryToCopy.getVat(),
@@ -879,7 +877,7 @@ public class DebitEntry extends DebitEntry_Base {
             return getOpenAmount().add(getPendingInterestAmount());
         }
     }
-    
+
     public BigDecimal getOpenAmountWithInterestsAtDate(LocalDate date) {
         if (isAnnulled()) {
             return BigDecimal.ZERO;

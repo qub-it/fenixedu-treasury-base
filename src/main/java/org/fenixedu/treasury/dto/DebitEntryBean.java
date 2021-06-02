@@ -1,6 +1,6 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
+ * This file was created by Quorum Born IT <http://www.qub-it.com/> and its
+ * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa
  * software development project between Quorum Born IT and Serviços Partilhados da
  * Universidade de Lisboa:
  *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
@@ -8,7 +8,7 @@
  *
  * Contributors: ricardo.pedro@qub-it.com
  *
- * 
+ *
  * This file is part of FenixEdu Treasury.
  *
  * FenixEdu Treasury is free software: you can redistribute it and/or modify
@@ -33,8 +33,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.treasury.dto.ITreasuryBean;
-import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -43,11 +41,8 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
-import com.google.common.collect.Lists;
 
 public class DebitEntryBean implements ITreasuryBean {
 
@@ -347,8 +342,10 @@ public class DebitEntryBean implements ITreasuryBean {
     }
 
     public void refreshProductsDataSource(final FinantialInstitution finantialInstitution) {
-        setProductDataSource(isShowLegacyProducts() ? 
-                Product.findAllLegacy().filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution)).collect(Collectors.toList()) : 
-                    Product.findAllActive().filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution)).collect(Collectors.toList()));
+        setProductDataSource(isShowLegacyProducts() ? Product.findAllLegacy()
+                .filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution))
+                .collect(Collectors.toList()) : Product.findAllActive()
+                        .filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution))
+                        .collect(Collectors.toList()));
     }
 }

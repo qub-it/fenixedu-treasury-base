@@ -1,7 +1,6 @@
 package org.fenixedu.treasury.dto;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
@@ -52,19 +51,21 @@ public interface ISettlementInvoiceEntryBean {
     // TODO: Rename method to getPaymentCustomers or getPaymentCustomerSet
     public Set<Customer> getPaymentCustomer();
 
-    
     /*
      * Methods to support jsp, overriden in subclasses
      */
-    
+
     boolean isForDebitEntry();
-    
+
     boolean isForInstallment();
-    
+
     boolean isForCreditEntry();
-    
+
     boolean isForPendingInterest();
-    
+
+    boolean isForPaymentPenalty();
+
+    boolean isForPendingDebitEntry();
     /**
      * Descrição
      *

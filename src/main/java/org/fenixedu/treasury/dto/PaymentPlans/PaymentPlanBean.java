@@ -1,18 +1,17 @@
-package org.fenixedu.treasury.domain.paymentPlan.beans;
+package org.fenixedu.treasury.dto.PaymentPlans;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
-import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.Days;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.joda.time.LocalDate;
 
 public class PaymentPlanBean {
@@ -31,64 +30,53 @@ public class PaymentPlanBean {
     private LocalDate creationDate;
 
     private PaymentPlanValidator paymentPlanValidator;
+    private PaymentPlanConfigurator paymentPlanConfigurator;
     private boolean isChanged;
     private boolean withInitialValues;
+    private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
 
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
         this.debitEntries = new ArrayList<DebitEntry>();
+        this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
         this.debitAmount = BigDecimal.ZERO;
         this.interestAmount = BigDecimal.ZERO;
         this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
         this.creationDate = creationDate;
-        this.paymentPlanId = PaymentPlanSettings.getActiveInstance().getNumberGenerators().getNextNumberPreview();
         this.isChanged = false;
         this.withInitialValues = true;
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
         if (installmentsBean == null || isChanged) {
-            installmentsBean = createInstallmentsBean();
+            installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this);
             isChanged = false;
         }
         return installmentsBean;
     }
 
-    private List<InstallmentBean> createInstallmentsBean() {
-        List<InstallmentBean> result = new ArrayList<InstallmentBean>();
-
-        LocalDate installmentDueDate = startDate;
-        BigDecimal installmentAmmount = getInstallmentAmmount();
-        BigDecimal restAmount = getTotalAmount();
-        for (int i = 1; i <= nbInstallments; i++) {
-            LocalizedString installmentDescription = Installment.installmentDescription(i, paymentPlanId);
-            if (i == nbInstallments) {
-                installmentAmmount = restAmount;
-                installmentDueDate = endDate;
-            }
-            InstallmentBean installmentBean = new InstallmentBean(installmentDueDate, installmentDescription, installmentAmmount);
-
-            result.add(installmentBean);
-            installmentDueDate = startDate.plusDays(getPlusDaysForInstallment(i));
-            restAmount = restAmount.subtract(installmentAmmount);
-        }
-
-        return result;
-    }
-
-    private int getPlusDaysForInstallment(int i) {
-        return Double.valueOf(((i) * getDaysBeweenInstallments())).intValue();
-    }
-
-    private double getDaysBeweenInstallments() {
-        return nbInstallments == 1 ? 0 : Days.daysBetween(startDate, endDate).getDays() / (nbInstallments - 1.00);
-    }
-
-    private BigDecimal getInstallmentAmmount() {
-        return debtAccount.getFinantialInstitution().getCurrency()
-                .getValueWithScale(TreasuryConstants.divide(getTotalAmount(), new BigDecimal(nbInstallments)));
-    }
+//    private List<InstallmentBean> createInstallmentsBean() {
+//        List<InstallmentBean> result = new ArrayList<InstallmentBean>();
+//
+//        LocalDate installmentDueDate = startDate;
+//        BigDecimal installmentAmmount = getInstallmentAmmount();
+//        BigDecimal restAmount = getTotalAmount();
+//        for (int i = 1; i <= nbInstallments; i++) {
+//            LocalizedString installmentDescription = getPaymentPlanConfigurator().getInstallmentDescription(i, paymentPlanId);
+//            if (i == nbInstallments) {
+//                installmentAmmount = restAmount;
+//                installmentDueDate = endDate;
+//            }
+//            InstallmentBean installmentBean = new InstallmentBean(installmentDueDate, installmentDescription, installmentAmmount);
+//
+//            result.add(installmentBean);
+//            installmentDueDate = startDate.plusDays(getPlusDaysForInstallment(i));
+//            restAmount = restAmount.subtract(installmentAmmount);
+//        }
+//
+//        return result;
+//    }
 
     public BigDecimal getTotalAmount() {
         return debitAmount.add(emolumentAmount).add(interestAmount);
@@ -189,10 +177,10 @@ public class PaymentPlanBean {
 
     public BigDecimal getTotalInstallments() {
         if (installmentsBean == null) {
-            installmentsBean = createInstallmentsBean();
+            installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this);
         }
 
-        return installmentsBean.stream().map(i -> i.getInstallmentAmmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
+        return installmentsBean.stream().map(i -> i.getInstallmentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
                 RoundingMode.HALF_UP);
     }
 
@@ -245,4 +233,35 @@ public class PaymentPlanBean {
     public void setCreationDate(LocalDate creationDate) {
         this.creationDate = creationDate;
     }
+
+    public PaymentPlanConfigurator getPaymentPlanConfigurator() {
+        return paymentPlanConfigurator;
+    }
+
+    public void setPaymentPlanConfigurator(PaymentPlanConfigurator paymentPlanConfigurator) {
+        this.paymentPlanConfigurator = paymentPlanConfigurator;
+        this.paymentPlanId = paymentPlanConfigurator.getNumberGenerators().getNextNumberPreview();
+
+    }
+
+    public Set<ISettlementInvoiceEntryBean> getSettlementInvoiceEntryBeans() {
+        return settlementInvoiceEntryBeans;
+    }
+
+    public void setSettlementInvoiceEntryBeans(Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans) {
+        this.settlementInvoiceEntryBeans = settlementInvoiceEntryBeans;
+    }
+
+    public void addSettlementInvoiceEntryBean(ISettlementInvoiceEntryBean settlementInvoiceEntryBeans) {
+        this.settlementInvoiceEntryBeans.add(settlementInvoiceEntryBeans);
+    }
+
+    public void removeSettlementInvoiceEntryBean(ISettlementInvoiceEntryBean settlementInvoiceEntryBeans) {
+        this.settlementInvoiceEntryBeans.remove(settlementInvoiceEntryBeans);
+    }
+
+    public void createInstallmentsBean(List<LocalDate> dates) {
+        installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this, dates);
+    }
+
 }

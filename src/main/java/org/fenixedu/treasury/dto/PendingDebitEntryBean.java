@@ -3,43 +3,33 @@ package org.fenixedu.treasury.dto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.joda.time.LocalDate;
 
-public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
+public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private Product product;
+    private BigDecimal amount;
+    private LocalDate dueDate;
 
-    private boolean isIncluded;
-
-    private boolean isNotValid;
-
-    private BigDecimal settledAmount;
-
-    private Installment installment;
-
-    public InstallmentPaymenPlanBean() {
+    public PendingDebitEntryBean(Product product, BigDecimal amount, LocalDate dueDate) {
+        super();
+        this.product = product;
+        this.amount = amount;
+        this.dueDate = dueDate;
     }
 
-    public InstallmentPaymenPlanBean(Installment installment) {
-        this.installment = installment;
-        this.isIncluded = false;
-        this.isNotValid = false;
-        this.settledAmount = installment.getOpenAmount();
+    public Product getProduct() {
+        return this.product;
     }
 
-    public Installment getInstallment() {
-        return installment;
-    }
-
-    public void setInstallment(Installment installment) {
-        this.installment = installment;
+    public void setProduct(Product emolumentProduct) {
+        this.product = emolumentProduct;
     }
 
     @Override
@@ -49,33 +39,36 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public String getDescription() {
-        return installment.getDescription().getContent();
+        return product.getName().getContent();
     }
 
     @Override
     public LocalDate getDueDate() {
-        return installment.getDueDate();
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 
     @Override
     public BigDecimal getEntryAmount() {
-        return installment.getTotalAmount();
+        return amount;
     }
 
     @Override
     public BigDecimal getEntryOpenAmount() {
-        return installment.getOpenAmount();
+        return amount;
     }
 
     @Override
     public BigDecimal getSettledAmount() {
-        return settledAmount;
+        return amount;
     }
 
     @Override
     public void setSettledAmount(BigDecimal debtAmount) {
-        this.settledAmount = debtAmount;
-
+        amount = debtAmount;
     }
 
     @Override
@@ -90,22 +83,22 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public boolean isIncluded() {
-        return isIncluded;
+        return false;
     }
 
     @Override
     public void setIncluded(boolean isIncluded) {
-        this.isIncluded = isIncluded;
+
     }
 
     @Override
     public boolean isNotValid() {
-        return isNotValid;
+        return false;
     }
 
     @Override
     public void setNotValid(boolean notValid) {
-        this.isNotValid = notValid;
+
     }
 
     @Override
@@ -115,10 +108,7 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public Set<Customer> getPaymentCustomer() {
-        return installment.getInstallmentEntriesSet().stream().map(entry -> entry.getDebitEntry().getDebitNote() != null
-                && entry.getDebitEntry().getDebitNote().getPayorDebtAccount() != null ? entry.getDebitEntry().getDebitNote()
-                        .getPayorDebtAccount().getCustomer() : entry.getDebitEntry().getDebtAccount().getCustomer())
-                .collect(Collectors.toSet());
+        return null;
     }
 
     @Override
@@ -128,7 +118,7 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public boolean isForInstallment() {
-        return true;
+        return false;
     }
 
     @Override
@@ -148,6 +138,7 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public boolean isForPendingDebitEntry() {
-        return false;
+        return true;
     }
+
 }
