@@ -20,6 +20,7 @@ import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -71,7 +72,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         }
         if (s1.isForPaymentPenalty()) {
             if (s2.isForDebitEntry()) {
-                return ((InterestEntryBean) s1).getDebitEntry() == s2.getInvoiceEntry() ? 1 : s1.getDueDate()
+                return ((PaymentPenaltyEntryBean) s1).getDebitEntry() == s2.getInvoiceEntry() ? 1 : s1.getDueDate()
                         .compareTo(s2.getDueDate());
             } else {
                 if (s2.isForPaymentPenalty()) {
@@ -218,7 +219,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
                         PaymentPenaltyEntryBean paymentPenaltyEntryBean =
                                 updateRelatedPenaltyTax((DebitEntryBean) bean, paymentPlanBean, installmentBean.getDueDate());
                         if (paymentPenaltyEntryBean != null && !isDividePenaltyTax()) {
-                            if (!invoiceEntries.contains(interestEntryBean)) {
+                            if (!invoiceEntries.contains(paymentPenaltyEntryBean)) {
                                 invoiceEntries.add(0, paymentPenaltyEntryBean);
                             }
                             restAmount = getSumAmountOf(invoiceEntries, result, paymentPlanBean).add(installmentEntryAmount);
@@ -237,8 +238,12 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
 
     protected PaymentPenaltyEntryBean updateRelatedPenaltyTax(DebitEntryBean bean, PaymentPlanBean paymentPlanBean,
             LocalDate dueDate) {
-        return new PaymentPenaltyEntryBean(bean.getDebitEntry(), "Penalty Tax - " + bean.getDebitEntry().getDescription(),
-                dueDate, BigDecimal.TEN);
+        PaymentPenaltyEntryBean calculatePaymentPenaltyTax = PaymentPenaltyTaxTreasuryEvent
+                .calculatePaymentPenaltyTax(bean.getDebitEntry(), dueDate, paymentPlanBean.getCreationDate());
+        if (calculatePaymentPenaltyTax != null) {
+            paymentPlanBean.addSettlementInvoiceEntryBean(calculatePaymentPenaltyTax);
+        }
+        return calculatePaymentPenaltyTax;
     }
 
     protected InterestEntryBean updateRelatedInterests(DebitEntryBean bean, PaymentPlanBean paymentPlanBean,

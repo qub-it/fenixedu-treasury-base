@@ -21,9 +21,11 @@ import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.PendingDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
@@ -175,8 +177,8 @@ public class PaymentPlan extends PaymentPlan_Base {
 
         //PendingDebitEntries (Emolument)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPendingDebitEntry())
-                .forEach(pendigBean -> {
-                    PendingDebitEntryBean debitEntryBean = (PendingDebitEntryBean) pendigBean;
+                .forEach(bean -> {
+                    PendingDebitEntryBean debitEntryBean = (PendingDebitEntryBean) bean;
 
                     Optional<DebitNote> debitNote = createDebitNote(paymentPlanBean, this);
                     Product product = debitEntryBean.getProduct();
@@ -186,13 +188,13 @@ public class PaymentPlan extends PaymentPlan_Base {
                     DebitEntry debitEntry = createDebitEntry(debtAccount, debitNote, debitEntryBean.getDescription(),
                             debitEntryBean.getSettledAmount(), creationDate, endDate, product, vat);
 
-                    result.put(pendigBean, debitEntry);
+                    result.put(bean, debitEntry);
                 });
 
         //Interests (Interests)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPendingInterest())
-                .forEach(pendigBean -> {
-                    InterestEntryBean interestEntryBean = (InterestEntryBean) pendigBean;
+                .forEach(bean -> {
+                    InterestEntryBean interestEntryBean = (InterestEntryBean) bean;
 
                     Optional<DebitNote> debitNote = createDebitNote(paymentPlanBean, this);
                     Product product = TreasurySettings.getInstance().getInterestProduct();
@@ -203,8 +205,18 @@ public class PaymentPlan extends PaymentPlan_Base {
                             interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat);
 
                     interestEntryBean.getDebitEntry().addInterestDebitEntries(debitEntry);
-                    result.put(pendigBean, debitEntry);
+                    result.put(bean, debitEntry);
                 });
+        //PenaltyTax (PenaltyTax)
+        paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPaymentPenalty())
+                .forEach(bean -> {
+                    PaymentPenaltyEntryBean penaltyBean = (PaymentPenaltyEntryBean) bean;
+
+                    DebitEntry debitEntry = PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(
+                            penaltyBean.getDebitEntry(), penaltyBean.getDueDate(), paymentPlanBean.getCreationDate());
+                    result.put(bean, debitEntry);
+                });
+
         return result;
     }
 

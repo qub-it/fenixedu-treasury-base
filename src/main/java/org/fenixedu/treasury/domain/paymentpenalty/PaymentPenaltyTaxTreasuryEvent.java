@@ -130,10 +130,10 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         Tariff tariff = null;
         if (originDebitEntry.getTreasuryEvent() != null) {
             tariff = originDebitEntry.getTreasuryEvent()
-                    .findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), whenDebtCreationDate)
+                    .findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), lastPaymentDate)
                     .orElse(null);
         } else {
-            tariff = Tariff.find(settings.getPenaltyProduct(), whenDebtCreationDate.toDateTimeAtStartOfDay())
+            tariff = Tariff.find(settings.getPenaltyProduct(), lastPaymentDate.toDateTimeAtStartOfDay())
                     .filter(t -> t.getFinantialEntity() == settings.getFinantialEntity())
                     .filter(t -> t.isBroadTariffForFinantialEntity()).findFirst().orElse(null);
         }
@@ -150,7 +150,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         }
 
         BigDecimal totalAmount = tariff.amountToPay();
-        LocalDate dueDate = tariff.dueDate(whenDebtCreationDate);
+        LocalDate dueDate = tariff.dueDate(lastPaymentDate);
 
         LocalizedString emolumentDescription = settings.buildEmolumentDescription(originDebitEntry);
         return new PaymentPenaltyEntryBean(originDebitEntry, emolumentDescription.getContent(TreasuryConstants.DEFAULT_LANGUAGE),
@@ -214,14 +214,14 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
         DebitNote debitNote = DebitNote.create(debtAccount, documentNumberSeries, whenDebtCreationDate.toDateTimeAtStartOfDay());
         BigDecimal totalAmount = tariff.amountToPay();
-        LocalDate dueDate = tariff.dueDate(whenDebtCreationDate);
+        LocalDate dueDate = tariff.dueDate(lastPaymentDate);
         Vat vat = Vat.findActiveUnique(settings.getPenaltyProduct().getVatType(), finantialInstitution,
                 whenDebtCreationDate.toDateTimeAtStartOfDay()).get();
 
         DebitEntry penaltyDebitEntry = DebitEntry.create(Optional.of(debitNote), debtAccount, paymentPenaltyTaxTreasuryEvent, vat,
                 totalAmount, dueDate, Collections.emptyMap(), settings.getPenaltyProduct(),
                 paymentPenaltyTaxTreasuryEvent.getDescription().getContent(TreasuryConstants.DEFAULT_LANGUAGE), BigDecimal.ONE,
-                tariff.getInterestRate(), whenDebtCreationDate.toDateTimeAtStartOfDay());
+                tariff.getInterestRate(), lastPaymentDate.toDateTimeAtStartOfDay());
 
         {
             Map<String, String> map = penaltyDebitEntry.getPropertiesMap();
@@ -242,9 +242,6 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
     }
 
     private static boolean shouldPenaltyBeCreatedForDebitEntry(DebitEntry originDebitEntry, LocalDate lastPaymentDate) {
-        if (originDebitEntry.isInDebt()) {
-            return false;
-        }
 
         if (originDebitEntry.getDebtAccount().getCustomer().isAdhocCustomer()) {
             return false;
@@ -262,7 +259,6 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             return false;
         }
 
-        // TODO: Check if the open payment plan it is compliant, but now for consider to not create penalty
         if (originDebitEntry.getOpenPaymentPlan() != null) {
             return false;
         }
@@ -296,6 +292,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         return true;
     }
 
+    @Deprecated
     public static Set<DebitEntry> checkAndCreatePaymentPenaltyTaxesFromSettlementNote(SettlementNote settlementNote) {
 
         Set<DebitEntry> result = new HashSet<>();
@@ -309,7 +306,9 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             }
 
             final DebitEntry d = (DebitEntry) invoiceEntry;
-
+            if (d.isInDebt()) {
+                continue;
+            }
             DateTime lastPaymentDate = d.getLastPaymentDate();
 
             if (lastPaymentDate == null) {
