@@ -1,3 +1,4 @@
+7.1.0 (07-06-2021)
 - Refactor: Refactor payment penalty from fenixedu-academic-treasury-base to fenixedu-treasury
 - Improvement: Use default payment platform to Automatic rules and Academic services
 
