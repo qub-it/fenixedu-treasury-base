@@ -3143,7 +3143,6 @@ class paymentPlan.PaymentPlanConfigurator{
 	}
 	
 	class paymentPlan.PaymentPlanCaculateInstallmentsInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{
-		Boolean blockInterestBeforePaymentPlanDate;
 	}
 	
 	class paymentPlan.PaymentPlanBlockInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{

@@ -32,13 +32,12 @@ public class PaymentPlanCaculateInstallmentsInterestsConfigurator
                         .filter(interestbean -> interestbean.isForPendingInterest()
                                 && ((InterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
                         .findFirst().orElse(null);
-
         DebitEntry debitEntry = bean.getDebitEntry();
+
         if (!debitEntry.isApplyInterests()) {
             return null;
         }
-
-        BigDecimal calculatedInterests = bean.getSettledAmount().subtract(bean.getEntryOpenAmount());
+        BigDecimal calculatedInterests = BigDecimal.ZERO;
         if (debitEntry.getInterestRate().getInterestType().isFixedAmount()) {
             if (TreasuryConstants.isPositive(calculatedInterests)) {
                 return null;
@@ -49,6 +48,14 @@ public class PaymentPlanCaculateInstallmentsInterestsConfigurator
         if (debitEntry.getInterestRate().getInterestType().isGlobalRate()) {
             LocalDate startDate = debitEntry.getDueDate().isAfter(paymentPlanBean.getCreationDate()) ? debitEntry
                     .getDueDate() : paymentPlanBean.getCreationDate();
+
+            BigDecimal interestAmountBeforePlan = debitEntry.calculateAllInterestValue(startDate).getInterestAmount();
+
+            BigDecimal totalInterestCreated =
+                    debitEntry.getInterestDebitEntriesSet().stream().filter(interest -> !interest.isAnnulled())
+                            .map(interest -> interest.getAvailableAmountForCredit()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            calculatedInterests = BigDecimal.ZERO.subtract(totalInterestCreated.subtract(interestAmountBeforePlan));
 
             for (InstallmentBean installment : result) {
                 InstallmentEntryBean installmentEntryBean = installment.getInstallmentEntries().stream()
@@ -64,7 +71,9 @@ public class PaymentPlanCaculateInstallmentsInterestsConfigurator
                         installment.getDueDate(), paymentPlanBean);
                 calculatedInterests = calculatedInterests.add(interest);
             }
+
         }
+
         if (TreasuryConstants.isPositive(calculatedInterests)) {
             if (interestEntryBean == null) {
                 InterestRateBean interestRateBean = new InterestRateBean();
@@ -102,6 +111,6 @@ public class PaymentPlanCaculateInstallmentsInterestsConfigurator
 
     @Override
     public boolean isInterestBlocked() {
-        return Boolean.TRUE.equals(getBlockInterestBeforePaymentPlanDate());
+        return true;
     }
 }

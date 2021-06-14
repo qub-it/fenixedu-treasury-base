@@ -2,25 +2,23 @@ package org.fenixedu.treasury.dto.PaymentPlans;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.joda.time.LocalDate;
 
 public class PaymentPlanBean {
 
     private DebtAccount debtAccount;
-    private List<DebitEntry> debitEntries;
-    private BigDecimal debitAmount;
     private BigDecimal emolumentAmount;
-    private BigDecimal interestAmount;
     private int nbInstallments;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -28,6 +26,7 @@ public class PaymentPlanBean {
     private String paymentPlanId;
     private List<InstallmentBean> installmentsBean;
     private LocalDate creationDate;
+    private List<? extends ISettlementInvoiceEntryBean> allDebits;
 
     private PaymentPlanValidator paymentPlanValidator;
     private PaymentPlanConfigurator paymentPlanConfigurator;
@@ -37,15 +36,19 @@ public class PaymentPlanBean {
 
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
-        this.debitEntries = new ArrayList<DebitEntry>();
         this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
-        this.debitAmount = BigDecimal.ZERO;
-        this.interestAmount = BigDecimal.ZERO;
         this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
         this.creationDate = creationDate;
         this.isChanged = false;
         this.withInitialValues = true;
+
+        allDebits = debtAccount.getPendingInvoiceEntriesSet().stream()
+                .filter(f -> f.isDebitNoteEntry() && !((DebitEntry) f).isInOpenPaymentPlan()).map((debitEntry) -> {
+                    DebitEntryBean debitEntryBean = new DebitEntryBean((DebitEntry) debitEntry);
+                    debitEntryBean.setSettledAmount(debitEntry.getOpenAmountWithInterests());
+                    return debitEntryBean;
+                }).collect(Collectors.toList());
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
@@ -56,69 +59,12 @@ public class PaymentPlanBean {
         return installmentsBean;
     }
 
-//    private List<InstallmentBean> createInstallmentsBean() {
-//        List<InstallmentBean> result = new ArrayList<InstallmentBean>();
-//
-//        LocalDate installmentDueDate = startDate;
-//        BigDecimal installmentAmmount = getInstallmentAmmount();
-//        BigDecimal restAmount = getTotalAmount();
-//        for (int i = 1; i <= nbInstallments; i++) {
-//            LocalizedString installmentDescription = getPaymentPlanConfigurator().getInstallmentDescription(i, paymentPlanId);
-//            if (i == nbInstallments) {
-//                installmentAmmount = restAmount;
-//                installmentDueDate = endDate;
-//            }
-//            InstallmentBean installmentBean = new InstallmentBean(installmentDueDate, installmentDescription, installmentAmmount);
-//
-//            result.add(installmentBean);
-//            installmentDueDate = startDate.plusDays(getPlusDaysForInstallment(i));
-//            restAmount = restAmount.subtract(installmentAmmount);
-//        }
-//
-//        return result;
-//    }
-
-    public BigDecimal getTotalAmount() {
-        return debitAmount.add(emolumentAmount).add(interestAmount);
-    }
-
-    public List<DebitEntry> getDebitEntries() {
-        return debitEntries;
-    }
-
-    public void addDebitEntry(DebitEntry entry) {
-        debitEntries.add(entry);
-        this.isChanged = true;
-    }
-
-    public void removeDebitEntry(DebitEntry entry) {
-        debitEntries.remove(entry);
-    }
-
-    public BigDecimal getDebitAmount() {
-        return debitAmount;
-    }
-
-    public void setDebitAmount(BigDecimal debitAmount) {
-        this.debitAmount = debitAmount;
-        this.isChanged = true;
-    }
-
     public BigDecimal getEmolumentAmount() {
         return emolumentAmount;
     }
 
     public void setEmolumentAmount(BigDecimal emolumentAmount) {
         this.emolumentAmount = emolumentAmount;
-        this.isChanged = true;
-    }
-
-    public BigDecimal getInterestAmount() {
-        return interestAmount;
-    }
-
-    public void setInterestAmount(BigDecimal interestAmount) {
-        this.interestAmount = interestAmount;
         this.isChanged = true;
     }
 
@@ -205,23 +151,6 @@ public class PaymentPlanBean {
         this.isChanged = true;
     }
 
-    public void calculeTotalAndInterestsAmount(LocalDate date) {
-        BigDecimal debitAmount = BigDecimal.ZERO;
-        BigDecimal interestAmount = BigDecimal.ZERO;
-
-        for (DebitEntry debitEntry : getDebitEntries()) {
-            debitAmount = debitAmount.add(debitEntry.getAmountInDebt(LocalDate.now()));
-            interestAmount = interestAmount.add(debitEntry.getPendingInterestAmount(date));
-        }
-        setDebitAmount(debitAmount);
-        setInterestAmount(interestAmount);
-    }
-
-    public BigDecimal getMaxInterestAmount() {
-        return debitEntries.stream().map(d -> d.getPendingInterestAmount(creationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-    }
-
     public boolean isWithInitialValues() {
         return withInitialValues;
     }
@@ -262,6 +191,14 @@ public class PaymentPlanBean {
 
     public void createInstallmentsBean(List<LocalDate> dates) {
         installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this, dates);
+    }
+
+    public List<? extends ISettlementInvoiceEntryBean> getAllDebits() {
+        return allDebits;
+    }
+
+    public void setAllDebits(List<? extends ISettlementInvoiceEntryBean> allDebits) {
+        this.allDebits = allDebits;
     }
 
 }

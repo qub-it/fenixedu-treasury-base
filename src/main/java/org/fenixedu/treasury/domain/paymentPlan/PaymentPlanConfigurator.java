@@ -44,43 +44,78 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         if (s1.isForPendingDebitEntry() || s2.isForPendingDebitEntry()) {
             return s1.isForPendingDebitEntry() ? -1 : 1;
         }
-        if (s1.isForDebitEntry()) {
-            if (!(s2.isForPendingInterest() || s2.isForPaymentPenalty())) {
-                return s1.getDueDate().compareTo(s2.getDueDate());
+        /**
+         * Divida1
+         * Taxa1
+         * Juro1
+         * Divida2
+         * Taxa2
+         * Juro2
+         */
+        String descriçãoS1 = s1.getDescription();
+        String descriçãoS2 = s2.getDescription();
+
+        DebitEntry debitEntryS1 = null;
+        DebitEntry interestEntryS1 = null;
+        DebitEntry penaltyTaxEntryS1 = null;
+
+        if (s1.isForPendingInterest() || (s1.isForDebitEntry() && ((DebitEntry) s1.getInvoiceEntry()).getDebitEntry() != null)) {
+            interestEntryS1 = s1.isForPendingInterest() ? ((InterestEntryBean) s1)
+                    .getDebitEntry() : ((DebitEntry) s1.getInvoiceEntry()).getDebitEntry();
+        } else if (s1.isForPaymentPenalty()
+                || (s1.isForDebitEntry() && ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent() != null
+                        && ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent)) {
+            penaltyTaxEntryS1 = s1.isForPaymentPenalty() ? ((PaymentPenaltyEntryBean) s1)
+                    .getDebitEntry() : ((PaymentPenaltyTaxTreasuryEvent) ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent())
+                            .getOriginDebitEntry();
+        } else {
+            debitEntryS1 = (DebitEntry) s1.getInvoiceEntry();
+        }
+
+        DebitEntry debitEntryS2 = null;
+        DebitEntry interestEntryS2 = null;
+        DebitEntry penaltyTaxEntryS2 = null;
+
+        if (s2.isForPendingInterest() || (s2.isForDebitEntry() && ((DebitEntry) s2.getInvoiceEntry()).getDebitEntry() != null)) {
+            interestEntryS2 = s2.isForPendingInterest() ? ((InterestEntryBean) s2)
+                    .getDebitEntry() : ((DebitEntry) s2.getInvoiceEntry()).getDebitEntry();
+        } else if (s2.isForPaymentPenalty()
+                || (s2.isForDebitEntry() && ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent() != null
+                        && ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent)) {
+            penaltyTaxEntryS2 = s2.isForPaymentPenalty() ? ((PaymentPenaltyEntryBean) s2)
+                    .getDebitEntry() : ((PaymentPenaltyTaxTreasuryEvent) ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent())
+                            .getOriginDebitEntry();
+        } else {
+            debitEntryS2 = (DebitEntry) s2.getInvoiceEntry();
+        }
+
+        if (debitEntryS1 != null) {
+            if (debitEntryS2 != null) {
+                return compareDebitEntryDueDate(debitEntryS1, debitEntryS2);
             } else {
-                DebitEntry debitEntry = s2.isForPendingInterest() ? ((InterestEntryBean) s2)
-                        .getDebitEntry() : ((PaymentPenaltyEntryBean) s2).getDebitEntry();
-                if (s1.getInvoiceEntry() == debitEntry) {
-                    return -1;
-                } else {
-                    return s1.getDueDate().compareTo(debitEntry.getDueDate());
-                }
+                DebitEntry debitAux = interestEntryS2 != null ? interestEntryS2 : penaltyTaxEntryS2;
+                return debitEntryS1 == debitAux ? -1 : compareDebitEntryDueDate(debitEntryS1, debitAux);
             }
         }
-        if (s1.isForPendingInterest()) {
-            if (s2.isForDebitEntry()) {
-                return ((InterestEntryBean) s1).getDebitEntry() == s2.getInvoiceEntry() ? 1 : s1.getDueDate()
-                        .compareTo(s2.getDueDate());
+
+        if (interestEntryS1 != null) {
+            if (interestEntryS2 != null) {
+                return interestEntryS1 == interestEntryS2 ? (s1.isForPendingInterest() ? 1 : -1) : compareDebitEntryDueDate(
+                        interestEntryS1, interestEntryS2);
             } else {
-                if (s2.isForPaymentPenalty()) {
-                    return ((InterestEntryBean) s1).getDebitEntry() == ((PaymentPenaltyEntryBean) s2).getDebitEntry() ? -1 : s1
-                            .getDueDate().compareTo(s2.getDueDate());
-                } else {
-                    return s1.getDueDate().compareTo(s2.getDueDate());
-                }
+                DebitEntry debitAux = debitEntryS2 != null ? debitEntryS2 : penaltyTaxEntryS2;
+                return interestEntryS1 == debitAux ? 1 : compareDebitEntryDueDate(interestEntryS1, debitAux);
             }
+
         }
-        if (s1.isForPaymentPenalty()) {
-            if (s2.isForDebitEntry()) {
-                return ((PaymentPenaltyEntryBean) s1).getDebitEntry() == s2.getInvoiceEntry() ? 1 : s1.getDueDate()
-                        .compareTo(s2.getDueDate());
+
+        if (penaltyTaxEntryS1 != null) {
+            if (penaltyTaxEntryS2 != null) {
+                return compareDebitEntryDueDate(penaltyTaxEntryS1, penaltyTaxEntryS2);
+            } else if (debitEntryS2 != null) {
+                return penaltyTaxEntryS1 == debitEntryS2 ? 1 : compareDebitEntryDueDate(penaltyTaxEntryS1, debitEntryS2);
             } else {
-                if (s2.isForPaymentPenalty()) {
-                    return s1.getDueDate().compareTo(s2.getDueDate());
-                } else {
-                    return ((PaymentPenaltyEntryBean) s1).getDebitEntry() == ((InterestEntryBean) s2).getDebitEntry() ? 1 : s1
-                            .getDueDate().compareTo(s2.getDueDate());
-                }
+                return penaltyTaxEntryS1 == interestEntryS2 ? -1 : compareDebitEntryDueDate(penaltyTaxEntryS1, interestEntryS2);
             }
         }
         return s1.getDueDate().compareTo(s2.getDueDate());
@@ -91,6 +126,11 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         setDomainRoot(FenixFramework.getDomainRoot());
         super.setActive(Boolean.FALSE);
         setTreasurySettings(TreasurySettings.getInstance());
+    }
+
+    private static int compareDebitEntryDueDate(DebitEntry debitEntry1, DebitEntry debitEntry2) {
+        return (debitEntry1.getDueDate().compareTo(debitEntry2.getDueDate()) * 10)
+                + debitEntry1.getExternalId().compareTo(debitEntry2.getExternalId());
     }
 
     protected PaymentPlanConfigurator(LocalizedString name, LocalizedString installmentDescriptionFormat,
@@ -405,16 +445,55 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
     }
 
     protected Predicate<? super ISettlementInvoiceEntryBean> getPredicateToDebitEntry() {
-        return bean -> !((bean.isForPendingInterest() && isDivideInterest())
-                || bean.isForPaymentPenalty() && isDividePenaltyTax());
+        return bean -> {
+            if (isDivideInterest()) {
+                if (bean.isForPendingInterest()) {
+                    return false;
+                }
+                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null) {
+                    return false;
+                }
+            }
+            if (isDividePenaltyTax()) {
+                if (bean.isForPaymentPenalty()) {
+                    return false;
+                }
+                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() != null
+                        && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent) {
+                    return false;
+                }
+            }
+            return true;
+        };
     }
 
     protected Predicate<? super ISettlementInvoiceEntryBean> getPredicateToInterestEntry() {
-        return bean -> bean.isForPendingInterest();
+        return bean -> {
+            if (isDivideInterest()) {
+                if (bean.isForPendingInterest()) {
+                    return true;
+                }
+                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null) {
+                    return true;
+                }
+            }
+            return false;
+        };
     }
 
     protected Predicate<? super ISettlementInvoiceEntryBean> getPredicateToPenaltyTaxEntry() {
-        return bean -> bean.isForPaymentPenalty();
+        return bean -> {
+            if (isDividePenaltyTax()) {
+                if (bean.isForPaymentPenalty()) {
+                    return true;
+                }
+                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() != null
+                        && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent) {
+                    return true;
+                }
+            }
+            return false;
+        };
     }
 
     protected boolean diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents(List<InstallmentBean> installments,
