@@ -118,10 +118,11 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     @Atomic
+    // TODO: By the method name, it is difficult to know that this method change instance data. The method name should be renamed.
     public void nonCompliance(LocalDate date) {
         setState(PaymentPlanStateType.NON_COMPLIANCE);
         setStateReason(
-                TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.nonCompliance", date.toString("dd/MM/yyyy")));
+                TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.nonCompliance", date.toString("yyyy-MM-dd")));
     }
 
     public Map<String, String> getPropertiesMap() {
@@ -319,7 +320,7 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     public void tryClosePaymentPlanByPaidOff() {
         if (getSortedOpenInstallments().isEmpty()) {
-            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff"));
+            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff") + " [" + new LocalDate().toString("yyyy-MM-dd") + "]");
         }
     }
 

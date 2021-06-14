@@ -24,6 +24,7 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -128,7 +129,8 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
         Tariff tariff = null;
         if (originDebitEntry.getTreasuryEvent() != null) {
-            tariff = originDebitEntry.getTreasuryEvent().findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), whenDebtCreationDate)
+            tariff = originDebitEntry.getTreasuryEvent()
+                    .findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), whenDebtCreationDate)
                     .orElse(null);
         } else {
             tariff = Tariff.find(settings.getPenaltyProduct(), whenDebtCreationDate.toDateTimeAtStartOfDay())
@@ -182,18 +184,18 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
         Tariff tariff = null;
         if (originDebitEntry.getTreasuryEvent() != null) {
-            tariff = originDebitEntry.getTreasuryEvent().findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), whenDebtCreationDate)
+            tariff = originDebitEntry.getTreasuryEvent()
+                    .findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), whenDebtCreationDate)
                     .orElse(null);
         }
 
-        if(tariff == null) {
+        if (tariff == null) {
             // Fallback to tariff which is only associated with finantial entity, without degree, degreeType, etc...
             tariff = Tariff.find(settings.getPenaltyProduct(), whenDebtCreationDate.toDateTimeAtStartOfDay())
                     .filter(t -> t.getFinantialEntity() == settings.getFinantialEntity())
-                    .filter(t -> t.isBroadTariffForFinantialEntity())
-                    .findFirst().orElse(null);
+                    .filter(t -> t.isBroadTariffForFinantialEntity()).findFirst().orElse(null);
         }
-        
+
         if (tariff == null) {
             throw new TreasuryDomainException(
                     "error.PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax.tariff.not.found");
@@ -262,6 +264,18 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
         // TODO: Check if the open payment plan it is compliant, but now for consider to not create penalty
         if (originDebitEntry.getOpenPaymentPlan() != null) {
+            return false;
+        }
+        
+        boolean hasSettlementInValidPaymentPlan =
+                originDebitEntry.getSettlementEntriesSet().stream().filter(se -> se.getFinantialDocument().isAnnulled())
+                        .filter(se -> se.getSettlementNote().getPaymentDate().toLocalDate().isEqual(lastPaymentDate))
+                        .flatMap(se -> se.getInstallmentSettlementEntriesSet().stream())
+                        .filter(ise -> !ise.getInstallmentEntry().getInstallment().getDueDate().isBefore(lastPaymentDate))
+                        .anyMatch(ise -> ise.getInstallmentEntry().getInstallment().getPaymentPlan()
+                                .getState() != PaymentPlanStateType.ANNULED);
+
+        if (hasSettlementInValidPaymentPlan) {
             return false;
         }
 
