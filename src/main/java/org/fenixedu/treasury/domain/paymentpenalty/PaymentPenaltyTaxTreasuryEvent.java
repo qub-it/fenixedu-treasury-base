@@ -268,7 +268,8 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         }
         
         boolean hasSettlementInValidPaymentPlan =
-                originDebitEntry.getSettlementEntriesSet().stream().filter(se -> se.getFinantialDocument().isAnnulled())
+                originDebitEntry.getSettlementEntriesSet().stream()
+                        .filter(se -> !se.getFinantialDocument().isAnnulled())
                         .filter(se -> se.getSettlementNote().getPaymentDate().toLocalDate().isEqual(lastPaymentDate))
                         .flatMap(se -> se.getInstallmentSettlementEntriesSet().stream())
                         .filter(ise -> !ise.getInstallmentEntry().getInstallment().getDueDate().isBefore(lastPaymentDate))
