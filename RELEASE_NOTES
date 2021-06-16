@@ -1,3 +1,5 @@
+- New Fixture: Payment plan configurators with custom interests and penalties calculations, and debit entries distribution in installments
+
 7.1.1 (14-06-2021)
 - Improvement: Add date when payment plan is closed by settlement
 - Bug Fix: Do not create payment penalty for settlement entries, of created settlement note, which has installment settlement entries in which installment due date is not before of payment date
