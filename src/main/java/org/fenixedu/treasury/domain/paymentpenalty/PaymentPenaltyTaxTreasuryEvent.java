@@ -44,13 +44,20 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
         super.init(product, description);
 
+        super.setDebtAccount(debitEntry.getDebtAccount());
         super.setOriginDebitEntry(debitEntry);
+        
+        checkRules();
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         super.checkRules();
 
+        if (super.getDebtAccount() == null) {
+            throw new TreasuryDomainException("error.PaymentPenaltyTaxTreasuryEvent.debtAccount.required");
+        }
+        
         if (super.getOriginDebitEntry() == null) {
             throw new TreasuryDomainException("error.PaymentPenaltyTaxTreasuryEvent.originDebitEntry.required");
         }
@@ -293,6 +300,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
     }
 
     @Deprecated
+    // Soon this will not be needed
     public static Set<DebitEntry> checkAndCreatePaymentPenaltyTaxesFromSettlementNote(SettlementNote settlementNote) {
 
         Set<DebitEntry> result = new HashSet<>();
@@ -325,7 +333,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             }
 
         }
-
+        
         return result;
     }
 

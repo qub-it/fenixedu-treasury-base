@@ -84,6 +84,8 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
         setDomainRoot(null);
         setFinantialEntity(null);
         setPenaltyProduct(null);
+        
+        getTargetProductsSet().clear();
 
         super.deleteDomainObject();
     }
