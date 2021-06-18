@@ -1418,6 +1418,7 @@ relation ERPImportOperationFinantialDocument {
 class settings.TreasurySettings {
 	boolean restrictPaymentMixingLegacyInvoices;
 	String forwardPaymentReturnDefaultURL;
+	Integer numberOfPaymentPlansActivesPerStudent;
 }
 
 	relation TreasurySettingsBennu {
@@ -3103,28 +3104,52 @@ class paymentPlan.PaymentPlanSettings{
 			multiplicity 0..1;
 		}
 	}
-	/**
-	// Deprecated	
-	relation PaymentCodePoolPaymentPlanSettings {
-		paymentcodes.pool.PaymentCodePool playsRole paymentCodePool { 
-			multiplicity 0..1; 
+
+class paymentPlan.PaymentPlanConfigurator{
+	Boolean active;
+	LocalizedStringT name;
+	LocalizedStringT installmentDescriptionFormat;
+	Boolean usePaymentPenalty;
+	Boolean divideInterestsByAllInstallments;
+	Boolean dividePaymentPenaltyByAllInstallments;
+}	
+	relation PaymentPlanConfiguratorDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
 		}
-		
-		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
-			multiplicity *; 
+	
+		paymentPlan.PaymentPlanConfigurator playsRole paymentPlanConfigurators {
+			multiplicity *;
 		}
 	}
 	
-	relation DigitalPaymentPlatformPaymentPlanSettings {
-		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform { 
-			multiplicity 0..1; 
+	relation PaymentPlanConfiguratorTreasurySettings {
+		settings.TreasurySettings playsRole treasurySettings {
+			multiplicity 1..1;
 		}
-		
-		paymentPlan.PaymentPlanSettings playsRole paymentPlanSettings { 
-			multiplicity *; 
+	
+		paymentPlan.PaymentPlanConfigurator playsRole paymentPlanConfigurators {
+			multiplicity *;
 		}
 	}
-	**/
+	
+	relation PaymentPlanConfiguratorProduct {
+		Product playsRole emolumentProduct {
+			multiplicity 0..1;
+		}
+	
+		paymentPlan.PaymentPlanConfigurator playsRole paymentPlanConfigurators {
+			multiplicity *;
+		}
+	}
+	
+	class paymentPlan.PaymentPlanCaculateInstallmentsInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{
+	}
+	
+	class paymentPlan.PaymentPlanBlockInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{
+		Boolean applyDebitEntryInterest;
+	}
+	
 class paymentPlan.PaymentPlanNumberGenerator {
 	LocalizedStringT name;
 	String prefix;
@@ -3150,7 +3175,16 @@ class paymentPlan.PaymentPlanNumberGenerator {
 			multiplicity *; 
 		}
 	}
-
+	
+	relation PaymentPlanNumberGeneratorPaymentPlanConfigurator {
+		paymentPlan.PaymentPlanNumberGenerator playsRole numberGenerators { 
+			multiplicity 0..1; 
+		}
+		
+		paymentPlan.PaymentPlanConfigurator playsRole paymentPlanConfigurators { 
+			multiplicity *; 
+		}
+	}
 class paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 }
 	relation PaymentPlanValidatorDomainRoot {
@@ -3267,6 +3301,70 @@ class PaymentMethodReference {
 		}	
 		
 		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}
+
+/*
+ * PaymentPenalty - refactored from fenixedu-academic-treasury-base
+ */
+
+class paymentpenalty.PaymentPenaltyTaxSettings {
+	Boolean active;
+	LocalizedStringT emolumentDescription;
+	Boolean createPaymentCode;
+	Boolean applyPenaltyOnDebitsWithoutInterest;
+}
+
+	relation PaymentPenaltyTaxSettingsDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettings {
+			multiplicity *;
+		}
+	}
+
+	relation PaymentPenaltyTaxSettingsProduct {
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettingsForPenaltyProduct {
+			multiplicity *;
+		}
+	
+		.org.fenixedu.treasury.domain.Product playsRole penaltyProduct {
+			multiplicity 1..1;
+		}
+	}
+	
+	relation PaymentPenaltyTaxSettingsProductsToTax {
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettingsForTargetProduct {
+			multiplicity 0..1;
+		}
+		
+		.org.fenixedu.treasury.domain.Product playsRole targetProducts {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPenaltyTaxSettingsFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 1..1;
+		}		
+	
+		paymentpenalty.PaymentPenaltyTaxSettings playsRole paymentPenaltyTaxSettings {
+			multiplicity *;
+		}
+	}
+	
+class paymentpenalty.PaymentPenaltyTaxTreasuryEvent extends event.TreasuryEvent {
+}
+
+	relation PaymentPenaltyTaxTreasuryEventDebitEntry {
+		.org.fenixedu.treasury.domain.document.DebitEntry playsRole originDebitEntry {
+			multiplicity 1..1;
+		}
+		
+		paymentpenalty.PaymentPenaltyTaxTreasuryEvent playsRole paymentPenaltyTaxTreasuryEvent {
 			multiplicity *;
 		}
 	}

@@ -50,30 +50,27 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.domain.paymentPlan.beans;
+package org.fenixedu.treasury.dto.PaymentPlans;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
-import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.Days;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.joda.time.LocalDate;
 
 public class PaymentPlanBean {
 
     private DebtAccount debtAccount;
-    private List<DebitEntry> debitEntries;
-    private BigDecimal debitAmount;
     private BigDecimal emolumentAmount;
-    private BigDecimal interestAmount;
     private int nbInstallments;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -81,91 +78,37 @@ public class PaymentPlanBean {
     private String paymentPlanId;
     private List<InstallmentBean> installmentsBean;
     private LocalDate creationDate;
+    private List<? extends ISettlementInvoiceEntryBean> allDebits;
 
     private PaymentPlanValidator paymentPlanValidator;
+    private PaymentPlanConfigurator paymentPlanConfigurator;
     private boolean isChanged;
     private boolean withInitialValues;
+    private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
 
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
-        this.debitEntries = new ArrayList<DebitEntry>();
-        this.debitAmount = BigDecimal.ZERO;
-        this.interestAmount = BigDecimal.ZERO;
+        this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
         this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
         this.creationDate = creationDate;
-        this.paymentPlanId = PaymentPlanSettings.getActiveInstance().getNumberGenerators().getNextNumberPreview();
         this.isChanged = false;
         this.withInitialValues = true;
+
+        allDebits = debtAccount.getPendingInvoiceEntriesSet().stream()
+                .filter(f -> f.isDebitNoteEntry() && !((DebitEntry) f).isInOpenPaymentPlan()).map((debitEntry) -> {
+                    DebitEntryBean debitEntryBean = new DebitEntryBean((DebitEntry) debitEntry);
+                    debitEntryBean.setSettledAmount(debitEntry.getOpenAmountWithInterests());
+                    return debitEntryBean;
+                }).collect(Collectors.toList());
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
         if (installmentsBean == null || isChanged) {
-            installmentsBean = createInstallmentsBean();
+            installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this);
             isChanged = false;
         }
         return installmentsBean;
-    }
-
-    private List<InstallmentBean> createInstallmentsBean() {
-        List<InstallmentBean> result = new ArrayList<InstallmentBean>();
-
-        LocalDate installmentDueDate = startDate;
-        BigDecimal installmentAmmount = getInstallmentAmmount();
-        BigDecimal restAmount = getTotalAmount();
-        for (int i = 1; i <= nbInstallments; i++) {
-            LocalizedString installmentDescription = Installment.installmentDescription(i, paymentPlanId);
-            if (i == nbInstallments) {
-                installmentAmmount = restAmount;
-                installmentDueDate = endDate;
-            }
-            InstallmentBean installmentBean = new InstallmentBean(installmentDueDate, installmentDescription, installmentAmmount);
-
-            result.add(installmentBean);
-            installmentDueDate = startDate.plusDays(getPlusDaysForInstallment(i));
-            restAmount = restAmount.subtract(installmentAmmount);
-        }
-
-        return result;
-    }
-
-    private int getPlusDaysForInstallment(int i) {
-        return Double.valueOf(((i) * getDaysBeweenInstallments())).intValue();
-    }
-
-    private double getDaysBeweenInstallments() {
-        return nbInstallments == 1 ? 0 : Days.daysBetween(startDate, endDate).getDays() / (nbInstallments - 1.00);
-    }
-
-    private BigDecimal getInstallmentAmmount() {
-        return debtAccount.getFinantialInstitution().getCurrency()
-                .getValueWithScale(TreasuryConstants.divide(getTotalAmount(), new BigDecimal(nbInstallments)));
-    }
-
-    public BigDecimal getTotalAmount() {
-        return debitAmount.add(emolumentAmount).add(interestAmount);
-    }
-
-    public List<DebitEntry> getDebitEntries() {
-        return debitEntries;
-    }
-
-    public void addDebitEntry(DebitEntry entry) {
-        debitEntries.add(entry);
-        this.isChanged = true;
-    }
-
-    public void removeDebitEntry(DebitEntry entry) {
-        debitEntries.remove(entry);
-    }
-
-    public BigDecimal getDebitAmount() {
-        return debitAmount;
-    }
-
-    public void setDebitAmount(BigDecimal debitAmount) {
-        this.debitAmount = debitAmount;
-        this.isChanged = true;
     }
 
     public BigDecimal getEmolumentAmount() {
@@ -174,15 +117,6 @@ public class PaymentPlanBean {
 
     public void setEmolumentAmount(BigDecimal emolumentAmount) {
         this.emolumentAmount = emolumentAmount;
-        this.isChanged = true;
-    }
-
-    public BigDecimal getInterestAmount() {
-        return interestAmount;
-    }
-
-    public void setInterestAmount(BigDecimal interestAmount) {
-        this.interestAmount = interestAmount;
         this.isChanged = true;
     }
 
@@ -241,10 +175,10 @@ public class PaymentPlanBean {
 
     public BigDecimal getTotalInstallments() {
         if (installmentsBean == null) {
-            installmentsBean = createInstallmentsBean();
+            installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this);
         }
 
-        return installmentsBean.stream().map(i -> i.getInstallmentAmmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
+        return installmentsBean.stream().map(i -> i.getInstallmentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
                 RoundingMode.HALF_UP);
     }
 
@@ -269,23 +203,6 @@ public class PaymentPlanBean {
         this.isChanged = true;
     }
 
-    public void calculeTotalAndInterestsAmount(LocalDate date) {
-        BigDecimal debitAmount = BigDecimal.ZERO;
-        BigDecimal interestAmount = BigDecimal.ZERO;
-
-        for (DebitEntry debitEntry : getDebitEntries()) {
-            debitAmount = debitAmount.add(debitEntry.getAmountInDebt(LocalDate.now()));
-            interestAmount = interestAmount.add(debitEntry.getPendingInterestAmount(date));
-        }
-        setDebitAmount(debitAmount);
-        setInterestAmount(interestAmount);
-    }
-
-    public BigDecimal getMaxInterestAmount() {
-        return debitEntries.stream().map(d -> d.getPendingInterestAmount(creationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-    }
-
     public boolean isWithInitialValues() {
         return withInitialValues;
     }
@@ -297,4 +214,43 @@ public class PaymentPlanBean {
     public void setCreationDate(LocalDate creationDate) {
         this.creationDate = creationDate;
     }
+
+    public PaymentPlanConfigurator getPaymentPlanConfigurator() {
+        return paymentPlanConfigurator;
+    }
+
+    public void setPaymentPlanConfigurator(PaymentPlanConfigurator paymentPlanConfigurator) {
+        this.paymentPlanConfigurator = paymentPlanConfigurator;
+        this.paymentPlanId = paymentPlanConfigurator.getNumberGenerators().getNextNumberPreview();
+
+    }
+
+    public Set<ISettlementInvoiceEntryBean> getSettlementInvoiceEntryBeans() {
+        return settlementInvoiceEntryBeans;
+    }
+
+    public void setSettlementInvoiceEntryBeans(Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans) {
+        this.settlementInvoiceEntryBeans = settlementInvoiceEntryBeans;
+    }
+
+    public void addSettlementInvoiceEntryBean(ISettlementInvoiceEntryBean settlementInvoiceEntryBeans) {
+        this.settlementInvoiceEntryBeans.add(settlementInvoiceEntryBeans);
+    }
+
+    public void removeSettlementInvoiceEntryBean(ISettlementInvoiceEntryBean settlementInvoiceEntryBeans) {
+        this.settlementInvoiceEntryBeans.remove(settlementInvoiceEntryBeans);
+    }
+
+    public void createInstallmentsBean(List<LocalDate> dates) {
+        installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this, dates);
+    }
+
+    public List<? extends ISettlementInvoiceEntryBean> getAllDebits() {
+        return allDebits;
+    }
+
+    public void setAllDebits(List<? extends ISettlementInvoiceEntryBean> allDebits) {
+        this.allDebits = allDebits;
+    }
+
 }

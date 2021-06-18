@@ -50,47 +50,22 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.domain.paymentPlan.beans;
+package org.fenixedu.treasury.domain.paymentPlan;
 
-import java.math.BigDecimal;
+public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInterestsConfigurator_Base {
 
-import org.fenixedu.commons.i18n.LocalizedString;
-import org.joda.time.LocalDate;
-
-public class InstallmentBean {
-
-    private LocalDate dueDate;
-    private LocalizedString description;
-    private BigDecimal installmentAmmount;
-
-    public InstallmentBean(LocalDate installmentDueDate, LocalizedString description, BigDecimal installmentAmmount) {
+    public PaymentPlanBlockInterestsConfigurator() {
         super();
-        this.dueDate = installmentDueDate;
-        this.description = description;
-        this.installmentAmmount = installmentAmmount;
     }
 
-    public LocalDate getDueDate() {
-        return dueDate;
+    @Override
+    public boolean isApplyInterest() {
+        return Boolean.TRUE.equals(getApplyDebitEntryInterest());
     }
 
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
+    @Override
+    public boolean isInterestBlocked() {
+        return !isApplyInterest();
     }
 
-    public LocalizedString getDescription() {
-        return description;
-    }
-
-    public void setDescription(LocalizedString description) {
-        this.description = description;
-    }
-
-    public BigDecimal getInstallmentAmmount() {
-        return installmentAmmount;
-    }
-
-    public void setInstallmentAmmount(BigDecimal installmentAmmount) {
-        this.installmentAmmount = installmentAmmount;
-    }
 }

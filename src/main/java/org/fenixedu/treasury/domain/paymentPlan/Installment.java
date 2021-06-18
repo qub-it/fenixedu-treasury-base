@@ -54,13 +54,10 @@ package org.fenixedu.treasury.domain.paymentPlan;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.text.StrSubstitutor;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -167,23 +164,4 @@ public class Installment extends Installment_Base {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
 
-    public static LocalizedString installmentDescription(int installmentNumber, String paymentPlanId) {
-        Map<String, String> values = new HashMap<>();
-        values.put("installmentNumber", "" + installmentNumber);
-        values.put("paymentPlanId", paymentPlanId);
-
-        PaymentPlanSettings activeInstance = PaymentPlanSettings.getActiveInstance();
-        if (activeInstance == null) {
-            throw new RuntimeException("error.paymentPlanBean.paymentPlanSettings.required");
-        }
-
-        LocalizedString installmentDescriptionFormat = PaymentPlanSettings.getActiveInstance().getInstallmentDescriptionFormat();
-
-        LocalizedString ls = new LocalizedString();
-        for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
-            ls = ls.with(locale, StrSubstitutor.replace(installmentDescriptionFormat.getContent(locale), values));
-        }
-
-        return ls;
-    }
 }

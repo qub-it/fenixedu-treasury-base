@@ -52,88 +52,145 @@
  */
 package org.fenixedu.treasury.dto;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.joda.time.LocalDate;
 
-public interface ISettlementInvoiceEntryBean {
+public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
-    public InvoiceEntry getInvoiceEntry();
+    private Product product;
+    private BigDecimal amount;
+    private LocalDate dueDate;
 
-    public String getDescription();
+    public PendingDebitEntryBean(Product product, BigDecimal amount, LocalDate dueDate) {
+        super();
+        this.product = product;
+        this.amount = amount;
+        this.dueDate = dueDate;
+    }
 
-    public LocalDate getDueDate();
+    public Product getProduct() {
+        return this.product;
+    }
 
-    /**
-     * Amount divida
-     * Open amount divida
-     *
-     * paymentAmount
-     *
-     * @return
-     */
+    public void setProduct(Product emolumentProduct) {
+        this.product = emolumentProduct;
+    }
 
-    public BigDecimal getEntryAmount();
+    @Override
+    public InvoiceEntry getInvoiceEntry() {
+        return null;
+    }
 
-    public BigDecimal getEntryOpenAmount();
+    @Override
+    public String getDescription() {
+        return product.getName().getContent();
+    }
 
-    public BigDecimal getSettledAmount();
+    @Override
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
 
-    public void setSettledAmount(BigDecimal debtAmount);
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
 
-    public Vat getVat();
+    @Override
+    public BigDecimal getEntryAmount() {
+        return amount;
+    }
 
-    public BigDecimal getVatRate();
+    @Override
+    public BigDecimal getEntryOpenAmount() {
+        return amount;
+    }
 
-    public boolean isIncluded();
+    @Override
+    public BigDecimal getSettledAmount() {
+        return amount;
+    }
 
-    public void setIncluded(boolean isIncluded);
+    @Override
+    public void setSettledAmount(BigDecimal debtAmount) {
+        amount = debtAmount;
+    }
 
-    public boolean isNotValid();
+    @Override
+    public Vat getVat() {
+        return null;
+    }
 
-    public void setNotValid(boolean notValid);
+    @Override
+    public BigDecimal getVatRate() {
+        return null;
+    }
 
-    public FinantialDocument getFinantialDocument();
+    @Override
+    public boolean isIncluded() {
+        return false;
+    }
 
-    // TODO: Rename method to getPaymentCustomers or getPaymentCustomerSet
-    public Set<Customer> getPaymentCustomer();
+    @Override
+    public void setIncluded(boolean isIncluded) {
 
-    /*
-     * Methods to support jsp, overriden in subclasses
-     */
+    }
 
-    boolean isForDebitEntry();
+    @Override
+    public boolean isNotValid() {
+        return false;
+    }
 
-    boolean isForInstallment();
+    @Override
+    public void setNotValid(boolean notValid) {
 
-    boolean isForCreditEntry();
+    }
 
-    boolean isForPendingInterest();
+    @Override
+    public FinantialDocument getFinantialDocument() {
+        return null;
+    }
 
-    boolean isForPaymentPenalty();
+    @Override
+    public Set<Customer> getPaymentCustomer() {
+        return null;
+    }
 
-    boolean isForPendingDebitEntry();
-    /**
-     * Descrição
-     *
-     * DueDate
-     *
-     * DebitAmount
-     *
-     * OpenAmount
-     *
-     * Iva
-     *
-     * SettlementAmount
-     *
-     * private boolean isIncluded;
-     * private boolean isNotValid;
-     *
-     */
+    @Override
+    public boolean isForDebitEntry() {
+        return false;
+    }
+
+    @Override
+    public boolean isForInstallment() {
+        return false;
+    }
+
+    @Override
+    public boolean isForCreditEntry() {
+        return false;
+    }
+
+    @Override
+    public boolean isForPendingInterest() {
+        return false;
+    }
+
+    @Override
+    public boolean isForPaymentPenalty() {
+        return false;
+    }
+
+    @Override
+    public boolean isForPendingDebitEntry() {
+        return true;
+    }
 
 }

@@ -94,7 +94,7 @@ public class InstallmentSettlementEntry extends InstallmentSettlementEntry_Base 
             throw new TreasuryDomainException("error.InstallmentSettlementEntry.installmentEntry.required");
         }
 
-        // Verifiy is installment settlement entry is duplicated 
+        // Verifiy is installment settlement entry is duplicated
         // by checking if some instance exists for the same installmentEntry and settlementEntry
         if (find(super.getInstallmentEntry(), super.getSettlementEntry()).count() > 1) {
             throw new TreasuryDomainException("error.InstallmentSettlementEntry.entry.is.duplicated");
@@ -115,34 +115,37 @@ public class InstallmentSettlementEntry extends InstallmentSettlementEntry_Base 
             BigDecimal debtAmount) {
         return new InstallmentSettlementEntry(installmentEntry, settlementEntry, debtAmount);
     }
-    
+
     /**
      * Just invoke with the creation of settlement entry, settling the debitEntry instead installmentEntry
+     *
      * @param settlementEntry
      * @return
      */
     public static Set<InstallmentSettlementEntry> settleInstallmentEntriesOfDebitEntry(SettlementEntry settlementEntry) {
-        if(!settlementEntry.getInvoiceEntry().isDebitNoteEntry()) {
-            throw new TreasuryDomainException("error.InstallmentSettlementEntry.settleForDebitEntry.expecting.settlementEntry.forDebitEntry");
+        if (!settlementEntry.getInvoiceEntry().isDebitNoteEntry()) {
+            throw new TreasuryDomainException(
+                    "error.InstallmentSettlementEntry.settleForDebitEntry.expecting.settlementEntry.forDebitEntry");
         }
-        
-        if(!settlementEntry.getInstallmentSettlementEntriesSet().isEmpty()) {
-            throw new TreasuryDomainException("error.InstallmentSettlementEntry.settlementEntry.already.has.installmentSettlementEntries");
+
+        if (!settlementEntry.getInstallmentSettlementEntriesSet().isEmpty()) {
+            throw new TreasuryDomainException(
+                    "error.InstallmentSettlementEntry.settlementEntry.already.has.installmentSettlementEntries");
         }
-        
+
         Set<InstallmentSettlementEntry> result = new HashSet<>();
         DebitEntry debitEntry = (DebitEntry) settlementEntry.getInvoiceEntry();
-        
+
         BigDecimal rest = settlementEntry.getAmount();
         for (InstallmentEntry installmentEntry : debitEntry.getSortedOpenInstallmentEntries()) {
             if (!TreasuryConstants.isPositive(rest)) {
                 break;
             }
-            
-            if(installmentEntry.isPaid()) {
+
+            if (installmentEntry.isPaid()) {
                 continue;
             }
-            
+
             BigDecimal debtAmount =
                     rest.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry.getOpenAmount() : rest;
             rest = rest.subtract(debtAmount);
@@ -150,7 +153,7 @@ public class InstallmentSettlementEntry extends InstallmentSettlementEntry_Base 
 
             installmentEntry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
         }
-        
+
         return result;
     }
 

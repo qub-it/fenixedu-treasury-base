@@ -50,90 +50,60 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.dto;
+package org.fenixedu.treasury.dto.PaymentPlans;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.HashSet;
 import java.util.Set;
 
-import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.Vat;
-import org.fenixedu.treasury.domain.document.FinantialDocument;
-import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.joda.time.LocalDate;
 
-public interface ISettlementInvoiceEntryBean {
+public class InstallmentBean {
 
-    public InvoiceEntry getInvoiceEntry();
+    private LocalDate dueDate;
+    private LocalizedString description;
+    Set<InstallmentEntryBean> installmentEntries;
 
-    public String getDescription();
+    public InstallmentBean(LocalDate installmentDueDate, LocalizedString description) {
+        super();
+        this.dueDate = installmentDueDate;
+        this.description = description;
+        this.installmentEntries = new HashSet<>();
+    }
 
-    public LocalDate getDueDate();
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
 
-    /**
-     * Amount divida
-     * Open amount divida
-     *
-     * paymentAmount
-     *
-     * @return
-     */
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
 
-    public BigDecimal getEntryAmount();
+    public LocalizedString getDescription() {
+        return description;
+    }
 
-    public BigDecimal getEntryOpenAmount();
+    public void setDescription(LocalizedString description) {
+        this.description = description;
+    }
 
-    public BigDecimal getSettledAmount();
+    public Set<InstallmentEntryBean> getInstallmentEntries() {
+        return installmentEntries;
+    }
 
-    public void setSettledAmount(BigDecimal debtAmount);
+    public void setInstallmentEntries(Set<InstallmentEntryBean> installmentEntries) {
+        this.installmentEntries = installmentEntries;
+    }
 
-    public Vat getVat();
+    public void addInstallmentEntries(InstallmentEntryBean installmentEntry) {
+        this.installmentEntries.add(installmentEntry);
+    }
 
-    public BigDecimal getVatRate();
-
-    public boolean isIncluded();
-
-    public void setIncluded(boolean isIncluded);
-
-    public boolean isNotValid();
-
-    public void setNotValid(boolean notValid);
-
-    public FinantialDocument getFinantialDocument();
-
-    // TODO: Rename method to getPaymentCustomers or getPaymentCustomerSet
-    public Set<Customer> getPaymentCustomer();
-
-    /*
-     * Methods to support jsp, overriden in subclasses
-     */
-
-    boolean isForDebitEntry();
-
-    boolean isForInstallment();
-
-    boolean isForCreditEntry();
-
-    boolean isForPendingInterest();
-
-    boolean isForPaymentPenalty();
-
-    boolean isForPendingDebitEntry();
-    /**
-     * Descrição
-     *
-     * DueDate
-     *
-     * DebitAmount
-     *
-     * OpenAmount
-     *
-     * Iva
-     *
-     * SettlementAmount
-     *
-     * private boolean isIncluded;
-     * private boolean isNotValid;
-     *
-     */
+    public BigDecimal getInstallmentAmount() {
+        return installmentEntries.stream().map(i -> i.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
+                RoundingMode.HALF_UP);
+    }
 
 }

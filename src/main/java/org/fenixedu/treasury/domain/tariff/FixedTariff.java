@@ -63,6 +63,7 @@ import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.DebitNote;
+import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.FixedTariffInterestRateBean;
 import org.joda.time.DateTime;
@@ -71,6 +72,8 @@ import org.joda.time.LocalDate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
+// TODO: Delete all instances of this entity and then remove from domain
 public class FixedTariff extends FixedTariff_Base {
 
     protected FixedTariff(final FinantialEntity finantialEntity, final Product product, final DateTime beginDate,
@@ -198,7 +201,17 @@ public class FixedTariff extends FixedTariff_Base {
 
         super.delete();
     }
-
+    
+    @Override
+    public BigDecimal amountToPay() {
+        return getAmount();
+    }
+    
+    @Override
+    public boolean isBroadTariffForFinantialEntity() {
+        return true;
+    }
+    
     @Atomic
     public static FixedTariff create(final Product product, final InterestRate interestRate,
             final FinantialEntity finantialEntity, final BigDecimal amount, final DateTime beginDate, final DateTime endDate,

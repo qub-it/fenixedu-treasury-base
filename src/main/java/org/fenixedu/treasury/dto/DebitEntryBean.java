@@ -58,8 +58,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fenixedu.treasury.dto.ITreasuryBean;
-import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -68,11 +66,8 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
-import com.google.common.collect.Lists;
 
 public class DebitEntryBean implements ITreasuryBean {
 
@@ -372,8 +367,10 @@ public class DebitEntryBean implements ITreasuryBean {
     }
 
     public void refreshProductsDataSource(final FinantialInstitution finantialInstitution) {
-        setProductDataSource(isShowLegacyProducts() ? 
-                Product.findAllLegacy().filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution)).collect(Collectors.toList()) : 
-                    Product.findAllActive().filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution)).collect(Collectors.toList()));
+        setProductDataSource(isShowLegacyProducts() ? Product.findAllLegacy()
+                .filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution))
+                .collect(Collectors.toList()) : Product.findAllActive()
+                        .filter(p -> p.getFinantialInstitutionsSet().contains(finantialInstitution))
+                        .collect(Collectors.toList()));
     }
 }

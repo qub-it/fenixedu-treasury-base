@@ -52,17 +52,18 @@
  */
 package org.fenixedu.treasury.domain.event;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -72,6 +73,7 @@ import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -252,6 +254,15 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     
     public abstract void copyDebitEntryInformation(final DebitEntry sourceDebitEntry, final DebitEntry copyDebitEntry);
 
+    /**
+     * This method is used to find a tariff, which might be academic or other, in which the types are not known by this module
+     * 
+     * @param product
+     * @param when
+     * @return
+     */
+    public abstract Optional<Tariff> findMatchTariff(FinantialEntity finantialEntity, Product product, LocalDate when);
+    
     @Atomic
     public void delete() {
         if (!isDeletable()) {

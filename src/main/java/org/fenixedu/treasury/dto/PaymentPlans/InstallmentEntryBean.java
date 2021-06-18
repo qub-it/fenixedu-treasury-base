@@ -50,90 +50,40 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.dto;
+package org.fenixedu.treasury.dto.PaymentPlans;
 
 import java.math.BigDecimal;
-import java.util.Set;
 
-import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.Vat;
-import org.fenixedu.treasury.domain.document.FinantialDocument;
-import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.joda.time.LocalDate;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 
-public interface ISettlementInvoiceEntryBean {
+public class InstallmentEntryBean {
 
-    public InvoiceEntry getInvoiceEntry();
+    ISettlementInvoiceEntryBean invoiceEntry;
+    BigDecimal amount;
 
-    public String getDescription();
+    public InstallmentEntryBean(ISettlementInvoiceEntryBean invoiceEntry, BigDecimal amount) {
+        super();
+        this.invoiceEntry = invoiceEntry;
+        this.amount = amount;
+    }
 
-    public LocalDate getDueDate();
+    public ISettlementInvoiceEntryBean getInvoiceEntry() {
+        return invoiceEntry;
+    }
 
-    /**
-     * Amount divida
-     * Open amount divida
-     *
-     * paymentAmount
-     *
-     * @return
-     */
+    public BigDecimal getAmount() {
+        return amount;
+    }
 
-    public BigDecimal getEntryAmount();
+    public void setInvoiceEntry(ISettlementInvoiceEntryBean invoiceEntry) {
+        this.invoiceEntry = invoiceEntry;
+    }
 
-    public BigDecimal getEntryOpenAmount();
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
 
-    public BigDecimal getSettledAmount();
-
-    public void setSettledAmount(BigDecimal debtAmount);
-
-    public Vat getVat();
-
-    public BigDecimal getVatRate();
-
-    public boolean isIncluded();
-
-    public void setIncluded(boolean isIncluded);
-
-    public boolean isNotValid();
-
-    public void setNotValid(boolean notValid);
-
-    public FinantialDocument getFinantialDocument();
-
-    // TODO: Rename method to getPaymentCustomers or getPaymentCustomerSet
-    public Set<Customer> getPaymentCustomer();
-
-    /*
-     * Methods to support jsp, overriden in subclasses
-     */
-
-    boolean isForDebitEntry();
-
-    boolean isForInstallment();
-
-    boolean isForCreditEntry();
-
-    boolean isForPendingInterest();
-
-    boolean isForPaymentPenalty();
-
-    boolean isForPendingDebitEntry();
-    /**
-     * Descrição
-     *
-     * DueDate
-     *
-     * DebitAmount
-     *
-     * OpenAmount
-     *
-     * Iva
-     *
-     * SettlementAmount
-     *
-     * private boolean isIncluded;
-     * private boolean isNotValid;
-     *
-     */
-
+    public String getDescription() {
+        return this.invoiceEntry.getDescription();
+    }
 }

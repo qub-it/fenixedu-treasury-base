@@ -125,12 +125,12 @@ public class TreasuryAccessControl {
     }
 
     public <T> boolean isFrontOfficeMemberWithinContext(final String username, final T context) {
-        for (ITreasuryAccessControlExtension<T> iTreasuryAccessControlExtension : extensions) {
-            if(!iTreasuryAccessControlExtension.isContextObjectApplied(context)) {
+        for (ITreasuryAccessControlExtension<T> ext : extensions) {
+            if(!ext.isContextObjectApplied(context)) {
                 continue;
             }
             
-            if (iTreasuryAccessControlExtension.isFrontOfficeMemberWithinContext(username, context)) {
+            if (ext.isFrontOfficeMemberWithinContext(username, context)) {
                 return true;
             }
         }

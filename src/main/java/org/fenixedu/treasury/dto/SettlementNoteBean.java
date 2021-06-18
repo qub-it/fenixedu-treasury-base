@@ -142,7 +142,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     private String finantialTransactionReference;
 
     private boolean advancePayment;
-    
+
     private DigitalPaymentPlatform digitalPaymentPlatform;
 
     private SibsBillingAddressBean addressBean;
@@ -171,7 +171,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
         init();
-        
+
         this.debtAccount = debtAccount;
         this.reimbursementNote = reimbursementNote;
 
@@ -214,16 +214,17 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
-        
+
         Collections.sort(this.debitEntries, (o1, o2) -> o1.getDueDate().compareTo(o2.getDueDate()));
     }
 
-    public SettlementNoteBean(DebtAccount debtAccount, DigitalPaymentPlatform digitalPaymentPlatform, final boolean reimbursementNote, final boolean excludeDebtsForPayorAccount) {
+    public SettlementNoteBean(DebtAccount debtAccount, DigitalPaymentPlatform digitalPaymentPlatform,
+            final boolean reimbursementNote, final boolean excludeDebtsForPayorAccount) {
         init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount);
-        
+
         setDigitalPaymentPlatform(digitalPaymentPlatform);
     }
-    
+
     public Set<Customer> getReferencedCustomers() {
         final Set<Customer> result = Sets.newHashSet();
 
@@ -379,7 +380,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return false;
     }
 
-    public void 	includeAllInterestOfSelectedDebitEntries() {
+    public void includeAllInterestOfSelectedDebitEntries() {
         setInterestEntries(new ArrayList<InterestEntryBean>());
         List<DebitEntryBean> debitEntriesToIterate = Lists.newArrayList(getDebitEntriesByType(DebitEntryBean.class));
         for (DebitEntryBean debitEntryBean : debitEntriesToIterate) {
@@ -406,7 +407,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     }
 
                     if (interestDebitEntry.isInDebt()) {
-                        getDebitEntries().stream().filter(e -> ((DebitEntryBean) e).getDebitEntry() == interestDebitEntry).findAny().get().setIncluded(true);
+                        getDebitEntries().stream().filter(e -> ((DebitEntryBean) e).getDebitEntry() == interestDebitEntry)
+                                .findAny().get().setIncluded(true);
                     }
                 }
             }
@@ -688,7 +690,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public void setFinantialTransactionReferenceYear(String finantialTransactionReferenceYear) {
         this.finantialTransactionReferenceYear = finantialTransactionReferenceYear;
     }
-    
+
     public DigitalPaymentPlatform getDigitalPaymentPlatform() {
         return digitalPaymentPlatform;
     }
@@ -712,7 +714,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.addressBean = addressBean;
     }
 
-    public class DebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
+    public static class DebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -852,34 +854,44 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                             ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
                                     .singleton(debitEntry.getDebtAccount().getCustomer());
         }
-        
+
         /*
          * Methods to support jsp, overriden in subclasses
          */
-        
+
         @Override
         public boolean isForDebitEntry() {
             return true;
         }
-        
+
         @Override
         public boolean isForInstallment() {
             return false;
         }
-        
+
         @Override
         public boolean isForCreditEntry() {
             return false;
         }
-        
+
         @Override
         public boolean isForPendingInterest() {
             return false;
         }
 
+        @Override
+        public boolean isForPaymentPenalty() {
+            return false;
+        }
+
+        @Override
+        public boolean isForPendingDebitEntry() {
+            // TODO Auto-generated method stub
+            return false;
+        }
     }
 
-    public class CreditEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
+    public static class CreditEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -1023,24 +1035,35 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         /*
          * Methods to support jsp, overriden in subclasses
          */
-        
+
         @Override
         public boolean isForDebitEntry() {
             return false;
         }
-        
+
         @Override
         public boolean isForInstallment() {
             return false;
         }
-        
+
         @Override
         public boolean isForCreditEntry() {
             return true;
         }
-        
+
         @Override
         public boolean isForPendingInterest() {
+            return false;
+        }
+
+        @Override
+        public boolean isForPaymentPenalty() {
+            return false;
+        }
+
+        @Override
+        public boolean isForPendingDebitEntry() {
+            // TODO Auto-generated method stub
             return false;
         }
     }
@@ -1162,28 +1185,38 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         public void setSettledAmount(BigDecimal debtAmount) {
 
         }
-        
+
         /*
          * Methods to support jsp, overriden in subclasses
          */
-        
+
         @Override
         public boolean isForDebitEntry() {
             return false;
         }
-        
+
         @Override
         public boolean isForInstallment() {
-            return true;
+            return false;
         }
-        
+
         @Override
         public boolean isForCreditEntry() {
             return false;
         }
-        
+
         @Override
         public boolean isForPendingInterest() {
+            return true;
+        }
+
+        @Override
+        public boolean isForPaymentPenalty() {
+            return false;
+        }
+
+        @Override
+        public boolean isForPendingDebitEntry() {
             return false;
         }
     }

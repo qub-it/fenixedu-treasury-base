@@ -1,3 +1,8 @@
+- Refactor: Refactor payment penalty from fenixedu-academic-treasury-base to fenixedu-treasury
+- Improvement: Add date when payment plan is closed by settlement
+- Bug Fix: Do not create payment penalty for settlement entries, of created settlement note, which has installment settlement entries in which installment due date is not before of payment date
+- New Fixture: Payment plan configurators with custom interests and penalties calculations, and debit entries distribution in installments
+
 7.2.0 (27-05-2021)
 - New Fixture: Payment method references, to stick the payment method reference code in payment entry as id
 
