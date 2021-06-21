@@ -1,3 +1,4 @@
+7.3.0 (21-06-2021)
 - Refactor: Refactor payment penalty from fenixedu-academic-treasury-base to fenixedu-treasury
 - Improvement: Add date when payment plan is closed by settlement
 - Bug Fix: Do not create payment penalty for settlement entries, of created settlement note, which has installment settlement entries in which installment due date is not before of payment date
