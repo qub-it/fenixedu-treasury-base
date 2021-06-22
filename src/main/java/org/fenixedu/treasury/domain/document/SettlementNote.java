@@ -62,7 +62,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.LongAdder;
@@ -79,10 +78,9 @@ import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
+import org.fenixedu.treasury.dto.SettlementCreditEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.CreditEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -191,8 +189,8 @@ public class SettlementNote extends SettlementNote_Base {
                 }
             }
         }
-        
-        if(getPaymentEntriesSet().size() > 1) {
+
+        if (getPaymentEntriesSet().size() > 1) {
             throw new TreasuryDomainException("error.SettlementNote.only.one.payment.method.is.supported");
         }
     }
@@ -319,7 +317,7 @@ public class SettlementNote extends SettlementNote_Base {
 
     @Atomic
     public void processSettlementNoteCreation(SettlementNoteBean bean) {
-        processInterestEntries(bean);
+//        processInterestEntries(bean);
         processDebtEntries(bean);
         processCreditEntries(bean);
         if (bean.isReimbursementNote()) {
@@ -388,31 +386,31 @@ public class SettlementNote extends SettlementNote_Base {
         }
     }
 
-    private void processInterestEntries(SettlementNoteBean bean) {
-
-        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
-                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
-        if (bean.getInterestEntries().size() == 0) {
-            return;
-        }
-
-        for (InterestEntryBean interestEntryBean : bean.getInterestEntries()) {
-            DebitNote interestDebitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, new DateTime());
-
-            DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
-                    interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
-
-            if (interestEntryBean.isIncluded()) {
-                interestDebitNote.closeDocument();
-                SettlementEntry.create(interestDebitEntry, this, interestEntryBean.getInterest().getInterestAmount(),
-                        interestDebitEntry.getDescription(), bean.getDate().toDateTimeAtStartOfDay(), false);
-            }
-        }
-    }
+//    private void processInterestEntries(SettlementNoteBean bean) {
+//
+//        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
+//                .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
+//                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
+//        if (bean.getInterestEntries().size() == 0) {
+//            return;
+//        }
+//
+//        for (SettlementInterestEntryBean interestEntryBean : bean.getInterestEntries()) {
+//            DebitNote interestDebitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, new DateTime());
+//
+//            DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
+//                    interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
+//
+//            if (interestEntryBean.isIncluded()) {
+//                interestDebitNote.closeDocument();
+//                SettlementEntry.create(interestDebitEntry, this, interestEntryBean.getInterest().getInterestAmount(),
+//                        interestDebitEntry.getDescription(), bean.getDate().toDateTimeAtStartOfDay(), false);
+//            }
+//        }
+//    }
 
     private void processCreditEntries(SettlementNoteBean bean) {
-        for (CreditEntryBean creditEntryBean : bean.getCreditEntries()) {
+        for (SettlementCreditEntryBean creditEntryBean : bean.getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 CreditEntry creditEntry = creditEntryBean.getCreditEntry();
 
@@ -446,7 +444,7 @@ public class SettlementNote extends SettlementNote_Base {
                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
 
         List<DebitEntry> untiedDebitEntries = new ArrayList<DebitEntry>();
-        for (DebitEntryBean debitEntryBean : bean.getDebitEntriesByType(DebitEntryBean.class)) {
+        for (SettlementDebitEntryBean debitEntryBean : bean.getDebitEntriesByType(SettlementDebitEntryBean.class)) {
             if (debitEntryBean.isIncluded()) {
                 DebitEntry debitEntry = debitEntryBean.getDebitEntry();
                 if (debitEntry.getFinantialDocument() == null) {
@@ -456,7 +454,7 @@ public class SettlementNote extends SettlementNote_Base {
                 }
                 SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
                         bean.getDate().toDateTimeAtStartOfDay());
-                
+
                 InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
             }
         }
@@ -825,13 +823,21 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     public static SettlementNote createSettlementNote(SettlementNoteBean bean) {
         DateTime documentDate = new DateTime();
+        SettlementNoteBean copy = bean.duplicate();
 
-        SettlementNote settlementNote = SettlementNote.create(bean.getDebtAccount(), bean.getDocNumSeries(), documentDate,
-                bean.getDate().toDateTimeAtStartOfDay(), bean.getOriginDocumentNumber(),
-                !Strings.isNullOrEmpty(bean.getFinantialTransactionReference()) ? bean.getFinantialTransactionReferenceYear()
-                        + "/" + bean.getFinantialTransactionReference() : "");
+        SettlementNote settlementNote = SettlementNote.create(copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
+                copy.getDate().toDateTimeAtStartOfDay(), copy.getOriginDocumentNumber(),
+                !Strings.isNullOrEmpty(copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear()
+                        + "/" + copy.getFinantialTransactionReference() : "");
 
-        settlementNote.processSettlementNoteCreation(bean);
+        for (ISettlementInvoiceEntryBean virtualbean : copy.getVirtualDebitEntries()) {
+            if (virtualbean.isIncluded() && virtualbean.getVirtualPaymentEntryHandler() != null) {
+                virtualbean.getVirtualPaymentEntryHandler().execute(copy, virtualbean);
+
+            }
+        }
+
+        settlementNote.processSettlementNoteCreation(copy);
         settlementNote.closeDocument();
 
         return settlementNote;

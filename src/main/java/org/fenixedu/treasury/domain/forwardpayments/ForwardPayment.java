@@ -87,9 +87,7 @@ import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessP
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
-import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.streaming.spreadsheet.ExcelSheet;
 import org.fenixedu.treasury.util.streaming.spreadsheet.IErrorsLog;

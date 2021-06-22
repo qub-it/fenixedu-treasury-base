@@ -52,6 +52,7 @@
  */
 package org.fenixedu.treasury.dto;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.Set;
 
@@ -59,7 +60,12 @@ import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
 import org.joda.time.LocalDate;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
 
 public interface ISettlementInvoiceEntryBean {
 
@@ -106,18 +112,49 @@ public interface ISettlementInvoiceEntryBean {
     /*
      * Methods to support jsp, overriden in subclasses
      */
+    
+    default boolean isForDebitEntry() {
+        return false;
+    }
 
-    boolean isForDebitEntry();
+    default boolean isForInstallment() {
+        return false;
+    }
 
-    boolean isForInstallment();
+    default boolean isForCreditEntry() {
+        return false;
+    }
 
-    boolean isForCreditEntry();
+    default boolean isForPendingInterest() {
+        return false;
+    }
 
-    boolean isForPendingInterest();
+    default IVirtualPaymentEntryHandler getVirtualPaymentEntryHandler() {
+        return null;
+    }
 
-    boolean isForPaymentPenalty();
+    default Map<String, List<String>> getCalculationDescription() {
+        return Collections.emptyMap();
+    }
 
-    boolean isForPendingDebitEntry();
+    public String serialize();
+
+    public void fillSerializable(JsonObject jsonObject);
+
+    public static ISettlementInvoiceEntryBean deserialize(String serializedObject) {
+        try {
+            JsonObject jsonObject = new Gson().fromJson(serializedObject, JsonObject.class);
+
+            Class<?> objectClass = Class.forName(jsonObject.get(IntrospectorTool.TYPE).getAsString());
+            ISettlementInvoiceEntryBean newInstance = (ISettlementInvoiceEntryBean) objectClass.getConstructor().newInstance();
+            newInstance.fillSerializable(jsonObject);
+            return newInstance;
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            return null;
+        }
+    }
+
     /**
      * Descrição
      *

@@ -52,10 +52,7 @@
  */
 package org.fenixedu.treasury.domain.payments;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -81,19 +78,17 @@ import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
-import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.FenixFramework;
@@ -209,14 +204,16 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             DateTime paymentDate, String originDocumentNumber, String comments,
             Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction) {
 
-        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
-        sortedDebitEntriesToPay.addAll(getDebitEntriesSet());
+        SettlementNote settlementNote = SettlementNote.createSettlementNote(new SettlementNoteBean(this));
 
-        final TreeSet<InstallmentEntry> sortedInstallmentEntryToPay =
-                Sets.newTreeSet(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR);
-
-        sortedInstallmentEntryToPay.addAll(
-                getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).collect(Collectors.toSet()));
+//        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
+//        sortedDebitEntriesToPay.addAll(getDebitEntriesSet());
+//
+//        final TreeSet<InstallmentEntry> sortedInstallmentEntryToPay =
+//                Sets.newTreeSet(InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR);
+//
+//        sortedInstallmentEntryToPay.addAll(
+//                getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).collect(Collectors.toSet()));
 
         //Process the payment of pending invoiceEntries
         //1. Find the InvoiceEntries
@@ -229,211 +226,211 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
         //5. Close the SettlementNote
         //6. Create a SibsTransactionDetail
-        BigDecimal availableAmount = paidAmount;
-
-        List<DebitEntry> interestRateEntries = new ArrayList<DebitEntry>();
-        DebtAccount referenceDebtAccount = this.getDebtAccount();
-
-        DocumentNumberSeries docNumberSeriesForPayments = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
-                .get();
-        DocumentNumberSeries docNumberSeriesForDebitNotes = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForDebitNote(), getDebtAccount().getFinantialInstitution()).get();
-
-        SettlementNote settlementNote = SettlementNote.create(referenceDebtAccount, docNumberSeriesForPayments, new DateTime(),
-                paymentDate, originDocumentNumber, null);
-
-        settlementNote.setDocumentObservations(comments);
-
-        //######################################
-        //1. Find the InvoiceEntries
-        //2. Create the SEttlementEntries and the SEttlementNote
-        //######################################
-
-        if (getReferencedCustomers().size() == 1) {
-            for (InvoiceEntry entry : sortedDebitEntriesToPay) {
-                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    break;
-                }
-
-                BigDecimal amountToPay = entry.getOpenAmount();
-                if (amountToPay.compareTo(BigDecimal.ZERO) > 0) {
-                    if (entry.isDebitNoteEntry()) {
-                        DebitEntry debitEntry = (DebitEntry) entry;
-
-                        if (debitEntry.getFinantialDocument() == null) {
-                            final DebitNote debitNote =
-                                    DebitNote.create(debitEntry.getDebtAccount(), docNumberSeriesForDebitNotes, new DateTime());
-                            debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
-                        }
-
-                        if (debitEntry.getFinantialDocument().isPreparing()) {
-                            debitEntry.getFinantialDocument().closeDocument();
-                        }
-
-                        //check if the amount to pay in the Debit Entry
-                        if (amountToPay.compareTo(availableAmount) > 0) {
-                            amountToPay = availableAmount;
-                        }
-
-                        if (debitEntry.getOpenAmount().equals(amountToPay)) {
-                            if (payAllDebitEntriesInterests()) {
-                                for (DebitEntry interestDebitEntry : debitEntry.getInterestDebitEntriesSet()) {
-                                    if (interestDebitEntry.isAnnulled()) {
-                                        continue;
-                                    }
-
-                                    if (!interestDebitEntry.isInDebt()) {
-                                        continue;
-                                    }
-
-                                    if (sortedDebitEntriesToPay.contains(interestDebitEntry)) {
-                                        continue;
-                                    }
-
-                                    interestRateEntries.add(interestDebitEntry);
-                                }
-                            }
-                            //######################################
-                            //2.1 create the "InterestRate entries"
-                            //######################################
-                            InterestRateBean calculateUndebitedInterestValue =
-                                    debitEntry.calculateUndebitedInterestValue(paymentDate.toLocalDate());
-                            if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
-                                DebitEntry interestDebitEntry = debitEntry.createInterestRateDebitEntry(
-                                        calculateUndebitedInterestValue, paymentDate, Optional.<DebitNote> empty());
-                                interestRateEntries.add(interestDebitEntry);
-                            }
-                        }
-
-                        SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay,
-                                entry.getDescription(), paymentDate, true);
-
-                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
-
-                        //Update the amount to Pay
-                        availableAmount = availableAmount.subtract(amountToPay);
-
-                    } else if (entry.isCreditNoteEntry()) {
-                        SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate,
-                                true);
-                        //update the amount to Pay
-                        availableAmount = availableAmount.add(amountToPay);
-                    }
-                } else {
-                    //Ignore since the "open amount" is ZERO
-                }
-            }
-            for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
-                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    break;
-                }
-
-                BigDecimal installmentAmountToPay = entry.getOpenAmount();
-                if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
-                    DebitEntry debitEntry = entry.getDebitEntry();
-
-                    if (debitEntry.getFinantialDocument() == null) {
-                        final DocumentNumberSeries documentNumberSeries =
-                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                                        getDebtAccount().getFinantialInstitution()).get();
-                        final DebitNote debitNote =
-                                DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
-                        debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
-                    }
-
-                    if (debitEntry.getFinantialDocument().isPreparing()) {
-                        debitEntry.getFinantialDocument().closeDocument();
-                    }
-
-                    // check if the amount to pay in the installment entry exceeds the available amount
-                    if (installmentAmountToPay.compareTo(availableAmount) > 0) {
-                        installmentAmountToPay = availableAmount;
-                    }
-                    SettlementEntry settlementEntry = settlementNote.getSettlementEntryByDebitEntry(debitEntry);
-                    if (settlementEntry == null) {
-                        settlementEntry = SettlementEntry.create(debitEntry, settlementNote, installmentAmountToPay,
-                                debitEntry.getDescription(), paymentDate, false);
-                    } else {
-                        settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
-                    }
-                    InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
-                    entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
-
-                    // Update the amount to Pay
-                    availableAmount = availableAmount.subtract(installmentAmountToPay);
-
-                } else {
-                    // Ignore since the "open amount" is ZERO
-                }
-            }
-            //######################################
-            //2.2 if there is pending amount, pay the interest rate
-            //######################################
-            //if we created interestRateEntries then we must close them in a document and try to pay with availableAmount
-            if (interestRateEntries.size() > 0) {
-                //Create a DebitNote for the Interests DebitEntries
-                DebitNote interestNote = DebitNote.create(referenceDebtAccount, docNumberSeriesForDebitNotes, paymentDate);
-                for (DebitEntry interestEntry : interestRateEntries) {
-                    if (interestEntry.getFinantialDocument() != null) {
-                        if (interestEntry.getFinantialDocument().isPreparing()) {
-                            interestEntry.getFinantialDocument().closeDocument();
-                        }
-                    } else {
-                        interestEntry.setFinantialDocument(interestNote);
-                    }
-                }
-                interestNote.closeDocument();
-
-                //if "availableAmount" still exists, then we must check if there is any InterestRate to pay
-                if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    for (DebitEntry interestEntry : interestRateEntries) {
-                        //Check if there is enough amount to Pay
-                        if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                            break;
-                        }
-
-                        BigDecimal amountToPay = interestEntry.getOpenAmount();
-                        //check if the amount to pay in the Debit Entry
-                        if (amountToPay.compareTo(availableAmount) > 0) {
-                            amountToPay = availableAmount;
-                        }
-
-                        SettlementEntry newSettlementEntry = SettlementEntry.create(interestEntry, settlementNote, amountToPay,
-                                interestEntry.getDescription(), paymentDate, true);
-                        //Update the amount to Pay
-                        availableAmount = availableAmount.subtract(amountToPay);
-                    }
-                }
-                interestRateEntries.clear();
-            }
-        }
-
-        //######################################
-        //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
-        //######################################
-
-        //if "availableAmount" still exists, then we must create a "pending Payment" or "CreditNote"
-        if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
-            final String advancedPaymentCreditNoteComments = String.format("%s [%s]",
-                    treasuryBundleI18N("label.SettlementNote.advancedpayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
-                    paymentDate.toString(TreasuryConstants.DATE_FORMAT));
-
-            settlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments,
-                    originDocumentNumber);
-
-            settlementNote.getAdvancedPaymentCreditNote().setDocumentObservations(comments);
-        }
-
-        //######################################
-        //5. Close the SettlementNote
-        //######################################
-
-        final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
-
-        PaymentEntry.create(getPaymentMethod(), settlementNote, paidAmount, fillPaymentEntryMethodId(),
-                paymentEntryPropertiesMap);
-        settlementNote.closeDocument();
+//        BigDecimal availableAmount = paidAmount;
+//
+//        List<DebitEntry> interestRateEntries = new ArrayList<DebitEntry>();
+//        DebtAccount referenceDebtAccount = this.getDebtAccount();
+//
+//        DocumentNumberSeries docNumberSeriesForPayments = DocumentNumberSeries
+//                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
+//                .get();
+//        DocumentNumberSeries docNumberSeriesForDebitNotes = DocumentNumberSeries
+//                .findUniqueDefault(FinantialDocumentType.findForDebitNote(), getDebtAccount().getFinantialInstitution()).get();
+//
+//        SettlementNote settlementNote = SettlementNote.create(referenceDebtAccount, docNumberSeriesForPayments, new DateTime(),
+//                paymentDate, originDocumentNumber, null);
+//
+//        settlementNote.setDocumentObservations(comments);
+//
+//        //######################################
+//        //1. Find the InvoiceEntries
+//        //2. Create the SEttlementEntries and the SEttlementNote
+//        //######################################
+//
+//        if (getReferencedCustomers().size() == 1) {
+//            for (InvoiceEntry entry : sortedDebitEntriesToPay) {
+//                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+//                    break;
+//                }
+//
+//                BigDecimal amountToPay = entry.getOpenAmount();
+//                if (amountToPay.compareTo(BigDecimal.ZERO) > 0) {
+//                    if (entry.isDebitNoteEntry()) {
+//                        DebitEntry debitEntry = (DebitEntry) entry;
+//
+//                        if (debitEntry.getFinantialDocument() == null) {
+//                            final DebitNote debitNote =
+//                                    DebitNote.create(debitEntry.getDebtAccount(), docNumberSeriesForDebitNotes, new DateTime());
+//                            debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
+//                        }
+//
+//                        if (debitEntry.getFinantialDocument().isPreparing()) {
+//                            debitEntry.getFinantialDocument().closeDocument();
+//                        }
+//
+//                        //check if the amount to pay in the Debit Entry
+//                        if (amountToPay.compareTo(availableAmount) > 0) {
+//                            amountToPay = availableAmount;
+//                        }
+//
+//                        if (debitEntry.getOpenAmount().equals(amountToPay)) {
+//                            if (payAllDebitEntriesInterests()) {
+//                                for (DebitEntry interestDebitEntry : debitEntry.getInterestDebitEntriesSet()) {
+//                                    if (interestDebitEntry.isAnnulled()) {
+//                                        continue;
+//                                    }
+//
+//                                    if (!interestDebitEntry.isInDebt()) {
+//                                        continue;
+//                                    }
+//
+//                                    if (sortedDebitEntriesToPay.contains(interestDebitEntry)) {
+//                                        continue;
+//                                    }
+//
+//                                    interestRateEntries.add(interestDebitEntry);
+//                                }
+//                            }
+//                            //######################################
+//                            //2.1 create the "InterestRate entries"
+//                            //######################################
+//                            InterestRateBean calculateUndebitedInterestValue =
+//                                    debitEntry.calculateUndebitedInterestValue(paymentDate.toLocalDate());
+//                            if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
+//                                DebitEntry interestDebitEntry = debitEntry.createInterestRateDebitEntry(
+//                                        calculateUndebitedInterestValue, paymentDate, Optional.<DebitNote> empty());
+//                                interestRateEntries.add(interestDebitEntry);
+//                            }
+//                        }
+//
+//                        SettlementEntry settlementEntry = SettlementEntry.create(entry, settlementNote, amountToPay,
+//                                entry.getDescription(), paymentDate, true);
+//
+//                        InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
+//
+//                        //Update the amount to Pay
+//                        availableAmount = availableAmount.subtract(amountToPay);
+//
+//                    } else if (entry.isCreditNoteEntry()) {
+//                        SettlementEntry.create(entry, settlementNote, entry.getOpenAmount(), entry.getDescription(), paymentDate,
+//                                true);
+//                        //update the amount to Pay
+//                        availableAmount = availableAmount.add(amountToPay);
+//                    }
+//                } else {
+//                    //Ignore since the "open amount" is ZERO
+//                }
+//            }
+//            for (InstallmentEntry entry : sortedInstallmentEntryToPay) {
+//                if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+//                    break;
+//                }
+//
+//                BigDecimal installmentAmountToPay = entry.getOpenAmount();
+//                if (installmentAmountToPay.compareTo(BigDecimal.ZERO) > 0) {
+//                    DebitEntry debitEntry = entry.getDebitEntry();
+//
+//                    if (debitEntry.getFinantialDocument() == null) {
+//                        final DocumentNumberSeries documentNumberSeries =
+//                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+//                                        getDebtAccount().getFinantialInstitution()).get();
+//                        final DebitNote debitNote =
+//                                DebitNote.create(debitEntry.getDebtAccount(), documentNumberSeries, new DateTime());
+//                        debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
+//                    }
+//
+//                    if (debitEntry.getFinantialDocument().isPreparing()) {
+//                        debitEntry.getFinantialDocument().closeDocument();
+//                    }
+//
+//                    // check if the amount to pay in the installment entry exceeds the available amount
+//                    if (installmentAmountToPay.compareTo(availableAmount) > 0) {
+//                        installmentAmountToPay = availableAmount;
+//                    }
+//                    SettlementEntry settlementEntry = settlementNote.getSettlementEntryByDebitEntry(debitEntry);
+//                    if (settlementEntry == null) {
+//                        settlementEntry = SettlementEntry.create(debitEntry, settlementNote, installmentAmountToPay,
+//                                debitEntry.getDescription(), paymentDate, false);
+//                    } else {
+//                        settlementEntry.setAmount(settlementEntry.getAmount().add(installmentAmountToPay));
+//                    }
+//                    InstallmentSettlementEntry.create(entry, settlementEntry, installmentAmountToPay);
+//                    entry.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+//
+//                    // Update the amount to Pay
+//                    availableAmount = availableAmount.subtract(installmentAmountToPay);
+//
+//                } else {
+//                    // Ignore since the "open amount" is ZERO
+//                }
+//            }
+//            //######################################
+//            //2.2 if there is pending amount, pay the interest rate
+//            //######################################
+//            //if we created interestRateEntries then we must close them in a document and try to pay with availableAmount
+//            if (interestRateEntries.size() > 0) {
+//                //Create a DebitNote for the Interests DebitEntries
+//                DebitNote interestNote = DebitNote.create(referenceDebtAccount, docNumberSeriesForDebitNotes, paymentDate);
+//                for (DebitEntry interestEntry : interestRateEntries) {
+//                    if (interestEntry.getFinantialDocument() != null) {
+//                        if (interestEntry.getFinantialDocument().isPreparing()) {
+//                            interestEntry.getFinantialDocument().closeDocument();
+//                        }
+//                    } else {
+//                        interestEntry.setFinantialDocument(interestNote);
+//                    }
+//                }
+//                interestNote.closeDocument();
+//
+//                //if "availableAmount" still exists, then we must check if there is any InterestRate to pay
+//                if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
+//                    for (DebitEntry interestEntry : interestRateEntries) {
+//                        //Check if there is enough amount to Pay
+//                        if (availableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+//                            break;
+//                        }
+//
+//                        BigDecimal amountToPay = interestEntry.getOpenAmount();
+//                        //check if the amount to pay in the Debit Entry
+//                        if (amountToPay.compareTo(availableAmount) > 0) {
+//                            amountToPay = availableAmount;
+//                        }
+//
+//                        SettlementEntry newSettlementEntry = SettlementEntry.create(interestEntry, settlementNote, amountToPay,
+//                                interestEntry.getDescription(), paymentDate, true);
+//                        //Update the amount to Pay
+//                        availableAmount = availableAmount.subtract(amountToPay);
+//                    }
+//                }
+//                interestRateEntries.clear();
+//            }
+//        }
+//
+//        //######################################
+//        //4. If there is money for more, create a "pending" payment (CreditNote) for being used later
+//        //######################################
+//
+//        //if "availableAmount" still exists, then we must create a "pending Payment" or "CreditNote"
+//        if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
+//            final String advancedPaymentCreditNoteComments = String.format("%s [%s]",
+//                    treasuryBundleI18N("label.SettlementNote.advancedpayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
+//                    paymentDate.toString(TreasuryConstants.DATE_FORMAT));
+//
+//            settlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments,
+//                    originDocumentNumber);
+//
+//            settlementNote.getAdvancedPaymentCreditNote().setDocumentObservations(comments);
+//        }
+//
+//        //######################################
+//        //5. Close the SettlementNote
+//        //######################################
+//
+//        final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
+//
+//        PaymentEntry.create(getPaymentMethod(), settlementNote, paidAmount, fillPaymentEntryMethodId(),
+//                paymentEntryPropertiesMap);
+//        settlementNote.closeDocument();
 
         return Sets.newHashSet(settlementNote);
     }
@@ -559,9 +556,9 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
 
             advancedPaymentSettlementNote.setDocumentObservations(comments);
 
-            final String advancedPaymentCreditNoteComments = String.format("%s [%s]",
-                    treasuryBundleI18N("label.SettlementNote.advancedpayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
-                    paymentDate.toString(TreasuryConstants.DATE_FORMAT));
+            final String advancedPaymentCreditNoteComments =
+                    String.format("%s [%s]", TreasuryConstants.treasuryBundleI18N("label.SettlementNote.advancedpayment")
+                            .getContent(TreasuryConstants.DEFAULT_LANGUAGE), paymentDate.toString(TreasuryConstants.DATE_FORMAT));
 
             advancedPaymentSettlementNote.createAdvancedPaymentCreditNote(availableAmount, advancedPaymentCreditNoteComments,
                     originDocumentNumber);
