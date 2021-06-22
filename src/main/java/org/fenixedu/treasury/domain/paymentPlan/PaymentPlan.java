@@ -79,8 +79,8 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.PendingDebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
@@ -119,7 +119,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         createPaymentReferenceCode();
         annulPaymentReferenceCodeFromDebitEntries(
                 paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(bean -> bean.isForDebitEntry())
-                        .map(bean -> ((DebitEntryBean) bean).getDebitEntry()).collect(Collectors.toList()));
+                        .map(bean -> ((SettlementDebitEntryBean) bean).getDebitEntry()).collect(Collectors.toList()));
         checkRules();
     }
 
@@ -246,7 +246,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         //Interests (Interests)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPendingInterest())
                 .forEach(bean -> {
-                    InterestEntryBean interestEntryBean = (InterestEntryBean) bean;
+                    SettlementInterestEntryBean interestEntryBean = (SettlementInterestEntryBean) bean;
 
                     Optional<DebitNote> debitNote = createDebitNote(paymentPlanBean, this);
                     Product product = TreasurySettings.getInstance().getInterestProduct();
@@ -350,7 +350,8 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     public void tryClosePaymentPlanByPaidOff() {
         if (getSortedOpenInstallments().isEmpty()) {
-            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff") + " [" + new LocalDate().toString("yyyy-MM-dd") + "]");
+            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff") + " ["
+                    + new LocalDate().toString("yyyy-MM-dd") + "]");
         }
     }
 

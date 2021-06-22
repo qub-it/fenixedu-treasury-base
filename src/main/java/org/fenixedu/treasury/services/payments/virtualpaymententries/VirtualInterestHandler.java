@@ -77,18 +77,6 @@ import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
 public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
-
-    @Override
-    public boolean isApplicable(SettlementNoteBean settlementNoteBean) {
-        List<SettlementDebitEntryBean> debitEntries = settlementNoteBean.getDebitEntriesByType(SettlementDebitEntryBean.class);
-
-        return debitEntries.stream()
-                .filter(bean -> bean.isIncluded()
-                        && TreasuryConstants.isEqual(bean.getDebitEntry().getOpenAmount(), bean.getSettledAmount()))
-                .anyMatch(bean -> TreasuryConstants.isPositive(
-                        bean.getDebitEntry().calculateUndebitedInterestValue(settlementNoteBean.getDate()).getInterestAmount()));
-    }
-
     @Override
     public List<ISettlementInvoiceEntryBean> createISettlementInvoiceEntryBean(SettlementNoteBean settlementNoteBean) {
         List<ISettlementInvoiceEntryBean> result = new ArrayList<>();

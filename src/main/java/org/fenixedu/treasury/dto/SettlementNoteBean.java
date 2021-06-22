@@ -68,7 +68,6 @@ import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
-import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.AdvancedPaymentCreditNote;
@@ -76,7 +75,6 @@ import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.CreditNote;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
-import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -84,16 +82,18 @@ import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
+import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
 
 public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public static final String CONTROLLER_URL = "/treasury/document/managepayments/settlementnote";
@@ -315,10 +315,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
         List<IVirtualPaymentEntryHandler> handlers = VirtualPaymentEntryFactory.implementation().getHandlers();
         for (IVirtualPaymentEntryHandler handler : handlers) {
-            if (handler.isApplicable(this)) {
-                addAllVirtualDebitEntries(handler.createISettlementInvoiceEntryBean(this));
-            }
+            addAllVirtualDebitEntries(handler.createISettlementInvoiceEntryBean(this));
         }
+    }
+
+    private void addAllVirtualDebitEntries(List<ISettlementInvoiceEntryBean> iSettlementInvoiceEntryBeans) {
+        this.virtualDebitEntries.addAll(iSettlementInvoiceEntryBeans);
     }
 
     public void calculateInterestDebitEntries() {
@@ -449,9 +451,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
                     if (interestDebitEntry.isInDebt()) {
                         getDebitEntries().stream()
-                        .filter(e -> ((SettlementDebitEntryBean) e).getDebitEntry() == interestDebitEntry).findAny().get()
-                        .setIncluded(true);
-                        }
+                                .filter(e -> ((SettlementDebitEntryBean) e).getDebitEntry() == interestDebitEntry).findAny().get()
+                                .setIncluded(true);
+                    }
                 }
             }
         }
@@ -574,7 +576,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 sum = sum.add(debitEntryBean.getSettledAmount());
             }
         }
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (interestEntryBean.isIncluded()) {
                 //Interest doesn't have vat
                 sum = sum.add(interestEntryBean.getSettledAmount());
@@ -747,6 +749,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public void setAddressBean(SibsBillingAddressBean addressBean) {
         this.addressBean = addressBean;
     }
+
     public List<ISettlementInvoiceEntryBean> getVirtualDebitEntries() {
         return virtualDebitEntries;
     }
@@ -754,6 +757,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public void setVirtualDebitEntries(List<ISettlementInvoiceEntryBean> virtualDebitEntries) {
         this.virtualDebitEntries = virtualDebitEntries;
     }
+
     public static class PaymentEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -850,4 +854,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             this.amountWithVat = amountWithVat.subtract(partialAmountWithVat);
         }
     }
+
+    public SettlementNoteBean duplicate() {
+        String settlementNoteBean = IntrospectorTool.serialize(this);
+        return (SettlementNoteBean) IntrospectorTool.deserialize(settlementNoteBean);
+    }
+
 }

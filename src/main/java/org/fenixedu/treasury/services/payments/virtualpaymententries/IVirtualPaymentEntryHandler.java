@@ -58,8 +58,6 @@ import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 
 public interface IVirtualPaymentEntryHandler {
-    public boolean isApplicable(SettlementNoteBean settlementNoteBean);
-
     public List<ISettlementInvoiceEntryBean> createISettlementInvoiceEntryBean(SettlementNoteBean settlementNoteBean);
 
     public void execute(SettlementNoteBean settlementNoteBean, ISettlementInvoiceEntryBean invoiceEntryBean);

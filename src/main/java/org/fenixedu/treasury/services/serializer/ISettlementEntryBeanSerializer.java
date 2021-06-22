@@ -100,51 +100,7 @@ public class ISettlementEntryBeanSerializer implements ObjectSerializer<ISettlem
         if (serializedObject == null) {
             return null;
         }
-//
-//        try {
-//            JsonObject jsonObject = new Gson().fromJson(serializedObject, JsonObject.class);
-//            Class<?> objectClass = Class.forName(jsonObject.get(IntrospectorTool.TYPE).getAsString());
-//
-//            BigDecimal amount = new BigDecimal(jsonObject.get(AMOUNT).getAsString());
-//
-//            if (objectClass == SettlementDebitEntryBean.class) {
-//                DebitEntry debitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
-//
-//                SettlementDebitEntryBean entry = new SettlementDebitEntryBean(debitEntry);
-//                entry.setSettledAmount(amount);
-//                return entry;
-//            }
-//            if (objectClass == SettlementInterestEntryBean.class) {
-//                DebitEntry debitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
-//                String description = jsonObject.get(DESCRITPION).getAsString();
-//                InterestRateBean interest = new InterestRateBean();
-//                interest.setInterestAmount(amount);
-//                interest.setDescription(description);
-//                SettlementInterestEntryBean entry = new SettlementInterestEntryBean(debitEntry, interest);
-//                entry.setSettledAmount(amount);
-//                return entry;
-//            }
-//            if (objectClass == PaymentPenaltyEntryBean.class) {
-//                DebitEntry debitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
-//                LocalDate dueDate = LocalDate.parse(jsonObject.get(DUE_DATE).getAsString());
-//                LocalDate creationDate = LocalDate.parse(jsonObject.get(CREATION_DATE).getAsString());
-//
-//                PaymentPenaltyEntryBean entry =
-//                        PaymentPenaltyTaxTreasuryEvent.calculatePaymentPenaltyTax(debitEntry, dueDate, creationDate);
-//                return entry;
-//            }
-//            if (objectClass == PendingDebitEntryBean.class) {
-//                Product product = FenixFramework.getDomainObject(jsonObject.get(PRODUCT_ID).getAsString());
-//                LocalDate dueDate = LocalDate.parse(jsonObject.get(DUE_DATE).getAsString());
-//
-//                PendingDebitEntryBean entry = new PendingDebitEntryBean(product, amount, dueDate);
-//                return entry;
-//            }
         return ISettlementInvoiceEntryBean.deserialize(serializedObject);
-//        } catch (ClassNotFoundException e) {
-//            throw new RuntimeException("Problems while trying to deserialize object: " + serializedObject, e);
-//        }
-
     }
 
     @Override
@@ -157,34 +113,6 @@ public class ISettlementEntryBeanSerializer implements ObjectSerializer<ISettlem
         if (entry == null) {
             return null;
         }
-
-//        JsonObject jsonObject = new JsonObject();
-//
-//        jsonObject.add(IntrospectorTool.TYPE, new JsonPrimitive(entry.getClass().getName()));
-//
-//        if (entry.isForDebitEntry()) {
-//            jsonObject.add(DEBIT_ENTRY_ID, new JsonPrimitive(entry.getInvoiceEntry().getExternalId()));
-//        }
-//
-//        if (entry.isForPendingInterest()) {
-//            jsonObject.add(DEBIT_ENTRY_ID,
-//                    new JsonPrimitive(((SettlementInterestEntryBean) entry).getDebitEntry().getExternalId()));
-//            jsonObject.add(DESCRITPION, new JsonPrimitive(((SettlementInterestEntryBean) entry).getDescription()));
-//        }
-//
-////        if (entry.isForPaymentPenalty()) {
-////            jsonObject.add(DEBIT_ENTRY_ID, new JsonPrimitive(((PaymentPenaltyEntryBean) entry).getDebitEntry().getExternalId()));
-////            jsonObject.add(DUE_DATE, new JsonPrimitive(((PaymentPenaltyEntryBean) entry).getDueDate().toString()));
-////            jsonObject.add(CREATION_DATE, new JsonPrimitive(((PaymentPenaltyEntryBean) entry).getDueDate().toString()));
-////        }
-////
-////        if (entry.isForPendingDebitEntry()) {
-////            jsonObject.add(PRODUCT_ID, new JsonPrimitive(((PendingDebitEntryBean) entry).getProduct().getExternalId()));
-////            jsonObject.add(DUE_DATE, new JsonPrimitive(((PaymentPenaltyEntryBean) entry).getDueDate().toString()));
-////        }
-//
-//        jsonObject.add(AMOUNT, new JsonPrimitive(entry.getSettledAmount().toPlainString()));
-
         return entry.serialize();
 
     }

@@ -54,6 +54,9 @@ package org.fenixedu.treasury.dto;
 
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
@@ -112,7 +115,7 @@ public interface ISettlementInvoiceEntryBean {
     /*
      * Methods to support jsp, overriden in subclasses
      */
-    
+
     default boolean isForDebitEntry() {
         return false;
     }
@@ -126,6 +129,14 @@ public interface ISettlementInvoiceEntryBean {
     }
 
     default boolean isForPendingInterest() {
+        return false;
+    }
+
+    default public boolean isForPaymentPenalty() {
+        return false;
+    }
+
+    default public boolean isForPendingDebitEntry() {
         return false;
     }
 

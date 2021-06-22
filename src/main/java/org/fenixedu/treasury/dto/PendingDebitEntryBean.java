@@ -61,10 +61,18 @@ import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.services.serializer.ISettlementEntryBeanSerializer;
 import org.joda.time.LocalDate;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
+import pt.ist.fenixframework.FenixFramework;
 
 public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
+    private static final String DUE_DATE = "dueDate";
+    private static final String PRODUCT_SERIALIZER = "product";
     private Product product;
     private BigDecimal amount;
     private LocalDate dueDate;
@@ -164,33 +172,24 @@ public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITrea
     }
 
     @Override
-    public boolean isForDebitEntry() {
-        return false;
-    }
-
-    @Override
-    public boolean isForInstallment() {
-        return false;
-    }
-
-    @Override
-    public boolean isForCreditEntry() {
-        return false;
-    }
-
-    @Override
-    public boolean isForPendingInterest() {
-        return false;
-    }
-
-    @Override
-    public boolean isForPaymentPenalty() {
-        return false;
-    }
-
-    @Override
     public boolean isForPendingDebitEntry() {
         return true;
+    }
+
+    @Override
+    public String serialize() {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add(PRODUCT_SERIALIZER, new JsonPrimitive(product.getExternalId()));
+        jsonObject.add(DUE_DATE, new JsonPrimitive(dueDate.toString()));
+        jsonObject.add(ISettlementEntryBeanSerializer.AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
+        return jsonObject.toString();
+    }
+
+    @Override
+    public void fillSerializable(JsonObject jsonObject) {
+        this.product = FenixFramework.getDomainObject(jsonObject.get(PRODUCT_SERIALIZER).getAsString());
+        this.dueDate = LocalDate.parse(jsonObject.get(DUE_DATE).getAsString());
+        this.amount = jsonObject.get(ISettlementEntryBeanSerializer.AMOUNT).getAsBigDecimal();
     }
 
 }
