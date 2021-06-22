@@ -52,8 +52,6 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
          * Taxa2
          * Juro2
          */
-        String descriçãoS1 = s1.getDescription();
-        String descriçãoS2 = s2.getDescription();
 
         DebitEntry debitEntryS1 = null;
         DebitEntry interestEntryS1 = null;

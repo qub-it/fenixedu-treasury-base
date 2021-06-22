@@ -1,3 +1,5 @@
+- Bug Fix: Payment Plan: multiples bug fix on creation payment plan
+
 7.2.0 (17-06-2021)
 - New Fixture: Payment plan configurators with custom interests and penalties calculations, and debit entries distribution in installments
 

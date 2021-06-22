@@ -3142,7 +3142,7 @@ class paymentPlan.PaymentPlanConfigurator{
 		}
 	}
 	
-	class paymentPlan.PaymentPlanCaculateInstallmentsInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{
+	class paymentPlan.PaymentPlanCalculateInstallmentsInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{
 	}
 	
 	class paymentPlan.PaymentPlanBlockInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{

@@ -17,10 +17,10 @@ import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
-public class PaymentPlanCaculateInstallmentsInterestsConfigurator
-        extends PaymentPlanCaculateInstallmentsInterestsConfigurator_Base {
+public class PaymentPlanCalculateInstallmentsInterestsConfigurator
+        extends PaymentPlanCalculateInstallmentsInterestsConfigurator_Base {
 
-    public PaymentPlanCaculateInstallmentsInterestsConfigurator() {
+    public PaymentPlanCalculateInstallmentsInterestsConfigurator() {
         super();
     }
 

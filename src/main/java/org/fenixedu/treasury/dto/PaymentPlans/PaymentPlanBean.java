@@ -72,6 +72,10 @@ public class PaymentPlanBean {
         return nbInstallments;
     }
 
+    public void setChanged(boolean isChanged) {
+        this.isChanged = isChanged;
+    }
+
     public void setNbInstallments(int nbInstallments) {
         this.nbInstallments = nbInstallments;
         this.isChanged = true;
