@@ -70,6 +70,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.bennu.signals.BennuSignalsServices;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -664,6 +665,8 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         checkRules();
+
+        BennuSignalsServices.emitSignalForSettlement(this);
     }
 
     @Atomic

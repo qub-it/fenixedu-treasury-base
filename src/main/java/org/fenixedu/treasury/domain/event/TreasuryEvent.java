@@ -243,6 +243,14 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public boolean isDeletable() {
         return true;
     }
+    
+    public boolean isEventAccountedAsTuition() {
+        return false;
+    }
+    
+    public boolean isEventDiscountInTuitionFee() {
+        return false;
+    }
 
     public abstract LocalDate getTreasuryEventDate();
 

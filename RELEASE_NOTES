@@ -1,6 +1,11 @@
 - Improvement: Property in payment method to check if requires a payment method reference, when registering a settlement note in backoffice
 - Refactor: Remove defaultReference property in PaymentMethodReference. Replace with "forDigitalPayments" property which if marked, the reference will be applied in digital payments
 - Refactor: Remove hardcoded "COB PAG SERV <sibsEntity>" and replace by payment reference code marked with "forDigitalPayments" property
+- Improvement: Emit settlement note bennu signal when settlement note is closed, instead of settlement entry creation
+- Refactor: Created an interface to declare a bennu signal handler or callback
+- Bug Fix: Only try to close credit entries with debit entries if they are not annuled (#UL-ISCSP-714)
+- Refactor: Predicates in TreasuryEvent to check if it is related with tuition debts, and if the event discount on tuition total amount
+- Refactor: Set method in Tariff, to calculate due date as static, so it can be reused
 
 8.4.0 (09-11-2021)
 - Improvement: Change Settlement note receipt from odt to webdocs 
