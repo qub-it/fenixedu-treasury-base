@@ -60,11 +60,13 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 
 public interface IMbwayPaymentPlatformService {
 
     public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
+    @Deprecated
     public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
             String countryPrefix, String localPhoneNumber);
 
@@ -73,5 +75,7 @@ public interface IMbwayPaymentPlatformService {
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
     public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
+
+    public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
 
 }

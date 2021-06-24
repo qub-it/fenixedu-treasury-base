@@ -77,6 +77,8 @@ import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.services.payments.paymentscodegenerator.CheckDigitGenerator;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
@@ -219,6 +221,34 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         BigDecimal payableAmountInstallments =
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+    }
+
+    @Override
+    public SibsPaymentRequest createSibsPaymentRequest(SettlementNoteBean settlementNoteBean) {
+
+        DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
+        Set<DebitEntry> debitEntries =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.getInvoiceEntry() != null)
+                        .map(s -> s.getInvoiceEntry()).map(DebitEntry.class::cast).collect(Collectors.toSet());
+        Set<Installment> installments =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.isForInstallment())
+                        .map(InstallmentPaymenPlanBean.class::cast).map(s -> s.getInstallment()).collect(Collectors.toSet());
+
+        BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
+        if (!isActive()) {
+            throw new RuntimeException("payment code pool not active");
+        }
+
+        LocalDate now = new LocalDate();
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+
+        if (validTo.isBefore(now)) {
+            validTo = now;
+        }
 
         return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }

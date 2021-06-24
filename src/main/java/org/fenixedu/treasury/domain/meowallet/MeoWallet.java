@@ -261,6 +261,96 @@ public class MeoWallet extends MeoWallet_Base
     }
 
     @Override
+    @Atomic(mode = TxMode.READ)
+    public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber) {
+        Set<DebitEntry> debitEntries =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.getInvoiceEntry() != null)
+                        .map(s -> s.getInvoiceEntry()).map(DebitEntry.class::cast).collect(Collectors.toSet());
+        Set<Installment> installments = settlementNoteBean.getIncludedInvoiceEntryBeans().stream()
+                .filter(s -> s.isForInstallment()).map(s -> ((InstallmentPaymenPlanBean) s).getInstallment())
+                .map(Installment.class::cast).collect(Collectors.toSet());
+
+        if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
+            throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
+        }
+
+        if (StringUtils.isEmpty(localPhoneNumber)) {
+            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.required");
+        }
+
+        if (!localPhoneNumber.matches("\\d+")) {
+            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.format.required");
+        }
+
+        BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
+
+        String merchantTransactionId = generateNewMerchantTransactionId();
+
+        DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
+        MeoWalletLog log = createLogForMbwayPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());;
+
+        List<MeoWalletPaymentItemBean> items = new ArrayList<>();
+        debitEntries.stream()
+                .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription(), d.getOpenAmountWithInterests())));
+        installments.stream()
+                .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription().getContent(), d.getOpenAmount())));
+
+        MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMbwayPaymentBean(payableAmount, merchantTransactionId,
+                debtAccount.getCustomer().getExternalId(), debtAccount.getCustomer().getName(), localPhoneNumber, items);
+
+        try {
+            MbwayRequest mbwayPaymentRequest = FenixFramework.atomic(() -> {
+                MbwayRequest request = MbwayRequest.create(this, debtAccount, debitEntries, installments, localPhoneNumber,
+                        payableAmount, merchantTransactionId);
+                log.logRequestSendDate();
+                log.setPaymentRequest(request);
+                return request;
+            });
+
+            final MeoWalletPaymentBean paymentBean = getMeoWalletService().generateMbwayReference(payment);
+
+            FenixFramework.atomic(() -> {
+                log.logRequestReceiveDateAndData(paymentBean.getId(), paymentBean.getType(), paymentBean.getMethod(),
+                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals(STATUS_FAIL));
+
+                log.saveRequest(paymentBean.getRequestLog());
+                log.saveResponse(paymentBean.getResponseLog());
+                log.setStateCode(mbwayPaymentRequest.getState().name());
+                log.setStateDescription(mbwayPaymentRequest.getState().getDescriptionI18N());
+
+                mbwayPaymentRequest.setTransactionId(paymentBean.getId());
+
+            });
+
+            return mbwayPaymentRequest;
+
+        } catch (Exception e) {
+            boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
+
+            FenixFramework.atomic(() -> {
+
+                log.logRequestReceiveDateAndData(null, null, null, null, null, false);
+                log.logException(e);
+
+                if (isOnlinePaymentsGatewayException) {
+                    OnlinePaymentsGatewayCommunicationException onlineException = (OnlinePaymentsGatewayCommunicationException) e;
+                    log.saveRequest(onlineException.getRequestLog());
+                    log.saveResponse(onlineException.getResponseLog());
+                }
+            });
+
+            if (e instanceof TreasuryDomainException) {
+                throw (TreasuryDomainException) e;
+            } else {
+                final String message = "error.MeoWallet.generateNewCodeFor."
+                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+
+                throw new TreasuryDomainException(e, message);
+            }
+        }
+    }
+
+    @Override
     public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean) {
         return processMbwayTransaction((MeoWalletLog) log, bean);
     }
@@ -348,6 +438,31 @@ public class MeoWallet extends MeoWallet_Base
         BigDecimal payableAmountInstallments =
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
+
+        LocalDate now = new LocalDate();
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+
+        if (validTo.isBefore(now)) {
+            validTo = now;
+        }
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+    }
+
+    @Override
+    public SibsPaymentRequest createSibsPaymentRequest(SettlementNoteBean settlementNoteBean) {
+
+        DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
+        Set<DebitEntry> debitEntries =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.getInvoiceEntry() != null)
+                        .map(s -> s.getInvoiceEntry()).map(DebitEntry.class::cast).collect(Collectors.toSet());
+        Set<Installment> installments =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.isForInstallment())
+                        .map(InstallmentPaymenPlanBean.class::cast).map(s -> s.getInstallment()).collect(Collectors.toSet());
+
+        BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
 
         LocalDate now = new LocalDate();
         Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
