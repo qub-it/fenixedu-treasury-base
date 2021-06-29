@@ -1,3 +1,55 @@
+/**
+ * Copyright (c) 2015, Quorum Born IT <http://www.qub-it.com/>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, without
+ * modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
+ *
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
+ *
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
+ *
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
+ *
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
+ *
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
+ *
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL “Quorum Born IT�? BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.fenixedu.treasury.domain.paymentcodes;
 
 import java.math.BigDecimal;
@@ -12,28 +64,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.onlinepaymentsgateway.api.PaymentStateBean;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.domain.sibspaymentsgateway.SibsPaymentsGatewayLog;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
-import pt.ist.fenixframework.FenixFramework;
 
 public class SibsPaymentRequest extends SibsPaymentRequest_Base {
 
@@ -62,18 +108,17 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         checkRules();
     }
 
-    protected SibsPaymentRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            Set<Installment> installments, BigDecimal payableAmount, String referenceCode,
-            String merchantTransactionId, String transactionId) {
-
+    public SibsPaymentRequest(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments, String entityCode, String referenceCode, BigDecimal payableAmount,
+            String merchantTransactionId, String sibsReferenceId) {
         this();
         this.init(platform, debtAccount, debitEntries, installments, payableAmount,
                 TreasurySettings.getInstance().getMbPaymentMethod());
 
-        setEntityReferenceCode(platform.castToSibsPaymentCodePoolService().getEntityReferenceCode());
+        setEntityReferenceCode(entityCode);
         setReferenceCode(referenceCode);
         setMerchantTransactionId(merchantTransactionId);
-        setTransactionId(transactionId);
+        setTransactionId(sibsReferenceId);
 
         setState(PaymentReferenceCodeStateType.USED);
 
@@ -81,9 +126,6 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsMerchantTransaction.required");
         }
 
-        if (StringUtils.isEmpty(getTransactionId())) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsMerchantTransaction.required");
-        }
 
         checkRules();
     }
@@ -181,9 +223,9 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     public PaymentTransaction processPayment(BigDecimal paidAmount, DateTime paymentDate, String sibsTransactionId,
             String sibsImportationFilename, String sibsMerchantTransactionId, DateTime whenProcessedBySibs,
             SibsReportFile sibsReportFile, boolean checkSibsTransactionIdDuplication) {
-        String entityReferenceCode = getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
 
-        if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, getReferenceCode(), paymentDate)) {
+        if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(getEntityReferenceCode(), getReferenceCode(),
+                paymentDate)) {
             return null;
         }
 
@@ -231,72 +273,17 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         return transaction;
     }
 
-    @Atomic(mode = TxMode.READ)
-    public PaymentTransaction processPaymentReferenceCodeTransaction(final SibsPaymentsGatewayLog log, PaymentStateBean bean) {
-        if (!bean.getMerchantTransactionId().equals(getMerchantTransactionId())) {
-            throw new TreasuryDomainException(
-                    "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.merchantTransactionId.not.equal");
-        }
-
-        FenixFramework.atomic(() -> {
-            log.setPaymentRequest(this);
-        });
-
-        final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = bean.getPaymentDate();
-
-        FenixFramework.atomic(() -> {
-            log.savePaymentInfo(paidAmount, paymentDate);
-        });
-
-        if (paidAmount == null || !TreasuryConstants.isPositive(paidAmount)) {
-            throw new TreasuryDomainException("error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.amount");
-        }
-
-        if (paymentDate == null) {
-            throw new TreasuryDomainException(
-                    "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.payment.date");
-        }
-
-        String entityReferenceCode = getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
-        if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, getReferenceCode(), paymentDate)) {
-            FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
-            return null;
-        }
-
-        if (PaymentTransaction.isTransactionDuplicate(bean.getTransactionId())) {
-            FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
-            return null;
-        }
-
-        if (SibsPaymentCodeTransaction.isSibsGatewayReferenceProcessingDuplicate(bean.getTransactionId())) {
-            FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
-            return null;
-        }
-
-        PaymentTransaction paymentTransaction = processPayment(paidAmount, paymentDate, bean.getTransactionId(), null, bean.getMerchantTransactionId(),
-                new DateTime(), null, true);
-        
-        if(paymentTransaction != null) {
-            FenixFramework.atomic(() -> log.setPaymentTransaction(paymentTransaction));
-        }
-        
-        return paymentTransaction;
-    }
-
     @Override
     public String fillPaymentEntryMethodId() {
         // ANIL (2017-09-13) Required by used ERP at this date
-        return String.format("COB PAG SERV %s",
-                ((ISibsPaymentCodePoolService) getDigitalPaymentPlatform()).getEntityReferenceCode());
+        return String.format("COB PAG SERV %s", getEntityReferenceCode());
     }
 
     private Map<String, String> fillPaymentEntryPropertiesMap(final String sibsTransactionId) {
-        String entityReferenceCode = this.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode();
         final Map<String, String> paymentEntryPropertiesMap = new HashMap<>();
 
         paymentEntryPropertiesMap.put("ReferenceCode", getReferenceCode());
-        paymentEntryPropertiesMap.put("EntityReferenceCode", entityReferenceCode);
+        paymentEntryPropertiesMap.put("EntityReferenceCode", getEntityReferenceCode());
 
         if (!Strings.isNullOrEmpty(sibsTransactionId)) {
             paymentEntryPropertiesMap.put("SibsTransactionId", sibsTransactionId);
@@ -318,9 +305,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     }
 
     public static Stream<SibsPaymentRequest> find(String entityReferenceCode, String referenceCode) {
-        return findAll()
-                .filter(p -> entityReferenceCode
-                        .equals(p.getDigitalPaymentPlatform().castToSibsPaymentCodePoolService().getEntityReferenceCode()))
+        return findAll().filter(p -> entityReferenceCode.equals(p.getEntityReferenceCode()))
                 .filter(p -> referenceCode.equals(p.getReferenceCode()));
     }
 
@@ -393,10 +378,10 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     }
 
     public static SibsPaymentRequest create(DigitalPaymentPlatform platform, DebtAccount debtAccount,
-            Set<DebitEntry> debitEntries, Set<Installment> installments, BigDecimal payableAmount, String referenceCode,
-            String sibsGatewayMerchantTransactionId, String sibsGatewayTransactionId) {
-        return new SibsPaymentRequest(platform, debtAccount, debitEntries, installments, payableAmount, referenceCode,
-                sibsGatewayMerchantTransactionId, sibsGatewayTransactionId);
+            Set<DebitEntry> debitEntries, Set<Installment> installments, BigDecimal payableAmount, String entityCode,
+            String referenceCode, String merchantTransactionId, String sibsReferenceId) {
+        return new SibsPaymentRequest(platform, debtAccount, debitEntries, installments, entityCode, referenceCode, payableAmount,
+                merchantTransactionId, sibsReferenceId);
     }
 
 }

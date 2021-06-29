@@ -1,3 +1,55 @@
+/**
+ * Copyright (c) 2015, Quorum Born IT <http://www.qub-it.com/>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, without
+ * modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
+ *
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
+ *
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
+ *
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
+ *
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
+ *
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
+ *
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL “Quorum Born IT�? BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.fenixedu.treasury.domain.forwardpayments;
 
 import java.math.BigDecimal;
@@ -116,6 +168,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return true;
     }
 
+    @Deprecated
     public PaymentRequestLog reject(String operationCode, String statusCode, String errorMessage, String requestBody,
             String responseBody) {
         setState(ForwardPaymentStateType.REJECTED);
@@ -128,6 +181,12 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         checkRules();
 
         return log;
+    }
+
+    public void reject() {
+        setState(ForwardPaymentStateType.REJECTED);
+
+        checkRules();
     }
 
     public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage,
@@ -175,6 +234,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return log;
     }
 
+    @Deprecated
     public PaymentRequestLog advanceToPaidState(String statusCode, String statusMessage, BigDecimal paidAmount,
             DateTime transactionDate, String transactionId, String authorizationNumber, String requestBody, String responseBody,
             String justification) {
@@ -215,9 +275,49 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
                 PaymentTransaction.create(this, transactionId, transactionDate, paidAmount, resultSettlementNotes);
         paymentTransaction.setJustification(justification);
 
+        log.setPaymentTransaction(paymentTransaction);
+
         checkRules();
 
         return log;
+    }
+
+    public PaymentTransaction advanceToPaidState(String statusCode, BigDecimal paidAmount, DateTime transactionDate,
+            String transactionId, String justification) {
+
+        if (!isActive()) {
+            throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
+        }
+
+        if (isInPaidState()) {
+            throw new ForwardPaymentAlreadyPayedException("error.ForwardPayment.already.payed");
+        }
+
+        if (!getPaymentTransactionsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.ForwardPayment.with.settlement.note.already.associated");
+        }
+
+        setState(ForwardPaymentStateType.PAYED);
+
+        Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
+                (o) -> fillPaymentEntryPropertiesMap(transactionId, transactionDate, statusCode);
+
+        Set<SettlementNote> resultSettlementNotes = null;
+        if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+            resultSettlementNotes = internalProcessPaymentInNormalPaymentMixingLegacyInvoices(paidAmount, transactionDate,
+                    String.valueOf(getOrderNumber()), transactionId, additionalPropertiesMapFunction);
+        } else {
+            resultSettlementNotes = internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(paidAmount, transactionDate,
+                    String.valueOf(getOrderNumber()), transactionId, additionalPropertiesMapFunction);
+        }
+
+        PaymentTransaction paymentTransaction =
+                PaymentTransaction.create(this, transactionId, transactionDate, paidAmount, resultSettlementNotes);
+        paymentTransaction.setJustification(justification);
+
+        checkRules();
+
+        return paymentTransaction;
     }
 
     private Map<String, String> fillPaymentEntryPropertiesMap(String transactionId, DateTime transactionDate, String statusCode) {
@@ -284,4 +384,20 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return request;
     }
 
+    public static ForwardPaymentRequest create(DigitalPaymentPlatform plataform, DebtAccount debtAccount,
+            Set<DebitEntry> debitEntries, Set<Installment> installments, BigDecimal amount,
+            Function<ForwardPaymentRequest, String> successUrlFunction,
+            Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
+
+        ForwardPaymentRequest request = new ForwardPaymentRequest(plataform, debtAccount, debitEntries, installments, amount);
+
+        request.setForwardPaymentSuccessUrl(successUrlFunction.apply(request));
+        request.setForwardPaymentInsuccessUrl(insuccessUrlFunction.apply(request));
+
+        return request;
+    }
+
+    public static Optional<ForwardPaymentRequest> findUniqueByMerchantTransactionId(String merchantTransactionId) {
+        return findAll().filter(pr -> pr.getMerchantTransactionId().equals(merchantTransactionId)).findFirst();
+    }
 }

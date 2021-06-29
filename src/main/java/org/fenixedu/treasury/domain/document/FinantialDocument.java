@@ -6,38 +6,38 @@
  * modification, are permitted provided that the following
  * conditions are met:
  *
- *  (o) Redistributions of source code must retain the above
- *  copyright notice, this list of conditions and the following
- *  disclaimer.
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
  *
- *  (o) Redistributions in binary form must reproduce the
- *  above copyright notice, this list of conditions and the
- *  following disclaimer in the documentation and/or other
- *  materials provided with the distribution.
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
  *
- *  (o) Neither the name of Quorum Born IT nor the names of
- *  its contributors may be used to endorse or promote products
- *  derived from this software without specific prior written
- *  permission.
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
  *
- *  (o) Universidade de Lisboa and its respective subsidiary
- *  Serviços Centrais da Universidade de Lisboa (Departamento
- *  de Informática), hereby referred to as the Beneficiary,
- *  is the sole demonstrated end-user and ultimately the only
- *  beneficiary of the redistributed binary form and/or source
- *  code.
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
  *
- *  (o) The Beneficiary is entrusted with either the binary form,
- *  the source code, or both, and by accepting it, accepts the
- *  terms of this License.
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
  *
- *  (o) Redistribution of any binary form and/or source code is
- *  only allowed in the scope of the Universidade de Lisboa
- *  FenixEdu(™)’s implementation projects.
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
  *
- *  (o) This license and conditions of redistribution of source
- *  code/binary can oly be reviewed by the Steering Comittee of
- *  FenixEdu(™) <http://www.fenixedu.org/>.
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -62,13 +62,14 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.bennu.core.security.Authenticate;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.domain.integration.ERPImportOperation;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.ERPExporterManager;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -311,7 +312,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         } else {
             throw new TreasuryDomainException(
-                    BundleUtil.getString(TreasuryConstants.BUNDLE, "error.FinantialDocumentState.invalid.state.change.request"));
+                    TreasuryConstants.treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
 
         }
 
@@ -345,7 +346,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
             
-            final String username = Authenticate.getUser() != null ? Authenticate.getUser().getUsername() : "unknown";
+            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
             super.setClearDocumentToExportReason(String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
@@ -360,7 +362,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
 
-            final String username = Authenticate.getUser() != null ? Authenticate.getUser().getUsername() : "unknown";
+            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
             super.setClearDocumentToExportReason(String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
