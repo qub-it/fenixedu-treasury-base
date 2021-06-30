@@ -62,6 +62,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
@@ -145,6 +147,13 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         SettlementInterestEntryBean interestEntryBean = (SettlementInterestEntryBean) invoiceEntryBean;
 
         DebitNote interestDebitNote = DebitNote.create(settlementNoteBean.getDebtAccount(), debitNoteSeries, new DateTime());
+
+        if (settlementNoteBean.getReferencedCustomers().size() == 1 && settlementNoteBean.getReferencedCustomers().iterator()
+                .next() != settlementNoteBean.getDebtAccount().getCustomer()) {
+            Customer payorCustomer = settlementNoteBean.getReferencedCustomers().iterator().next();
+            DebtAccount payorDebtAccount = payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
+            interestDebitNote.setPayorDebtAccount(payorDebtAccount);
+        }
 
         DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
                 interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
