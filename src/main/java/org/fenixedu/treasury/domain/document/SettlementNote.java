@@ -317,7 +317,6 @@ public class SettlementNote extends SettlementNote_Base {
 
     @Atomic
     public void processSettlementNoteCreation(SettlementNoteBean bean) {
-//        processInterestEntries(bean);
         processDebtEntries(bean);
         processCreditEntries(bean);
         if (bean.isReimbursementNote()) {
@@ -385,29 +384,6 @@ public class SettlementNote extends SettlementNote_Base {
                     paymentEntryBean.getPaymentMethodId(), Maps.newHashMap());
         }
     }
-
-//    private void processInterestEntries(SettlementNoteBean bean) {
-//
-//        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-//                .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
-//                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
-//        if (bean.getInterestEntries().size() == 0) {
-//            return;
-//        }
-//
-//        for (SettlementInterestEntryBean interestEntryBean : bean.getInterestEntries()) {
-//            DebitNote interestDebitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, new DateTime());
-//
-//            DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
-//                    interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
-//
-//            if (interestEntryBean.isIncluded()) {
-//                interestDebitNote.closeDocument();
-//                SettlementEntry.create(interestDebitEntry, this, interestEntryBean.getInterest().getInterestAmount(),
-//                        interestDebitEntry.getDescription(), bean.getDate().toDateTimeAtStartOfDay(), false);
-//            }
-//        }
-//    }
 
     private void processCreditEntries(SettlementNoteBean bean) {
         for (SettlementCreditEntryBean creditEntryBean : bean.getCreditEntries()) {

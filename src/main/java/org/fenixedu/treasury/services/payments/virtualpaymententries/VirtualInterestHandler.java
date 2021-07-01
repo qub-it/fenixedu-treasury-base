@@ -160,6 +160,11 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         SettlementDebitEntryBean settlementDebitEntryBean = new SettlementDebitEntryBean(interestDebitEntry);
         settlementDebitEntryBean.setIncluded(true);
         settlementNoteBean.getDebitEntries().add(settlementDebitEntryBean);
+        
+        // As we are adding a debitEntryBean to settle, mark the virtual entry bean as not included, 
+        // to not influence the calculation of advanced payment amount
+        // TODO: Check with Diogo
+        interestEntryBean.setIncluded(false);
 
     }
 
