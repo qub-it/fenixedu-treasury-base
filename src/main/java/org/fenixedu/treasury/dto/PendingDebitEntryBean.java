@@ -76,6 +76,10 @@ public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITrea
     private BigDecimal amount;
     private LocalDate dueDate;
 
+    public PendingDebitEntryBean() {
+        super();
+    }
+
     public PendingDebitEntryBean(Product product, BigDecimal amount, LocalDate dueDate) {
         super();
         this.product = product;

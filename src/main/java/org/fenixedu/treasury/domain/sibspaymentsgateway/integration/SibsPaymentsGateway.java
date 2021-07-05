@@ -226,7 +226,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     }
 
     @Atomic(mode = TxMode.READ)
-    private ForwardPaymentStatusBean prepareCheckout(ForwardPaymentRequest forwardPayment, SibsBillingAddressBean addressBean) {
+    public ForwardPaymentStatusBean prepareCheckout(ForwardPaymentRequest forwardPayment, SibsBillingAddressBean addressBean) {
         String merchantTransactionId = generateNewMerchantTransactionId();
 
         FenixFramework.atomic(() -> {
@@ -589,6 +589,22 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                         .map(InstallmentPaymenPlanBean.class::cast).map(s -> s.getInstallment()).collect(Collectors.toSet());
 
         BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
+
+        LocalDate now = new LocalDate();
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+
+        if (validTo.isBefore(now)) {
+            validTo = now;
+        }
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+    }
+
+    @Override
+    public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments, BigDecimal payableAmount) {
 
         LocalDate now = new LocalDate();
         Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());

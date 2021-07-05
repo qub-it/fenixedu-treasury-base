@@ -81,6 +81,8 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
+    private static final String INTEREST_DESCRIPTION = "interestDescription";
+
     private static final String VIRTUAL_PAYMENT_ENTRY_HANDLER = "virtualPaymentEntryHandler";
 
     private static final String INTEREST_STATIC = "interest";
@@ -252,7 +254,7 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
         this.debitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
         this.isIncluded = jsonObject.get(INCLUDED).getAsBoolean();
         this.calculationDescription = deserializeCalculationDescription(jsonObject.get(DESCRIPTION).getAsString());
-        this.interest = deserializeInterest(jsonObject.get(INTEREST_STATIC).getAsString());
+        this.interest = deserializeInterest(new Gson().fromJson(jsonObject.get(INTEREST_STATIC).getAsString(), JsonObject.class));
 
         for (IVirtualPaymentEntryHandler handler : VirtualPaymentEntryFactory.implementation().getHandlers()) {
             String className = jsonObject.get(VIRTUAL_PAYMENT_ENTRY_HANDLER).getAsString();
@@ -263,8 +265,21 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
     }
 
     private String serializeInterest(InterestRateBean interest2) {
-        Gson gson = new Gson();
-        return gson.toJson(interest2, InterestRateBean.class);
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add(INTEREST_DESCRIPTION, new JsonPrimitive(interest2.getDescription()));
+        jsonObject.add(AMOUNT, new JsonPrimitive(interest2.getInterestAmount()));
+
+        return jsonObject.toString();
+    }
+
+    private InterestRateBean deserializeInterest(JsonObject jsonObject) {
+
+        InterestRateBean interestRateBean = new InterestRateBean();
+        interestRateBean.setDescription(jsonObject.get(INTEREST_DESCRIPTION).getAsString());
+        interestRateBean.setInterestAmount(jsonObject.get(AMOUNT).getAsBigDecimal());
+
+        return interestRateBean;
     }
 
     private String serializeCalculationDescription(Map<String, List<String>> calculationDescription2) {
@@ -279,11 +294,6 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
         Type listType = new TypeToken<Map<String, List<String>>>() {
         }.getType();
         return gson.fromJson(asString, listType);
-    }
-
-    private InterestRateBean deserializeInterest(String asString) {
-        Gson gson = new Gson();
-        return gson.fromJson(asString, InterestRateBean.class);
     }
 
 }

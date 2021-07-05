@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.dto;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,7 +66,6 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.VatType;
@@ -184,6 +182,60 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 paymentRequest.getPaymentMethod(), paymentRequest.getPaymentMethod().getExternalId());
         paymentEntries.add(paymentEntryBean);
 
+    }
+
+    public SettlementNoteBean(SettlementNoteBean settlementNoteBean) {
+        init();
+        this.debtAccount = settlementNoteBean.getDebtAccount();
+        this.reimbursementNote = settlementNoteBean.isReimbursementNote();
+        this.advancePayment = settlementNoteBean.isAdvancePayment();
+        this.date = settlementNoteBean.getDate();
+        this.digitalPaymentPlatform = settlementNoteBean.getDigitalPaymentPlatform();
+        this.docNumSeries = settlementNoteBean.getDocNumSeries();
+        this.finantialTransactionReference = settlementNoteBean.getFinantialTransactionReference();
+        this.finantialTransactionReferenceYear = settlementNoteBean.getFinantialTransactionReferenceYear();
+        this.originDocumentNumber = settlementNoteBean.getOriginDocumentNumber();
+
+        if (settlementNoteBean.getAddressBean() != null) {
+            SibsBillingAddressBean sibsBillingAddressBean = new SibsBillingAddressBean();
+            sibsBillingAddressBean.setAddress(settlementNoteBean.getAddressBean().getAddress());
+            sibsBillingAddressBean.setAddressCountryCode(settlementNoteBean.getAddressBean().getAddressCountryCode());
+            sibsBillingAddressBean.setAddressCountryName(settlementNoteBean.getAddressBean().getAddressCountryName());
+            sibsBillingAddressBean.setCity(settlementNoteBean.getAddressBean().getCity());
+            sibsBillingAddressBean.setZipCode(settlementNoteBean.getAddressBean().getZipCode());
+            this.addressBean = sibsBillingAddressBean;
+        }
+
+        this.previousStates = (Stack<Integer>) settlementNoteBean.getPreviousStates().clone();
+        this.settlementNoteStateUrls = new ArrayList(settlementNoteBean.getSettlementNoteStateUrls());
+        this.documentNumberSeries = new ArrayList<>();
+        settlementNoteBean.getDocumentNumberSeries()
+                .forEach(bean -> this.documentNumberSeries.add(new TreasuryTupleDataSourceBean(bean.getId(), bean.getText())));
+
+        settlementNoteBean.creditEntries.forEach(bean -> {
+            SettlementCreditEntryBean creditBean = new SettlementCreditEntryBean(bean.getCreditEntry());
+            creditBean.setIncluded(bean.isIncluded());
+            creditBean.setNotValid(bean.isNotValid());
+            creditBean.setSettledAmount(bean.getSettledAmount());
+            this.creditEntries.add(creditBean);
+        });
+
+        settlementNoteBean.debitEntries.forEach(bean -> {
+            SettlementDebitEntryBean debitEntry = new SettlementDebitEntryBean((DebitEntry) bean.getInvoiceEntry());
+            debitEntry.setIncluded(bean.isIncluded());
+            debitEntry.setNotValid(bean.isNotValid());
+            debitEntry.setSettledAmount(bean.getSettledAmount());
+            this.debitEntries.add(debitEntry);
+        });
+
+        settlementNoteBean.paymentEntries.forEach(bean -> {
+            this.paymentEntries.add(new PaymentEntryBean(bean.paymentAmount, bean.paymentMethod, bean.paymentMethodId));
+        });
+
+        settlementNoteBean.virtualDebitEntries.forEach(bean -> {
+            String serialize = bean.serialize();
+            this.virtualDebitEntries.add(ISettlementInvoiceEntryBean.deserialize(serialize));
+        });
     }
 
     private void init() {
@@ -318,10 +370,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         for (IVirtualPaymentEntryHandler handler : handlers) {
             addAllVirtualDebitEntries(handler.createISettlementInvoiceEntryBean(this));
         }
-    }
-
-    private void addAllVirtualDebitEntries(List<ISettlementInvoiceEntryBean> iSettlementInvoiceEntryBeans) {
-        this.virtualDebitEntries.addAll(iSettlementInvoiceEntryBeans);
     }
 
     public void calculateInterestDebitEntries() {
@@ -759,6 +807,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.virtualDebitEntries = virtualDebitEntries;
     }
 
+    private void addAllVirtualDebitEntries(List<ISettlementInvoiceEntryBean> iSettlementInvoiceEntryBeans) {
+        this.virtualDebitEntries.addAll(iSettlementInvoiceEntryBeans);
+    }
+
     public static class PaymentEntryBean implements ITreasuryBean, Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -855,13 +907,4 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             this.amountWithVat = amountWithVat.subtract(partialAmountWithVat);
         }
     }
-
-    public SettlementNoteBean duplicate() {
-        try {
-            return (SettlementNoteBean) BeanUtils.cloneBean(this);
-        } catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
-            return null;
-        }
-    }
-
 }

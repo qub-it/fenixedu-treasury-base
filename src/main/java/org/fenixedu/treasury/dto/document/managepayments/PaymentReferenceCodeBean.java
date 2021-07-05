@@ -62,8 +62,10 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
+import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.dto.ITreasuryBean;
+import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
@@ -115,10 +117,21 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
                         .collect(Collectors.toList());
     }
 
+    public BigDecimal getExtraAmount(DebitEntry debitEntry) {
+
+        PaymentPenaltyEntryBean penaltyTax =
+                PaymentPenaltyTaxTreasuryEvent.calculatePaymentPenaltyTax(debitEntry, LocalDate.now());
+
+        BigDecimal penaltyTaxAmount = penaltyTax != null ? penaltyTax.getSettledAmount() : BigDecimal.ZERO;
+
+        return debitEntry.getOpenAmountWithInterests().add(penaltyTaxAmount);
+    }
+
     public void updateAmountOnSelectedDebitEntries() {
+
         BigDecimal paymentAmountDebitEnries = this.selectedDebitEntries.stream()
-                .map(e -> isUsePaymentAmountWithInterests() ? e.getOpenAmountWithInterests() : e.getOpenAmount())
-                .reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO);
+                .map(e -> isUsePaymentAmountWithInterests() ? getExtraAmount(e) : e.getOpenAmount()).reduce((a, c) -> a.add(c))
+                .orElse(BigDecimal.ZERO);
         BigDecimal paymentAmountInstallments =
                 this.selectedInstallments.stream().map(e -> e.getOpenAmount()).reduce((a, c) -> a.add(c)).orElse(BigDecimal.ZERO);
 
