@@ -448,7 +448,7 @@ public class MeoWallet extends MeoWallet_Base
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
     }
 
     @Override
@@ -469,11 +469,15 @@ public class MeoWallet extends MeoWallet_Base
         map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
         LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
+        if(settlementNoteBean.getCustomSibsPaymentRequestDueDate() != null) {
+            validTo = settlementNoteBean.getCustomSibsPaymentRequestDueDate();
+        }
+        
         if (validTo.isBefore(now)) {
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate());
     }
 
     @Override
@@ -494,11 +498,11 @@ public class MeoWallet extends MeoWallet_Base
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
     }
 
     private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
+            Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount, boolean limitSibsPaymentRequestToValidTo) {
 
         if (!isActive()) {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.paymentCodePool.not.active");
@@ -521,6 +525,10 @@ public class MeoWallet extends MeoWallet_Base
         MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMBPaymentBean(payableAmount, merchantTransactionId,
                 debtAccount.getCustomer().getExternalId(), debtAccount.getCustomer().getName(), items);
 
+        if(limitSibsPaymentRequestToValidTo) {
+            payment.setExpires(validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1).minusHours(3));
+        }
+        
         final MeoWalletLog log = createLogForSibsPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());
 
         try {

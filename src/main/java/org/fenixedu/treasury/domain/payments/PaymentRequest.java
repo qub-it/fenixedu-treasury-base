@@ -204,7 +204,22 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             DateTime paymentDate, String originDocumentNumber, String comments,
             Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction) {
 
-        SettlementNote settlementNote = SettlementNote.createSettlementNote(new SettlementNoteBean(this));
+        SettlementNoteBean bean = new SettlementNoteBean(this, paymentDate, paidAmount, originDocumentNumber);
+        
+        SettlementNote settlementNote = SettlementNote.createSettlementNote(bean);
+
+        settlementNote.setDocumentObservations(comments);
+
+        if(settlementNote.getAdvancedPaymentCreditNote() != null) {
+            settlementNote.getAdvancedPaymentCreditNote().setDocumentObservations(comments);
+        }
+        
+        final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
+
+        PaymentEntry paymentEntry = settlementNote.getPaymentEntriesSet().iterator().next();
+        paymentEntryPropertiesMap.putAll(paymentEntry.getPropertiesMap());
+
+        paymentEntry.editPropertiesMap(paymentEntryPropertiesMap);
 
 //        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
 //        sortedDebitEntriesToPay.addAll(getDebitEntriesSet());
@@ -435,6 +450,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         return Sets.newHashSet(settlementNote);
     }
 
+    // TODO: Test thoroughly
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(BigDecimal amount,
             DateTime paymentDate, String originDocumentNumber, String comments,
             Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction) {
@@ -606,7 +622,8 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     public Set<DebitEntry> getOrderedDebitEntries() {
-        final TreeSet<DebitEntry> result = new TreeSet<DebitEntry>(DebitEntry.COMPARE_BY_EXTERNAL_ID);
+        final TreeSet<DebitEntry> result =
+                new TreeSet<DebitEntry>(InvoiceEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
         getDebitEntriesSet().stream().collect(Collectors.toCollection(() -> result));
 
         return result;

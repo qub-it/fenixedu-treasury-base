@@ -141,6 +141,10 @@ public class PaymentEntry extends PaymentEntry_Base {
         return TreasuryConstants.propertiesJsonToMap(getPropertiesJsonMap());
     }
 
+    public void editPropertiesMap(final Map<String, String> propertiesMap) {
+        setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
+    }
+    
     public boolean isDeletable() {
         return true;
     }
