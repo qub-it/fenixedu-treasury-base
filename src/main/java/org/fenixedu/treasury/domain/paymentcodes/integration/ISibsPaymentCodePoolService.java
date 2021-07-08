@@ -62,6 +62,7 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.joda.time.LocalDate;
 
 public interface ISibsPaymentCodePoolService {
@@ -72,8 +73,11 @@ public interface ISibsPaymentCodePoolService {
 
     public String getEntityReferenceCode();
 
+    @Deprecated
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments);
+
+    public SibsPaymentRequest createSibsPaymentRequest(SettlementNoteBean settlementNoteBean);
 
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate);

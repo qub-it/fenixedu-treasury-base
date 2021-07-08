@@ -308,7 +308,17 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
-        debitEntries.forEach(x -> this.addFinantialDocumentEntries(x));
+        debitEntries.forEach(d -> {
+            if(d.getFinantialDocument() != null && !d.getFinantialDocument().isPreparing()) {
+                throw new IllegalArgumentException("debit entry with finantial document that is not in preparing state");
+            }
+            
+            if(d.getFinantialDocument() != null && d.getDebitNote().getPayorDebtAccount() != getPayorDebtAccount()) {
+                throw new IllegalArgumentException("debit entry with preparing debit note, but payor debt account mismatch");
+            }
+            
+            this.addFinantialDocumentEntries(d);
+        });
         checkRules();
     }
 

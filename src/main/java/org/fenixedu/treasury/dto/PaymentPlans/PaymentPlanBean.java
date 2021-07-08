@@ -64,7 +64,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanValidator;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.joda.time.LocalDate;
 
 public class PaymentPlanBean {
@@ -97,7 +97,7 @@ public class PaymentPlanBean {
 
         allDebits = debtAccount.getPendingInvoiceEntriesSet().stream()
                 .filter(f -> f.isDebitNoteEntry() && !((DebitEntry) f).isInOpenPaymentPlan()).map((debitEntry) -> {
-                    DebitEntryBean debitEntryBean = new DebitEntryBean((DebitEntry) debitEntry);
+                    SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean((DebitEntry) debitEntry);
                     debitEntryBean.setSettledAmount(debitEntry.getOpenAmountWithInterests());
                     return debitEntryBean;
                 }).collect(Collectors.toList());

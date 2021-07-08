@@ -578,6 +578,31 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     }
 
     @Override
+    public SibsPaymentRequest createSibsPaymentRequest(SettlementNoteBean settlementNoteBean) {
+
+        DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
+        Set<DebitEntry> debitEntries =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.getInvoiceEntry() != null)
+                        .map(s -> s.getInvoiceEntry()).map(DebitEntry.class::cast).collect(Collectors.toSet());
+        Set<Installment> installments =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.isForInstallment())
+                        .map(InstallmentPaymenPlanBean.class::cast).map(s -> s.getInstallment()).collect(Collectors.toSet());
+
+        BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
+
+        LocalDate now = new LocalDate();
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+
+        if (validTo.isBefore(now)) {
+            validTo = now;
+        }
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+    }
+
+    @Override
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate) {
         BigDecimal payableAmountDebitEntries = debitEntries.stream()
@@ -956,6 +981,103 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         }
     }
 
+    @Override
+    @Atomic(mode = TxMode.READ)
+    public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber) {
+        DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
+        Set<DebitEntry> debitEntries =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.getInvoiceEntry() != null)
+                        .map(s -> s.getInvoiceEntry()).map(DebitEntry.class::cast).collect(Collectors.toSet());
+        Set<Installment> installments =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.isForInstallment())
+                        .map(InstallmentPaymenPlanBean.class::cast).map(s -> s.getInstallment()).collect(Collectors.toSet());
+
+        BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
+
+        if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
+            throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
+        }
+
+        if (StringUtils.isEmpty(countryPrefix)) {
+            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.required");
+        }
+
+        if (StringUtils.isEmpty(localPhoneNumber)) {
+            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.required");
+        }
+
+        if (!countryPrefix.matches("\\d+")) {
+            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.countryPrefix.number.format.required");
+        }
+
+        if (!localPhoneNumber.matches("\\d+")) {
+            throw new TreasuryDomainException("error.MbwayPaymentRequest.phone.number.format.required");
+        }
+
+        String phoneNumber = String.format("%s#%s", countryPrefix, localPhoneNumber);
+
+        String merchantTransactionId = generateNewMerchantTransactionId();
+
+        SibsPaymentsGatewayLog log = createLog(merchantTransactionId);
+
+        try {
+            MbwayRequest mbwayPaymentRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber,
+                    payableAmount, merchantTransactionId);
+            FenixFramework.atomic(() -> {
+                log.logRequestSendDate();
+            });
+
+            final MbWayCheckoutResultBean checkoutResultBean =
+                    generateMbwayReference(payableAmount, merchantTransactionId, phoneNumber);
+
+            FenixFramework.atomic(() -> {
+                log.logRequestReceiveDateAndData(checkoutResultBean.getTransactionId(), checkoutResultBean.isOperationSuccess(),
+                        false, checkoutResultBean.getPaymentGatewayResultCode(),
+                        checkoutResultBean.getOperationResultDescription());
+                log.saveRequest(checkoutResultBean.getRequestLog());
+                log.saveResponse(checkoutResultBean.getResponseLog());
+            });
+
+            if (!checkoutResultBean.isOperationSuccess()) {
+                throw new TreasuryDomainException(
+                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
+            }
+
+            FenixFramework.atomic(() -> {
+                mbwayPaymentRequest.setTransactionId(checkoutResultBean.getTransactionId());
+                log.setPaymentRequest(mbwayPaymentRequest);
+                log.setStateCode(mbwayPaymentRequest.getState().name());
+                log.setStateDescription(mbwayPaymentRequest.getState().getDescriptionI18N());
+            });
+
+            return mbwayPaymentRequest;
+
+        } catch (Exception e) {
+            boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
+
+            FenixFramework.atomic(() -> {
+
+                log.logRequestReceiveDateAndData(null, false, false, null, null);
+                log.logException(e);
+
+                if (isOnlinePaymentsGatewayException) {
+                    OnlinePaymentsGatewayCommunicationException onlineException = (OnlinePaymentsGatewayCommunicationException) e;
+                    log.saveRequest(onlineException.getRequestLog());
+                    log.saveResponse(onlineException.getResponseLog());
+                }
+            });
+
+            if (e instanceof TreasuryDomainException) {
+                throw (TreasuryDomainException) e;
+            } else {
+                final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
+                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+
+                throw new TreasuryDomainException(e, message);
+            }
+        }
+    }
+
     @Atomic(mode = TxMode.READ)
     public PaymentTransaction processPaymentReferenceCodeTransaction(final SibsPaymentsGatewayLog log, PaymentStateBean bean) {
         SibsPaymentRequest paymentRequest = (SibsPaymentRequest) log.getPaymentRequest();
@@ -1101,8 +1223,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     @Override
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
         try {
-            PaymentStateBean paymentStatusBySibsCheckoutId =
-                    getPaymentStatusBySibsCheckoutId(forwardPayment.getCheckoutId());
+            PaymentStateBean paymentStatusBySibsCheckoutId = getPaymentStatusBySibsCheckoutId(forwardPayment.getCheckoutId());
             return postProcessPayment(forwardPayment, "", Optional.of(paymentStatusBySibsCheckoutId.getTransactionId()));
         } catch (OnlinePaymentsGatewayCommunicationException e) {
             return null;

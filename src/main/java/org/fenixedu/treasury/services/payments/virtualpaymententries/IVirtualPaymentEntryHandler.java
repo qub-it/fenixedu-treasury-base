@@ -50,32 +50,16 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.domain.payments;
+package org.fenixedu.treasury.services.payments.virtualpaymententries;
 
 import java.util.List;
-import java.util.Set;
 
-import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
-import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 
-public interface IMbwayPaymentPlatformService {
+public interface IVirtualPaymentEntryHandler {
+    public List<ISettlementInvoiceEntryBean> createISettlementInvoiceEntryBean(SettlementNoteBean settlementNoteBean);
 
-    public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean);
-
-    @Deprecated
-    public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
-            String countryPrefix, String localPhoneNumber);
-
-    public PaymentRequestLog createLogForWebhookNotification();
-
-    public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
-
-    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
-
-    public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
+    public void execute(SettlementNoteBean settlementNoteBean, ISettlementInvoiceEntryBean invoiceEntryBean);
 
 }

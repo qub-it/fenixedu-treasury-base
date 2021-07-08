@@ -1,3 +1,6 @@
+- New Fixture: Virtual Payment Entry Handler
+- Improvement: Validate that the debit entries, included in debit note, are preparing and the payor debt account matches
+
 7.3.0 (21-06-2021)
 - Refactor: Refactor payment penalty from fenixedu-academic-treasury-base to fenixedu-treasury
 - Improvement: Add date when payment plan is closed by settlement

@@ -50,32 +50,42 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.domain.payments;
+package org.fenixedu.treasury.services.payments.virtualpaymententries;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
-import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
-import org.fenixedu.treasury.dto.SettlementNoteBean;
+public class VirtualPaymentEntryFactory {
+    private static VirtualPaymentEntryFactory _impl;
 
-public interface IMbwayPaymentPlatformService {
+    private List<IVirtualPaymentEntryHandler> handlers;
 
-    public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean);
+    public VirtualPaymentEntryFactory() {
+        super();
+        handlers = new ArrayList<IVirtualPaymentEntryHandler>();
+    }
 
-    @Deprecated
-    public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
-            String countryPrefix, String localPhoneNumber);
+    public static VirtualPaymentEntryFactory implementation() {
+        if (_impl == null) {
+            _impl = new VirtualPaymentEntryFactory();
+        }
 
-    public PaymentRequestLog createLogForWebhookNotification();
+        return _impl;
+    }
 
-    public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
+    public List<IVirtualPaymentEntryHandler> getHandlers() {
+        return handlers;
+    }
 
-    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
+    public void addHandler(IVirtualPaymentEntryHandler handler) {
+        handlers.add(handler);
+    }
 
-    public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
+    public void addHandler(int index, IVirtualPaymentEntryHandler handler) {
+        handlers.add(index, handler);
+    }
 
+    public void removeHandler(Class<? extends IVirtualPaymentEntryHandler> clazz) {
+        handlers.removeIf(handler -> handler.getClass() == clazz);
+    }
 }

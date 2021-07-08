@@ -76,8 +76,8 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
@@ -112,7 +112,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         DebitEntry penaltyTaxEntryS1 = null;
 
         if (s1.isForPendingInterest() || (s1.isForDebitEntry() && ((DebitEntry) s1.getInvoiceEntry()).getDebitEntry() != null)) {
-            interestEntryS1 = s1.isForPendingInterest() ? ((InterestEntryBean) s1)
+            interestEntryS1 = s1.isForPendingInterest() ? ((SettlementInterestEntryBean) s1)
                     .getDebitEntry() : ((DebitEntry) s1.getInvoiceEntry()).getDebitEntry();
         } else if (s1.isForPaymentPenalty()
                 || (s1.isForDebitEntry() && ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent() != null
@@ -129,7 +129,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         DebitEntry penaltyTaxEntryS2 = null;
 
         if (s2.isForPendingInterest() || (s2.isForDebitEntry() && ((DebitEntry) s2.getInvoiceEntry()).getDebitEntry() != null)) {
-            interestEntryS2 = s2.isForPendingInterest() ? ((InterestEntryBean) s2)
+            interestEntryS2 = s2.isForPendingInterest() ? ((SettlementInterestEntryBean) s2)
                     .getDebitEntry() : ((DebitEntry) s2.getInvoiceEntry()).getDebitEntry();
         } else if (s2.isForPaymentPenalty()
                 || (s2.isForDebitEntry() && ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent() != null
@@ -299,8 +299,8 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
                 restInstallmentAmmount = restInstallmentAmmount.subtract(installmentEntryAmount);
 
                 if (bean.isForDebitEntry() && !TreasuryConstants.isPositive(getRestAmountOf(bean, result, paymentPlanBean))) {
-                    InterestEntryBean interestEntryBean =
-                            updateRelatedInterests((DebitEntryBean) bean, paymentPlanBean, result, installmentBean.getDueDate());
+                    SettlementInterestEntryBean interestEntryBean = updateRelatedInterests((SettlementDebitEntryBean) bean,
+                            paymentPlanBean, result, installmentBean.getDueDate());
                     if (interestEntryBean != null && !isDivideInterest()) {
                         if (!invoiceEntries.contains(interestEntryBean)) {
                             invoiceEntries.add(0, interestEntryBean);
@@ -308,8 +308,8 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
                         restAmount = getSumAmountOf(invoiceEntries, result, paymentPlanBean).add(installmentEntryAmount);
                     }
                     if (Boolean.TRUE.equals(getUsePaymentPenalty())) {
-                        PaymentPenaltyEntryBean paymentPenaltyEntryBean =
-                                updateRelatedPenaltyTax((DebitEntryBean) bean, paymentPlanBean, installmentBean.getDueDate());
+                        PaymentPenaltyEntryBean paymentPenaltyEntryBean = updateRelatedPenaltyTax((SettlementDebitEntryBean) bean,
+                                paymentPlanBean, installmentBean.getDueDate());
                         if (paymentPenaltyEntryBean != null && !isDividePenaltyTax()) {
                             if (!invoiceEntries.contains(paymentPenaltyEntryBean)) {
                                 invoiceEntries.add(0, paymentPenaltyEntryBean);
@@ -328,7 +328,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         }
     }
 
-    protected PaymentPenaltyEntryBean updateRelatedPenaltyTax(DebitEntryBean bean, PaymentPlanBean paymentPlanBean,
+    protected PaymentPenaltyEntryBean updateRelatedPenaltyTax(SettlementDebitEntryBean bean, PaymentPlanBean paymentPlanBean,
             LocalDate dueDate) {
         PaymentPenaltyEntryBean calculatePaymentPenaltyTax = PaymentPenaltyTaxTreasuryEvent
                 .calculatePaymentPenaltyTax(bean.getDebitEntry(), dueDate, paymentPlanBean.getCreationDate());
@@ -338,13 +338,13 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         return calculatePaymentPenaltyTax;
     }
 
-    protected InterestEntryBean updateRelatedInterests(DebitEntryBean bean, PaymentPlanBean paymentPlanBean,
+    protected SettlementInterestEntryBean updateRelatedInterests(SettlementDebitEntryBean bean, PaymentPlanBean paymentPlanBean,
             List<InstallmentBean> result, LocalDate lastInstallmentDueDate) {
 
-        InterestEntryBean interestEntryBean =
-                (InterestEntryBean) paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
+        SettlementInterestEntryBean interestEntryBean =
+                (SettlementInterestEntryBean) paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
                         .filter(interestbean -> interestbean.isForPendingInterest()
-                                && ((InterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
+                                && ((SettlementInterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
                         .findFirst().orElse(null);
 
         BigDecimal interestBeforePaymentPlan = bean.getSettledAmount().subtract(bean.getEntryOpenAmount());
@@ -356,7 +356,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
                         "label.InterestRateBean.interest.designation", bean.getDebitEntry().getDescription()));
 
                 interestRateBean.setInterestAmount(interestBeforePaymentPlan);
-                interestEntryBean = new InterestEntryBean(bean.getDebitEntry(), interestRateBean);
+                interestEntryBean = new SettlementInterestEntryBean(bean.getDebitEntry(), interestRateBean);
                 paymentPlanBean.addSettlementInvoiceEntryBean(interestEntryBean);
             } else {
                 interestEntryBean.getInterest().setInterestAmount(interestBeforePaymentPlan);

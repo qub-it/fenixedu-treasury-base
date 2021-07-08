@@ -60,8 +60,8 @@ import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.dto.InterestRateBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
@@ -77,12 +77,12 @@ public class PaymentPlanCaculateInstallmentsInterestsConfigurator
     }
 
     @Override
-    protected InterestEntryBean updateRelatedInterests(DebitEntryBean bean, PaymentPlanBean paymentPlanBean,
+    protected SettlementInterestEntryBean updateRelatedInterests(SettlementDebitEntryBean bean, PaymentPlanBean paymentPlanBean,
             List<InstallmentBean> result, LocalDate lastInstallmentDueDate) {
-        InterestEntryBean interestEntryBean =
-                (InterestEntryBean) paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
+        SettlementInterestEntryBean interestEntryBean =
+                (SettlementInterestEntryBean) paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
                         .filter(interestbean -> interestbean.isForPendingInterest()
-                                && ((InterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
+                                && ((SettlementInterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
                         .findFirst().orElse(null);
         DebitEntry debitEntry = bean.getDebitEntry();
 
@@ -132,7 +132,7 @@ public class PaymentPlanCaculateInstallmentsInterestsConfigurator
                 interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                         "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
                 interestRateBean.setInterestAmount(calculatedInterests);
-                interestEntryBean = new InterestEntryBean(debitEntry, interestRateBean);
+                interestEntryBean = new SettlementInterestEntryBean(debitEntry, interestRateBean);
                 paymentPlanBean.addSettlementInvoiceEntryBean(interestEntryBean);
             } else {
                 interestEntryBean.getInterest().setInterestAmount(calculatedInterests);

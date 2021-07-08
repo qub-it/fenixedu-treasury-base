@@ -55,8 +55,6 @@ package org.fenixedu.treasury.dto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
@@ -65,8 +63,6 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
-import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.fenixedu.treasury.services.serializer.ISettlementEntryBeanSerializer;
 import org.joda.time.LocalDate;
 
@@ -76,90 +72,112 @@ import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
 
 import pt.ist.fenixframework.FenixFramework;
 
-public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
+public class SettlementDebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
 
-    private static final String VIRTUAL_PAYMENT_ENTRY_HANDLER = "virtualPaymentEntryHandler";
+    private static final long serialVersionUID = 1L;
 
-    private static final String DESCRIPTION = "description";
-
-    private static final String CALCULATED_DESCRIPTION = "calculatedDescription";
-
-    private static final String DUE_DATE = "dueDate";
-
-    private DebitEntry originDebitEntry;
+    private DebitEntry debitEntry;
 
     private boolean isIncluded;
 
     private boolean isNotValid;
 
-    private String description;
+    private BigDecimal debtAmount;
 
-    private LocalDate dueDate;
+    public SettlementDebitEntryBean() {
 
-    private BigDecimal amount;
-
-    private IVirtualPaymentEntryHandler virtualPaymentEntryHandler;
-    private Map<String, List<String>> calculationDescription;
-
-    public PaymentPenaltyEntryBean() {
-        this.isIncluded = false;
     }
 
-    public PaymentPenaltyEntryBean(DebitEntry originDebitEntry, String description, LocalDate dueDate, BigDecimal amount) {
-        super();
-        this.originDebitEntry = originDebitEntry;
-        this.description = description;
-        this.dueDate = dueDate;
-        this.amount = amount;
+    public SettlementDebitEntryBean(DebitEntry debitEntry) {
+        this.debitEntry = debitEntry;
+        this.isIncluded = false;
+        this.isNotValid = false;
+        this.debtAmount = debitEntry.getOpenAmount();
     }
 
     public DebitEntry getDebitEntry() {
-        return originDebitEntry;
+        return debitEntry;
+    }
+
+    public void setDebitEntry(DebitEntry debitEntry) {
+        this.debitEntry = debitEntry;
+    }
+
+    public String getDocumentNumber() {
+        return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentNumber() : null;
+    }
+
+    @Deprecated
+    public LocalDate getDocumentDueDate() {
+        return debitEntry.getDueDate();
+    }
+
+    @Deprecated
+    public BigDecimal getDebtAmount() {
+        if (debtAmount == null) {
+            return null;
+        }
+
+        return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
+    }
+
+    @Deprecated
+    public BigDecimal getDebtAmountWithVat() {
+        if (debtAmount == null) {
+            return null;
+        }
+
+        return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
+    }
+
+    @Deprecated
+    public void setDebtAmount(BigDecimal debtAmount) {
+        this.debtAmount = debtAmount;
     }
 
     @Override
     public InvoiceEntry getInvoiceEntry() {
-        return null;
+        return debitEntry;
     }
 
     @Override
     public String getDescription() {
-        return description;
+        return debitEntry.getDescription();
     }
 
     @Override
     public LocalDate getDueDate() {
-        return dueDate;
+        return debitEntry.getDueDate();
     }
 
     @Override
     public BigDecimal getEntryAmount() {
-        return amount;
+        return debitEntry.getAmount();
     }
 
     @Override
     public BigDecimal getEntryOpenAmount() {
-        return amount;
+        return debitEntry.getOpenAmount();
     }
 
     @Override
     public BigDecimal getSettledAmount() {
-        return amount;
+        return debtAmount;
     }
 
     @Override
     public void setSettledAmount(BigDecimal debtAmount) {
-        amount = debtAmount;
+        this.debtAmount = debtAmount;
     }
 
     @Override
     public Vat getVat() {
-        return null;
+        return debitEntry.getVat();
     }
 
     @Override
     public BigDecimal getVatRate() {
-        return null;
+        return debitEntry.getVatRate();
     }
 
     @Override
@@ -184,74 +202,44 @@ public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITr
 
     @Override
     public FinantialDocument getFinantialDocument() {
-        return null;
+        return debitEntry.getFinantialDocument();
     }
 
     @Override
     public Set<Customer> getPaymentCustomer() {
-        return originDebitEntry.getFinantialDocument() != null
-                && ((Invoice) originDebitEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
-                        ((Invoice) originDebitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
-                                .singleton(originDebitEntry.getDebtAccount().getCustomer());
+        return debitEntry.getFinantialDocument() != null
+                && ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
+                        ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
+                                .singleton(debitEntry.getDebtAccount().getCustomer());
     }
 
+    /*
+     * Methods to support jsp, overriden in subclasses
+     */
+
     @Override
-    public boolean isForPaymentPenalty() {
+    public boolean isForDebitEntry() {
         return true;
-    }
-
-    @Override
-    public IVirtualPaymentEntryHandler getVirtualPaymentEntryHandler() {
-        return virtualPaymentEntryHandler;
-    }
-
-    public void setVirtualPaymentEntryHandler(IVirtualPaymentEntryHandler virtualPaymentEntryHandler) {
-        this.virtualPaymentEntryHandler = virtualPaymentEntryHandler;
-    }
-
-    @Override
-    public Map<String, List<String>> getCalculationDescription() {
-        return calculationDescription;
-    }
-
-    public void setCalculationDescription(Map<String, List<String>> calculationDescription) {
-        this.calculationDescription = calculationDescription;
     }
 
     @Override
     public String serialize() {
         JsonObject jsonObject = new JsonObject();
         jsonObject.add(IntrospectorTool.TYPE, new JsonPrimitive(getClass().getName()));
-        jsonObject.add(ISettlementEntryBeanSerializer.AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
-        jsonObject.add(CALCULATED_DESCRIPTION, new JsonPrimitive(IntrospectorTool.serialize(calculationDescription)));
-        jsonObject.add(DESCRIPTION, new JsonPrimitive(description));
-        jsonObject.add(DUE_DATE, new JsonPrimitive(dueDate.toString()));
+        jsonObject.add(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID, new JsonPrimitive(getInvoiceEntry().getExternalId()));
         jsonObject.add(ISettlementEntryBeanSerializer.INCLUDED, new JsonPrimitive(isIncluded));
         jsonObject.add(ISettlementEntryBeanSerializer.NOT_VALID, new JsonPrimitive(isNotValid));
-        jsonObject.add(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID, new JsonPrimitive(originDebitEntry.getExternalId()));
-        jsonObject.add(VIRTUAL_PAYMENT_ENTRY_HANDLER,
-                new JsonPrimitive(virtualPaymentEntryHandler != null ? virtualPaymentEntryHandler.getClass().getName() : ""));
-
+        jsonObject.add(ISettlementEntryBeanSerializer.AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
         return jsonObject.toString();
     }
 
     @Override
     public void fillSerializable(JsonObject jsonObject) {
-        this.amount = jsonObject.get(ISettlementEntryBeanSerializer.AMOUNT).getAsBigDecimal();
-        this.calculationDescription =
-                (Map<String, List<String>>) IntrospectorTool.deserialize(jsonObject.get(CALCULATED_DESCRIPTION).getAsString());
-        this.description = jsonObject.get(DESCRIPTION).getAsString();
-        this.dueDate = LocalDate.parse(jsonObject.get(DUE_DATE).getAsString());
+        this.debitEntry =
+                FenixFramework.getDomainObject(jsonObject.get(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID).getAsString());
         this.isIncluded = jsonObject.get(ISettlementEntryBeanSerializer.INCLUDED).getAsBoolean();
         this.isNotValid = jsonObject.get(ISettlementEntryBeanSerializer.NOT_VALID).getAsBoolean();
-        this.originDebitEntry =
-                FenixFramework.getDomainObject(jsonObject.get(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID).getAsString());
-
-        for (IVirtualPaymentEntryHandler handler : VirtualPaymentEntryFactory.implementation().getHandlers()) {
-            String className = jsonObject.get(VIRTUAL_PAYMENT_ENTRY_HANDLER).getAsString();
-            if (className.equals(handler.getClass().getName())) {
-                this.virtualPaymentEntryHandler = handler;
-            }
-        }
+        this.debtAmount = jsonObject.get(ISettlementEntryBeanSerializer.AMOUNT).getAsBigDecimal();
     }
+
 }

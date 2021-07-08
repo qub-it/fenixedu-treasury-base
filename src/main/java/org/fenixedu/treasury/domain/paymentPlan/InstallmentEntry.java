@@ -94,9 +94,6 @@ public class InstallmentEntry extends InstallmentEntry_Base {
         if (getInstallment() == null) {
             throw new TreasuryDomainException("error.InstallmentEntry.installment.required");
         }
-//        if (getDebitEntry().getDebitNote() == null || !getDebitEntry().getDebitNote().isClosed()) {
-//            throw new TreasuryDomainException("error.InstallmentEntry.debitEntry.require.closed.debitNote");
-//        }
     }
 
     @Atomic
