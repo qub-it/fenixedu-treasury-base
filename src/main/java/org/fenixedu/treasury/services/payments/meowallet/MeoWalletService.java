@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.services.payments.meowallet;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -73,12 +74,16 @@ import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentBean;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.logging.LoggingFeature.Verbosity;
 import org.joda.time.DateTime;
+import org.joda.time.Hours;
+import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
 import com.qubit.terra.framework.tools.gson.serializers.DateTimeSerializer;
 
 public class MeoWalletService {
@@ -107,13 +112,12 @@ public class MeoWalletService {
     }
 
     public void closeClient() {
-
         this.client.close();
     }
 
     public MeoWalletPaymentBean generateMbwayReference(MeoWalletPaymentBean payment)
             throws OnlinePaymentsGatewayCommunicationException {
-
+        
         String requestLog = getGson().toJson(payment);
         String responseLog = processPost(PAYMENT_PATH, requestLog);
         try {
@@ -134,7 +138,21 @@ public class MeoWalletService {
     public MeoWalletPaymentBean generateMBPaymentReference(MeoWalletPaymentBean payment)
             throws OnlinePaymentsGatewayCommunicationException, IOException {
 
-        String requestLog = getGson().toJson(payment);
+        if(payment.getExpires() != null && Hours.hoursBetween(payment.getExpires(), DateTime.now()).getHours() < 32) {
+            payment.setExpires(payment.getExpires().plusDays(1));
+        }
+        
+        // TODO: Put this in the getGson()
+        Gson gson = new GsonBuilder().registerTypeAdapter(DateTime.class, new DateTimeSerializer() {
+
+            @Override
+            public JsonElement serialize(DateTime src, Type srcType, JsonSerializationContext context) {
+                return new JsonPrimitive(src.toString(ISODateTimeFormat.dateTimeNoMillis()));
+            }
+            
+        }).setPrettyPrinting().create();
+
+        String requestLog = gson.toJson(payment);
         String responseLog = processPost(MB_PAY_PATH, requestLog);
 
         try {
