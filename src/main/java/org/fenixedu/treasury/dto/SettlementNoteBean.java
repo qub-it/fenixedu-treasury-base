@@ -166,6 +166,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public SettlementNoteBean(PaymentRequest paymentRequest, DateTime paymentDate, BigDecimal paidAmount,
             String originDocumentNumber) {
+        if(!TreasuryConstants.isPositive(paidAmount)) {
+            throw new IllegalArgumentException("Paid amount is not positive");
+        }
+        
         init();
         setDate(paymentDate.toLocalDate());
         setOriginDocumentNumber(originDocumentNumber);
@@ -178,12 +182,28 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
                 .get();
 
-        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(InvoiceEntry.COMPARE_BY_AMOUNT_AND_DUE_DATE);
+        Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE_AND_AMOUNT = (o1, o2) -> {
+            int c = o1.getDueDate().compareTo(o2.getDueDate());
+
+            if (c != 0) {
+                return c;
+            }
+
+            c = -o1.getOpenAmount().compareTo(o2.getOpenAmount());
+
+            if (c != 0) {
+                return c;
+            }
+
+            return o1.getExternalId().compareTo(o2.getExternalId());
+        };
+        
+        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(COMPARE_BY_DUE_DATE_AND_AMOUNT);
         sortedDebitEntriesToPay.addAll(paymentRequest.getDebitEntriesSet());
 
         for (DebitEntry debitEntry : sortedDebitEntriesToPay) {
             SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean(debitEntry);
-            debitEntryBean.setIncluded(true);
+            debitEntryBean.setIncluded(TreasuryConstants.isPositive(debitEntry.getOpenAmount()));
             debitEntries.add(debitEntryBean);
         }
 
@@ -192,10 +212,28 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         for (Installment installment : sortedInstallments) {
             InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
-            installmentBean.setIncluded(true);
+            installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
             debitEntries.add(installmentBean);
         }
 
+        BigDecimal amountToDistribute = paidAmount;
+        
+        for (ISettlementInvoiceEntryBean entryBean : debitEntries) {
+            if(!entryBean.isIncluded()) {
+                continue;
+            }
+            
+            if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute, entryBean.getSettledAmount())) {
+                amountToDistribute = amountToDistribute.subtract(entryBean.getSettledAmount());
+            } else if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterThan(entryBean.getSettledAmount(), amountToDistribute)) {
+                entryBean.setSettledAmount(amountToDistribute);
+                amountToDistribute = BigDecimal.ZERO;
+            } else {
+                entryBean.setSettledAmount(BigDecimal.ZERO);
+                entryBean.setIncluded(false);
+            }
+        }
+        
         calculateVirtualDebitEntries();
 
         PaymentEntryBean paymentEntryBean = new PaymentEntryBean(paidAmount,

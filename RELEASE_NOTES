@@ -1,3 +1,5 @@
+- Bug Fix: In various payments issues
+
 7.4.0 (08-07-2021)
 - New Fixture: Virtual Payment Entry Handler
 - Improvement: Validate that the debit entries, included in debit note, are preparing and the payor debt account matches

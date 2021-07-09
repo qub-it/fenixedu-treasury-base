@@ -169,6 +169,10 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     public LocalDate getDueDate() {
+        if(super.getPaymentDueDate() != null) {
+            return super.getPaymentDueDate();
+        }
+        
         Set<LocalDate> map = getDebitEntriesSet().stream().filter(d -> !d.isAnnulled()).map(InvoiceEntry::getDueDate)
                 .collect(Collectors.toSet());
         map.addAll(getInstallmentsSet().stream().filter(i -> i.getPaymentPlan().getState().isOpen()).map(Installment::getDueDate)
