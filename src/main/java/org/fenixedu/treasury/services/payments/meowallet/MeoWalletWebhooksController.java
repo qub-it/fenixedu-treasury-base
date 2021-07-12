@@ -131,9 +131,9 @@ public class MeoWalletWebhooksController {
             if (referenceCodeOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) referenceCodeOptional.get().getDigitalPaymentPlatform();
 
-//                if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
-//                    throw new Exception("callback not verified");
-//                }
+                if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
+                    throw new Exception("callback not verified");
+                }
 
                 final SibsPaymentRequest paymentReferenceCode = referenceCodeOptional.get();
                 FenixFramework.atomic(() -> {

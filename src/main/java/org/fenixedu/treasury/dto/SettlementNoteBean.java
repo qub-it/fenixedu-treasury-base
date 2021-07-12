@@ -215,6 +215,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
             debitEntries.add(installmentBean);
         }
+        
+        if(getReferencedCustomers().size() > 1) {
+            // Register advance payment only
+            debitEntries.clear();
+        }
 
         BigDecimal amountToDistribute = paidAmount;
         
