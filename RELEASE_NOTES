@@ -1,3 +1,4 @@
+7.4.2 (12-07-2021)
 - Bug Fix: Register advance payment if payment is for debts of different customers
 - Bug Fix: Reactivate MeoWallet validation
 - Improvement: Order settlement note entries in printed settlement note
