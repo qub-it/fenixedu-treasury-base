@@ -9,6 +9,7 @@ enum org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType				
 enum org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType                           as ForwardPaymentStateType;
 enum org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayEnviromentMode	as SibsOnlinePaymentsGatewayEnviromentMode;
 enum org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType 									as PaymentPlanStateType;
+enum org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum								as AddictionsCalculeType;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -3109,8 +3110,8 @@ class paymentPlan.PaymentPlanConfigurator{
 	LocalizedString name;
 	LocalizedString installmentDescriptionFormat;
 	Boolean usePaymentPenalty;
-	Boolean divideInterestsByAllInstallments;
-	Boolean dividePaymentPenaltyByAllInstallments;
+	AddictionsCalculeType interestDistribution;
+	AddictionsCalculeType paymentPenaltyDistribution;
 }	
 	relation PaymentPlanConfiguratorDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
@@ -3147,6 +3148,7 @@ class paymentPlan.PaymentPlanConfigurator{
 	
 	class paymentPlan.PaymentPlanBlockInterestsConfigurator extends paymentPlan.PaymentPlanConfigurator{
 		Boolean applyDebitEntryInterest;
+		Boolean canEditInstallmentAmount;
 	}
 	
 class paymentPlan.PaymentPlanNumberGenerator {
