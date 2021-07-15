@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,7 +33,6 @@ public class PaymentPlanBean {
     private boolean isChanged;
     private boolean withInitialValues;
     private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
-    private Map<DebitEntryBean, BigDecimal> extraInterestWarning;
 
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
@@ -195,8 +193,8 @@ public class PaymentPlanBean {
         this.settlementInvoiceEntryBeans.remove(settlementInvoiceEntryBeans);
     }
 
-    public void createInstallmentsBean(List<LocalDate> fixedDates, List<BigDecimal> fixedAmounts) {
-        installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this, fixedDates, fixedAmounts);
+    public void createInstallmentsBean(List<LocalDate> dates) {
+        installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this, dates);
     }
 
     public List<? extends ISettlementInvoiceEntryBean> getAllDebits() {
@@ -207,11 +205,4 @@ public class PaymentPlanBean {
         this.allDebits = allDebits;
     }
 
-    public void setExtraInterestWarning(Map<DebitEntryBean, BigDecimal> result) {
-        this.extraInterestWarning = result;
-    }
-
-    public Map<DebitEntryBean, BigDecimal> getExtraInterestWarning() {
-        return this.extraInterestWarning;
-    }
 }

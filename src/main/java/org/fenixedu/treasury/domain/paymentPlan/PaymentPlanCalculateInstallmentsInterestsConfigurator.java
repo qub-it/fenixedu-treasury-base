@@ -3,12 +3,16 @@ package org.fenixedu.treasury.domain.paymentPlan;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
-import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
+import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -21,96 +25,92 @@ public class PaymentPlanCalculateInstallmentsInterestsConfigurator
     }
 
     @Override
-    public boolean isInterestBlocked() {
-        return true;
-    }
+    protected InterestEntryBean updateRelatedInterests(DebitEntryBean bean, PaymentPlanBean paymentPlanBean,
+            List<InstallmentBean> result, LocalDate lastInstallmentDueDate) {
+        InterestEntryBean interestEntryBean =
+                (InterestEntryBean) paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
+                        .filter(interestbean -> interestbean.isForPendingInterest()
+                                && ((InterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
+                        .findFirst().orElse(null);
+        DebitEntry debitEntry = bean.getDebitEntry();
 
-    @Override
-    public boolean canChangeInstallmentsAmount() {
-        return false;
-    };
-
-    @Override
-    protected BigDecimal getInterestAmountOfCurrentInvoiceEntryBeanToInstallment(
-            PaymentPlanInstallmentCreationBean installmentsCreationBean, ISettlementInvoiceEntryBean currentInvoiceEntryBean,
-            BigDecimal amount, LocalDate fromDate, LocalDate toDate, boolean isLastInstallmentOfCurrInvoiceEntryBean) {
-        /**
-         * Calculate interestAmount before payment plan request date
-         *
-         * Calculate interestAmount after payment plan start date
-         *
-         * return interestAmountBeforePaymentPlan + interestAmountAfterPaymentPlan
-         */
-
-        BigDecimal interestAmountBeforePaymentPlan = BigDecimal.ZERO;
-
-        if (fromDate.isBefore(installmentsCreationBean.getRequestDate())) {
-            interestAmountBeforePaymentPlan =
-                    super.getInterestAmountOfCurrentInvoiceEntryBeanToInstallment(installmentsCreationBean,
-                            currentInvoiceEntryBean, amount, fromDate, toDate, isLastInstallmentOfCurrInvoiceEntryBean);
+        if (!debitEntry.isApplyInterests()) {
+            return null;
         }
-
-        LocalDate startDate = currentInvoiceEntryBean.getDueDate()
-                .isAfter(installmentsCreationBean.getPaymentPlanStartDate()) ? currentInvoiceEntryBean
-                        .getDueDate() : installmentsCreationBean.getPaymentPlanStartDate();
-
-        BigDecimal interestAmountAfterPaymentPlan = calculateInterestValue(installmentsCreationBean, amount, startDate, toDate);
-
-        return interestAmountBeforePaymentPlan.add(interestAmountAfterPaymentPlan);
-    }
-
-    @Override
-    protected BigDecimal getInterestAmountToPaymentPlan(PaymentPlanInstallmentCreationBean installmentsCreationBean,
-            ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
-        //get Installments with invoice entry bean
-        BigDecimal totalInterestAmount = BigDecimal.ZERO;
-        List<InstallmentBean> collect = installmentsCreationBean.getInstallmentBeansWithInvoiceEntryBean(currentInvoiceEntryBean)
-                .collect(Collectors.toList());
-
-        /**
-         * sum interestAmount of each installment
-         */
-
-        boolean isLastinstallment = false;
-        for (int i = 0; i < collect.size(); i++) {
-            if (i == collect.size() - 1) {
-                isLastinstallment = true;
+        BigDecimal calculatedInterests = BigDecimal.ZERO;
+        if (debitEntry.getInterestRate().getInterestType().isFixedAmount()) {
+            if (TreasuryConstants.isPositive(calculatedInterests)) {
+                return null;
             }
-            InstallmentBean installment = collect.get(i);
 
-            InstallmentEntryBean installmentEntryBean = installment.getInstallmentEntries().stream()
-                    .filter(entryBean -> entryBean.getInvoiceEntry() == currentInvoiceEntryBean).findFirst().get();
+            calculatedInterests = debitEntry.calculateUndebitedInterestValue(lastInstallmentDueDate).getInterestAmount();
+        }
+        if (debitEntry.getInterestRate().getInterestType().isGlobalRate()) {
+            LocalDate startDate = debitEntry.getDueDate().isAfter(paymentPlanBean.getCreationDate()) ? debitEntry
+                    .getDueDate() : paymentPlanBean.getCreationDate();
 
-            BigDecimal installmentInterestAmount = getInterestAmountOfCurrentInvoiceEntryBeanToInstallment(
-                    installmentsCreationBean, currentInvoiceEntryBean, installmentEntryBean.getAmount(),
-                    installmentEntryBean.getInvoiceEntry().getDueDate(), installment.getDueDate(), isLastinstallment);
-            totalInterestAmount = totalInterestAmount.add(installmentInterestAmount);
+            BigDecimal interestAmountBeforePlan = debitEntry.calculateAllInterestValue(startDate).getInterestAmount();
+
+            BigDecimal totalInterestCreated =
+                    debitEntry.getInterestDebitEntriesSet().stream().filter(interest -> !interest.isAnnulled())
+                            .map(interest -> interest.getAvailableAmountForCredit()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            calculatedInterests = BigDecimal.ZERO.subtract(totalInterestCreated.subtract(interestAmountBeforePlan));
+
+            for (InstallmentBean installment : result) {
+                InstallmentEntryBean installmentEntryBean = installment.getInstallmentEntries().stream()
+                        .filter(entryBean -> entryBean.getInvoiceEntry() == bean).findFirst().orElse(null);
+                if (installmentEntryBean == null) {
+                    continue;
+                }
+                if (!installment.getDueDate().isAfter(startDate)) {
+                    continue;
+                }
+
+                BigDecimal interest = calculateInterestValue(installmentEntryBean.getAmount(), startDate,
+                        installment.getDueDate(), paymentPlanBean);
+                calculatedInterests = calculatedInterests.add(interest);
+            }
 
         }
 
-        return totalInterestAmount;
+        if (TreasuryConstants.isPositive(calculatedInterests)) {
+            if (interestEntryBean == null) {
+                InterestRateBean interestRateBean = new InterestRateBean();
+                interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+                        "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
+                interestRateBean.setInterestAmount(calculatedInterests);
+                interestEntryBean = new InterestEntryBean(debitEntry, interestRateBean);
+                paymentPlanBean.addSettlementInvoiceEntryBean(interestEntryBean);
+            } else {
+                interestEntryBean.getInterest().setInterestAmount(calculatedInterests);
+            }
+            return interestEntryBean;
+        } else if (interestEntryBean != null) {
+            paymentPlanBean.removeSettlementInvoiceEntryBean(interestEntryBean);
+        }
+
+        return null;
+
     }
 
-    @Override
-    protected LocalDate getDateToUseToPenaltyTaxCalculation(LocalDate creationDate, LocalDate installmentDate) {
-        return installmentDate;
-    }
-
-    private BigDecimal calculateInterestValue(PaymentPlanInstallmentCreationBean installmentsCreationBean, BigDecimal amount,
-            LocalDate fromDate, LocalDate toDate) {
-        BigDecimal daysBetween = new BigDecimal(Days.daysBetween(fromDate, toDate).getDays());
-        BigDecimal daysInYear =
-                new BigDecimal(TreasuryConstants.numberOfDaysInYear(installmentsCreationBean.getRequestDate().getYear()));
+    private BigDecimal calculateInterestValue(BigDecimal amount, LocalDate creationDate, LocalDate dueDate,
+            PaymentPlanBean paymentPlanBean) {
+        BigDecimal daysBetween = new BigDecimal(Days.daysBetween(creationDate, dueDate).getDays());
+        BigDecimal daysInYear = new BigDecimal(TreasuryConstants.numberOfDaysInYear(paymentPlanBean.getCreationDate().getYear()));
         BigDecimal amountPerDay = TreasuryConstants.divide(amount, daysInYear);
         Optional<GlobalInterestRate> findUniqueAppliedForDate =
-                GlobalInterestRate.findUniqueAppliedForDate(installmentsCreationBean.getRequestDate());
-        if (findUniqueAppliedForDate.isEmpty() || !TreasuryConstants.isPositive(daysBetween)) {
+                GlobalInterestRate.findUniqueAppliedForDate(paymentPlanBean.getCreationDate());
+        if (findUniqueAppliedForDate.isEmpty()) {
             return BigDecimal.ZERO;
         }
         BigDecimal interestRate =
                 TreasuryConstants.divide(findUniqueAppliedForDate.get().getRate(), TreasuryConstants.HUNDRED_PERCENT);
+        return Currency.getValueWithScale(interestRate.multiply(amountPerDay).multiply(daysBetween));
+    }
 
-        // interestRate * (amount / daysInYear) * (days Between fromDate and toDate)
-        return interestRate.multiply(amountPerDay).multiply(daysBetween);
+    @Override
+    public boolean isInterestBlocked() {
+        return true;
     }
 }

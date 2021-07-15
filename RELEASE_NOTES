@@ -1,5 +1,3 @@
-- Improvement: Change payment plan installment creation algorithm to support interests and penaltyTax distribution
-
 7.2.1 (23-06-2021)
 - Bug Fix: Payment Plan: multiples bug fix on creation payment plan
 

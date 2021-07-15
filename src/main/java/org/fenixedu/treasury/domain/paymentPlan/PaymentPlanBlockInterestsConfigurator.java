@@ -1,7 +1,5 @@
 package org.fenixedu.treasury.domain.paymentPlan;
 
-import org.joda.time.LocalDate;
-
 public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInterestsConfigurator_Base {
 
     public PaymentPlanBlockInterestsConfigurator() {
@@ -16,16 +14,6 @@ public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInter
     @Override
     public boolean isInterestBlocked() {
         return !isApplyInterest();
-    }
-
-    @Override
-    protected LocalDate getDateToUseToPenaltyTaxCalculation(LocalDate creationDate, LocalDate dueDate) {
-        return creationDate;
-    }
-
-    @Override
-    protected boolean canChangeInstallmentsAmount() {
-        return Boolean.TRUE.equals(getCanEditInstallmentAmount());
     }
 
 }
