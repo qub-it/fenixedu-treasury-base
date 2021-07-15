@@ -218,9 +218,11 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Atomic
-    public void updateSettlementNote(java.lang.String originDocumentNumber, String documentObservations) {
+    public void updateSettlementNote(java.lang.String originDocumentNumber, String documentObservations,
+            String documentTermsAndConditions) {
         setOriginDocumentNumber(originDocumentNumber);
         setDocumentObservations(documentObservations);
+        setDocumentTermsAndConditions(documentTermsAndConditions);
 
         checkRules();
     }

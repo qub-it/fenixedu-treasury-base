@@ -309,6 +309,7 @@ class document.FinantialDocument {
 	String address;
 	String annulledReason;
 	String documentObservations;
+	String documentTermsAndConditions;
 	String clearDocumentToExportReason;
 	DateTime clearDocumentToExportDate;
 	DateTime closeDate;
