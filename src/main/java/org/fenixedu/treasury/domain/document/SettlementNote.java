@@ -415,57 +415,98 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     private void processDebtEntries(SettlementNoteBean bean) {
+        BigDecimal paymentEntriesAmount = bean.getPaymentEntries().stream().map(p -> p.getPaymentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal creditsAmount = bean.getCreditEntries().stream().filter(c -> c.isIncluded()).map(c -> c.getCreditAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal restAmountToUse = paymentEntriesAmount.add(creditsAmount);
+        
         DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
                 .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
 
         List<DebitEntry> untiedDebitEntries = new ArrayList<DebitEntry>();
         for (SettlementDebitEntryBean debitEntryBean : bean.getDebitEntriesByType(SettlementDebitEntryBean.class)) {
-            if (debitEntryBean.isIncluded()) {
-                DebitEntry debitEntry = debitEntryBean.getDebitEntry();
-                if (debitEntry.getFinantialDocument() == null) {
-                    untiedDebitEntries.add(debitEntry);
-                } else if (!debitEntry.getFinantialDocument().isClosed()) {
-                    debitEntry.getFinantialDocument().closeDocument();
-                }
-                SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
-                        bean.getDate().toDateTimeAtStartOfDay());
-
-                InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
+            if (!debitEntryBean.isIncluded()) {
+                continue;
             }
+
+            if(!TreasuryConstants.isPositive(restAmountToUse)) {
+                debitEntryBean.setSettledAmount(BigDecimal.ZERO);
+                debitEntryBean.setIncluded(false);
+                continue;
+            }
+            
+            DebitEntry debitEntry = debitEntryBean.getDebitEntry();
+
+            if (debitEntry.getFinantialDocument() == null) {
+                untiedDebitEntries.add(debitEntry);
+            } else if (!debitEntry.getFinantialDocument().isClosed()) {
+                debitEntry.getFinantialDocument().closeDocument();
+            }
+
+            if(TreasuryConstants.isLessThan(restAmountToUse, debitEntryBean.getSettledAmount())) {
+                debitEntryBean.setSettledAmount(restAmountToUse);
+            }
+            
+            restAmountToUse = restAmountToUse.subtract(debitEntryBean.getSettledAmount());
+            
+            SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
+                    bean.getDate().toDateTimeAtStartOfDay());
+
+            InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
         }
-        for (InstallmentPaymenPlanBean installmentPaymenPlanBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
-            if (installmentPaymenPlanBean.isIncluded()) {
-                BigDecimal restToPay = installmentPaymenPlanBean.getSettledAmount();
 
-                for (InstallmentEntry installmentEntry : installmentPaymenPlanBean.getInstallment()
-                        .getSortedOpenInstallmentEntries()) {
-                    if (TreasuryConstants.isZero(restToPay)) {
-                        break;
-                    }
-                    BigDecimal debtAmount = restToPay.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry
-                            .getOpenAmount() : restToPay;
-                    restToPay = restToPay.subtract(debtAmount);
-                    if (!TreasuryConstants.isPositive(debtAmount)) {
-                        continue;
-                    }
-                    if (installmentEntry.getDebitEntry().getFinantialDocument() == null) {
-                        untiedDebitEntries.add(installmentEntry.getDebitEntry());
-                    } else if (!installmentEntry.getDebitEntry().getFinantialDocument().isClosed()) {
-                        installmentEntry.getDebitEntry().getFinantialDocument().closeDocument();
-                    }
-                    SettlementEntry settlementEntry = getSettlementEntryByDebitEntry(installmentEntry.getDebitEntry());
-                    if (settlementEntry == null) {
-                        settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this,
-                                bean.getDate().toDateTimeAtStartOfDay());
-                    } else {
-                        settlementEntry.setAmount(settlementEntry.getAmount().add(debtAmount));
-                    }
-                    InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
-                }
-                installmentPaymenPlanBean.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+        for (InstallmentPaymenPlanBean installmentPaymenPlanBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
+            if (!installmentPaymenPlanBean.isIncluded()) {
+                continue;
+            }
+            
+            if(!TreasuryConstants.isPositive(restAmountToUse)) {
+                installmentPaymenPlanBean.setSettledAmount(BigDecimal.ZERO);
+                installmentPaymenPlanBean.setIncluded(false);
+                continue;
+            }
+            
+            if(TreasuryConstants.isLessThan(restAmountToUse, installmentPaymenPlanBean.getSettledAmount())) {
+                installmentPaymenPlanBean.setSettledAmount(restAmountToUse);
             }
 
+            restAmountToUse = restAmountToUse.subtract(installmentPaymenPlanBean.getSettledAmount());
+            
+            BigDecimal restToPay = installmentPaymenPlanBean.getSettledAmount();
+
+            for (InstallmentEntry installmentEntry : installmentPaymenPlanBean.getInstallment()
+                    .getSortedOpenInstallmentEntries()) {
+                if (TreasuryConstants.isZero(restToPay)) {
+                    break;
+                }
+
+                BigDecimal debtAmount =
+                        restToPay.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry.getOpenAmount() : restToPay;
+                restToPay = restToPay.subtract(debtAmount);
+
+                if (!TreasuryConstants.isPositive(debtAmount)) {
+                    continue;
+                }
+
+                if (installmentEntry.getDebitEntry().getFinantialDocument() == null) {
+                    untiedDebitEntries.add(installmentEntry.getDebitEntry());
+                } else if (!installmentEntry.getDebitEntry().getFinantialDocument().isClosed()) {
+                    installmentEntry.getDebitEntry().getFinantialDocument().closeDocument();
+                }
+
+                SettlementEntry settlementEntry = getSettlementEntryByDebitEntry(installmentEntry.getDebitEntry());
+                if (settlementEntry == null) {
+                    settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this,
+                            bean.getDate().toDateTimeAtStartOfDay());
+                } else {
+                    settlementEntry.setAmount(settlementEntry.getAmount().add(debtAmount));
+                }
+
+                InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
+            }
+            
+            installmentPaymenPlanBean.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
         }
 
         if (untiedDebitEntries.size() != 0) {

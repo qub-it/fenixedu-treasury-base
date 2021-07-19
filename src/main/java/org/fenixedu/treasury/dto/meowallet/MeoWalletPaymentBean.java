@@ -70,6 +70,8 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
     private String currency;
 
     private DateTime date;
+    
+    private DateTime expires;
 
     private String ext_invoiceid;
 
@@ -146,6 +148,14 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
 
     public void setDate(DateTime date) {
         this.date = date;
+    }
+    
+    public DateTime getExpires() {
+        return expires;
+    }
+    
+    public void setExpires(DateTime expires) {
+        this.expires = expires;
     }
 
     public String getExt_invoiceid() {

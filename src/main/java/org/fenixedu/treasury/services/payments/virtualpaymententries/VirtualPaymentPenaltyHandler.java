@@ -57,7 +57,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.DebitNote;
+import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
+import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxSettings;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
@@ -65,6 +70,7 @@ import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 
 public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler {
     @Override
@@ -111,10 +117,21 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
 
         DebitEntry paymentPenaltyEntry = PaymentPenaltyTaxTreasuryEvent
                 .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), settlementNoteBean.getDate());
+        
+        if (settlementNoteBean.getReferencedCustomers().size() == 1 && settlementNoteBean.getReferencedCustomers().iterator()
+                .next() != settlementNoteBean.getDebtAccount().getCustomer()) {
+            Customer payorCustomer = settlementNoteBean.getReferencedCustomers().iterator().next();
+            DebtAccount payorDebtAccount = payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
+            paymentPenaltyEntry.getDebitNote().setPayorDebtAccount(payorDebtAccount);
+        }
+        
         SettlementDebitEntryBean settlementDebitEntryBean = new SettlementDebitEntryBean(paymentPenaltyEntry);
         settlementDebitEntryBean.setIncluded(true);
         settlementNoteBean.getDebitEntries().add(settlementDebitEntryBean);
 
+        // As we are adding a debitEntryBean to settle, mark the virtual entry bean as not included, 
+        // to not influence the calculation of advanced payment amount
+        paymentPenaltyEntryBean.setIncluded(false);
     }
 
 }

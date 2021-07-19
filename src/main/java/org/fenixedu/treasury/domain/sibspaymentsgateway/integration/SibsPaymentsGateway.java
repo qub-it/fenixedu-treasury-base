@@ -94,6 +94,7 @@ import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentCodeTransaction;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
+import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
 import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
@@ -107,6 +108,7 @@ import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.SibsPaymentsGatewayLog;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
+import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -901,12 +903,21 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     public static String getPresentationName() {
         return TreasuryConstants.treasuryBundle("label.SibsPaymentsGateway.presentationName");
     }
-
+    
     @Override
     @Atomic(mode = TxMode.READ)
     public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
             String countryPrefix, String localPhoneNumber) {
 
+        final Function<DebitEntry, BigDecimal> getExtraAmount = (DebitEntry debitEntry) -> {
+            PaymentPenaltyEntryBean penaltyTax =
+                    PaymentPenaltyTaxTreasuryEvent.calculatePaymentPenaltyTax(debitEntry, LocalDate.now());
+
+            BigDecimal penaltyTaxAmount = penaltyTax != null ? penaltyTax.getSettledAmount() : BigDecimal.ZERO;
+
+            return debitEntry.getOpenAmountWithInterests().add(penaltyTaxAmount);
+        };
+        
         if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
@@ -930,7 +941,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         String phoneNumber = String.format("%s#%s", countryPrefix, localPhoneNumber);
 
         BigDecimal payableAmountDebitEntries =
-                debitEntries.stream().map(e -> e.getOpenAmountWithInterests()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                debitEntries.stream().map(e -> getExtraAmount.apply(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmountInstallments =
                 installments.stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);

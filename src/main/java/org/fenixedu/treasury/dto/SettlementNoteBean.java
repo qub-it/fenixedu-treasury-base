@@ -64,6 +64,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
@@ -89,6 +91,7 @@ import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Lists;
@@ -146,6 +149,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     private SibsBillingAddressBean addressBean;
 
+    // Fields used by SibsPaymentRequest generation
+    private boolean limitSibsPaymentRequestToCustomDueDate;
+    private LocalDate customSibsPaymentRequestDueDate;
+    
     public SettlementNoteBean() {
         init();
     }
@@ -155,8 +162,17 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         init(debtAccount, isReimbursementNote, excludeDebtsForPayorAccount);
     }
 
-    public SettlementNoteBean(PaymentRequest paymentRequest) {
+    public SettlementNoteBean(PaymentRequest paymentRequest, DateTime paymentDate, BigDecimal paidAmount,
+            String originDocumentNumber) {
+        if(!TreasuryConstants.isPositive(paidAmount)) {
+            throw new IllegalArgumentException("Paid amount is not positive");
+        }
+        
         init();
+        setDate(paymentDate.toLocalDate());
+        setOriginDocumentNumber(originDocumentNumber);
+        setAdvancePayment(true);
+        
         this.debtAccount = paymentRequest.getDebtAccount();
         this.reimbursementNote = false;
 
@@ -164,22 +180,68 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
                 .get();
 
-        for (DebitEntry debitEntry : paymentRequest.getDebitEntriesSet()) {
+        Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE_AND_AMOUNT = (o1, o2) -> {
+            int c = o1.getDueDate().compareTo(o2.getDueDate());
+
+            if (c != 0) {
+                return c;
+            }
+
+            c = -o1.getOpenAmount().compareTo(o2.getOpenAmount());
+
+            if (c != 0) {
+                return c;
+            }
+
+            return o1.getExternalId().compareTo(o2.getExternalId());
+        };
+        
+        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(COMPARE_BY_DUE_DATE_AND_AMOUNT);
+        sortedDebitEntriesToPay.addAll(paymentRequest.getDebitEntriesSet());
+
+        for (DebitEntry debitEntry : sortedDebitEntriesToPay) {
             SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean(debitEntry);
-            debitEntryBean.setIncluded(true);
+            debitEntryBean.setIncluded(TreasuryConstants.isPositive(debitEntry.getOpenAmount()));
             debitEntries.add(debitEntryBean);
         }
 
-        for (Installment installment : paymentRequest.getInstallmentsSet()) {
+        final TreeSet<Installment> sortedInstallments = Sets.newTreeSet(Installment.COMPARE_BY_DUEDATE);
+        sortedInstallments.addAll(paymentRequest.getInstallmentsSet());
+
+        for (Installment installment : sortedInstallments) {
             InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
-            installmentBean.setIncluded(true);
+            installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
             debitEntries.add(installmentBean);
         }
+        
+        if(getReferencedCustomers().size() > 1) {
+            // Register advance payment only
+            debitEntries.clear();
+        }
 
+        BigDecimal amountToDistribute = paidAmount;
+        
+        for (ISettlementInvoiceEntryBean entryBean : debitEntries) {
+            if(!entryBean.isIncluded()) {
+                continue;
+            }
+            
+            if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute, entryBean.getSettledAmount())) {
+                amountToDistribute = amountToDistribute.subtract(entryBean.getSettledAmount());
+            } else if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterThan(entryBean.getSettledAmount(), amountToDistribute)) {
+                entryBean.setSettledAmount(amountToDistribute);
+                amountToDistribute = BigDecimal.ZERO;
+            } else {
+                entryBean.setSettledAmount(BigDecimal.ZERO);
+                entryBean.setIncluded(false);
+            }
+        }
+        
         calculateVirtualDebitEntries();
 
-        PaymentEntryBean paymentEntryBean = new PaymentEntryBean(paymentRequest.getPayableAmount(),
-                paymentRequest.getPaymentMethod(), paymentRequest.getPaymentMethod().getExternalId());
+        PaymentEntryBean paymentEntryBean = new PaymentEntryBean(paidAmount,
+                paymentRequest.getPaymentMethod(), paymentRequest.fillPaymentEntryMethodId());
+
         paymentEntries.add(paymentEntryBean);
 
     }
@@ -208,6 +270,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         this.previousStates = (Stack<Integer>) settlementNoteBean.getPreviousStates().clone();
         this.settlementNoteStateUrls = new ArrayList(settlementNoteBean.getSettlementNoteStateUrls());
+        
         this.documentNumberSeries = new ArrayList<>();
         settlementNoteBean.getDocumentNumberSeries()
                 .forEach(bean -> this.documentNumberSeries.add(new TreasuryTupleDataSourceBean(bean.getId(), bean.getText())));
@@ -244,11 +307,18 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.virtualDebitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
         this.paymentEntries = new ArrayList<PaymentEntryBean>();
         this.date = new LocalDate();
+        this.settlementNoteStateUrls = new ArrayList<>();
         this.previousStates = new Stack<Integer>();
         setPaymentMethods(PaymentMethod.findAvailableForPaymentInApplication().collect(Collectors.toList()));
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
+
+        this.documentNumberSeries = new ArrayList<>();
+        
+        // Fields used by SibsPaymentRequest generation
+        this.limitSibsPaymentRequestToCustomDueDate = false;
+        this.customSibsPaymentRequestDueDate = null;
     }
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
@@ -290,7 +360,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         setDocumentNumberSeries(debtAccount, reimbursementNote);
 
-        settlementNoteStateUrls = Arrays.asList(
+        this.settlementNoteStateUrls = Arrays.asList(
                 CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote, CHOOSE_INVOICE_ENTRIES_URL,
                 CALCULATE_INTEREST_URL, CREATE_DEBIT_NOTE_URL, INSERT_PAYMENT_URL, SUMMARY_URL);
 
@@ -784,6 +854,22 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.digitalPaymentPlatform = digitalPaymentPlatform;
     }
 
+    public boolean isLimitSibsPaymentRequestToCustomDueDate() {
+        return this.limitSibsPaymentRequestToCustomDueDate;
+    }
+
+    public void setLimitSibsPaymentRequestToCustomDueDate(boolean limitSibsPaymentRequestToCustomDueDate) {
+        this.limitSibsPaymentRequestToCustomDueDate = limitSibsPaymentRequestToCustomDueDate;
+    }
+
+    public LocalDate getCustomSibsPaymentRequestDueDate() {
+        return customSibsPaymentRequestDueDate;
+    }
+
+    public void setCustomSibsPaymentRequestDueDate(LocalDate customSibsPaymentRequestDueDate) {
+        this.customSibsPaymentRequestDueDate = customSibsPaymentRequestDueDate;
+    }
+    
     // @formatter:off
     /* ************
      * HELPER BEANS

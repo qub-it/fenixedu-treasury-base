@@ -102,7 +102,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     public byte[] getContent() {
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+                Object file = PropertyUtils.getProperty(this, "treasuryFile");
 
                 if (file != null) {
                     return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
@@ -119,7 +119,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     public long getSize() {
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+                Object file = PropertyUtils.getProperty(this, "treasuryFile");
 
                 if (file != null) {
                     return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
@@ -136,7 +136,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     public DateTime getCreationDate() {
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+                Object file = PropertyUtils.getProperty(this, "treasuryFile");
 
                 if (file != null) {
                     return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
@@ -153,7 +153,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     public String getFilename() {
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+                Object file = PropertyUtils.getProperty(this, "treasuryFile");
 
                 if (file != null) {
                     return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
@@ -170,7 +170,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     public InputStream getStream() {
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+                Object file = PropertyUtils.getProperty(this, "treasuryFile");
 
                 if (file != null) {
                     return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
@@ -187,7 +187,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     public String getContentType() {
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                IGenericFile file = (IGenericFile) PropertyUtils.getProperty(this, "treasuryFile");
+                Object file = PropertyUtils.getProperty(this, "treasuryFile");
 
                 if (file != null) {
                     return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);

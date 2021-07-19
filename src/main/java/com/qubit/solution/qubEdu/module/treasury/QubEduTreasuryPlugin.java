@@ -55,6 +55,7 @@
 //import com.qubit.solution.qubEdu.framework.domain.module.AbstractQubEduPlugin;
 //import com.qubit.terra.framework.domain.packages.interfaces.QubJar;
 //
+// // This class is used in qubEdu
 //public class QubEduTreasuryPlugin extends AbstractQubEduPlugin {
 //
 //    static final private String PLUGIN_NAME = "fenixedu-treasury-base-iscte";

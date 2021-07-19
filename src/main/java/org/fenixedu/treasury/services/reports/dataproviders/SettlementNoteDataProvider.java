@@ -56,8 +56,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.Function;
 
+import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 
 import com.qubit.terra.docs.util.IDocumentFieldsData;
@@ -91,7 +93,10 @@ public class SettlementNoteDataProvider extends AbstractDataProvider implements 
 
     private static Object handleLines(IReportDataProvider provider) {
         SettlementNoteDataProvider invoiceProvider = (SettlementNoteDataProvider) provider;
-        return invoiceProvider.note.getSettlemetEntriesSet();
+        TreeSet<SettlementEntry> settlementNoteEntriesSet = new TreeSet<>(SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+        settlementNoteEntriesSet.addAll(invoiceProvider.note.getSettlemetEntriesSet());
+        
+        return settlementNoteEntriesSet;
     }
 
     private static Object handlePaymentLines(IReportDataProvider provider) {

@@ -689,6 +689,7 @@ class payments.PaymentRequest {
 	String transactionId;
 	String merchantTransactionId;
 	String migrationCode;
+	LocalDate paymentDueDate;
 }
 
 	relation PaymentRequestDomainRoot {
