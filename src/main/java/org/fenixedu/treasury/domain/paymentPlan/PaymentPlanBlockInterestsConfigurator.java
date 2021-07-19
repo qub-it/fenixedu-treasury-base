@@ -24,7 +24,7 @@ public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInter
     }
 
     @Override
-    protected boolean canChangeInstallmentsAmount() {
+    public boolean canChangeInstallmentsAmount() {
         return Boolean.TRUE.equals(getCanEditInstallmentAmount());
     }
 

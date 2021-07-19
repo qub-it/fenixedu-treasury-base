@@ -216,7 +216,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
 
     public abstract boolean isInterestBlocked();
 
-    protected abstract boolean canChangeInstallmentsAmount();
+    public abstract boolean canChangeInstallmentsAmount();
 
     protected abstract LocalDate getDateToUseToPenaltyTaxCalculation(LocalDate creationDate, LocalDate dueDate);
 
