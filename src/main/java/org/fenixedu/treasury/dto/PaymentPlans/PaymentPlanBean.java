@@ -86,7 +86,7 @@ public class PaymentPlanBean {
     private boolean isChanged;
     private boolean withInitialValues;
     private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
-    private Map<DebitEntryBean, BigDecimal> extraInterestWarning;
+    private Map<SettlementDebitEntryBean, BigDecimal> extraInterestWarning;
 
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
@@ -259,11 +259,11 @@ public class PaymentPlanBean {
         this.allDebits = allDebits;
     }
 
-    public void setExtraInterestWarning(Map<DebitEntryBean, BigDecimal> result) {
+    public void setExtraInterestWarning(Map<SettlementDebitEntryBean, BigDecimal> result) {
         this.extraInterestWarning = result;
     }
 
-    public Map<DebitEntryBean, BigDecimal> getExtraInterestWarning() {
+    public Map<SettlementDebitEntryBean, BigDecimal> getExtraInterestWarning() {
         return this.extraInterestWarning;
     }
 }

@@ -65,7 +65,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
@@ -76,12 +75,13 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -522,7 +522,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
     private ISettlementInvoiceEntryBean processPaymentPenaltyEntryBean(
             PaymentPlanInstallmentCreationBean installmentsCreationBean, ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
         PaymentPenaltyEntryBean paymentPenaltyEntryBean =
-                createIfNotExistsPaymentPenaltyEntryBean((DebitEntryBean) currentInvoiceEntryBean, installmentsCreationBean);
+                createIfNotExistsPaymentPenaltyEntryBean((SettlementDebitEntryBean) currentInvoiceEntryBean, installmentsCreationBean);
 
         if (paymentPenaltyEntryBean != null) {
             /**
@@ -614,7 +614,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         return installmentEntryBean;
     }
 
-    private PaymentPenaltyEntryBean createIfNotExistsPaymentPenaltyEntryBean(DebitEntryBean currInvoiceEntryBean,
+    private PaymentPenaltyEntryBean createIfNotExistsPaymentPenaltyEntryBean(SettlementDebitEntryBean currInvoiceEntryBean,
             PaymentPlanInstallmentCreationBean installmentsCreationBean) {
 
         Optional<ISettlementInvoiceEntryBean> paymentPenaltyEntryOptional =
@@ -827,7 +827,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
 
             } else {
                 //add totalInterestEntryAmount to existent InterestEntryBean
-                ((InterestEntryBean) settlementInvoiceEntryBean).getInterest()
+                ((SettlementInterestEntryBean) settlementInvoiceEntryBean).getInterest()
                         .setInterestAmount(settlementInvoiceEntryBean.getSettledAmount().add(totalInterestEntryAmount));
                 createInstallmentEntryBean(currentInstallmentBean, settlementInvoiceEntryBean, interestEntryAmout);
                 return interestEntryAmout;
@@ -857,7 +857,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
             interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                     "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
             interestRateBean.setInterestAmount(interestEntryAmout);
-            InterestEntryBean interestEntryBean = new InterestEntryBean(debitEntry, interestRateBean);
+            SettlementInterestEntryBean interestEntryBean = new SettlementInterestEntryBean(debitEntry, interestRateBean);
             installmentsCreationBean.addPaymentPlanSettlementInvoiceEntryBean(interestEntryBean);
             installmentsCreationBean.addInvoiceEntryBeanToBeTreatedAndSort(interestEntryBean);
             return interestEntryBean;
@@ -883,7 +883,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         DebitEntry debitEntry = null;
         if (bean.isForPendingInterest()
                 || (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null)) {
-            debitEntry = bean.isForPendingInterest() ? ((InterestEntryBean) bean)
+            debitEntry = bean.isForPendingInterest() ? ((SettlementInterestEntryBean) bean)
                     .getDebitEntry() : ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry();
         }
         return debitEntry;
@@ -983,7 +983,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
                 values.put("paymentPlanId", paymentPlanBean.getPaymentPlanId());
 
                 LocalizedString installmentDescription = new LocalizedString();
-                for (Locale locale : CoreConfiguration.supportedLocales()) {
+                for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
                     installmentDescription = installmentDescription.with(locale,
                             StrSubstitutor.replace(getInstallmentDescriptionFormat().getContent(locale), values));
                 }
@@ -1044,7 +1044,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
             boolean isInterestEntry = settlementInvoiceEntry.isForDebitEntry()
                     && ((DebitEntry) settlementInvoiceEntry.getInvoiceEntry()).getDebitEntry() == invoiceEntry;
             boolean isPendingInterestEntry = settlementInvoiceEntry.isForPendingInterest()
-                    && ((InterestEntryBean) settlementInvoiceEntry).getDebitEntry() == invoiceEntry;
+                    && ((SettlementInterestEntryBean) settlementInvoiceEntry).getDebitEntry() == invoiceEntry;
             return isPendingInterestEntry || isInterestEntry;
         }
 
@@ -1089,13 +1089,13 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         }
 
         public void fillExtraInterestWarning() {
-            Map<DebitEntryBean, BigDecimal> result = new LinkedHashMap<>();
+            Map<SettlementDebitEntryBean, BigDecimal> result = new LinkedHashMap<>();
 
             List<ISettlementInvoiceEntryBean> debitEntryList = paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
                     .filter(bean -> isDebitEntry(bean)).sorted(getComparator()).collect(Collectors.toList());
 
             for (ISettlementInvoiceEntryBean iSettlementInvoiceEntryBean : debitEntryList) {
-                DebitEntryBean debitEntry = (DebitEntryBean) iSettlementInvoiceEntryBean;
+                SettlementDebitEntryBean debitEntry = (SettlementDebitEntryBean) iSettlementInvoiceEntryBean;
 
                 BigDecimal totalInterestsBeans = getInterestInvoiceEntryBeanOfDebitEntry(debitEntry.getDebitEntry())
                         .map(bean -> bean.getSettledAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
