@@ -170,7 +170,8 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public void edit(final LocalDate documentDate, LocalDate documentDueDate, final String originDocumentNumber,
-            final String documentObservations, final String legacyERPCertificateDocumentReference) {
+            final String documentObservations, final String documentTermsAndConditions,
+            final String legacyERPCertificateDocumentReference) {
 
         if (isPreparing()) {
             setDocumentDate(documentDate.toDateTimeAtStartOfDay());
@@ -179,6 +180,7 @@ public class DebitNote extends DebitNote_Base {
 
         setOriginDocumentNumber(originDocumentNumber);
         setDocumentObservations(documentObservations);
+        setDocumentTermsAndConditions(documentTermsAndConditions);
         setLegacyERPCertificateDocumentReference(legacyERPCertificateDocumentReference);
 
         checkRules();
@@ -242,10 +244,11 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate,
-            String originDocumentNumber, String documentObservations) {
+            String originDocumentNumber, String documentObservations, String documentTermsAndConditionss) {
         final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
                 documentDate, documentDueDate, originDocumentNumber);
         debitNote.setDocumentObservations(documentObservations);
+        debitNote.setDocumentTermsAndConditions(documentTermsAndConditionss);
 
         debitEntry.setFinantialDocument(debitNote);
 
@@ -264,7 +267,9 @@ public class DebitNote extends DebitNote_Base {
         }
 
         result.setAddress(debitNoteToCopy.getAddress());
-        result.setDocumentObservations(result.getDocumentObservations());
+        result.setDocumentObservations(debitNoteToCopy.getDocumentObservations());
+        result.setDocumentTermsAndConditions(debitNoteToCopy.getDocumentTermsAndConditions());
+
         result.setLegacyERPCertificateDocumentReference(debitNoteToCopy.getLegacyERPCertificateDocumentReference());
 
         final Map<DebitEntry, DebitEntry> debitEntriesMap = Maps.newHashMap();
@@ -392,7 +397,7 @@ public class DebitNote extends DebitNote_Base {
             //7. fechar settlement note
 
             // No final podem sobrar itens de acerto com valor pendente de utilizacao, que representam os valores ja pagos nos itens de dividas correspondentes
-            createEquivalentCreditNote(now, reason, anullGeneratedInterests);
+            createEquivalentCreditNote(now, reason, null, anullGeneratedInterests);
 
             //Clear the InterestRate for DebitEntry
             for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
@@ -459,7 +464,7 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public void createEquivalentCreditNote(final DateTime documentDate, final String documentObservations,
-            final boolean createForInterestRateEntries) {
+            final String documentTermsAndConditions, final boolean createForInterestRateEntries) {
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             //Get the amount for credit without tax, and considering the credit quantity FOR ONE
             final BigDecimal amountForCreditWithoutVat = entry.getCurrency().getValueWithScale(
@@ -470,7 +475,7 @@ public class DebitNote extends DebitNote_Base {
             }
 
             final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(), documentObservations,
-                    amountForCreditWithoutVat, null, null);
+                    documentTermsAndConditions, amountForCreditWithoutVat, null, null);
 
             if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && isExportedInLegacyERP()) {
                 creditEntry.getFinantialDocument().setExportedInLegacyERP(true);
@@ -492,7 +497,7 @@ public class DebitNote extends DebitNote_Base {
                 }
 
                 CreditEntry interestsCreditEntry = interestEntry.createCreditEntry(documentDate, interestEntry.getDescription(),
-                        documentObservations, amountForCreditWithoutVat, null, null);
+                        documentObservations, documentTermsAndConditions, amountForCreditWithoutVat, null, null);
 
                 if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                         && interestEntry.getFinantialDocument() != null
@@ -593,7 +598,8 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public static DebitNote createInterestDebitNoteForDebitNote(final DebitNote debitNote,
-            final DocumentNumberSeries documentNumberSeries, final LocalDate paymentDate, final String documentObservations) {
+            final DocumentNumberSeries documentNumberSeries, final LocalDate paymentDate, final String documentObservations,
+            final String documentTermsAndConditions) {
         DebitNote interestDebitNote;
         if (documentNumberSeries.getSeries().getCertificated()) {
             interestDebitNote =
@@ -603,6 +609,7 @@ public class DebitNote extends DebitNote_Base {
                     paymentDate.toDateTimeAtStartOfDay(), paymentDate);
         }
         interestDebitNote.setDocumentObservations(documentObservations);
+        interestDebitNote.setDocumentTermsAndConditions(documentTermsAndConditions);
 
         return interestDebitNote;
     }

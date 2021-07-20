@@ -312,7 +312,7 @@ public class BalanceTransferService {
 
                     final BigDecimal openAmountWithoutVat = debitEntry.getCurrency().getValueWithScale(
                             TreasuryConstants.divide(openAmount, BigDecimal.ONE.add(rationalVatRate(debitEntry))));
-                    final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null,
+                    final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null, null,
                             openAmountWithoutVat, null, null);
 
                     newCreditEntry.getFinantialDocument().closeDocument();

@@ -81,6 +81,7 @@ public interface ISibsPaymentCodePoolService {
     public SibsPaymentRequest createSibsPaymentRequest(SettlementNoteBean settlementNoteBean);
 
     @Deprecated
+    // TODO: Only used by PaymentReferenceCodeController.createPaymentCodeForSeveralDebitEntries() method. Replace with settlement note bean
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, BigDecimal paymentAmount);
 

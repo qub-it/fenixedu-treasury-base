@@ -157,11 +157,11 @@ public class ReimbursementUtils {
         settlementCompensation(originalCreditEntry, amountToReimburseWithVat, now, debtAccount, settlementNumberSeries,
                 compensationDebitEntry);
 
-        final CreditNote creditNoteToReimburse = CreditNote.create(debtAccount, creditNumberSeries, now,
-                compensationDebitNote, originalCreditNote.getUiDocumentNumber());
-        final CreditEntry creditEntryToReimburse =
-                compensationDebitEntry.createCreditEntry(now, originalCreditEntry.getDescription(),
-                        originalCreditNote.getDocumentObservations(), amountToReimburseWithoutVat, null, creditNoteToReimburse);
+        final CreditNote creditNoteToReimburse = CreditNote.create(debtAccount, creditNumberSeries, now, compensationDebitNote,
+                originalCreditNote.getUiDocumentNumber());
+        final CreditEntry creditEntryToReimburse = compensationDebitEntry.createCreditEntry(now,
+                originalCreditEntry.getDescription(), originalCreditNote.getDocumentObservations(),
+                originalCreditNote.getDocumentTermsAndConditions(), amountToReimburseWithoutVat, null, creditNoteToReimburse);
 
         return creditEntryToReimburse;
     }

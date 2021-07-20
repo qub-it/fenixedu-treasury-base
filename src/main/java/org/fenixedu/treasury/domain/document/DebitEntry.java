@@ -444,7 +444,7 @@ public class DebitEntry extends DebitEntry_Base {
                     treasuryExemption.getTreasuryExemptionType().getName().getContent());
 
             final CreditEntry creditEntryFromExemption =
-                    createCreditEntry(now, getDescription(), null, amountWithoutVat, treasuryExemption, null);
+                    createCreditEntry(now, getDescription(), null, null, amountWithoutVat, treasuryExemption, null);
 
             closeCreditEntryIfPossible(reason, now, creditEntryFromExemption);
 
@@ -472,7 +472,8 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public CreditEntry createCreditEntry(final DateTime documentDate, final String description, final String documentObservations,
-            final BigDecimal amountForCreditWithoutVat, final TreasuryExemption treasuryExemption, CreditNote creditNote) {
+            final String documentTermsAndConditions, final BigDecimal amountForCreditWithoutVat,
+            final TreasuryExemption treasuryExemption, CreditNote creditNote) {
         final DebitNote finantialDocument = (DebitNote) this.getFinantialDocument();
 
         if (finantialDocument == null) {
@@ -485,13 +486,14 @@ public class DebitEntry extends DebitEntry_Base {
         if (creditNote == null) {
             creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, finantialDocument,
                     finantialDocument.getUiDocumentNumber());
-
         }
 
         if (!Strings.isNullOrEmpty(documentObservations)) {
             creditNote.setDocumentObservations(documentObservations);
         }
-
+        if (!Strings.isNullOrEmpty(documentTermsAndConditions)) {
+            creditNote.setDocumentTermsAndConditions(documentTermsAndConditions);
+        }
         if (!TreasuryConstants.isPositive(amountForCreditWithoutVat)) {
             throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.amountForCredit.not.positive");
         }
@@ -1013,7 +1015,8 @@ public class DebitEntry extends DebitEntry_Base {
                 TreasuryConstants.divide(amountToCreditWithVat, BigDecimal.ONE.add(rationalVatRate(this)));;
 
         final DateTime now = new DateTime();
-        final CreditEntry creditEntry = createCreditEntry(now, getDescription(), null, amountForCreditWithoutVat, null, null);
+        final CreditEntry creditEntry =
+                createCreditEntry(now, getDescription(), null, null, amountForCreditWithoutVat, null, null);
 
         // Close creditEntry with debitEntry if it is possible
         closeCreditEntryIfPossible(reason, now, creditEntry);

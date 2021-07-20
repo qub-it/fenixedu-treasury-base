@@ -100,72 +100,18 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
             final ForwardPaymentConfiguration forwardPaymentConfiguration, final String sibsEntityId,
             final String sibsEndpointUrl, final String merchantTransactionIdPrefix, final String bearerToken, final String aesKey,
             final PaymentMethod mbwayPaymentMethod, final DocumentNumberSeries mbwayDocumentSeries, final boolean mbwayActive) {
-        this();
-
-        setPaymentCodePool(paymentCodePool);
-        setForwardPaymentConfiguration(forwardPaymentConfiguration);
-        setSibsEntityId(sibsEntityId);
-        setSibsEndpointUrl(sibsEndpointUrl);
-        setMerchantTransactionIdPrefix(merchantTransactionIdPrefix);
-        setBearerToken(bearerToken);
-        setAesKey(aesKey);
-
-        setMbwayPaymentMethod(mbwayPaymentMethod);
-        setMbwayDocumentSeries(mbwayDocumentSeries);
-        setMbwayActive(mbwayActive);
-        setNumberOfMonthsToExpirePaymentReferenceCode(DEFAULT_NUM_MONTHS_PAYMENT_REFERENCE_CODE_EXPIRATION);
-
-        checkRules();
+        throw new RuntimeException("deprecated");
     }
 
     private void checkRules() {
-
-        if (getDomainRoot() == null) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.domainRoot.required");
-        }
-
-        if (getPaymentCodePool() == null) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.paymentCodePool.required");
-        }
-
-        if (getForwardPaymentConfiguration() == null) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.forwardPaymentConfiguration.required");
-        }
-
-        if (getPaymentCodePool().getFinantialInstitution() != getForwardPaymentConfiguration().getFinantialInstitution()) {
-            throw new TreasuryDomainException(
-                    "error.SibsOnlinePaymentsGateway.pool.and.forward.configuration.not.from.same.finantial.institution");
-        }
-
-        if (Strings.isNullOrEmpty(getSibsEntityId())) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.sibsEntityId.required");
-        }
-
-        if (Strings.isNullOrEmpty(getSibsEndpointUrl())) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.sibsEndpointUrl.required");
-        }
-
-        if (getMbwayPaymentMethod() == null) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.mbwayPaymentMethod.required");
-        }
-
-        if (getMbwayDocumentSeries() == null) {
-            throw new TreasuryDomainException("error.SibsOnlinePaymentsGateway.mbwayDocumentSeries.required");
-        }
+        throw new RuntimeException("deprecated");
     }
 
     @Atomic
     public void edit(final String sibsEndpointUrl, final String bearerToken, final String aesKey,
             final PaymentMethod mbwayPaymentMethod, final DocumentNumberSeries mbwayDocumentSeries, final boolean mbwayActive,
             final int numberOfMonthsToExpirePaymentReferenceCode) {
-        setSibsEndpointUrl(sibsEndpointUrl);
-        setBearerToken(bearerToken);
-        setAesKey(aesKey);
-
-        setMbwayPaymentMethod(mbwayPaymentMethod);
-        setMbwayDocumentSeries(mbwayDocumentSeries);
-        setMbwayActive(mbwayActive);
-        setNumberOfMonthsToExpirePaymentReferenceCode(numberOfMonthsToExpirePaymentReferenceCode);
+        throw new RuntimeException("deprecated");
     }
 
     public void delete() {
@@ -193,61 +139,32 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     }
 
     public String generateNewMerchantTransactionId() {
-        return UUID.randomUUID().toString().replace("-", "");
+        throw new RuntimeException("deprecated");
     }
 
     @Atomic(mode = TxMode.READ)
     public PaymentStateBean getPaymentStatusBySibsCheckoutId(final String checkoutId)
             throws OnlinePaymentsGatewayCommunicationException {
-        final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
-
-        try {
-            return gatewayService.getPaymentStatusByCheckoutId(checkoutId);
-        } catch (OnlinePaymentsGatewayCommunicationException e) {
-            throw new TreasuryDomainException(e,
-                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
-        }
+        throw new RuntimeException("deprecated");
     }
 
     @Atomic(mode = TxMode.READ)
     public PaymentStateBean getPaymentStatusBySibsTransactionId(final String transactionId)
             throws OnlinePaymentsGatewayCommunicationException {
-        final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
-
-        return gatewayService.getPaymentTransactionReportByTransactionId(transactionId);
+        throw new RuntimeException("deprecated");
     }
 
     @Atomic(mode = TxMode.READ)
     public List<PaymentStateBean> getPaymentTransactionsReportListByMerchantId(final String merchantId)
             throws OnlinePaymentsGatewayCommunicationException {
-        final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
-
-        return gatewayService.getPaymentTransactionsReportListByMerchantId(merchantId);
+        throw new RuntimeException("deprecated");
     }
 
     @Atomic(mode = TxMode.READ)
     public CheckoutResultBean prepareCheckout(final DebtAccount debtAccount, final String merchantTransactionId,
             final BigDecimal amount, final String returnUrl, final SibsBillingAddressBean billingAddressBean)
             throws OnlinePaymentsGatewayCommunicationException {
-        final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
-
-        final PrepareCheckoutInputBean bean = new PrepareCheckoutInputBean(amount, merchantTransactionId, returnUrl,
-                new DateTime(), new DateTime().plusDays(7));
-
-        if (isSendBillingDataInOnlinePayment()) {
-            String customerEmail = debtAccount.getCustomer().getEmail();
-
-            bean.fillBillingData(null, billingAddressBean.getAddressCountryCode(),
-                    limitTextSize(billingAddressBean.getCity(), SECURE_3D_MAX_CITY_SIZE),
-                    limitTextSize(billingAddressBean.getAddress(), SECURE_3D_MAX_ADDRESS_SIZE),
-                    limitTextSize(billingAddressBean.getZipCode(), SECURE_3D_MAX_ZIP_CODE), customerEmail);
-        }
-
-        bean.setUseCreditCard(true);
-
-        CheckoutResultBean resultBean = gatewayService.prepareOnlinePaymentCheckout(bean);
-
-        return resultBean;
+        throw new RuntimeException("deprecated");
     }
 
     private static final int SECURE_3D_MAX_CITY_SIZE = 50;
@@ -265,32 +182,12 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     @Atomic(mode = TxMode.READ)
     public MbCheckoutResultBean generateMBPaymentReference(final BigDecimal amount, final DateTime validFrom,
             final DateTime validTo, final String merchantTransactionId) throws OnlinePaymentsGatewayCommunicationException {
-        final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
-
-        final MbPrepareCheckoutInputBean inputBean =
-                new MbPrepareCheckoutInputBean(amount, merchantTransactionId, validFrom, validTo);
-
-        // Customer data will not be sent due to GDPR
-        final CustomerDataInputBean customerInputBean = null;
-
-        final MbCheckoutResultBean requestResult = gatewayService.generateMBPaymentReference(inputBean, customerInputBean);
-
-        return requestResult;
+        throw new RuntimeException("deprecated");
     }
 
     public MbWayCheckoutResultBean generateMbwayReference(final BigDecimal amount, final String merchantTransactionId,
             final String phoneNumber) throws OnlinePaymentsGatewayCommunicationException {
-        final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
-
-        MbWayPrepareCheckoutInputBean inputBean = new MbWayPrepareCheckoutInputBean(amount, merchantTransactionId, phoneNumber);
-
-        inputBean.setAmount(amount);
-        inputBean.setMerchantTransactionId(merchantTransactionId);
-        inputBean.setPhoneNumber(phoneNumber);
-
-        MbWayCheckoutResultBean mbwayCheckoutResult = gatewayService.generateMbWayPayment(inputBean, null);
-
-        return mbwayCheckoutResult;
+        throw new RuntimeException("deprecated");
     }
 
     public PaymentStateBean handleWebhookNotificationRequest(final String initializationVector, final String authTag,
@@ -304,16 +201,7 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
     }
 
     private SIBSOnlinePaymentsGatewayService gatewayService() {
-        final SIBSInitializeServiceBean initializeServiceBean = new SIBSInitializeServiceBean(getSibsEntityId(), getBearerToken(),
-                getSibsEndpointUrl(), getPaymentCodePool().getEntityReferenceCode(),
-                getPaymentCodePool().getFinantialInstitution().getCurrency().getIsoCode(), translateEnviromentMode());
-
-        initializeServiceBean.setAesKey(getAesKey());
-
-        final SIBSOnlinePaymentsGatewayService gatewayService =
-                OnlinePaymentServiceFactory.createSIBSOnlinePaymentGatewayService(initializeServiceBean);
-
-        return gatewayService;
+        throw new RuntimeException("deprecated");
     }
 
     private SibsEnvironmentMode translateEnviromentMode() {
@@ -336,8 +224,7 @@ public class SibsOnlinePaymentsGateway extends SibsOnlinePaymentsGateway_Base {
             final ForwardPaymentConfiguration forwardPaymentConfiguration, final String sibsEntityId,
             final String sibsEndpointUrl, final String merchantIdPrefix, final String bearerToken, final String aesKey,
             final PaymentMethod mbwayPaymentMethod, final DocumentNumberSeries mbwayDocumentSeries, final boolean mbwayActive) {
-        return new SibsOnlinePaymentsGateway(paymentCodePool, forwardPaymentConfiguration, sibsEntityId, sibsEndpointUrl,
-                merchantIdPrefix, bearerToken, aesKey, mbwayPaymentMethod, mbwayDocumentSeries, mbwayActive);
+        throw new RuntimeException("deprecated");
     }
 
     public static Stream<SibsOnlinePaymentsGateway> findAll() {

@@ -452,6 +452,8 @@ public class MeoWallet extends MeoWallet_Base
     }
 
     @Override
+    @Deprecated
+    // TODO: Only used by PaymentReferenceCodeController.createPaymentCodeForSeveralDebitEntries() method. Replace with settlement note bean
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, BigDecimal payableAmount) {
 

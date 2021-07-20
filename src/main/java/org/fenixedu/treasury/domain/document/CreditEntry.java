@@ -241,6 +241,7 @@ public class CreditEntry extends CreditEntry_Base {
                 getFinantialDocument().getDocumentNumberSeries(), getFinantialDocument().getDocumentDate(),
                 ((CreditNote) getFinantialDocument()).getDebitNote(), getFinantialDocument().getOriginDocumentNumber());
         newCreditNote.setDocumentObservations(getFinantialDocument().getDocumentObservations());
+        newCreditNote.setDocumentTermsAndConditions(getFinantialDocument().getDocumentTermsAndConditions());
 
         final BigDecimal newOpenAmountWithoutVatDividedByQuantity =
                 divide(divide(getOpenAmount(), BigDecimal.ONE.add(rationalVatRate(this))), getQuantity());

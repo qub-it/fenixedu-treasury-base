@@ -238,10 +238,10 @@ public class CreditNote extends CreditNote_Base {
     }
 
     @Atomic
-    public void updateCreditNote(String originDocumentNumber, String documentObservations) {
+    public void updateCreditNote(String originDocumentNumber, String documentObservations, String documentTermsAndConditions) {
         setOriginDocumentNumber(originDocumentNumber);
         setDocumentObservations(documentObservations);
-
+        setDocumentTermsAndConditions(documentTermsAndConditions);
         checkRules();
     }
 

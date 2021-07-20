@@ -1536,13 +1536,7 @@ public class SAPExporter implements IERPExporter {
                         FinantialDocument.findByUiDocumentNumber(institution, status.getDocumentNumber());
 
                 boolean integratedWithSuccess = status.isIntegratedWithSuccess();
-//                if(document.isCreditNote()) {
-//                    final CreditNote creditNote = (CreditNote) document;
-//
-//                    creditNote.getRelatedSettlementEntries()
-//                }
 
-                // TODO: SINGAP
                 if (integratedWithSuccess && isToIgnoreWsDocument(institution, status)) {
 
                     if (document != null) {
