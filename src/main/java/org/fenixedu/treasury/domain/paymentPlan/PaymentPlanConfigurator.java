@@ -1,3 +1,55 @@
+/**
+ * Copyright (c) 2015, Quorum Born IT <http://www.qub-it.com/>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, without
+ * modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
+ *
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
+ *
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
+ *
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
+ *
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
+ *
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
+ *
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL “Quorum Born IT�? BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.fenixedu.treasury.domain.paymentPlan;
 
 import java.math.BigDecimal;
@@ -13,7 +65,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
@@ -24,12 +75,13 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
+import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -470,7 +522,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
     private ISettlementInvoiceEntryBean processPaymentPenaltyEntryBean(
             PaymentPlanInstallmentCreationBean installmentsCreationBean, ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
         PaymentPenaltyEntryBean paymentPenaltyEntryBean =
-                createIfNotExistsPaymentPenaltyEntryBean((DebitEntryBean) currentInvoiceEntryBean, installmentsCreationBean);
+                createIfNotExistsPaymentPenaltyEntryBean((SettlementDebitEntryBean) currentInvoiceEntryBean, installmentsCreationBean);
 
         if (paymentPenaltyEntryBean != null) {
             /**
@@ -562,7 +614,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         return installmentEntryBean;
     }
 
-    private PaymentPenaltyEntryBean createIfNotExistsPaymentPenaltyEntryBean(DebitEntryBean currInvoiceEntryBean,
+    private PaymentPenaltyEntryBean createIfNotExistsPaymentPenaltyEntryBean(SettlementDebitEntryBean currInvoiceEntryBean,
             PaymentPlanInstallmentCreationBean installmentsCreationBean) {
 
         Optional<ISettlementInvoiceEntryBean> paymentPenaltyEntryOptional =
@@ -775,7 +827,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
 
             } else {
                 //add totalInterestEntryAmount to existent InterestEntryBean
-                ((InterestEntryBean) settlementInvoiceEntryBean).getInterest()
+                ((SettlementInterestEntryBean) settlementInvoiceEntryBean).getInterest()
                         .setInterestAmount(settlementInvoiceEntryBean.getSettledAmount().add(totalInterestEntryAmount));
                 createInstallmentEntryBean(currentInstallmentBean, settlementInvoiceEntryBean, interestEntryAmout);
                 return interestEntryAmout;
@@ -805,7 +857,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
             interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                     "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
             interestRateBean.setInterestAmount(interestEntryAmout);
-            InterestEntryBean interestEntryBean = new InterestEntryBean(debitEntry, interestRateBean);
+            SettlementInterestEntryBean interestEntryBean = new SettlementInterestEntryBean(debitEntry, interestRateBean);
             installmentsCreationBean.addPaymentPlanSettlementInvoiceEntryBean(interestEntryBean);
             installmentsCreationBean.addInvoiceEntryBeanToBeTreatedAndSort(interestEntryBean);
             return interestEntryBean;
@@ -831,7 +883,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         DebitEntry debitEntry = null;
         if (bean.isForPendingInterest()
                 || (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null)) {
-            debitEntry = bean.isForPendingInterest() ? ((InterestEntryBean) bean)
+            debitEntry = bean.isForPendingInterest() ? ((SettlementInterestEntryBean) bean)
                     .getDebitEntry() : ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry();
         }
         return debitEntry;
@@ -931,7 +983,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
                 values.put("paymentPlanId", paymentPlanBean.getPaymentPlanId());
 
                 LocalizedString installmentDescription = new LocalizedString();
-                for (Locale locale : CoreConfiguration.supportedLocales()) {
+                for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
                     installmentDescription = installmentDescription.with(locale,
                             StrSubstitutor.replace(getInstallmentDescriptionFormat().getContent(locale), values));
                 }
@@ -992,7 +1044,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
             boolean isInterestEntry = settlementInvoiceEntry.isForDebitEntry()
                     && ((DebitEntry) settlementInvoiceEntry.getInvoiceEntry()).getDebitEntry() == invoiceEntry;
             boolean isPendingInterestEntry = settlementInvoiceEntry.isForPendingInterest()
-                    && ((InterestEntryBean) settlementInvoiceEntry).getDebitEntry() == invoiceEntry;
+                    && ((SettlementInterestEntryBean) settlementInvoiceEntry).getDebitEntry() == invoiceEntry;
             return isPendingInterestEntry || isInterestEntry;
         }
 
@@ -1037,13 +1089,13 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         }
 
         public void fillExtraInterestWarning() {
-            Map<DebitEntryBean, BigDecimal> result = new LinkedHashMap<>();
+            Map<SettlementDebitEntryBean, BigDecimal> result = new LinkedHashMap<>();
 
             List<ISettlementInvoiceEntryBean> debitEntryList = paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
                     .filter(bean -> isDebitEntry(bean)).sorted(getComparator()).collect(Collectors.toList());
 
             for (ISettlementInvoiceEntryBean iSettlementInvoiceEntryBean : debitEntryList) {
-                DebitEntryBean debitEntry = (DebitEntryBean) iSettlementInvoiceEntryBean;
+                SettlementDebitEntryBean debitEntry = (SettlementDebitEntryBean) iSettlementInvoiceEntryBean;
 
                 BigDecimal totalInterestsBeans = getInterestInvoiceEntryBeanOfDebitEntry(debitEntry.getDebitEntry())
                         .map(bean -> bean.getSettledAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);

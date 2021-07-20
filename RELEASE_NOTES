@@ -1,5 +1,12 @@
 - Improvement: Close credit note when created if is SINGAP ERP Service Implementation
 - Improvement: Change payment plan installment creation algorithm to support interests and penaltyTax distribution
+- New Fixture: Meo Wallet service
+- Improvement: add Terms and conditions to finantial documents
+- Improvement: Order settlement note entries in printed settlement note
+- New Fixture: Virtual Payment Entry Handler
+- Improvement: Validate that the debit entries, included in debit note, are preparing and the payor debt account matches
+- New Fixture: Payment method references, to stick the payment method reference code in payment entry as id
+- Refactor: Move Bennu specific implementations to fenixedu-treasury-ui
 
 7.2.1 (23-06-2021)
 - Bug Fix: Payment Plan: multiples bug fix on creation payment plan

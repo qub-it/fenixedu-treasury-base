@@ -1,3 +1,55 @@
+/**
+ * Copyright (c) 2015, Quorum Born IT <http://www.qub-it.com/>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, without
+ * modification, are permitted provided that the following
+ * conditions are met:
+ *
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
+ *
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
+ *
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
+ *
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
+ *
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
+ *
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
+ *
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL “Quorum Born IT�? BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.fenixedu.treasury.dto;
 
 import java.io.Serializable;
@@ -12,11 +64,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
-import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.AdvancedPaymentCreditNote;
@@ -24,7 +77,6 @@ import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.CreditNote;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
-import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -32,9 +84,12 @@ import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
+import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -68,11 +123,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     private String originDocumentNumber;
 
-    private List<CreditEntryBean> creditEntries;
+    private List<SettlementCreditEntryBean> creditEntries;
 
     private List<ISettlementInvoiceEntryBean> debitEntries;
 
-    private List<InterestEntryBean> interestEntries;
+    private List<ISettlementInvoiceEntryBean> virtualDebitEntries;
 
     private List<PaymentEntryBean> paymentEntries;
 
@@ -92,6 +147,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     private DigitalPaymentPlatform digitalPaymentPlatform;
 
+    private SibsBillingAddressBean addressBean;
+
+    // Fields used by SibsPaymentRequest generation
+    private boolean limitSibsPaymentRequestToCustomDueDate;
+    private LocalDate customSibsPaymentRequestDueDate;
+    
     public SettlementNoteBean() {
         init();
     }
@@ -101,17 +162,163 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         init(debtAccount, isReimbursementNote, excludeDebtsForPayorAccount);
     }
 
+    public SettlementNoteBean(PaymentRequest paymentRequest, DateTime paymentDate, BigDecimal paidAmount,
+            String originDocumentNumber) {
+        if(!TreasuryConstants.isPositive(paidAmount)) {
+            throw new IllegalArgumentException("Paid amount is not positive");
+        }
+        
+        init();
+        setDate(paymentDate.toLocalDate());
+        setOriginDocumentNumber(originDocumentNumber);
+        setAdvancePayment(true);
+        
+        this.debtAccount = paymentRequest.getDebtAccount();
+        this.reimbursementNote = false;
+
+        docNumSeries = DocumentNumberSeries
+                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
+                .get();
+
+        Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE_AND_AMOUNT = (o1, o2) -> {
+            int c = o1.getDueDate().compareTo(o2.getDueDate());
+
+            if (c != 0) {
+                return c;
+            }
+
+            c = -o1.getOpenAmount().compareTo(o2.getOpenAmount());
+
+            if (c != 0) {
+                return c;
+            }
+
+            return o1.getExternalId().compareTo(o2.getExternalId());
+        };
+        
+        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(COMPARE_BY_DUE_DATE_AND_AMOUNT);
+        sortedDebitEntriesToPay.addAll(paymentRequest.getDebitEntriesSet());
+
+        for (DebitEntry debitEntry : sortedDebitEntriesToPay) {
+            SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean(debitEntry);
+            debitEntryBean.setIncluded(TreasuryConstants.isPositive(debitEntry.getOpenAmount()));
+            debitEntries.add(debitEntryBean);
+        }
+
+        final TreeSet<Installment> sortedInstallments = Sets.newTreeSet(Installment.COMPARE_BY_DUEDATE);
+        sortedInstallments.addAll(paymentRequest.getInstallmentsSet());
+
+        for (Installment installment : sortedInstallments) {
+            InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
+            installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
+            debitEntries.add(installmentBean);
+        }
+        
+        if(getReferencedCustomers().size() > 1) {
+            // Register advance payment only
+            debitEntries.clear();
+        }
+
+        BigDecimal amountToDistribute = paidAmount;
+        
+        for (ISettlementInvoiceEntryBean entryBean : debitEntries) {
+            if(!entryBean.isIncluded()) {
+                continue;
+            }
+            
+            if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute, entryBean.getSettledAmount())) {
+                amountToDistribute = amountToDistribute.subtract(entryBean.getSettledAmount());
+            } else if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterThan(entryBean.getSettledAmount(), amountToDistribute)) {
+                entryBean.setSettledAmount(amountToDistribute);
+                amountToDistribute = BigDecimal.ZERO;
+            } else {
+                entryBean.setSettledAmount(BigDecimal.ZERO);
+                entryBean.setIncluded(false);
+            }
+        }
+        
+        calculateVirtualDebitEntries();
+
+        PaymentEntryBean paymentEntryBean = new PaymentEntryBean(paidAmount,
+                paymentRequest.getPaymentMethod(), paymentRequest.fillPaymentEntryMethodId());
+
+        paymentEntries.add(paymentEntryBean);
+
+    }
+
+    public SettlementNoteBean(SettlementNoteBean settlementNoteBean) {
+        init();
+        this.debtAccount = settlementNoteBean.getDebtAccount();
+        this.reimbursementNote = settlementNoteBean.isReimbursementNote();
+        this.advancePayment = settlementNoteBean.isAdvancePayment();
+        this.date = settlementNoteBean.getDate();
+        this.digitalPaymentPlatform = settlementNoteBean.getDigitalPaymentPlatform();
+        this.docNumSeries = settlementNoteBean.getDocNumSeries();
+        this.finantialTransactionReference = settlementNoteBean.getFinantialTransactionReference();
+        this.finantialTransactionReferenceYear = settlementNoteBean.getFinantialTransactionReferenceYear();
+        this.originDocumentNumber = settlementNoteBean.getOriginDocumentNumber();
+
+        if (settlementNoteBean.getAddressBean() != null) {
+            SibsBillingAddressBean sibsBillingAddressBean = new SibsBillingAddressBean();
+            sibsBillingAddressBean.setAddress(settlementNoteBean.getAddressBean().getAddress());
+            sibsBillingAddressBean.setAddressCountryCode(settlementNoteBean.getAddressBean().getAddressCountryCode());
+            sibsBillingAddressBean.setAddressCountryName(settlementNoteBean.getAddressBean().getAddressCountryName());
+            sibsBillingAddressBean.setCity(settlementNoteBean.getAddressBean().getCity());
+            sibsBillingAddressBean.setZipCode(settlementNoteBean.getAddressBean().getZipCode());
+            this.addressBean = sibsBillingAddressBean;
+        }
+
+        this.previousStates = (Stack<Integer>) settlementNoteBean.getPreviousStates().clone();
+        this.settlementNoteStateUrls = new ArrayList(settlementNoteBean.getSettlementNoteStateUrls());
+        
+        this.documentNumberSeries = new ArrayList<>();
+        settlementNoteBean.getDocumentNumberSeries()
+                .forEach(bean -> this.documentNumberSeries.add(new TreasuryTupleDataSourceBean(bean.getId(), bean.getText())));
+
+        settlementNoteBean.creditEntries.forEach(bean -> {
+            SettlementCreditEntryBean creditBean = new SettlementCreditEntryBean(bean.getCreditEntry());
+            creditBean.setIncluded(bean.isIncluded());
+            creditBean.setNotValid(bean.isNotValid());
+            creditBean.setSettledAmount(bean.getSettledAmount());
+            this.creditEntries.add(creditBean);
+        });
+
+        settlementNoteBean.debitEntries.forEach(bean -> {
+            SettlementDebitEntryBean debitEntry = new SettlementDebitEntryBean((DebitEntry) bean.getInvoiceEntry());
+            debitEntry.setIncluded(bean.isIncluded());
+            debitEntry.setNotValid(bean.isNotValid());
+            debitEntry.setSettledAmount(bean.getSettledAmount());
+            this.debitEntries.add(debitEntry);
+        });
+
+        settlementNoteBean.paymentEntries.forEach(bean -> {
+            this.paymentEntries.add(new PaymentEntryBean(bean.paymentAmount, bean.paymentMethod, bean.paymentMethodId));
+        });
+
+        settlementNoteBean.virtualDebitEntries.forEach(bean -> {
+            String serialize = bean.serialize();
+            this.virtualDebitEntries.add(ISettlementInvoiceEntryBean.deserialize(serialize));
+        });
+    }
+
     private void init() {
-        this.creditEntries = new ArrayList<CreditEntryBean>();
+        this.creditEntries = new ArrayList<SettlementCreditEntryBean>();
         this.debitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
-        this.interestEntries = new ArrayList<InterestEntryBean>();
+        this.virtualDebitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
         this.paymentEntries = new ArrayList<PaymentEntryBean>();
         this.date = new LocalDate();
+        this.settlementNoteStateUrls = new ArrayList<>();
         this.previousStates = new Stack<Integer>();
         setPaymentMethods(PaymentMethod.findAvailableForPaymentInApplication().collect(Collectors.toList()));
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
+
+        this.documentNumberSeries = new ArrayList<>();
+        
+        // Fields used by SibsPaymentRequest generation
+        this.limitSibsPaymentRequestToCustomDueDate = false;
+        this.customSibsPaymentRequestDueDate = null;
     }
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
@@ -131,7 +338,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     continue;
                 }
 
-                debitEntries.add(new DebitEntryBean(debitEntry));
+                debitEntries.add(new SettlementDebitEntryBean(debitEntry));
             } else {
                 final CreditEntry creditEntry = (CreditEntry) invoiceEntry;
 
@@ -140,7 +347,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     continue;
                 }
 
-                creditEntries.add(new CreditEntryBean((CreditEntry) invoiceEntry));
+                creditEntries.add(new SettlementCreditEntryBean((CreditEntry) invoiceEntry));
             }
         }
 
@@ -153,7 +360,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         setDocumentNumberSeries(debtAccount, reimbursementNote);
 
-        settlementNoteStateUrls = Arrays.asList(
+        this.settlementNoteStateUrls = Arrays.asList(
                 CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote, CHOOSE_INVOICE_ENTRIES_URL,
                 CALCULATE_INTEREST_URL, CREATE_DEBIT_NOTE_URL, INSERT_PAYMENT_URL, SUMMARY_URL);
 
@@ -181,7 +388,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         }
 
-        for (final CreditEntryBean creditEntryBean : creditEntries) {
+        for (final SettlementCreditEntryBean creditEntryBean : creditEntries) {
             if (!creditEntryBean.isIncluded()) {
                 continue;
             }
@@ -227,17 +434,26 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return lastAdvancedCreditSettlementNote;
     }
 
+    public void calculateVirtualDebitEntries() {
+        setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
+        List<IVirtualPaymentEntryHandler> handlers = VirtualPaymentEntryFactory.implementation().getHandlers();
+        for (IVirtualPaymentEntryHandler handler : handlers) {
+            addAllVirtualDebitEntries(handler.createISettlementInvoiceEntryBean(this));
+        }
+    }
+
     public void calculateInterestDebitEntries() {
-        setInterestEntries(new ArrayList<InterestEntryBean>());
-        for (DebitEntryBean debitEntryBean : getDebitEntriesByType(DebitEntryBean.class)) {
+        setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
+        for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
             if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
                 InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
                 if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
-                    InterestEntryBean interestEntryBean = new InterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-                    getInterestEntries().add(interestEntryBean);
+                    SettlementInterestEntryBean interestEntryBean =
+                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
+                    virtualDebitEntries.add(interestEntryBean);
                 }
             }
         }
@@ -258,19 +474,19 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
 
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (!interestEntryBean.isIncluded()) {
                 continue;
             }
 
             if (isReimbursementNote()) {
-                totalAmount = totalAmount.subtract(interestEntryBean.getInterest().getInterestAmount());
+                totalAmount = totalAmount.subtract(interestEntryBean.getSettledAmount());
             } else {
-                totalAmount = totalAmount.add(interestEntryBean.getInterest().getInterestAmount());
+                totalAmount = totalAmount.add(interestEntryBean.getSettledAmount());
             }
         }
 
-        for (CreditEntryBean creditEntryBean : getCreditEntries()) {
+        for (SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (!creditEntryBean.isIncluded()) {
                 continue;
             }
@@ -293,13 +509,13 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
 
-        for (final CreditEntryBean creditEntryBean : getCreditEntries()) {
+        for (final SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 invoiceEntriesList.add(creditEntryBean);
             }
         }
 
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (interestEntryBean.isIncluded()) {
                 invoiceEntriesList.add(interestEntryBean);
             }
@@ -326,34 +542,36 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public void includeAllInterestOfSelectedDebitEntries() {
-        setInterestEntries(new ArrayList<InterestEntryBean>());
-        List<DebitEntryBean> debitEntriesToIterate = Lists.newArrayList(getDebitEntriesByType(DebitEntryBean.class));
-        for (DebitEntryBean debitEntryBean : debitEntriesToIterate) {
+        List<SettlementDebitEntryBean> debitEntriesToIterate =
+                Lists.newArrayList(getDebitEntriesByType(SettlementDebitEntryBean.class));
+        for (SettlementDebitEntryBean debitEntryBean : debitEntriesToIterate) {
             if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
                 InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
                 if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
-                    InterestEntryBean interestEntryBean = new InterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-                    getInterestEntries().add(interestEntryBean);
+                    SettlementInterestEntryBean interestEntryBean =
+                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
+                    virtualDebitEntries.add(interestEntryBean);
                     interestEntryBean.setIncluded(true);
                 }
             }
         }
 
-        for (DebitEntryBean debitEntryBean : debitEntriesToIterate) {
+        for (SettlementDebitEntryBean debitEntryBean : debitEntriesToIterate) {
             if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
                     debitEntryBean.getDebtAmount())) {
                 for (final DebitEntry interestDebitEntry : debitEntryBean.getDebitEntry().getInterestDebitEntriesSet()) {
-                    if (getDebitEntriesByType(DebitEntryBean.class).stream().filter(e -> e.isIncluded)
+                    if (getDebitEntriesByType(SettlementDebitEntryBean.class).stream().filter(e -> e.isIncluded())
                             .filter(e -> e.getDebitEntry() == interestDebitEntry).findAny().isPresent()) {
                         continue;
                     }
 
                     if (interestDebitEntry.isInDebt()) {
-                        getDebitEntries().stream().filter(e -> ((DebitEntryBean) e).getDebitEntry() == interestDebitEntry)
-                                .findAny().get().setIncluded(true);
+                        getDebitEntries().stream()
+                                .filter(e -> ((SettlementDebitEntryBean) e).getDebitEntry() == interestDebitEntry).findAny().get()
+                                .setIncluded(true);
                     }
                 }
             }
@@ -403,11 +621,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.date = date;
     }
 
-    public List<CreditEntryBean> getCreditEntries() {
+    public List<SettlementCreditEntryBean> getCreditEntries() {
         return creditEntries;
     }
 
-    public void setCreditEntries(List<CreditEntryBean> creditEntries) {
+    public void setCreditEntries(List<SettlementCreditEntryBean> creditEntries) {
         this.creditEntries = creditEntries;
     }
 
@@ -427,14 +645,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.debitEntries = debitEntries;
     }
 
-    public List<InterestEntryBean> getInterestEntries() {
-        return interestEntries;
-    }
-
-    public void setInterestEntries(List<InterestEntryBean> interestEntries) {
-        this.interestEntries = interestEntries;
-    }
-
     public boolean isAdvancePayment() {
         return this.advancePayment;
     }
@@ -445,12 +655,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public LocalDate getDebitNoteDate() {
         LocalDate lowerDate = new LocalDate();
-        for (DebitEntryBean debitEntryBean : getDebitEntriesByType(DebitEntryBean.class)) {
+        for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
             if (debitEntryBean.isIncluded() && debitEntryBean.getDueDate().isBefore(lowerDate)) {
                 lowerDate = debitEntryBean.getDueDate();
             }
         }
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (interestEntryBean.isIncluded() && interestEntryBean.getDueDate().isBefore(lowerDate)) {
                 lowerDate = interestEntryBean.getDueDate();
             }
@@ -465,12 +675,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 sum = sum.add(debitEntryBean.getSettledAmount());
             }
         }
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (interestEntryBean.isIncluded()) {
-                sum = sum.add(interestEntryBean.getInterest().getInterestAmount());
+                sum = sum.add(interestEntryBean.getSettledAmount());
             }
         }
-        for (CreditEntryBean creditEntryBean : getCreditEntries()) {
+        for (SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 sum = sum.subtract(creditEntryBean.getCreditAmount());
             }
@@ -485,13 +695,13 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 sum = sum.add(debitEntryBean.getSettledAmount());
             }
         }
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (interestEntryBean.isIncluded()) {
                 //Interest doesn't have vat
-                sum = sum.add(interestEntryBean.getInterest().getInterestAmount());
+                sum = sum.add(interestEntryBean.getSettledAmount());
             }
         }
-        for (CreditEntryBean creditEntryBean : getCreditEntries()) {
+        for (SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 sum = sum.subtract(creditEntryBean.getCreditAmountWithVat());
             }
@@ -508,21 +718,21 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         for (VatType vatType : VatType.findAll().collect(Collectors.toList())) {
             sumByVat.put(vatType.getName().getContent(), new VatAmountBean(BigDecimal.ZERO, BigDecimal.ZERO));
         }
-        for (DebitEntryBean debitEntryBean : getDebitEntriesByType(DebitEntryBean.class)) {
+        for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
             if (debitEntryBean.isIncluded()) {
                 String vatType = debitEntryBean.getDebitEntry().getVat().getVatType().getName().getContent();
                 sumByVat.get(vatType).addAmount(debitEntryBean.getDebtAmount());
                 sumByVat.get(vatType).addAmountWithVat(debitEntryBean.getDebtAmountWithVat());
             }
         }
-        for (InterestEntryBean interestEntryBean : getInterestEntries()) {
+        for (ISettlementInvoiceEntryBean interestEntryBean : getVirtualDebitEntries()) {
             if (interestEntryBean.isIncluded()) {
-                String vatType = interestEntryBean.getDebitEntry().getVat().getVatType().getName().getContent();
-                sumByVat.get(vatType).addAmount(interestEntryBean.getInterest().getInterestAmount());
-                sumByVat.get(vatType).addAmountWithVat(interestEntryBean.getInterest().getInterestAmount());
+                String vatType = interestEntryBean.getVat().getVatType().getName().getContent();
+                sumByVat.get(vatType).addAmount(interestEntryBean.getSettledAmount());
+                sumByVat.get(vatType).addAmountWithVat(interestEntryBean.getSettledAmount());
             }
         }
-        for (CreditEntryBean creditEntryBean : getCreditEntries()) {
+        for (SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 String vatType = creditEntryBean.getCreditEntry().getVat().getVatType().getName().getContent();
                 sumByVat.get(vatType).subtractAmount(creditEntryBean.getCreditAmount());
@@ -615,9 +825,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public boolean hasEntriesWithoutDocument() {
-        return getDebitEntriesByType(DebitEntryBean.class).stream()
+        return getDebitEntriesByType(SettlementDebitEntryBean.class).stream()
                 .anyMatch(deb -> deb.isIncluded() && deb.getDebitEntry().getFinantialDocument() == null)
-                || interestEntries.stream().anyMatch(deb -> deb.isIncluded());
+                || virtualDebitEntries.stream().anyMatch(deb -> deb.isIncluded());
     }
 
     public String getFinantialTransactionReference() {
@@ -644,6 +854,22 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.digitalPaymentPlatform = digitalPaymentPlatform;
     }
 
+    public boolean isLimitSibsPaymentRequestToCustomDueDate() {
+        return this.limitSibsPaymentRequestToCustomDueDate;
+    }
+
+    public void setLimitSibsPaymentRequestToCustomDueDate(boolean limitSibsPaymentRequestToCustomDueDate) {
+        this.limitSibsPaymentRequestToCustomDueDate = limitSibsPaymentRequestToCustomDueDate;
+    }
+
+    public LocalDate getCustomSibsPaymentRequestDueDate() {
+        return customSibsPaymentRequestDueDate;
+    }
+
+    public void setCustomSibsPaymentRequestDueDate(LocalDate customSibsPaymentRequestDueDate) {
+        this.customSibsPaymentRequestDueDate = customSibsPaymentRequestDueDate;
+    }
+    
     // @formatter:off
     /* ************
      * HELPER BEANS
@@ -651,511 +877,24 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
      */
     // @formatter:on
 
-    public static class DebitEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        private DebitEntry debitEntry;
-
-        private boolean isIncluded;
-
-        private boolean isNotValid;
-
-        private BigDecimal debtAmount;
-
-        public DebitEntryBean() {
-
-        }
-
-        public DebitEntryBean(DebitEntry debitEntry) {
-            this.debitEntry = debitEntry;
-            this.isIncluded = false;
-            this.isNotValid = false;
-            this.debtAmount = debitEntry.getOpenAmount();
-        }
-
-        public DebitEntry getDebitEntry() {
-            return debitEntry;
-        }
-
-        public void setDebitEntry(DebitEntry debitEntry) {
-            this.debitEntry = debitEntry;
-        }
-
-        public String getDocumentNumber() {
-            return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentNumber() : null;
-        }
-
-        @Deprecated
-        public LocalDate getDocumentDueDate() {
-            return debitEntry.getDueDate();
-        }
-
-        @Deprecated
-        public BigDecimal getDebtAmount() {
-            if (debtAmount == null) {
-                return null;
-            }
-
-            return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
-        }
-
-        @Deprecated
-        public BigDecimal getDebtAmountWithVat() {
-            if (debtAmount == null) {
-                return null;
-            }
-
-            return debitEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(debtAmount);
-        }
-
-        @Deprecated
-        public void setDebtAmount(BigDecimal debtAmount) {
-            this.debtAmount = debtAmount;
-        }
-
-        @Override
-        public InvoiceEntry getInvoiceEntry() {
-            return debitEntry;
-        }
-
-        @Override
-        public String getDescription() {
-            return debitEntry.getDescription();
-        }
-
-        @Override
-        public LocalDate getDueDate() {
-            return debitEntry.getDueDate();
-        }
-
-        @Override
-        public BigDecimal getEntryAmount() {
-            return debitEntry.getAmount();
-        }
-
-        @Override
-        public BigDecimal getEntryOpenAmount() {
-            return debitEntry.getOpenAmount();
-        }
-
-        @Override
-        public BigDecimal getSettledAmount() {
-            return debtAmount;
-        }
-
-        @Override
-        public void setSettledAmount(BigDecimal debtAmount) {
-            this.debtAmount = debtAmount;
-        }
-
-        @Override
-        public Vat getVat() {
-            return debitEntry.getVat();
-        }
-
-        @Override
-        public BigDecimal getVatRate() {
-            return debitEntry.getVatRate();
-        }
-
-        @Override
-        public boolean isIncluded() {
-            return isIncluded;
-        }
-
-        @Override
-        public void setIncluded(boolean isIncluded) {
-            this.isIncluded = isIncluded;
-        }
-
-        @Override
-        public boolean isNotValid() {
-            return isNotValid;
-        }
-
-        @Override
-        public void setNotValid(boolean notValid) {
-            this.isNotValid = notValid;
-        }
-
-        @Override
-        public FinantialDocument getFinantialDocument() {
-            return debitEntry.getFinantialDocument();
-        }
-
-        @Override
-        public Set<Customer> getPaymentCustomer() {
-            return debitEntry.getFinantialDocument() != null
-                    && ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
-                            ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
-                                    .singleton(debitEntry.getDebtAccount().getCustomer());
-        }
-
-        /*
-         * Methods to support jsp, overriden in subclasses
-         */
-
-        @Override
-        public boolean isForDebitEntry() {
-            return true;
-        }
-
-        @Override
-        public boolean isForInstallment() {
-            return false;
-        }
-
-        @Override
-        public boolean isForCreditEntry() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPendingInterest() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPaymentPenalty() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPendingDebitEntry() {
-            // TODO Auto-generated method stub
-            return false;
-        }
+    public SibsBillingAddressBean getAddressBean() {
+        return addressBean;
     }
 
-    public static class CreditEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        private CreditEntry creditEntry;
-
-        private boolean isIncluded;
-
-        private boolean isNotValid;
-
-        private BigDecimal creditAmount;
-
-        public CreditEntryBean() {
-        }
-
-        public CreditEntryBean(CreditEntry creditEntry) {
-            this.creditEntry = creditEntry;
-            this.isIncluded = false;
-            this.isNotValid = false;
-            this.creditAmount = creditEntry.getOpenAmount();
-        }
-
-        public CreditEntry getCreditEntry() {
-            return creditEntry;
-        }
-
-        public void setCreditEntry(CreditEntry creditEntry) {
-            this.creditEntry = creditEntry;
-        }
-
-        public String getDocumentNumber() {
-            return creditEntry.getFinantialDocument() != null ? creditEntry.getFinantialDocument().getDocumentNumber() : null;
-        }
-
-        @Deprecated
-        public LocalDate getDocumentDueDate() {
-            return creditEntry.getFinantialDocument() != null ? creditEntry.getFinantialDocument()
-                    .getDocumentDueDate() : creditEntry.getEntryDateTime().toLocalDate();
-        }
-
-        @Deprecated
-        public BigDecimal getCreditAmount() {
-            if (creditAmount == null) {
-                return null;
-            }
-
-            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
-        }
-
-        @Deprecated
-        public BigDecimal getCreditAmountWithVat() {
-            if (creditAmount == null) {
-                return null;
-            }
-
-            return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
-        }
-
-        @Deprecated
-        public void setCreditAmount(BigDecimal creditAmount) {
-            this.creditAmount = creditAmount;
-        }
-
-        @Override
-        public InvoiceEntry getInvoiceEntry() {
-            return creditEntry;
-        }
-
-        @Override
-        public String getDescription() {
-            return creditEntry.getDescription();
-        }
-
-        @Override
-        public LocalDate getDueDate() {
-            return creditEntry.getDueDate();
-        }
-
-        @Override
-        public BigDecimal getEntryAmount() {
-            return creditEntry.getAmount();
-        }
-
-        @Override
-        public BigDecimal getEntryOpenAmount() {
-            return creditEntry.getOpenAmount();
-        }
-
-        @Override
-        public BigDecimal getSettledAmount() {
-            return creditAmount;
-        }
-
-        @Override
-        public void setSettledAmount(BigDecimal debtAmount) {
-            this.creditAmount = debtAmount;
-        }
-
-        @Override
-        public Vat getVat() {
-            return creditEntry.getVat();
-        }
-
-        @Override
-        public BigDecimal getVatRate() {
-            return creditEntry.getVatRate();
-        }
-
-        @Override
-        public boolean isIncluded() {
-            return isIncluded;
-        }
-
-        @Override
-        public void setIncluded(boolean isIncluded) {
-            this.isIncluded = isIncluded;
-        }
-
-        @Override
-        public boolean isNotValid() {
-            return isNotValid;
-        }
-
-        @Override
-        public void setNotValid(boolean notValid) {
-            this.isNotValid = notValid;
-        }
-
-        @Override
-        public FinantialDocument getFinantialDocument() {
-            return creditEntry.getFinantialDocument();
-        }
-
-        @Override
-        public Set<Customer> getPaymentCustomer() {
-            return creditEntry.getFinantialDocument() != null
-                    && ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
-                            ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
-                                    .singleton(creditEntry.getDebtAccount().getCustomer());
-        }
-
-        /*
-         * Methods to support jsp, overriden in subclasses
-         */
-
-        @Override
-        public boolean isForDebitEntry() {
-            return false;
-        }
-
-        @Override
-        public boolean isForInstallment() {
-            return false;
-        }
-
-        @Override
-        public boolean isForCreditEntry() {
-            return true;
-        }
-
-        @Override
-        public boolean isForPendingInterest() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPaymentPenalty() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPendingDebitEntry() {
-            // TODO Auto-generated method stub
-            return false;
-        }
+    public void setAddressBean(SibsBillingAddressBean addressBean) {
+        this.addressBean = addressBean;
     }
 
-    public static class InterestEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
+    public List<ISettlementInvoiceEntryBean> getVirtualDebitEntries() {
+        return virtualDebitEntries;
+    }
 
-        private static final long serialVersionUID = 1L;
+    public void setVirtualDebitEntries(List<ISettlementInvoiceEntryBean> virtualDebitEntries) {
+        this.virtualDebitEntries = virtualDebitEntries;
+    }
 
-        private DebitEntry debitEntry;
-
-        private boolean isIncluded;
-
-        private InterestRateBean interest;
-
-        public InterestEntryBean() {
-            this.isIncluded = false;
-        }
-
-        public InterestEntryBean(DebitEntry debitEntry, InterestRateBean interest) {
-            this();
-            this.debitEntry = debitEntry;
-            this.interest = interest;
-        }
-
-        public InterestRateBean getInterest() {
-            return interest;
-        }
-
-        public void setInterest(InterestRateBean interest) {
-            this.interest = interest;
-        }
-
-        public DebitEntry getDebitEntry() {
-            return debitEntry;
-        }
-
-        public void setDebitEntry(DebitEntry debitEntry) {
-            this.debitEntry = debitEntry;
-        }
-
-        public LocalDate getDocumentDueDate() {
-            return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentDueDate() : debitEntry
-                    .getDueDate();
-        }
-
-        @Override
-        public boolean isIncluded() {
-            return isIncluded;
-        }
-
-        @Override
-        public void setIncluded(boolean isIncluded) {
-            this.isIncluded = isIncluded;
-        }
-
-        @Override
-        public InvoiceEntry getInvoiceEntry() {
-            return null;
-        }
-
-        @Override
-        public String getDescription() {
-            return getInterest().getDescription();
-        }
-
-        @Override
-        public boolean isNotValid() {
-            return false;
-        }
-
-        @Override
-        public void setNotValid(boolean notValid) {
-        }
-
-        @Override
-        public BigDecimal getVatRate() {
-            return debitEntry.getVatRate();
-        }
-
-        @Override
-        public FinantialDocument getFinantialDocument() {
-            return null;
-        }
-
-        @Override
-        public Vat getVat() {
-            final VatType vatType = TreasurySettings.getInstance().getInterestProduct().getVatType();
-            return Vat.findActiveUnique(vatType, debitEntry.getDebtAccount().getFinantialInstitution(), DateTime.now()).get();
-
-        }
-
-        @Override
-        public Set<Customer> getPaymentCustomer() {
-            return Collections.emptySet();
-        }
-
-        @Override
-        public LocalDate getDueDate() {
-            return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentDueDate() : debitEntry
-                    .getDueDate();
-        }
-
-        @Override
-        public BigDecimal getEntryAmount() {
-            return null;
-        }
-
-        @Override
-        public BigDecimal getEntryOpenAmount() {
-            return null;
-        }
-
-        @Override
-        public BigDecimal getSettledAmount() {
-            return getInterest().getInterestAmount();
-        }
-
-        @Override
-        public void setSettledAmount(BigDecimal debtAmount) {
-
-        }
-
-        /*
-         * Methods to support jsp, overriden in subclasses
-         */
-
-        @Override
-        public boolean isForDebitEntry() {
-            return false;
-        }
-
-        @Override
-        public boolean isForInstallment() {
-            return false;
-        }
-
-        @Override
-        public boolean isForCreditEntry() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPendingInterest() {
-            return true;
-        }
-
-        @Override
-        public boolean isForPaymentPenalty() {
-            return false;
-        }
-
-        @Override
-        public boolean isForPendingDebitEntry() {
-            return false;
-        }
+    private void addAllVirtualDebitEntries(List<ISettlementInvoiceEntryBean> iSettlementInvoiceEntryBeans) {
+        this.virtualDebitEntries.addAll(iSettlementInvoiceEntryBeans);
     }
 
     public static class PaymentEntryBean implements ITreasuryBean, Serializable {

@@ -20,6 +20,14 @@ valueType java.math.BigDecimal as BigDecimalT
 	}
 } 
 
+valueType org.fenixedu.commons.i18n.LocalizedString as LocalizedStringT {
+	externalizeWith {
+		JsonElement json();
+	}
+	
+	internalizeWith fromJson();
+}
+
 valueType pt.ist.standards.geographic.Municipality as Municipality {
     externalizeWith {
         String pt.ist.standards.geographic.TreasuryGeographicInfoLoader.externalizePlace();
@@ -54,17 +62,17 @@ valueType pt.ist.standards.geographic.Country as Country {
 
 class FiscalCountryRegion {
 	String fiscalCode;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class CustomerType {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	LocalizedStringT name (REQUIRED);
 }
 
 class VatType {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class Vat {
@@ -76,18 +84,18 @@ class Vat {
 class VatExemptionReason
 {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class ProductGroup {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 }
 
 class Product {
 	String code;
-	LocalizedString name;
-	LocalizedString unitOfMeasure;
+	LocalizedStringT name;
+	LocalizedStringT unitOfMeasure;
 	boolean active;
 	boolean legacy;
 	int tuitionInstallmentOrder;
@@ -95,16 +103,26 @@ class Product {
 
 class Currency {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	String isoCode;
 	String symbol;
 }
 
 class PaymentMethod {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	boolean availableForPaymentInApplication;
 }
+
+	relation PaymentMethodBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		PaymentMethod playsRole paymentMethods {
+			multiplicity *;
+		}
+	}
 
 class integration.Configuration
 {
@@ -144,7 +162,7 @@ class FinantialInstitution {
 
 class FinantialEntity {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	LocalizedStringT name (REQUIRED);
 } 
 
 
@@ -245,7 +263,7 @@ class document.TreasuryDocumentTemplateFile /* implements IGenericFile */ {
 class document.FinantialDocumentType {
 	FinantialDocumentTypeEnum type;
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	String documentNumberSeriesPrefix;
 	boolean invoice;
 	
@@ -253,7 +271,7 @@ class document.FinantialDocumentType {
 
 class document.Series {
 	String code (REQUIRED);
-	LocalizedString name (REQUIRED);
+	LocalizedStringT name (REQUIRED);
 	boolean active;
 	boolean externSeries;
 	boolean certificated;
@@ -279,7 +297,7 @@ class document.DocumentNumberSeries {
 }
 
 class event.TreasuryEvent {
-	LocalizedString description;
+	LocalizedStringT description;
 	String propertiesJsonMap;
 }
 
@@ -292,6 +310,7 @@ class document.FinantialDocument {
 	String address;
 	String annulledReason;
 	String documentObservations;
+	String documentTermsAndConditions;
 	String clearDocumentToExportReason;
 	DateTime clearDocumentToExportDate;
 	DateTime closeDate;
@@ -367,19 +386,72 @@ class document.PaymentEntry {
 	String propertiesJsonMap;
 }
 
+	relation PaymentEntryBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		document.PaymentEntry playsRole paymentEntries {
+			multiplicity *;
+		}
+	}
+
+	relation PaymentEntrySettlementNote {
+		document.SettlementNote playsRole settlementNote {
+			multiplicity 1..1;
+		}
+	
+		document.PaymentEntry playsRole paymentEntries {
+			multiplicity *;
+		}
+	}	
+
+	relation PaymentEntryPaymentMode {
+		PaymentMethod playsRole paymentMethod {
+			multiplicity 1..1;
+		}
+		
+		document.PaymentEntry playsRole paymentEntries {
+			multiplicity *;
+		}
+	}
+
 class document.ReimbursementEntry {
 	BigDecimalT reimbursedAmount;
 	String reimbursementMethodId;
+	String propertiesJsonMap;
 }
 
+	relation ReimbursementEntryBennu {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		document.ReimbursementEntry playsRole reimbursementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation ReimbursementEntrySettlementNote {
+		document.SettlementNote playsRole settlementNote {
+			multiplicity 1..1;
+		}
+	
+		document.ReimbursementEntry playsRole reimbursementEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation ReimbursementEntryPaymentMode {
+	    PaymentMethod playsRole paymentMethod {
+	        multiplicity 1..1;
+	    }
+	    
+	    document.ReimbursementEntry playsRole reimbursementEntries {
+	        multiplicity *;
+	    }
+	}
 
-/*
-class debt.DebitEntrySuspensionRequest {
-}
-
-class debt.DebitEntrySuspensionRequestEntry {
-}
-*/
 
 /*************
 * ACCESS CONTROL
@@ -423,7 +495,7 @@ class debt.DebitEntrySuspensionRequestEntry {
 
 class exemption.TreasuryExemptionType {
 	String code;
-	LocalizedString name;
+	LocalizedStringT name;
 	BigDecimalT defaultExemptionPercentage;
 	boolean active;
 }
@@ -525,7 +597,7 @@ class tariff.InterestRate {
 class tariff.GlobalInterestRate {
     int year;
     LocalDate firstDay;
-    LocalizedString description;
+    LocalizedStringT description;
     BigDecimalT rate;
     boolean applyPaymentMonth;
     boolean applyInFirstWorkday;
@@ -618,6 +690,7 @@ class payments.PaymentRequest {
 	String transactionId;
 	String merchantTransactionId;
 	String migrationCode;
+	LocalDate paymentDueDate;
 }
 
 	relation PaymentRequestDomainRoot {
@@ -714,7 +787,7 @@ class payments.PaymentRequestLog {
 	DateTime creationDate;
 	String responsibleUsername;	
 	String stateCode;
-	LocalizedString stateDescription;
+	LocalizedStringT stateDescription;
 	String operationCode;
 	String statusCode;
 	String statusMessage;
@@ -1595,16 +1668,6 @@ relation CurrencyBennu {
 	}
 }
 
-relation PaymentMethodBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
-	}
-	
-	PaymentMethod playsRole paymentMethods {
-		multiplicity *;
-	}
-}
-
 relation TreasuryOperationLogBennu {
     .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
@@ -2063,71 +2126,6 @@ relation SettlementNoteAdvancedPaymentCreditNote{
     document.SettlementNote playsRole advancedPaymentSettlementNote
     {
         multiplicity 0..1;
-    }
-}
-
-/* --- PaymentEntry --- */
-
-relation PaymentEntryBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
-	}
-	
-	document.PaymentEntry playsRole paymentEntries {
-		multiplicity *;
-	}
-}
-
-relation PaymentEntrySettlementNote {
-	document.SettlementNote playsRole settlementNote {
-		multiplicity 1..1;
-	}
-
-	document.PaymentEntry playsRole paymentEntries {
-		multiplicity *;
-	}
-}
-
-relation PaymentEntryPaymentMode {
-	PaymentMethod playsRole paymentMethod {
-		multiplicity 1..1;
-	}
-	
-	document.PaymentEntry playsRole paymentEntries {
-		multiplicity *;
-	}
-}
-
-
-/* --- ReimbursementEntry --- */
-
-relation ReimbursementEntryBennu {
-	.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
-		multiplicity 1..1;
-	}
-	
-	document.ReimbursementEntry playsRole reimbursementEntries {
-		multiplicity *;
-	}
-}
-
-relation ReimbursementEntrySettlementNote {
-	document.SettlementNote playsRole settlementNote {
-		multiplicity 1..1;
-	}
-
-	document.ReimbursementEntry playsRole reimbursementEntries {
-		multiplicity *;
-	}
-}
-
-relation ReimbursementEntryPaymentMode {
-    PaymentMethod playsRole paymentMethod {
-        multiplicity 1..1;
-    }
-    
-    document.ReimbursementEntry playsRole reimbursementEntries {
-        multiplicity *;
     }
 }
 
@@ -2934,7 +2932,7 @@ class paymentPlan.PaymentPlan{
 
 
 class paymentPlan.Installment {
-	LocalizedString description;
+	LocalizedStringT description;
 	LocalDate dueDate;
 	String propertiesJsonMap;
 }
@@ -3071,7 +3069,7 @@ class paymentPlan.InstallmentSettlementEntry{
 
 class paymentPlan.PaymentPlanSettings{
 	Boolean active;
-	LocalizedString installmentDescriptionFormat;
+	LocalizedStringT installmentDescriptionFormat;
 	Boolean interestCalculationOfDebitsInPlans;
 	Integer numberOfPaymentPlansActives;
 }	
@@ -3107,8 +3105,8 @@ class paymentPlan.PaymentPlanSettings{
 
 class paymentPlan.PaymentPlanConfigurator{
 	Boolean active;
-	LocalizedString name;
-	LocalizedString installmentDescriptionFormat;
+	LocalizedStringT name;
+	LocalizedStringT installmentDescriptionFormat;
 	Boolean usePaymentPenalty;
 	AddictionsCalculeType interestDistribution;
 	AddictionsCalculeType paymentPenaltyDistribution;
@@ -3152,7 +3150,7 @@ class paymentPlan.PaymentPlanConfigurator{
 	}
 	
 class paymentPlan.PaymentPlanNumberGenerator {
-	LocalizedString name;
+	LocalizedStringT name;
 	String prefix;
 	Integer initialValue;
 	Integer actualValue;
@@ -3209,7 +3207,7 @@ class paymentPlan.paymentPlanValidator.PaymentPlanValidator{
 	}
 
 class paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator extends paymentPlan.paymentPlanValidator.PaymentPlanValidator{
-	LocalizedString name;
+	LocalizedStringT name;
 	Boolean active;
 	Boolean conjunction;
 }
@@ -3232,13 +3230,87 @@ class paymentPlan.paymentPlanValidator.WithoutConsecutiveInstallmentsOverdueVali
 	Integer numberInstallments;
 }
 
+
+
+/******************
+* MEO wallet
+******************/
+
+
+class meowallet.MeoWallet extends payments.integration.DigitalPaymentPlatform {
+	String authorizationAPIToken;
+	String endpointUrl;
+	String includeMethod;
+}
+
+class meowallet.MeoWalletLog extends payments.PaymentRequestLog {
+	
+	String extCustomerId;
+	String extInvoiceId;
+	String meoWalletId;
+	
+	String paymentType;
+	String paymentMethod;
+	String paymentStatus;
+	
+	DateTime requestSendDate;
+	DateTime requestReceiveDate;
+	DateTime paymentDate;
+	
+	BigDecimalT amount;	
+	
+	boolean transactionDuplicated;
+}
+
+
+/*************************
+* PaymentMethodReference *
+**************************/
+
+class PaymentMethodReference {
+	String name;
+	String paymentReferenceId;
+	boolean paymentMethodReferenceActive;
+	boolean defaultReference;
+}
+	
+	relation PaymentMethodReferenceDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentMethodReferencePaymentMethod {
+		PaymentMethod playsRole paymentMethod {
+			multiplicity 1..1;
+		}
+		
+		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentMethodReferenceFinantialInstitution {
+		FinantialInstitution playsRole finantialInstitution {
+			multiplicity 1..1;
+		}	
+		
+		PaymentMethodReference playsRole paymentMethodReferences {
+			multiplicity *;
+		}
+	}
+
 /*
  * PaymentPenalty - refactored from fenixedu-academic-treasury-base
  */
 
 class paymentpenalty.PaymentPenaltyTaxSettings {
 	Boolean active;
-	LocalizedString emolumentDescription;
+	LocalizedStringT emolumentDescription;
 	Boolean createPaymentCode;
 	Boolean applyPenaltyOnDebitsWithoutInterest;
 }

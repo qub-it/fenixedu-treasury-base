@@ -1,29 +1,54 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
- * software development project between Quorum Born IT and Serviços Partilhados da
- * Universidade de Lisboa:
- *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
- *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
+ * Copyright (c) 2015, Quorum Born IT <http://www.qub-it.com/>
+ * All rights reserved.
  *
- * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
+ * Redistribution and use in source and binary forms, without
+ * modification, are permitted provided that the following
+ * conditions are met:
  *
- * 
- * This file is part of FenixEdu Treasury.
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
  *
- * FenixEdu Treasury is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
  *
- * FenixEdu Treasury is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with FenixEdu Treasury.  If not, see <http://www.gnu.org/licenses/>.
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
+ *
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
+ *
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
+ *
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL “Quorum Born IT�? BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.fenixedu.treasury.domain;
 
@@ -41,11 +66,9 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.dto.AdhocCustomerBean;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
-import org.fenixedu.treasury.util.LocalizedStringUtil;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -60,13 +83,9 @@ public abstract class Customer extends Customer_Base {
     public static final String DEFAULT_FISCAL_NUMBER = "999999990";
     public static final int MAX_CODE_LENGHT = 20;
 
-    public static final Comparator<Customer> COMPARE_BY_NAME_IGNORE_CASE = new Comparator<Customer>() {
-
-        @Override
-        public int compare(final Customer o1, final Customer o2) {
-            int c = o1.getName().compareToIgnoreCase(o2.getName());
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
+    public static final Comparator<Customer> COMPARE_BY_NAME_IGNORE_CASE = (o1, o2) -> {
+        int c = o1.getName().compareToIgnoreCase(o2.getName());
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
 
     protected Customer() {
@@ -99,11 +118,11 @@ public abstract class Customer extends Customer_Base {
     public abstract String getPhoneNumber();
 
     public abstract BigDecimal getGlobalBalance();
-    
+
     public abstract String getUsername();
 
     public abstract Set<Customer> getAllCustomers();
-    
+
     public boolean isDeletable() {
         return false;
     }
@@ -148,34 +167,35 @@ public abstract class Customer extends Customer_Base {
         if (this.getCode().length() > Customer.MAX_CODE_LENGHT) {
             throw new TreasuryDomainException("error.Customer.code.maxlenght");
         }
-        
-        if(Strings.isNullOrEmpty(getFiscalNumber().trim())) {
+
+        if (Strings.isNullOrEmpty(getFiscalNumber().trim())) {
             throw new TreasuryDomainException("error.Customer.fiscalNumber.required");
         }
 
-        if(Strings.isNullOrEmpty(super.getAddressCountryCode())) {
+        if (Strings.isNullOrEmpty(super.getAddressCountryCode())) {
             throw new TreasuryDomainException("error.Customer.addressCountryCode.required");
         }
 
-        if(getCustomerType() == null) {
+        if (getCustomerType() == null) {
             throw new TreasuryDomainException("error.Customer.customerType.required");
         }
-        
+
         if (!TreasuryConstants.isDefaultCountry(getFiscalCountry()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
             final Set<Customer> customers = findByFiscalInformation(getFiscalCountry(), getFiscalNumber())
                     .filter(c -> c.isActive()).collect(Collectors.<Customer> toSet());
-            
+
             if (customers.size() > 1) {
                 final Customer self = this;
-                final Set<String> otherCustomers = customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
+                final Set<String> otherCustomers =
+                        customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
 
-                throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists", 
+                throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists",
                         Joiner.on(", ").join(otherCustomers));
             }
         }
 
     }
-    
+
     public String getShortName() {
         return TreasuryConstants.firstAndLastWords(getName());
     }
@@ -203,8 +223,7 @@ public abstract class Customer extends Customer_Base {
 
         return findAll().filter(c -> !Strings.isNullOrEmpty(c.getFiscalCountry())
                 && lowerCase(c.getFiscalCountry()).equals(lowerCase(fiscalCountryCode))
-                && !Strings.isNullOrEmpty(c.getFiscalNumber()) 
-                && c.getFiscalNumber().equals(fiscalNumber));
+                && !Strings.isNullOrEmpty(c.getFiscalNumber()) && c.getFiscalNumber().equals(fiscalNumber));
     }
 
     public boolean matchesMultiFilter(String searchText) {
@@ -240,7 +259,7 @@ public abstract class Customer extends Customer_Base {
         return getDebtAccountsSet().stream().filter(x -> x.getFinantialInstitution().equals(institution)).findFirst()
                 .orElse(null);
     }
-    
+
     @Atomic
     public void registerFinantialInstitutions(List<FinantialInstitution> newFinantialInstitutions) {
 
@@ -270,20 +289,20 @@ public abstract class Customer extends Customer_Base {
     public boolean isFiscalValidated() {
         return FiscalCodeValidation.isValidationAppliedToFiscalCountry(getAddressCountryCode());
     }
-    
+
     public boolean isAbleToChangeFiscalNumber() {
-        if(!Strings.isNullOrEmpty(getErpCustomerId())) {
+        if (!Strings.isNullOrEmpty(getErpCustomerId())) {
             return false;
         }
-        
-        if(isWithFinantialDocumentsIntegratedInERP()) {
+
+        if (isWithFinantialDocumentsIntegratedInERP()) {
             return false;
         }
-        
-        if(isFiscalValidated() && isFiscalCodeValid()) {
+
+        if (isFiscalValidated() && isFiscalCodeValid()) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -293,28 +312,29 @@ public abstract class Customer extends Customer_Base {
         for (DebtAccount debtAccount : getDebtAccountsSet()) {
             final FinantialInstitution institution = debtAccount.getFinantialInstitution();
 
-            if(institution.getErpIntegrationConfiguration() == null) {
+            if (institution.getErpIntegrationConfiguration() == null) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            if(Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
+
+            if (Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            final IERPExternalService erpService = institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
-            
-            if(erpService == null) {
+
+            final IERPExternalService erpService =
+                    institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
+
+            if (erpService == null) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            if(erpService.getERPExporter().isCustomerWithFinantialDocumentsIntegratedInERP(this)) {
+
+            if (erpService.getERPExporter().isCustomerWithFinantialDocumentsIntegratedInERP(this)) {
                 return true;
             }
         }
-        
+
         return !checkedInAllFinantialInstitutions;
     }
 
@@ -324,88 +344,90 @@ public abstract class Customer extends Customer_Base {
         for (DebtAccount debtAccount : getDebtAccountsSet()) {
             final FinantialInstitution institution = debtAccount.getFinantialInstitution();
 
-            if(institution.getErpIntegrationConfiguration() == null) {
+            if (institution.getErpIntegrationConfiguration() == null) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            if(Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
+
+            if (Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            final IERPExternalService erpService = institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
-            
-            if(erpService == null) {
+
+            final IERPExternalService erpService =
+                    institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
+
+            if (erpService == null) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            if(erpService.getERPExporter().isCustomerMaybeIntegratedWithSuccess(this)) {
+
+            if (erpService.getERPExporter().isCustomerMaybeIntegratedWithSuccess(this)) {
                 return true;
             }
         }
-        
+
         return !checkedInAllFinantialInstitutions;
     }
-    
+
     public boolean isCustomerWithFinantialDocumentsIntegratedInPreviousERP() {
         boolean checkedInAllFinantialInstitutions = true;
-        
+
         for (DebtAccount debtAccount : getDebtAccountsSet()) {
             final FinantialInstitution institution = debtAccount.getFinantialInstitution();
 
-            if(institution.getErpIntegrationConfiguration() == null) {
+            if (institution.getErpIntegrationConfiguration() == null) {
                 checkedInAllFinantialInstitutions = false;
                 continue;
             }
-            
-            if(Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
+
+            if (Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            final IERPExternalService erpService = institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
-            
-            if(erpService == null) {
+
+            final IERPExternalService erpService =
+                    institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
+
+            if (erpService == null) {
                 checkedInAllFinantialInstitutions = false;
                 break;
             }
-            
-            if(erpService.getERPExporter().isCustomerWithFinantialDocumentsIntegratedInPreviousERP(this)) {
+
+            if (erpService.getERPExporter().isCustomerWithFinantialDocumentsIntegratedInPreviousERP(this)) {
                 throw new TreasuryDomainException("error.Customer.changeFiscalNumber.documents.integrated.in.previous.erp");
             }
         }
-        
+
         return !checkedInAllFinantialInstitutions;
     }
-    
+
     public String getUiCompleteAddress() {
         final List<String> addressCompoundList = Lists.newArrayList();
-        
-        if(!Strings.isNullOrEmpty(getAddress())) {
+
+        if (!Strings.isNullOrEmpty(getAddress())) {
             addressCompoundList.add(getAddress());
         }
-        
-        if(!Strings.isNullOrEmpty(getZipCode())) {
+
+        if (!Strings.isNullOrEmpty(getZipCode())) {
             addressCompoundList.add(getZipCode());
         }
-        
-        if(!Strings.isNullOrEmpty(getDistrictSubdivision())) {
+
+        if (!Strings.isNullOrEmpty(getDistrictSubdivision())) {
             addressCompoundList.add(getDistrictSubdivision());
         }
-        
-        if(!Strings.isNullOrEmpty(getRegion())) {
+
+        if (!Strings.isNullOrEmpty(getRegion())) {
             addressCompoundList.add(getRegion());
         }
-        
-        if(!Strings.isNullOrEmpty(getAddressCountryCode())) {
+
+        if (!Strings.isNullOrEmpty(getAddressCountryCode())) {
             addressCompoundList.add(getAddressCountryCode());
         }
-        
+
         return String.join(", ", addressCompoundList);
     }
-    
+
     public abstract Set<? extends TreasuryEvent> getTreasuryEventsSet();
 
     public abstract boolean isUiOtherRelatedCustomerActive();
@@ -418,13 +440,13 @@ public abstract class Customer extends Customer_Base {
 
         return (fiscalCountry + " " + fiscalNumber).trim();
     }
-    
+
     public abstract LocalizedString getIdentificationTypeDesignation();
-    
+
     public abstract String getIdentificationTypeCode();
-    
+
     public abstract String getIban();
-    
+
     public boolean isIbanDefined() {
         return !isNullOrEmpty(getIban());
     }
@@ -435,32 +457,30 @@ public abstract class Customer extends Customer_Base {
      * ****************************
      */
     // @formatter:on
-    
-    
+
     public String getSaftBillingAddressCountry() {
         return getAddressCountryCode();
     }
-    
+
     public String getSaftBillingAddressStreetName() {
         return getAddress();
     }
-    
+
     public String getSaftBillingAddressDetail() {
         return getAddress();
     }
-    
+
     public String getSaftBillingAddressCity() {
         return getDistrictSubdivision();
     }
-    
+
     public String getSaftBillingAddressPostalCode() {
         return getZipCode();
     }
-    
+
     public String getSaftBillingAddressRegion() {
         return getRegion();
     }
-    
 
     // @formatter:off
     /* **************************

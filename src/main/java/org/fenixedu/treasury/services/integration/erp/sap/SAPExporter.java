@@ -1,29 +1,54 @@
 /**
- * This file was created by Quorum Born IT <http://www.qub-it.com/> and its 
- * copyright terms are bind to the legal agreement regulating the FenixEdu@ULisboa 
- * software development project between Quorum Born IT and Serviços Partilhados da
- * Universidade de Lisboa:
- *  - Copyright © 2015 Quorum Born IT (until any Go-Live phase)
- *  - Copyright © 2015 Universidade de Lisboa (after any Go-Live phase)
+ * Copyright (c) 2015, Quorum Born IT <http://www.qub-it.com/>
+ * All rights reserved.
  *
- * Contributors: ricardo.pedro@qub-it.com, anil.mamede@qub-it.com
- * 
+ * Redistribution and use in source and binary forms, without
+ * modification, are permitted provided that the following
+ * conditions are met:
  *
- * 
- * This file is part of FenixEdu Treasury.
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
  *
- * FenixEdu Treasury is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
  *
- * FenixEdu Treasury is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with FenixEdu Treasury.  If not, see <http://www.gnu.org/licenses/>.
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
+ *
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
+ *
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
+ *
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL “Quorum Born IT�? BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.fenixedu.treasury.services.integration.erp.sap;
 
@@ -39,15 +64,16 @@ import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -57,7 +83,6 @@ import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -78,7 +103,6 @@ import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.ReimbursementEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
@@ -162,7 +186,7 @@ public class SAPExporter implements IERPExporter {
 
         // Build SAFT-AuditFile
         AuditFile auditFile = new AuditFile();
-        // ThreadInformation information = 
+        // ThreadInformation information =
         // SaftThreadRegister.retrieveCurrentThreadInformation();
 
         // Build SAFT-HEADER (Chapter 1 in AuditFile)
@@ -314,7 +338,7 @@ public class SAPExporter implements IERPExporter {
         paymentsDocuments.setNumberOfEntries(BigInteger.ZERO);
         paymentsDocuments.setTotalCredit(BigDecimal.ZERO);
         paymentsDocuments.setTotalDebit(BigDecimal.ZERO);
-        
+
         if (!generateAllCustomers && !generateAllProducts) {
             for (FinantialDocument document : allDocuments) {
                 checkForUnsetDocumentSeriesNumberInDocumentsToExport(Lists.newArrayList(document));
@@ -455,12 +479,14 @@ public class SAPExporter implements IERPExporter {
             } else {
                 status.setPaymentStatus("N");
             }
-            
-            DateTime versioningUpdateDate = TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(document);
+
+            DateTime versioningUpdateDate =
+                    TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(document);
             if (versioningUpdateDate != null) {
                 status.setPaymentStatusDate(convertToXMLDateTime(dataTypeFactory, versioningUpdateDate));
                 // Utilizador responsável pelo estado atual do docu-mento.
-                status.setSourceID(TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document));
+                status.setSourceID(
+                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document));
             } else {
                 status.setPaymentStatusDate(payment.getSystemEntryDate());
                 // Utilizador responsável pelo estado atual do docu-mento.
@@ -541,15 +567,14 @@ public class SAPExporter implements IERPExporter {
 
             //Lines
             BigInteger i = BigInteger.ONE;
-            
-            final List<SettlementEntry> settlementEntriesList = document.getSettlemetEntriesSet().stream()
-                    .sorted(SettlementEntry.COMPARATOR_BY_ENTRY_ORDER)
-                    .collect(Collectors.toList());
 
-            if(settlementEntriesList.size() != document.getSettlemetEntriesSet().size()) {
+            final List<SettlementEntry> settlementEntriesList = document.getSettlemetEntriesSet().stream()
+                    .sorted(SettlementEntry.COMPARATOR_BY_ENTRY_ORDER).collect(Collectors.toList());
+
+            if (settlementEntriesList.size() != document.getSettlemetEntriesSet().size()) {
                 throw new RuntimeException("error");
             }
-            
+
             for (SettlementEntry settlementEntry : settlementEntriesList) {
                 SourceDocuments.Payments.Payment.Line line = new SourceDocuments.Payments.Payment.Line();
                 line.setLineNumber(i);
@@ -671,16 +696,16 @@ public class SAPExporter implements IERPExporter {
             workDocument.setAdvancedPayment(advancedPayment);
         }
 
-        if(document.getPayorDebtAccount() == document.getDebtAccount()) {
+        if (document.getPayorDebtAccount() == document.getDebtAccount()) {
             throw new TreasuryDomainException("error.SAPExporter.payor.same.as.debt.account");
         }
-        
+
         //check the PayorDebtAccount
         if (document.getPayorDebtAccount() != null) {
-            if(!document.getPayorDebtAccount().getCustomer().isAdhocCustomer()) {
+            if (!document.getPayorDebtAccount().getCustomer().isAdhocCustomer()) {
                 throw new TreasuryDomainException("error.SAPExporter.payor.debt.account.not.adhoc.customer");
             }
-            
+
             ERPCustomerFieldsBean payorCustomerBean = null;
 
             if (document.isDebitNote()) {
@@ -753,11 +778,13 @@ public class SAPExporter implements IERPExporter {
                 status.setWorkStatus("N");
             }
 
-            final DateTime versioningUpdateDate = TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(document);
+            final DateTime versioningUpdateDate =
+                    TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(document);
             if (versioningUpdateDate != null) {
                 status.setWorkStatusDate(convertToXMLDateTime(dataTypeFactory, versioningUpdateDate));
                 // Utilizador responsável pelo estado atual do docu-mento.
-                status.setSourceID(TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document));
+                status.setSourceID(
+                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document));
             } else {
                 status.setWorkStatusDate(workDocument.getSystemEntryDate());
                 // Utilizador responsável pelo estado atual do docu-mento.
@@ -817,8 +844,7 @@ public class SAPExporter implements IERPExporter {
 
             // SourceID
             String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
-            workDocument
-                    .setSourceID(!Strings.isNullOrEmpty(creator) ? creator : "");
+            workDocument.setSourceID(!Strings.isNullOrEmpty(creator) ? creator : "");
 
         } catch (DatatypeConfigurationException e) {
 
@@ -849,7 +875,7 @@ public class SAPExporter implements IERPExporter {
     private org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.Line convertToSAFTWorkDocumentLine(
             InvoiceEntry entry, Map<String, org.fenixedu.treasury.generated.sources.saft.sap.Product> baseProducts) {
         final FinantialInstitution institution = entry.getDebtAccount().getFinantialInstitution();
-        
+
         org.fenixedu.treasury.generated.sources.saft.sap.Product currentProduct = null;
 
         Product product = entry.getProduct();
@@ -909,28 +935,28 @@ public class SAPExporter implements IERPExporter {
 
                 OrderReferences reference = new OrderReferences();
 
-                if(!creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
+                if (!creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
                     reference.setOriginatingON(creditEntry.getDebitEntry().getFinantialDocument().getUiDocumentNumber());
                 } else {
                     reference.setOriginatingON("");
                 }
-                
+
                 reference.setOrderDate(documentDateCalendar);
 
                 if (((DebitNote) creditEntry.getDebitEntry().getFinantialDocument()).isExportedInLegacyERP()) {
                     final DebitNote debitNote = (DebitNote) creditEntry.getDebitEntry().getFinantialDocument();
                     if (!Strings.isNullOrEmpty(debitNote.getLegacyERPCertificateDocumentReference())) {
-                        if(!creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
+                        if (!creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
                             reference.setOriginatingON(debitNote.getLegacyERPCertificateDocumentReference());
                         }
                     } else {
-                        if(!creditEntry.getFinantialDocument().isExportedInLegacyERP() && 
-                                !institution.getErpIntegrationConfiguration().isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled()) {
-                            throw new TreasuryDomainException("error.ERPExporter.credit.note.of.legacy.debit.note.without.legacyERPCertificateDocumentReference", 
-                                    debitNote.getUiDocumentNumber(),
-                                    creditEntry.getFinantialDocument().getUiDocumentNumber());
+                        if (!creditEntry.getFinantialDocument().isExportedInLegacyERP() && !institution
+                                .getErpIntegrationConfiguration().isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled()) {
+                            throw new TreasuryDomainException(
+                                    "error.ERPExporter.credit.note.of.legacy.debit.note.without.legacyERPCertificateDocumentReference",
+                                    debitNote.getUiDocumentNumber(), creditEntry.getFinantialDocument().getUiDocumentNumber());
                         }
-                        
+
                         reference.setOriginatingON("");
                     }
                 }
@@ -973,8 +999,8 @@ public class SAPExporter implements IERPExporter {
          * a zero. Deve ser referido o preceito legal aplic?vel. . . . . . . . .
          * . Texto 60
          */
-        if (TreasuryConstants.isEqual(line.getTax().getTaxPercentage(), BigDecimal.ZERO)
-                || (line.getTax().getTaxAmount() != null && TreasuryConstants.isEqual(line.getTax().getTaxAmount(), BigDecimal.ZERO))) {
+        if (TreasuryConstants.isEqual(line.getTax().getTaxPercentage(), BigDecimal.ZERO) || (line.getTax().getTaxAmount() != null
+                && TreasuryConstants.isEqual(line.getTax().getTaxAmount(), BigDecimal.ZERO))) {
             if (product.getVatExemptionReason() != null) {
                 line.setTaxExemptionReason(
                         product.getVatExemptionReason().getCode() + "-" + product.getVatExemptionReason().getName().getContent());
@@ -990,8 +1016,9 @@ public class SAPExporter implements IERPExporter {
         line.setUnitPrice(entry.getAmount().setScale(2, RoundingMode.HALF_EVEN));
 
         if (entry.getFinantialDocument().isExportedInLegacyERP()) {
-            line.setUnitPrice(
-                    TreasuryConstants.divide(SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE), entry.getQuantity()).setScale(2, RoundingMode.HALF_EVEN));
+            line.setUnitPrice(TreasuryConstants
+                    .divide(SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE), entry.getQuantity())
+                    .setScale(2, RoundingMode.HALF_EVEN));
         }
 
         return line;
@@ -1314,7 +1341,7 @@ public class SAPExporter implements IERPExporter {
     }
 
     private static String translateCountryCodeForExceptions(final String countryCode) {
-        if(Strings.isNullOrEmpty(countryCode)) {
+        if (Strings.isNullOrEmpty(countryCode)) {
             return countryCode;
         }
 
@@ -1322,24 +1349,22 @@ public class SAPExporter implements IERPExporter {
 //        if("GR".equals(countryCode.toUpperCase())) {
 //            return "EL";
 //        }
-        
-        return countryCode;
+
+        return countryCode.toUpperCase();
     }
 
     public static AddressStructure convertAddressToSAFTAddress(final ERPCustomerFieldsBean customer) {
         final AddressStructure address = new AddressStructure();
 
-        address.setCountry(
-                !Strings.isNullOrEmpty(customer.getCustomerCountry()) ? translateCountryCodeForExceptions(customer.getCustomerCountry()) : MORADA_DESCONHECIDO);
+        address.setCountry(!Strings.isNullOrEmpty(customer.getCustomerCountry()) ? translateCountryCodeForExceptions(
+                customer.getCustomerCountry()) : MORADA_DESCONHECIDO);
 
         address.setAddressDetail(!Strings.isNullOrEmpty(customer.getCustomerAddressDetail()) ? customer
                 .getCustomerAddressDetail() : MORADA_DESCONHECIDO);
 
-        address.setCity(
-                !Strings.isNullOrEmpty(customer.getCustomerCity()) ? customer.getCustomerCity() : MORADA_DESCONHECIDO);
+        address.setCity(!Strings.isNullOrEmpty(customer.getCustomerCity()) ? customer.getCustomerCity() : MORADA_DESCONHECIDO);
 
-        address.setPostalCode(
-                !Strings.isNullOrEmpty(customer.getCustomerZipCode()) ? customer.getCustomerZipCode() : "");
+        address.setPostalCode(!Strings.isNullOrEmpty(customer.getCustomerZipCode()) ? customer.getCustomerZipCode() : "");
 
         address.setRegion(
                 !Strings.isNullOrEmpty(customer.getCustomerRegion()) ? customer.getCustomerRegion() : MORADA_DESCONHECIDO);
@@ -1427,14 +1452,14 @@ public class SAPExporter implements IERPExporter {
             logger.info("Collecting " + documents.size() + " documents to export to institution " + institution.getCode());
             UnaryOperator<AuditFile> auditFilePreProcess = getAuditFilePreProcessOperator(institution);
 
-            if(documents.isEmpty()) {
+            if (documents.isEmpty()) {
                 throw new TreasuryDomainException("error.ERPExporter.no.document.to.export");
             }
-            
-            String xml = saftExporter.generateERPFile(institution, fromDate, toDate, documents, true, true, auditFilePreProcess);
-            OperationFile operationFile = writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            String xml = saftExporter.generateERPFile(institution, fromDate, toDate, documents, true, true, auditFilePreProcess);
+            writeContentToExportOperation(xml, operation);
+
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
 
             operation.getFinantialDocumentsSet().addAll(documents);
             operation.setSuccess(success);
@@ -1478,8 +1503,8 @@ public class SAPExporter implements IERPExporter {
         }
     }
 
-    private boolean sendDocumentsInformationToIntegration(final FinantialInstitution institution,
-            final OperationFile operationFile, final IntegrationOperationLogBean logBean) throws MalformedURLException {
+    private boolean sendDocumentsInformationToIntegration(final FinantialInstitution institution, byte[] contents,
+            final IntegrationOperationLogBean logBean) throws MalformedURLException {
         boolean success = true;
         ERPConfiguration erpIntegrationConfiguration = institution.getErpIntegrationConfiguration();
         if (erpIntegrationConfiguration == null) {
@@ -1491,14 +1516,16 @@ public class SAPExporter implements IERPExporter {
             return false;
         }
 
-        final IERPExternalService service = erpIntegrationConfiguration.getERPExternalServiceImplementation();
+        final IERPExternalService service = TreasuryPlataformDependentServicesFactory.implementation()
+                .getERPExternalServiceImplementation(erpIntegrationConfiguration);;
         logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.sending.inforation"));
 
         DocumentsInformationInput input = new DocumentsInformationInput();
-        if (operationFile.getSize() <= erpIntegrationConfiguration.getMaxSizeBytesToExportOnline()) {
-            input.setData(operationFile.getContent());
+        if (contents.length <= erpIntegrationConfiguration.getMaxSizeBytesToExportOnline()) {
+            input.setData(contents);
             DocumentsInformationOutput sendInfoOnlineResult = service.sendInfoOnline(institution, input);
-
+            TreasuryPlataformDependentServicesFactory.implementation()
+                    .getERPExternalServiceImplementation(erpIntegrationConfiguration);
             logBean.appendIntegrationLog(
                     treasuryBundle("info.ERPExporter.sucess.sending.inforation.online", sendInfoOnlineResult.getRequestId()));
             logBean.setErpOperationId(sendInfoOnlineResult.getRequestId());
@@ -1509,19 +1536,15 @@ public class SAPExporter implements IERPExporter {
                         FinantialDocument.findByUiDocumentNumber(institution, status.getDocumentNumber());
 
                 boolean integratedWithSuccess = status.isIntegratedWithSuccess();
-//                if(document.isCreditNote()) {
-//                    final CreditNote creditNote = (CreditNote) document;
-//                    
-//                    creditNote.getRelatedSettlementEntries()
-//                }
 
-                if (integratedWithSuccess) {
+                if (integratedWithSuccess && isToIgnoreWsDocument(institution, status)) {
 
                     if (document != null) {
                         final String message =
                                 treasuryBundle("info.ERPExporter.sucess.integrating.document", document.getUiDocumentNumber());
                         logBean.appendIntegrationLog(message);
-                        document.clearDocumentToExportAndSaveERPCertificationData(message, new LocalDate(), status.getSapDocumentNumber());
+                        document.clearDocumentToExportAndSaveERPCertificationData(message, new LocalDate(),
+                                status.getSapDocumentNumber());
                     } else {
                         success = false;
                         logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.error.integrating.document",
@@ -1542,8 +1565,8 @@ public class SAPExporter implements IERPExporter {
             for (final String m : sendInfoOnlineResult.getOtherMessages()) {
                 logBean.appendIntegrationLog(m);
             }
-            
-            for(final String m : sendInfoOnlineResult.getOtherErrorMessages()) {
+
+            for (final String m : sendInfoOnlineResult.getOtherErrorMessages()) {
                 logBean.appendErrorLog(m);
             }
 
@@ -1556,6 +1579,24 @@ public class SAPExporter implements IERPExporter {
         }
 
         return success;
+    }
+
+    // TODO: SINGAP specific
+    private boolean isToIgnoreWsDocument(final FinantialInstitution finantialInstitution, final DocumentStatusWS status) {
+        String documentNumber = status.getDocumentNumber();
+        if (documentNumber != null) {
+            Optional<Product> product = Product.findUniqueByCode(documentNumber);
+            if (product.isPresent()) {
+                return true;
+            }
+
+            Stream<? extends Customer> customers = Customer.findByCode(documentNumber);
+            if (customers.findAny().isPresent()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void writeError(final ERPExportOperation operation, final IntegrationOperationLogBean logBean, final Throwable t) {
@@ -1608,10 +1649,10 @@ public class SAPExporter implements IERPExporter {
     private String exportFinantialDocumentToXML(final FinantialInstitution finantialInstitution,
             List<FinantialDocument> documents, final UnaryOperator<AuditFile> preProcessFunctionBeforeSerialize) {
 
-        if(documents.isEmpty()) {
+        if (documents.isEmpty()) {
             throw new TreasuryDomainException("error.ERPExporter.no.document.to.export");
         }
-        
+
         checkForUnsetDocumentSeriesNumberInDocumentsToExport(documents);
 
         documents = processCreditNoteSettlementsInclusion(documents);
@@ -1654,16 +1695,15 @@ public class SAPExporter implements IERPExporter {
                 }
             }
         }
-        
-        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-            // If there is restriction on mixing payments exported in legacy ERP, 
+
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+            // If there is restriction on mixing payments exported in legacy ERP,
             // then filter documents exported in legacy ERP
-            result = result.stream()
-                    .filter(d -> !d.isExportedInLegacyERP())
+            result = result.stream().filter(d -> !d.isExportedInLegacyERP())
                     .filter(d -> !d.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE))
                     .collect(Collectors.<FinantialDocument> toList());
         }
-        
+
         return result;
     }
 
@@ -1743,9 +1783,9 @@ public class SAPExporter implements IERPExporter {
             String xml = exportFinantialDocumentToXML(institution, documents, preProcessFunctionBeforeSerialize);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
-            OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
             operation.getFinantialDocumentsSet().addAll(documents);
             operation.setSuccess(success);
 
@@ -1773,9 +1813,9 @@ public class SAPExporter implements IERPExporter {
             String xml = exportCustomersToXML(institution, preProcessFunctionBeforeSerialize);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
-            final OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.finished.customers.integration"));
 
             operation.setSuccess(success);
@@ -1802,9 +1842,9 @@ public class SAPExporter implements IERPExporter {
             String xml = exportsProductsToXML(institution, preProcessFunctionBeforeSerialize);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
-            final OperationFile operationFile = writeContentToExportOperation(xml, operation);
+            writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(institution, operationFile, logBean);
+            boolean success = sendDocumentsInformationToIntegration(institution, xml.getBytes(SAFT_PT_ENCODING), logBean);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.finished.products.integration"));
 
             operation.setSuccess(success);
@@ -1946,98 +1986,100 @@ public class SAPExporter implements IERPExporter {
     public String saftEncoding() {
         return SAFT_PT_ENCODING;
     }
-    
+
     private static final String SAP_CUSTOMER_ID_IN_LOG_PAT = "(?si).+clientes: \\(SAP n.? \\d+\\): \\[S\\].+";
-    
+
+    @Override
     public boolean isCustomerMaybeIntegratedWithSuccess(final Customer customer) {
         for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
-            
+
             for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
                 for (final ERPExportOperation exportOperation : finantialDocument.getErpExportOperationsSet()) {
-                    if(exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
+                    if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
                         return true;
                     }
                 }
             }
-            
+
             for (final Invoice invoice : debtAccount.getInvoiceSet()) {
                 for (final ERPExportOperation exportOperation : invoice.getErpExportOperationsSet()) {
-                    if(exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
+                    if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
                         return true;
                     }
                 }
             }
         }
-        
+
         return false;
     }
 
     @Override
     public boolean isCustomerWithFinantialDocumentsIntegratedInPreviousERP(final Customer customer) {
         for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
-            
-            if(debtAccount.getFinantialInstitution().getErpIntegrationConfiguration() != null && 
-                    debtAccount.getFinantialInstitution().getErpIntegrationConfiguration().isAllowFiscalFixWithLegacyDocsExportedLegacyERP()) {
+
+            if (debtAccount.getFinantialInstitution().getErpIntegrationConfiguration() != null
+                    && debtAccount.getFinantialInstitution().getErpIntegrationConfiguration()
+                            .isAllowFiscalFixWithLegacyDocsExportedLegacyERP()) {
                 continue;
             }
-            
+
             for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
-                if(finantialDocument.isExportedInLegacyERP()) {
+                if (finantialDocument.isExportedInLegacyERP()) {
                     return true;
                 }
-                
+
             }
-            
+
             for (Invoice invoice : debtAccount.getInvoiceSet()) {
 
-                if(invoice.isExportedInLegacyERP()) {
+                if (invoice.isExportedInLegacyERP()) {
                     return true;
                 }
             }
         }
-        
+
         return false;
     }
-    
+
     @Override
     public boolean isCustomerWithFinantialDocumentsIntegratedInERP(final Customer customer) {
         for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
-            
+
             for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
-                
+
                 for (final ERPExportOperation erpExportOperation : finantialDocument.getErpExportOperationsSet()) {
-                    if(!erpExportOperation.getSuccess()) {
+                    if (!erpExportOperation.getSuccess()) {
                         continue;
                     }
-                    
-                    if(!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
-                       return true; 
+
+                    if (!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
+                        return true;
                     }
                 }
-                
-                if(!Strings.isNullOrEmpty(finantialDocument.getErpCertificateDocumentReference())) {
+
+                if (!Strings.isNullOrEmpty(finantialDocument.getErpCertificateDocumentReference())) {
                     return true;
                 }
             }
-            
+
             for (Invoice invoice : debtAccount.getInvoiceSet()) {
-                
+
                 for (final ERPExportOperation erpExportOperation : invoice.getErpExportOperationsSet()) {
-                    if(!erpExportOperation.getSuccess()) {
+                    if (!erpExportOperation.getSuccess()) {
                         continue;
                     }
-                    
-                    if(!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
-                       return true; 
+
+                    if (!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
+                        return true;
                     }
                 }
-                
-                if(!Strings.isNullOrEmpty(invoice.getErpCertificateDocumentReference())) {
+
+                if (!Strings.isNullOrEmpty(invoice.getErpCertificateDocumentReference())) {
                     return true;
                 }
             }
         }
-        
+
         return false;
     }
 }

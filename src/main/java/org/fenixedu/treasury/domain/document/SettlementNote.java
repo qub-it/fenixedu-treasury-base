@@ -6,38 +6,38 @@
  * modification, are permitted provided that the following
  * conditions are met:
  *
- *  (o) Redistributions of source code must retain the above
- *  copyright notice, this list of conditions and the following
- *  disclaimer.
+ * 	(o) Redistributions of source code must retain the above
+ * 	copyright notice, this list of conditions and the following
+ * 	disclaimer.
  *
- *  (o) Redistributions in binary form must reproduce the
- *  above copyright notice, this list of conditions and the
- *  following disclaimer in the documentation and/or other
- *  materials provided with the distribution.
+ * 	(o) Redistributions in binary form must reproduce the
+ * 	above copyright notice, this list of conditions and the
+ * 	following disclaimer in the documentation and/or other
+ * 	materials provided with the distribution.
  *
- *  (o) Neither the name of Quorum Born IT nor the names of
- *  its contributors may be used to endorse or promote products
- *  derived from this software without specific prior written
- *  permission.
+ * 	(o) Neither the name of Quorum Born IT nor the names of
+ * 	its contributors may be used to endorse or promote products
+ * 	derived from this software without specific prior written
+ * 	permission.
  *
- *  (o) Universidade de Lisboa and its respective subsidiary
- *  Serviços Centrais da Universidade de Lisboa (Departamento
- *  de Informática), hereby referred to as the Beneficiary,
- *  is the sole demonstrated end-user and ultimately the only
- *  beneficiary of the redistributed binary form and/or source
- *  code.
+ * 	(o) Universidade de Lisboa and its respective subsidiary
+ * 	Serviços Centrais da Universidade de Lisboa (Departamento
+ * 	de Informática), hereby referred to as the Beneficiary,
+ * 	is the sole demonstrated end-user and ultimately the only
+ * 	beneficiary of the redistributed binary form and/or source
+ * 	code.
  *
- *  (o) The Beneficiary is entrusted with either the binary form,
- *  the source code, or both, and by accepting it, accepts the
- *  terms of this License.
+ * 	(o) The Beneficiary is entrusted with either the binary form,
+ * 	the source code, or both, and by accepting it, accepts the
+ * 	terms of this License.
  *
- *  (o) Redistribution of any binary form and/or source code is
- *  only allowed in the scope of the Universidade de Lisboa
- *  FenixEdu(™)’s implementation projects.
+ * 	(o) Redistribution of any binary form and/or source code is
+ * 	only allowed in the scope of the Universidade de Lisboa
+ * 	FenixEdu(™)’s implementation projects.
  *
- *  (o) This license and conditions of redistribution of source
- *  code/binary can oly be reviewed by the Steering Comittee of
- *  FenixEdu(™) <http://www.fenixedu.org/>.
+ * 	(o) This license and conditions of redistribution of source
+ * 	code/binary can oly be reviewed by the Steering Comittee of
+ * 	FenixEdu(™) <http://www.fenixedu.org/>.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -62,7 +62,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.LongAdder;
@@ -79,10 +78,9 @@ import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
+import org.fenixedu.treasury.dto.SettlementCreditEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.CreditEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.DebitEntryBean;
-import org.fenixedu.treasury.dto.SettlementNoteBean.InterestEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -191,6 +189,10 @@ public class SettlementNote extends SettlementNote_Base {
                 }
             }
         }
+
+        if (getPaymentEntriesSet().size() > 1) {
+            throw new TreasuryDomainException("error.SettlementNote.only.one.payment.method.is.supported");
+        }
     }
 
     public void markAsUsedInBalanceTransfer() {
@@ -216,9 +218,11 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Atomic
-    public void updateSettlementNote(java.lang.String originDocumentNumber, String documentObservations) {
+    public void updateSettlementNote(java.lang.String originDocumentNumber, String documentObservations,
+            String documentTermsAndConditions) {
         setOriginDocumentNumber(originDocumentNumber);
         setDocumentObservations(documentObservations);
+        setDocumentTermsAndConditions(documentTermsAndConditions);
 
         checkRules();
     }
@@ -315,7 +319,6 @@ public class SettlementNote extends SettlementNote_Base {
 
     @Atomic
     public void processSettlementNoteCreation(SettlementNoteBean bean) {
-        processInterestEntries(bean);
         processDebtEntries(bean);
         processCreditEntries(bean);
         if (bean.isReimbursementNote()) {
@@ -384,31 +387,8 @@ public class SettlementNote extends SettlementNote_Base {
         }
     }
 
-    private void processInterestEntries(SettlementNoteBean bean) {
-
-        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
-                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
-        if (bean.getInterestEntries().size() == 0) {
-            return;
-        }
-
-        for (InterestEntryBean interestEntryBean : bean.getInterestEntries()) {
-            DebitNote interestDebitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, new DateTime());
-
-            DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
-                    interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
-
-            if (interestEntryBean.isIncluded()) {
-                interestDebitNote.closeDocument();
-                SettlementEntry.create(interestDebitEntry, this, interestEntryBean.getInterest().getInterestAmount(),
-                        interestDebitEntry.getDescription(), bean.getDate().toDateTimeAtStartOfDay(), false);
-            }
-        }
-    }
-
     private void processCreditEntries(SettlementNoteBean bean) {
-        for (CreditEntryBean creditEntryBean : bean.getCreditEntries()) {
+        for (SettlementCreditEntryBean creditEntryBean : bean.getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 CreditEntry creditEntry = creditEntryBean.getCreditEntry();
 
@@ -437,57 +417,98 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     private void processDebtEntries(SettlementNoteBean bean) {
+        BigDecimal paymentEntriesAmount = bean.getPaymentEntries().stream().map(p -> p.getPaymentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal creditsAmount = bean.getCreditEntries().stream().filter(c -> c.isIncluded()).map(c -> c.getCreditAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal restAmountToUse = paymentEntriesAmount.add(creditsAmount);
+        
         DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
                 .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
 
         List<DebitEntry> untiedDebitEntries = new ArrayList<DebitEntry>();
-        for (DebitEntryBean debitEntryBean : bean.getDebitEntriesByType(DebitEntryBean.class)) {
-            if (debitEntryBean.isIncluded()) {
-                DebitEntry debitEntry = debitEntryBean.getDebitEntry();
-                if (debitEntry.getFinantialDocument() == null) {
-                    untiedDebitEntries.add(debitEntry);
-                } else if (!debitEntry.getFinantialDocument().isClosed()) {
-                    debitEntry.getFinantialDocument().closeDocument();
-                }
-                SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
-                        bean.getDate().toDateTimeAtStartOfDay());
-                
-                InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
+        for (SettlementDebitEntryBean debitEntryBean : bean.getDebitEntriesByType(SettlementDebitEntryBean.class)) {
+            if (!debitEntryBean.isIncluded()) {
+                continue;
             }
+
+            if(!TreasuryConstants.isPositive(restAmountToUse)) {
+                debitEntryBean.setSettledAmount(BigDecimal.ZERO);
+                debitEntryBean.setIncluded(false);
+                continue;
+            }
+            
+            DebitEntry debitEntry = debitEntryBean.getDebitEntry();
+
+            if (debitEntry.getFinantialDocument() == null) {
+                untiedDebitEntries.add(debitEntry);
+            } else if (!debitEntry.getFinantialDocument().isClosed()) {
+                debitEntry.getFinantialDocument().closeDocument();
+            }
+
+            if(TreasuryConstants.isLessThan(restAmountToUse, debitEntryBean.getSettledAmount())) {
+                debitEntryBean.setSettledAmount(restAmountToUse);
+            }
+            
+            restAmountToUse = restAmountToUse.subtract(debitEntryBean.getSettledAmount());
+            
+            SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
+                    bean.getDate().toDateTimeAtStartOfDay());
+
+            InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
         }
-        for (InstallmentPaymenPlanBean installmentPaymenPlanBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
-            if (installmentPaymenPlanBean.isIncluded()) {
-                BigDecimal restToPay = installmentPaymenPlanBean.getSettledAmount();
 
-                for (InstallmentEntry installmentEntry : installmentPaymenPlanBean.getInstallment()
-                        .getSortedOpenInstallmentEntries()) {
-                    if (TreasuryConstants.isZero(restToPay)) {
-                        break;
-                    }
-                    BigDecimal debtAmount = restToPay.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry
-                            .getOpenAmount() : restToPay;
-                    restToPay = restToPay.subtract(debtAmount);
-                    if (!TreasuryConstants.isPositive(debtAmount)) {
-                        continue;
-                    }
-                    if (installmentEntry.getDebitEntry().getFinantialDocument() == null) {
-                        untiedDebitEntries.add(installmentEntry.getDebitEntry());
-                    } else if (!installmentEntry.getDebitEntry().getFinantialDocument().isClosed()) {
-                        installmentEntry.getDebitEntry().getFinantialDocument().closeDocument();
-                    }
-                    SettlementEntry settlementEntry = getSettlementEntryByDebitEntry(installmentEntry.getDebitEntry());
-                    if (settlementEntry == null) {
-                        settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this,
-                                bean.getDate().toDateTimeAtStartOfDay());
-                    } else {
-                        settlementEntry.setAmount(settlementEntry.getAmount().add(debtAmount));
-                    }
-                    InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
-                }
-                installmentPaymenPlanBean.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
+        for (InstallmentPaymenPlanBean installmentPaymenPlanBean : bean.getDebitEntriesByType(InstallmentPaymenPlanBean.class)) {
+            if (!installmentPaymenPlanBean.isIncluded()) {
+                continue;
+            }
+            
+            if(!TreasuryConstants.isPositive(restAmountToUse)) {
+                installmentPaymenPlanBean.setSettledAmount(BigDecimal.ZERO);
+                installmentPaymenPlanBean.setIncluded(false);
+                continue;
+            }
+            
+            if(TreasuryConstants.isLessThan(restAmountToUse, installmentPaymenPlanBean.getSettledAmount())) {
+                installmentPaymenPlanBean.setSettledAmount(restAmountToUse);
             }
 
+            restAmountToUse = restAmountToUse.subtract(installmentPaymenPlanBean.getSettledAmount());
+            
+            BigDecimal restToPay = installmentPaymenPlanBean.getSettledAmount();
+
+            for (InstallmentEntry installmentEntry : installmentPaymenPlanBean.getInstallment()
+                    .getSortedOpenInstallmentEntries()) {
+                if (TreasuryConstants.isZero(restToPay)) {
+                    break;
+                }
+
+                BigDecimal debtAmount =
+                        restToPay.compareTo(installmentEntry.getOpenAmount()) > 0 ? installmentEntry.getOpenAmount() : restToPay;
+                restToPay = restToPay.subtract(debtAmount);
+
+                if (!TreasuryConstants.isPositive(debtAmount)) {
+                    continue;
+                }
+
+                if (installmentEntry.getDebitEntry().getFinantialDocument() == null) {
+                    untiedDebitEntries.add(installmentEntry.getDebitEntry());
+                } else if (!installmentEntry.getDebitEntry().getFinantialDocument().isClosed()) {
+                    installmentEntry.getDebitEntry().getFinantialDocument().closeDocument();
+                }
+
+                SettlementEntry settlementEntry = getSettlementEntryByDebitEntry(installmentEntry.getDebitEntry());
+                if (settlementEntry == null) {
+                    settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this,
+                            bean.getDate().toDateTimeAtStartOfDay());
+                } else {
+                    settlementEntry.setAmount(settlementEntry.getAmount().add(debtAmount));
+                }
+
+                InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
+            }
+            
+            installmentPaymenPlanBean.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
         }
 
         if (untiedDebitEntries.size() != 0) {
@@ -821,13 +842,21 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     public static SettlementNote createSettlementNote(SettlementNoteBean bean) {
         DateTime documentDate = new DateTime();
+        SettlementNoteBean copy = new SettlementNoteBean(bean);
 
-        SettlementNote settlementNote = SettlementNote.create(bean.getDebtAccount(), bean.getDocNumSeries(), documentDate,
-                bean.getDate().toDateTimeAtStartOfDay(), bean.getOriginDocumentNumber(),
-                !Strings.isNullOrEmpty(bean.getFinantialTransactionReference()) ? bean.getFinantialTransactionReferenceYear()
-                        + "/" + bean.getFinantialTransactionReference() : "");
+        SettlementNote settlementNote = SettlementNote.create(copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
+                copy.getDate().toDateTimeAtStartOfDay(), copy.getOriginDocumentNumber(),
+                !Strings.isNullOrEmpty(copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear()
+                        + "/" + copy.getFinantialTransactionReference() : "");
 
-        settlementNote.processSettlementNoteCreation(bean);
+        for (ISettlementInvoiceEntryBean virtualbean : copy.getVirtualDebitEntries()) {
+            if (virtualbean.isIncluded() && virtualbean.getVirtualPaymentEntryHandler() != null) {
+                virtualbean.getVirtualPaymentEntryHandler().execute(copy, virtualbean);
+
+            }
+        }
+
+        settlementNote.processSettlementNoteCreation(copy);
         settlementNote.closeDocument();
 
         return settlementNote;
