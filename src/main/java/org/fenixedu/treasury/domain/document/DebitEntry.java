@@ -502,12 +502,19 @@ public class DebitEntry extends DebitEntry_Base {
                     documentDate, this, BigDecimal.ONE);
         }
 
-        if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null
-                && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
-                        .getERPExternalServiceImplementation() != null
-                && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
-                        .getERPExternalServiceImplementation().isToSendCreditNoteWhenCreated()) {
-            creditNote.closeDocument();
+        try {
+
+            if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null
+                    && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
+                            .getERPExternalServiceImplementation() != null
+                    && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
+                            .getERPExternalServiceImplementation().isToSendCreditNoteWhenCreated()) {
+                creditNote.closeDocument();
+            }
+        } catch (TreasuryDomainException e) {
+            return creditEntry;
+        } finally {
+            return creditEntry;
         }
 
         return creditEntry;
