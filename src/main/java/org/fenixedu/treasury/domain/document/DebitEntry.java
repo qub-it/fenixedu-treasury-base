@@ -511,13 +511,10 @@ public class DebitEntry extends DebitEntry_Base {
                             .getERPExternalServiceImplementation().isToSendCreditNoteWhenCreated()) {
                 creditNote.closeDocument();
             }
+            return creditEntry;
         } catch (TreasuryDomainException e) {
             return creditEntry;
-        } finally {
-            return creditEntry;
-        }
-
-        return creditEntry;
+        } 
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
