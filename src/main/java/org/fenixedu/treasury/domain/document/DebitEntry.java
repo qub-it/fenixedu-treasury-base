@@ -483,6 +483,7 @@ public class DebitEntry extends DebitEntry_Base {
         if (creditNote == null) {
             creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, finantialDocument,
                     finantialDocument.getUiDocumentNumber());
+
         }
 
         if (!Strings.isNullOrEmpty(documentObservations)) {
@@ -492,14 +493,24 @@ public class DebitEntry extends DebitEntry_Base {
         if (!TreasuryConstants.isPositive(amountForCreditWithoutVat)) {
             throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.amountForCredit.not.positive");
         }
-
+        CreditEntry creditEntry = null;
         if (treasuryExemption != null) {
-            return CreditEntry.createFromExemption(treasuryExemption, creditNote, description, amountForCreditWithoutVat,
+            creditEntry = CreditEntry.createFromExemption(treasuryExemption, creditNote, description, amountForCreditWithoutVat,
                     new DateTime(), this);
         } else {
-            return CreditEntry.create(creditNote, description, getProduct(), getVat(), amountForCreditWithoutVat, documentDate,
-                    this, BigDecimal.ONE);
+            creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), amountForCreditWithoutVat,
+                    documentDate, this, BigDecimal.ONE);
         }
+
+        if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null
+                && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
+                        .getERPExternalServiceImplementation() != null
+                && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
+                        .getERPExternalServiceImplementation().isToSendCreditNoteWhenCreated()) {
+            creditNote.closeDocument();
+        }
+
+        return creditEntry;
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {

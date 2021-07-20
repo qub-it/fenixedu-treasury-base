@@ -153,4 +153,9 @@ public class SINGAPExternalService extends BennuWebServiceClient<ServiceSoap> im
         throw new RuntimeException("not implemented");
     }
 
+    @Override
+    public boolean isToSendCreditNoteWhenCreated() {
+        return true;
+    }
+
 }

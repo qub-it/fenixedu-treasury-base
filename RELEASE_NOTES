@@ -1,3 +1,4 @@
+- Improvement: Close credit note when created if is SINGAP ERP Service Implementation
 - Improvement: Change payment plan installment creation algorithm to support interests and penaltyTax distribution
 
 7.2.1 (23-06-2021)
