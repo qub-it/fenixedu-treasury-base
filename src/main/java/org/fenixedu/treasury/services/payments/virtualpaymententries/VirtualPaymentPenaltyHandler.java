@@ -81,12 +81,19 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
         List<ISettlementInvoiceEntryBean> result = new ArrayList<>();
 
         for (SettlementDebitEntryBean debitEntryBean : settlementNoteBean.getDebitEntriesByType(SettlementDebitEntryBean.class)) {
-            if (debitEntryBean.isIncluded()) {
+            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
+                    debitEntryBean.getSettledAmount())) {
+                
                 PaymentPenaltyEntryBean calculatePaymentPenaltyTax = PaymentPenaltyTaxTreasuryEvent
                         .calculatePaymentPenaltyTax(debitEntryBean.getDebitEntry(), settlementNoteBean.getDate());
 
                 if (calculatePaymentPenaltyTax != null) {
-                    calculatePaymentPenaltyTax.setIncluded(true);
+                    
+                    // It will be included by default if TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() == false
+                    // and debit not is not exported in legacy ERP
+                    calculatePaymentPenaltyTax.setIncluded(
+                            !debitEntryBean.getDebitEntry().isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices());
+                    
                     calculatePaymentPenaltyTax.setVirtualPaymentEntryHandler(this);
                     calculatePaymentPenaltyTax
                             .setCalculationDescription(getCalculationDescription(settlementNoteBean, calculatePaymentPenaltyTax));

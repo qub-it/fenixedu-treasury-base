@@ -283,7 +283,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             this.creditEntries.add(creditBean);
         });
 
-        settlementNoteBean.debitEntries.forEach(bean -> {
+        settlementNoteBean.debitEntries.stream().filter(bean -> bean.isForDebitEntry()).forEach(bean -> {
             SettlementDebitEntryBean debitEntry = new SettlementDebitEntryBean((DebitEntry) bean.getInvoiceEntry());
             debitEntry.setIncluded(bean.isIncluded());
             debitEntry.setNotValid(bean.isNotValid());
@@ -291,6 +291,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             this.debitEntries.add(debitEntry);
         });
 
+        settlementNoteBean.debitEntries.stream().filter(bean -> bean.isForInstallment()).forEach(bean -> {
+            InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(((InstallmentPaymenPlanBean) bean).getInstallment());
+            installmentBean.setIncluded(bean.isIncluded());
+            installmentBean.setNotValid(bean.isNotValid());
+            installmentBean.setSettledAmount(bean.getSettledAmount());
+            this.debitEntries.add(installmentBean);
+        });
+        
         settlementNoteBean.paymentEntries.forEach(bean -> {
             this.paymentEntries.add(new PaymentEntryBean(bean.paymentAmount, bean.paymentMethod, bean.paymentMethodId));
         });
