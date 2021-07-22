@@ -166,7 +166,7 @@ public interface ITreasuryPlatformDependentServices {
 
     void signalsEmitForObject(String signalKey, DomainObject obj);
 
-    String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
+    String getForwardPaymentURL(String contextPath, Class<?> screenClass, boolean isSuccess, String forwardPaymentId,
             boolean isException);
 
     void exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,

@@ -359,7 +359,6 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         SibsPaymentRequest paymentRequest =
                 SibsPaymentRequest.create(code, debtAccount, debitEntries, installments, payableAmount);
 
-        paymentRequest.setEntityReferenceCode(getEntityReferenceCode());
         return paymentRequest;
     }
 
