@@ -351,8 +351,6 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         return true;
     }
 
-    @Deprecated
-    // Soon this will not be needed
     public static Set<DebitEntry> checkAndCreatePaymentPenaltyTaxesFromSettlementNote(SettlementNote settlementNote) {
 
         Set<DebitEntry> result = new HashSet<>();

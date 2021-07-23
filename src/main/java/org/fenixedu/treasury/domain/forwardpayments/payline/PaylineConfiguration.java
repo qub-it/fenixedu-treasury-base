@@ -194,10 +194,6 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                     String.valueOf(forwardPayment.getOrderNumber()));
         }
 
-        if (Strings.isNullOrEmpty(justification)) {
-            throw new TreasuryDomainException("label.ManageForwardPayments.postProcessPayment.justification.required");
-        }
-
         if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
                 .contains(paymentStatusBean.getStateType())) {
             // Do nothing
@@ -273,7 +269,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                 TreasuryPlataformDependentServicesFactory.implementation().calculateURLChecksum(returnUrlToChecksum, session);
         forwardPayment.setReturnForwardPaymentUrlChecksum(urlChecksum);
     }
-
+    
     public static String getCancelURL(final ForwardPaymentRequest forwardPayment, final String returnControllerURL) {
         return String.format("%s%s/%s/%s/%s", TreasurySettings.getInstance().getForwardPaymentReturnDefaultURL(),
                 returnControllerURL, forwardPayment.getExternalId(), ACTION_CANCEL_URL,
@@ -294,10 +290,24 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
             throw new TreasuryDomainException("error.ForwardPaymentConfiguration.not.active");
         }
 
-        saveReturnUrlChecksum(forwardPayment, returnControllerURL, session);
+        String returnUrl;
+        String cancelUrl;
+        
+        // The return url can be different between Spring and OMNIS, 
+        // and session is needed and not needed respectively
+        if(session != null) {
+            // Spring
+            saveReturnUrlChecksum(forwardPayment, returnControllerURL, session);
+            returnUrl = PaylineConfiguration.getReturnURL(forwardPayment, returnControllerURL);
+            cancelUrl = PaylineConfiguration.getCancelURL(forwardPayment, returnControllerURL);
+        } else {
+            // OMNIS
+            returnUrl =  forwardPayment.getForwardPaymentSuccessUrl();
+            cancelUrl = forwardPayment.getForwardPaymentInsuccessUrl();
+        }
 
         ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-        PaylineWebServiceResponse response = implementation.paylineDoWebPayment(forwardPayment, returnControllerURL);
+        PaylineWebServiceResponse response = implementation.paylineDoWebPayment(forwardPayment, returnUrl, cancelUrl);
 
         final boolean success = TRANSACTION_APPROVED_CODE.equals(response.getResultCode());
 
@@ -380,7 +390,21 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
             Function<ForwardPaymentRequest, String> successUrlFunction,
             Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
 
-        throw new RuntimeException("Not implemented");
+        Set<DebitEntry> debitEntries =
+                bean.getIncludedInvoiceEntryBeans().stream().map(ISettlementInvoiceEntryBean::getInvoiceEntry)
+                        .filter(i -> i != null).map(DebitEntry.class::cast).collect(Collectors.toSet());
+
+        Set<Installment> installments =
+                bean.getIncludedInvoiceEntryBeans().stream().filter(i -> i instanceof InstallmentPaymenPlanBean && i.isIncluded())
+                        .map(InstallmentPaymenPlanBean.class::cast).map(ib -> ib.getInstallment()).collect(Collectors.toSet());
+
+        ForwardPaymentRequest forwardPaymentRequest =
+                ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries, installments,
+                        bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+
+        doWebPayment(forwardPaymentRequest, null /*forwardPaymentRequest.getForwardPaymentSuccessUrl()*/, null);
+        
+        return forwardPaymentRequest;
     }
 
     @Override
@@ -390,7 +414,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
     @Override
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
-        return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getTransactionId()));
+        return postProcessPayment(forwardPayment, "", null);
     }
 
 }
