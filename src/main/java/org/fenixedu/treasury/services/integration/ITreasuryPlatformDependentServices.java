@@ -152,7 +152,7 @@ public interface ITreasuryPlatformDependentServices {
 
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
 
-    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl, String cancelUrl);
+    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
 
     void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
 
@@ -166,10 +166,9 @@ public interface ITreasuryPlatformDependentServices {
 
     void signalsEmitForObject(String signalKey, DomainObject obj);
 
-    String getForwardPaymentURL(String contextPath, Class<?> screenClass, boolean isSuccess, String forwardPaymentId,
+    String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
             boolean isException);
 
-    void exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
+    public InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
             LocalDate documentDateTo);
-
 }

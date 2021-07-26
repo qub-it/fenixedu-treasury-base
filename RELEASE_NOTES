@@ -1,3 +1,4 @@
+- Improvement: Debts and Credits summary and transactions summary support on platformDependentServices
 - Improvement: Close credit note when created if is SINGAP ERP Service Implementation
 - Improvement: Change payment plan installment creation algorithm to support interests and penaltyTax distribution
 - New Fixture: Meo Wallet service
