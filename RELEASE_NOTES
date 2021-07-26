@@ -7,6 +7,7 @@
 - Improvement: Validate that the debit entries, included in debit note, are preparing and the payor debt account matches
 - New Fixture: Payment method references, to stick the payment method reference code in payment entry as id
 - Refactor: Move Bennu specific implementations to fenixedu-treasury-ui
+- New Fixture: Support Payline in OMNIS
 
 7.2.1 (23-06-2021)
 - Bug Fix: Payment Plan: multiples bug fix on creation payment plan
