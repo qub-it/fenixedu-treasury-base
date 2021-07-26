@@ -152,7 +152,7 @@ public interface ITreasuryPlatformDependentServices {
 
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
 
-    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
+    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl, String cancelUrl);
 
     void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
 
