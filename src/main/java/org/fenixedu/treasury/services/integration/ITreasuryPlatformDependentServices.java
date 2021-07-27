@@ -169,6 +169,10 @@ public interface ITreasuryPlatformDependentServices {
     String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
             boolean isException);
 
+    /* Web Docs */
+    
     public InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
             LocalDate documentDateTo);
+    
+    public String exportDocumentFileExtension();
 }
