@@ -206,7 +206,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
 
         final TreeSet<Installment> sortedInstallments = Sets.newTreeSet(Installment.COMPARE_BY_DUEDATE);
-        sortedInstallments.addAll(paymentRequest.getInstallmentsSet());
+        
+        /*
+         * Include only open installment, because the installment settlement entries are created
+         * for installment entries of open debit entries.
+         */
+        sortedInstallments.addAll(paymentRequest.getInstallmentsSet().stream()
+                .filter(i -> i.getPaymentPlan().getState().isOpen())
+                .collect(Collectors.toSet()));
 
         for (Installment installment : sortedInstallments) {
             InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
