@@ -85,7 +85,7 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
                     debitEntryBean.getSettledAmount())) {
                 
                 PaymentPenaltyEntryBean calculatePaymentPenaltyTax = PaymentPenaltyTaxTreasuryEvent
-                        .calculatePaymentPenaltyTax(debitEntryBean.getDebitEntry(), settlementNoteBean.getDate());
+                        .calculatePaymentPenaltyTax(debitEntryBean.getDebitEntry(), settlementNoteBean.getDate().toLocalDate());
 
                 if (calculatePaymentPenaltyTax != null) {
                     
@@ -123,7 +123,7 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
         PaymentPenaltyEntryBean paymentPenaltyEntryBean = (PaymentPenaltyEntryBean) invoiceEntryBean;
 
         DebitEntry paymentPenaltyEntry = PaymentPenaltyTaxTreasuryEvent
-                .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), settlementNoteBean.getDate());
+                .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), settlementNoteBean.getDate().toLocalDate());
         
         if (settlementNoteBean.getReferencedCustomers().size() == 1 && settlementNoteBean.getReferencedCustomers().iterator()
                 .next() != settlementNoteBean.getDebtAccount().getCustomer()) {

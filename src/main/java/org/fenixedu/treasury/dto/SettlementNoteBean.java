@@ -117,7 +117,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     private DebtAccount debtAccount;
 
-    private LocalDate date;
+    private DateTime date;
 
     private DocumentNumberSeries docNumSeries;
 
@@ -153,6 +153,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     private boolean limitSibsPaymentRequestToCustomDueDate;
     private LocalDate customSibsPaymentRequestDueDate;
     
+    // This date is used only in Angular settlement note creation (treasury-ui)
+    private LocalDate uiAngularPaymentDate;
+    
     public SettlementNoteBean() {
         init();
     }
@@ -169,7 +172,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
         
         init();
-        setDate(paymentDate.toLocalDate());
+        setDate(paymentDate);
         setOriginDocumentNumber(originDocumentNumber);
         setAdvancePayment(true);
         
@@ -321,7 +324,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.debitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
         this.virtualDebitEntries = new ArrayList<ISettlementInvoiceEntryBean>();
         this.paymentEntries = new ArrayList<PaymentEntryBean>();
-        this.date = new LocalDate();
+        this.date = new LocalDate().toDateTimeAtStartOfDay();
         this.settlementNoteStateUrls = new ArrayList<>();
         this.previousStates = new Stack<Integer>();
         setPaymentMethods(PaymentMethod.findAvailableForPaymentInApplication().collect(Collectors.toList()));
@@ -334,6 +337,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         // Fields used by SibsPaymentRequest generation
         this.limitSibsPaymentRequestToCustomDueDate = false;
         this.customSibsPaymentRequestDueDate = null;
+        
+        // This date is used only in settlement note creation in angular ui (treasury-ui)
+        // This should not be used elsewhere
+        this.uiAngularPaymentDate = new LocalDate();
     }
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
@@ -434,7 +441,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             return true;
         }
 
-        return !getDate().isBefore(lastAdvancedCreditSettlementNote.get().getPaymentDate().toLocalDate());
+        return !getDate().toLocalDate().isBefore(lastAdvancedCreditSettlementNote.get().getPaymentDate().toLocalDate());
     }
 
     public Optional<SettlementNote> getLastPaidAdvancedCreditSettlementNote() {
@@ -464,7 +471,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
+                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
                 if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
                     SettlementInterestEntryBean interestEntryBean =
                             new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
@@ -564,7 +571,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate());
+                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
                 if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
                     SettlementInterestEntryBean interestEntryBean =
                             new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
@@ -628,11 +635,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.debtAccount = debtAccount;
     }
 
-    public LocalDate getDate() {
+    public DateTime getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(DateTime date) {
         this.date = date;
     }
 
@@ -883,6 +890,20 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public void setCustomSibsPaymentRequestDueDate(LocalDate customSibsPaymentRequestDueDate) {
         this.customSibsPaymentRequestDueDate = customSibsPaymentRequestDueDate;
+    }
+    
+    @Deprecated
+    // This date is used only in settlement note creation in angular ui (treasury-ui)
+    // This should not be used elsewhere
+    public LocalDate getUiAngularPaymentDate() {
+        return uiAngularPaymentDate;
+    }
+    
+    @Deprecated
+    // This date is used only in settlement note creation in angular ui (treasury-ui)
+    // This should not be used elsewhere
+    public void setUiAngularPaymentDate(LocalDate uiAngularPaymentDate) {
+        this.uiAngularPaymentDate = uiAngularPaymentDate;
     }
     
     // @formatter:off

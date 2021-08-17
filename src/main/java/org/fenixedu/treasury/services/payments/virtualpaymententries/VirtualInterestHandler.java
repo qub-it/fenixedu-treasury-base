@@ -90,7 +90,7 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
 
                 //Calculate interest only if we are making a FullPayment
                 InterestRateBean debitInterest =
-                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(settlementNoteBean.getDate());
+                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(settlementNoteBean.getDate().toLocalDate());
                 if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
                     SettlementInterestEntryBean interestEntryBean =
                             new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);

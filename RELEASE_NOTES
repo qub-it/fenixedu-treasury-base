@@ -1,6 +1,7 @@
 - Bug Fix: Save sibs importation filename as comment in payment transaction, as before in deprecated sibs transaction detail
 - Bug Fix: Save sibs processing date in payment transaction
 - Bug Fix: In payment request payment processing, exclude associated installments that are closed or annulled
+- Bug Fix: Change SettlementNoteBean.date from LocalDate to DateTime, in order to not lose precision in registering automatic payments
 
 8.0.2 (27-07-2021)
 - Improvement: Use service to get transaction summary and debit&credits web docs file extension
