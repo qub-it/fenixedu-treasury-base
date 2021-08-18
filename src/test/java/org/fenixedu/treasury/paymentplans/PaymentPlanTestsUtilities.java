@@ -209,11 +209,11 @@ public class PaymentPlanTestsUtilities {
         return paymentPlanBean;
     }
 
-    public static PaymentPlanBlockInterestsConfigurator createBlockingConfigurator(String name, Boolean applyDebitEntryInterest,
+    public static PaymentPlanConfigurator createBlockingConfigurator(String name, Boolean applyDebitEntryInterest,
             AddictionsCalculeTypeEnum interestDistribution, AddictionsCalculeTypeEnum paymentPenaltyDistribution,
             Boolean usePaymentPenalty) {
 
-        PaymentPlanBlockInterestsConfigurator configurator = new PaymentPlanBlockInterestsConfigurator();
+        PaymentPlanConfigurator configurator = new PaymentPlanConfigurator();
         configurator.setName(ls(name));
         configurator.setActive(true);
         configurator.setInstallmentDescriptionFormat(new LocalizedString(TreasuryConstants.DEFAULT_LANGUAGE,

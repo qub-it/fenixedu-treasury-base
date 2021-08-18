@@ -2888,6 +2888,7 @@ class paymentPlan.PaymentPlan{
 	String reason;
 	PaymentPlanStateType state;
 	String stateReason;
+	String interestChangeReason;
 	String propertiesJsonMap;
 }
 	relation PaymentPlanDomainRoot {
@@ -3110,6 +3111,9 @@ class paymentPlan.PaymentPlanConfigurator{
 	Boolean usePaymentPenalty;
 	AddictionsCalculeType interestDistribution;
 	AddictionsCalculeType paymentPenaltyDistribution;
+	Boolean applyDebitEntryInterest;
+	Boolean canEditInstallmentAmount;
+	Boolean canIncreaseInterestAmount;
 }	
 	relation PaymentPlanConfiguratorDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
