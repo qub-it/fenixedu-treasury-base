@@ -336,7 +336,8 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
              * list of invoice entries to be treated
              *
              * EG:
-             * For this example is used InterestDistribution = AFTER_DEBIT_ENTRY and not exists PaymentPenaltyTax and Interest are blocked at payment plan request date
+             * For this example is used InterestDistribution = AFTER_DEBIT_ENTRY and not exists PaymentPenaltyTax and Interest are
+             * blocked at payment plan request date
              *
              * loopNumber := 0
              *
@@ -354,20 +355,26 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
              * PaymentPlanInstallmentCreationBean whit state:
              * We will try to fit the maximum amount of installment
              * -- installmentsMaxAmount := [30,30,30,30,37.54]
-             * -- installments := [[description1,[DebitEntry1 :=30]],   -> rest of DE1 := 100-30 =70 -> Max amount was 30
-             *                     [description2,[DebitEntry1 :=30]],   -> rest of DE1 := 70-30 =40
-             *                     [description3,[DebitEntry1 :=30]],   -> rest of DE1 := 40-30 =10
-             *                     [description4,[DebitEntry1 :=10,InterestDE1:=5,DebitEntry2 :=15]],   -> rest of DE1 := 10-10 =0, rest of InterestDE1 := 5-5 =0, rest of DE2 := 50 - 15 = 35
-             *                     [description5,[DebitEntry2 :=35,InterestDE2:=2.54]]]   -> rest of DE2 := 35 - 35 = 0, rest of InterestDE1 := 2.54-2.54 = 0 -> Max amount was 37.54
-             * Check ending condition (EG: condition fails, because diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents fails -> ABS(37.54 - 30) > 0.05 )
+             * -- installments := [[description1,[DebitEntry1 :=30]], -> rest of DE1 := 100-30 =70 -> Max amount was 30
+             * [description2,[DebitEntry1 :=30]], -> rest of DE1 := 70-30 =40
+             * [description3,[DebitEntry1 :=30]], -> rest of DE1 := 40-30 =10
+             * [description4,[DebitEntry1 :=10,InterestDE1:=5,DebitEntry2 :=15]], -> rest of DE1 := 10-10 =0, rest of InterestDE1
+             * := 5-5 =0, rest of DE2 := 50 - 15 = 35
+             * [description5,[DebitEntry2 :=35,InterestDE2:=2.54]]] -> rest of DE2 := 35 - 35 = 0, rest of InterestDE1 :=
+             * 2.54-2.54 = 0 -> Max amount was 37.54
+             * Check ending condition (EG: condition fails, because diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents
+             * fails -> ABS(37.54 - 30) > 0.05 )
              *
              * loopNumber := 1
              *
-             * Payment contains : [DebitEntry1 := 100.00, DebitEntry2 := 50, InterestDE1 := 5, InterestDE2 := 2.54], number of installments := 5
+             * Payment contains : [DebitEntry1 := 100.00, DebitEntry2 := 50, InterestDE1 := 5, InterestDE2 := 2.54], number of
+             * installments := 5
              * Creating PaymentPlanInstallmentCreationBean with state:
              * -- installmentsMaxAmount := [31.5,31.5,31.5,31.5,31.54], because (100 + 50 + 5 + 2.54) / 5 = 31.5 (+0.04)
-             * -- installments := [[description1],[description2],[description3],[description4],[description5]] -> reset state for new calculation step
-             * -- Payment contains : [DebitEntry1 := 100.00, DebitEntry2 := 50], number of installments := 5 -> reset state for new calculation step
+             * -- installments := [[description1],[description2],[description3],[description4],[description5]] -> reset state for
+             * new calculation step
+             * -- Payment contains : [DebitEntry1 := 100.00, DebitEntry2 := 50], number of installments := 5 -> reset state for
+             * new calculation step
              *
              * Calling fillInstallmentsWithInvoiceEntries:
              * - Calculate PaymentPenaltyTax and Interest for each debit entry (EG: Interests for debitEntry1 := 5, interest for
@@ -378,12 +385,15 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
              * PaymentPlanInstallmentCreationBean whit state:
              * We will try to fit the maximum amount of installment
              * -- installmentsMaxAmount := [31.5,31.5,31.5,31.5,31.54]
-             * -- installments := [[description1,[DebitEntry1 :=31.5]],   -> rest of DE1 := 100-31.5 =68.5 -> Max amount was 31.5
-             *                     [description2,[DebitEntry1 :=31.5]],   -> rest of DE1 := 68.5-31.5 =37
-             *                     [description3,[DebitEntry1 :=31.5]],   -> rest of DE1 := 37-31.5 = 5.5
-             *                     [description4,[DebitEntry1 :=5.5,InterestDE1:=5,DebitEntry2 :=21]],   -> rest of DE1 := 5.5-5.5 =0, rest of InterestDE1 := 5-5 =0, rest of DE2 := 50 - 21 = 29
-             *                     [description5,[DebitEntry2 :=29,InterestDE2:=2.54]]]   -> rest of DE2 := 29 - 29 = 0, rest of InterestDE1 := 2.54-2.54 = 0 -> Max amount was 31.54        *
-             * Check ending condition (EG: condition success, because diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents success -> ABS(31.54 - 31.5) < 0.05 )
+             * -- installments := [[description1,[DebitEntry1 :=31.5]], -> rest of DE1 := 100-31.5 =68.5 -> Max amount was 31.5
+             * [description2,[DebitEntry1 :=31.5]], -> rest of DE1 := 68.5-31.5 =37
+             * [description3,[DebitEntry1 :=31.5]], -> rest of DE1 := 37-31.5 = 5.5
+             * [description4,[DebitEntry1 :=5.5,InterestDE1:=5,DebitEntry2 :=21]], -> rest of DE1 := 5.5-5.5 =0, rest of
+             * InterestDE1 := 5-5 =0, rest of DE2 := 50 - 21 = 29
+             * [description5,[DebitEntry2 :=29,InterestDE2:=2.54]]] -> rest of DE2 := 29 - 29 = 0, rest of InterestDE1 :=
+             * 2.54-2.54 = 0 -> Max amount was 31.54 *
+             * Check ending condition (EG: condition success, because diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents
+             * success -> ABS(31.54 - 31.5) < 0.05 )
              */
             //@formatter:on
 
@@ -521,8 +531,8 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
 
     private ISettlementInvoiceEntryBean processPaymentPenaltyEntryBean(
             PaymentPlanInstallmentCreationBean installmentsCreationBean, ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
-        PaymentPenaltyEntryBean paymentPenaltyEntryBean =
-                createIfNotExistsPaymentPenaltyEntryBean((SettlementDebitEntryBean) currentInvoiceEntryBean, installmentsCreationBean);
+        PaymentPenaltyEntryBean paymentPenaltyEntryBean = createIfNotExistsPaymentPenaltyEntryBean(
+                (SettlementDebitEntryBean) currentInvoiceEntryBean, installmentsCreationBean);
 
         if (paymentPenaltyEntryBean != null) {
             /**
@@ -592,14 +602,14 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         installmentsCreationBean.addAmountToLastInstallmentMaxAmount(interestAmountToAddAtLastInstallment);
     }
 
-    private boolean isDebitEntry(ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
+    protected boolean isDebitEntry(ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
         return currentInvoiceEntryBean.isForDebitEntry()
                 && ((DebitEntry) currentInvoiceEntryBean.getInvoiceEntry()).getDebitEntry() == null
                 && !(((DebitEntry) currentInvoiceEntryBean.getInvoiceEntry())
                         .getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent);
     }
 
-    private InstallmentEntryBean createInstallmentEntryBean(InstallmentBean currentInstallmentBean,
+    protected InstallmentEntryBean createInstallmentEntryBean(InstallmentBean currentInstallmentBean,
             ISettlementInvoiceEntryBean currentInvoiceEntryBean, BigDecimal installmentEntryAmount) {
         Optional<InstallmentEntryBean> installmentEntryBeanOptional = currentInstallmentBean.getInstallmentEntries().stream()
                 .filter(bean -> bean.getInvoiceEntry() == currentInvoiceEntryBean).findFirst();
@@ -879,7 +889,7 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
     // Comparators Utilities
     //*******************
 
-    private static DebitEntry getOriginDebitEntryFromInterestEntry(ISettlementInvoiceEntryBean bean) {
+    protected static DebitEntry getOriginDebitEntryFromInterestEntry(ISettlementInvoiceEntryBean bean) {
         DebitEntry debitEntry = null;
         if (bean.isForPendingInterest()
                 || (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null)) {
