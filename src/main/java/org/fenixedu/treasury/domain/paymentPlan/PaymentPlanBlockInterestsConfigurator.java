@@ -93,9 +93,4 @@ public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInter
         return Boolean.TRUE.equals(getApplyDebitEntryInterest());
     }
 
-    @Override
-    public boolean canChangeInstallmentsAmount() {
-        return Boolean.TRUE.equals(getCanEditInstallmentAmount());
-    }
-
 }

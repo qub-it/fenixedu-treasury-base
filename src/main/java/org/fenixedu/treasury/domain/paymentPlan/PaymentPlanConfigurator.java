@@ -267,10 +267,6 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
         return Boolean.TRUE.equals(getApplyDebitEntryInterest());
     }
 
-    public boolean canChangeInstallmentsAmount() {
-        return Boolean.TRUE.equals(getCanEditInstallmentAmount());
-    }
-
     @Override
     @Atomic
     public void setActive(Boolean active) {
@@ -463,18 +459,22 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
              */
             dates = new ArrayList<>();
 
-            double daysBetweenInstallments = paymentPlanBean.getNbInstallments() == 1 ? 0 : Days
-                    .daysBetween(paymentPlanBean.getStartDate(), paymentPlanBean.getEndDate()).getDays()
-                    / (paymentPlanBean.getNbInstallments() - 1.00);
+            if (paymentPlanBean.getNbInstallments() == 1) {
+                dates.add(paymentPlanBean.getStartDate());
+            } else {
+                double daysBetweenInstallments =
+                        Days.daysBetween(paymentPlanBean.getStartDate(), paymentPlanBean.getEndDate()).getDays()
+                                / (paymentPlanBean.getNbInstallments() - 1.00);
 
-            LocalDate installmentDueDate = paymentPlanBean.getStartDate();
-            for (int i = 1; i <= paymentPlanBean.getNbInstallments(); i++) {
-                if (i == paymentPlanBean.getNbInstallments()) {
-                    installmentDueDate = paymentPlanBean.getEndDate();
+                LocalDate installmentDueDate = paymentPlanBean.getStartDate();
+                for (int i = 1; i <= paymentPlanBean.getNbInstallments(); i++) {
+                    if (i == paymentPlanBean.getNbInstallments()) {
+                        installmentDueDate = paymentPlanBean.getEndDate();
+                    }
+                    dates.add(installmentDueDate);
+                    installmentDueDate =
+                            paymentPlanBean.getStartDate().plusDays(Double.valueOf(((i) * daysBetweenInstallments)).intValue());
                 }
-                dates.add(installmentDueDate);
-                installmentDueDate =
-                        paymentPlanBean.getStartDate().plusDays(Double.valueOf(((i) * daysBetweenInstallments)).intValue());
             }
         }
 

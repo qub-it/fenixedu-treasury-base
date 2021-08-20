@@ -108,6 +108,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         setState(PaymentPlanStateType.OPEN);
         setStateReason(null);
         setPaymentPlanId(paymentPlanBean.getPaymentPlanConfigurator().getNumberGenerators().generateNumber());
+        setInterestChangeReason(paymentPlanBean.getInterestChangeReason());
 
         if (paymentPlanBean.getPaymentPlanValidator() != null) {
             getPaymentPlanValidatorsSet().add(paymentPlanBean.getPaymentPlanValidator());

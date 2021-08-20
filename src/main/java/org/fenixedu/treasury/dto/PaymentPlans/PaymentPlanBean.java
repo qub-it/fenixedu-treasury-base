@@ -88,6 +88,8 @@ public class PaymentPlanBean {
     private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
     private Map<SettlementDebitEntryBean, BigDecimal> extraInterestWarning;
 
+    private String interestChangeReason;
+
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
         this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
@@ -265,5 +267,13 @@ public class PaymentPlanBean {
 
     public Map<SettlementDebitEntryBean, BigDecimal> getExtraInterestWarning() {
         return this.extraInterestWarning;
+    }
+
+    public String getInterestChangeReason() {
+        return interestChangeReason;
+    }
+
+    public void setInterestChangeReason(String interestChangeReason) {
+        this.interestChangeReason = interestChangeReason;
     }
 }

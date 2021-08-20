@@ -3112,7 +3112,6 @@ class paymentPlan.PaymentPlanConfigurator{
 	AddictionsCalculeType interestDistribution;
 	AddictionsCalculeType paymentPenaltyDistribution;
 	Boolean applyDebitEntryInterest;
-	Boolean canEditInstallmentAmount;
 	Boolean canIncreaseInterestAmount;
 }	
 	relation PaymentPlanConfiguratorDomainRoot {

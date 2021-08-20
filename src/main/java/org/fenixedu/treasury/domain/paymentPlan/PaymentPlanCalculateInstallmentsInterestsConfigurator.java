@@ -74,11 +74,6 @@ public class PaymentPlanCalculateInstallmentsInterestsConfigurator
     }
 
     @Override
-    public boolean canChangeInstallmentsAmount() {
-        return false;
-    };
-
-    @Override
     public boolean isApplyInterest() {
         return true;
     }
