@@ -339,21 +339,41 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                     installmentEntryAmount = restInstallmentMaxAmount;
                 }
 
-                if (isInterestTodistributeByInstallmentEntryAmountAndCurrentInvoiceEntryHaveInterest(invoiceEntriesToBeTreated,
-                        currentInvoiceEntryBean)) {
-                    //get iterest referent at current invoice entry and that rest amount
-                    ISettlementInvoiceEntryBean interestEntryBean = invoiceEntriesToBeTreated.get(0);
-                    BigDecimal restAmountOfInterestEntryBean = getRestAmountOfBeanInPaymentPlan(interestEntryBean, installments);
+                if (isApplyInterest() && getInterestDistribution().isByInstallmentEntryAmount()
+                        && isDebitEntry(currentInvoiceEntryBean)) {
 
-                    if (TreasuryConstants.isGreaterThan(restAmountOfInterestEntryBean.add(installmentEntryAmount),
-                            restInstallmentMaxAmount)) {
+                    //get iterest referent at current invoice entry and that rest amount
+                    List<ISettlementInvoiceEntryBean> interestEntryBeans =
+                            getInterestEntryBean(currentInvoiceEntryBean, invoiceEntriesToBeTreated);
+                    BigDecimal restAmountOfInterestEntryBean =
+                            interestEntryBeans.stream().map(bean -> getRestAmountOfBeanInPaymentPlan(bean, installments))
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    BigDecimal totalAmountOfInterestEntryBean = interestEntryBeans.stream().map(bean -> bean.getSettledAmount())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    if (TreasuryConstants.isPositive(restAmountOfInterestEntryBean) && TreasuryConstants
+                            .isGreaterThan(restAmountOfInterestEntryBean.add(installmentEntryAmount), restInstallmentMaxAmount)) {
+
                         installmentEntryAmount = calculateDebitEntryAmountOnInstallment(restInstallmentMaxAmount,
-                                currentInvoiceEntryBean.getEntryOpenAmount(), interestEntryBean.getSettledAmount());
+                                currentInvoiceEntryBean.getEntryOpenAmount(), totalAmountOfInterestEntryBean);
 
                         //process interestEntryBean
                         BigDecimal interestEntryAmount = restInstallmentMaxAmount.subtract(installmentEntryAmount);
-                        createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean, interestEntryAmount);
-                        restInstallmentMaxAmount = interestEntryAmount;
+                        restInstallmentMaxAmount = restInstallmentMaxAmount.subtract(interestEntryAmount);
+
+                        int intrestIndex = 0;
+                        while (TreasuryConstants.isPositive(interestEntryAmount)) {
+
+                            ISettlementInvoiceEntryBean interestEntryBean = interestEntryBeans.get(intrestIndex);
+                            BigDecimal restInterestEntryBean = getRestAmountOfBeanInPaymentPlan(interestEntryBean, installments);
+                            if (TreasuryConstants.isGreaterThan(restInterestEntryBean, interestEntryAmount)) {
+                                restInterestEntryBean = interestEntryAmount;
+                            }
+                            createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean, restInterestEntryBean);
+                            interestEntryAmount = interestEntryAmount.subtract(restInterestEntryBean);
+                            intrestIndex++;
+                        }
                     }
                 }
                 //CREATE InstallmentEntryBean for currentInvoiceEntryBean
@@ -362,6 +382,20 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
             }
         }
         return installments;
+    }
+
+    private List<ISettlementInvoiceEntryBean> getInterestEntryBean(ISettlementInvoiceEntryBean currentInvoiceEntryBean,
+            List<ISettlementInvoiceEntryBean> invoiceEntriesToBeTreated) {
+        List<ISettlementInvoiceEntryBean> result = new ArrayList<>();
+        if (!isDebitEntry(currentInvoiceEntryBean)) {
+            return result;
+        }
+        for (ISettlementInvoiceEntryBean element : invoiceEntriesToBeTreated) {
+            if (currentInvoiceEntryBean.getInvoiceEntry().equals(getOriginDebitEntryFromInterestEntry(element))) {
+                result.add(element);
+            }
+        }
+        return result;
     }
 
     private ISettlementInvoiceEntryBean pullNextCurrentInvoiceEntryBean(
@@ -374,37 +408,23 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
         return currentInvoiceEntryBean;
     }
 
-    private boolean isInterestTodistributeByInstallmentEntryAmountAndCurrentInvoiceEntryHaveInterest(
-            List<ISettlementInvoiceEntryBean> invoiceEntriesToBeTreated, ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
-
-        boolean isInterestTodistributeByInstallmentEntryAmount = isApplyInterest()
-                && getInterestDistribution().isByInstallmentEntryAmount() && isDebitEntry(currentInvoiceEntryBean);
-
-        //if current invoice entry have interest, than is next invoice bean to be treated
-        boolean currentInvoiceEntryHaveInterest = !invoiceEntriesToBeTreated.isEmpty()
-                && invoiceEntriesToBeTreated.get(0).isForPendingInterest() && currentInvoiceEntryBean.getInvoiceEntry()
-                        .equals(getOriginDebitEntryFromInterestEntry(invoiceEntriesToBeTreated.get(0)));
-
-        return isInterestTodistributeByInstallmentEntryAmount && currentInvoiceEntryHaveInterest;
-    }
-
     /**
-     * 
+     *
      * IA = Rest amount of installment
      * TD = Total of Debt
      * TI = Total of interest amount of debt
      * D = debt amount on installment
      * I = interest amount on installment
-     * 
+     *
      * IA = D + I
-     * 
+     *
      * I = D / TD * TI
-     * 
+     *
      * IA = D + ( D / TD * TI)
      * IA = (D (TD + TI)) / TD
-     * 
+     *
      * assuming that all variables are positive
-     * 
+     *
      * IA * TD = D ( TD + TI)
      * D = (IA * TD) / (TD + TI)
      */
