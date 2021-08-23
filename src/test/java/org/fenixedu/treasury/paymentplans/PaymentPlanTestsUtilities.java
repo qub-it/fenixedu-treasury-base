@@ -23,7 +23,6 @@ import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
-import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanBlockInterestsConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanNumberGenerator;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -39,7 +38,6 @@ import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
@@ -64,8 +62,7 @@ public class PaymentPlanTestsUtilities {
                 createDebtAccount();
                 createTreasurySettings();
 
-                TreasuryPlataformDependentServicesFactory.registerImplementation(
-                        (ITreasuryPlatformDependentServices) new TreasuryPlatformDependentServicesForTests());
+                TreasuryPlataformDependentServicesFactory.registerImplementation(new TreasuryPlatformDependentServicesForTests());
 
                 Vat.create(VatType.findByCode("INT"), getFinatialInstitution(), new BigDecimal("0"),
                         new LocalDate(2000, 1, 1).toDateTimeAtStartOfDay(), new LocalDate(2050, 1, 1).toDateTimeAtStartOfDay());
@@ -83,6 +80,17 @@ public class PaymentPlanTestsUtilities {
     public static void runTests(PaymentPlanBean paymentPlanBean, List<InstallmentBean> expectedInstallments) {
         List<InstallmentBean> resultInstallmentsBeans =
                 paymentPlanBean.getPaymentPlanConfigurator().getInstallmentsBeansFor(paymentPlanBean);
+
+        for (int i = 0; i < expectedInstallments.size(); i++) {
+            assertInstallment(paymentPlanBean, expectedInstallments.get(i), resultInstallmentsBeans.get(i));
+        }
+
+    }
+
+    public static void runTests(PaymentPlanBean paymentPlanBean, List<InstallmentBean> expectedInstallments,
+            List<LocalDate> fixedDates, List<BigDecimal> fixedAmounts) {
+        List<InstallmentBean> resultInstallmentsBeans =
+                paymentPlanBean.getPaymentPlanConfigurator().getInstallmentsBeansFor(paymentPlanBean, fixedDates, fixedAmounts);
 
         for (int i = 0; i < expectedInstallments.size(); i++) {
             assertInstallment(paymentPlanBean, expectedInstallments.get(i), resultInstallmentsBeans.get(i));

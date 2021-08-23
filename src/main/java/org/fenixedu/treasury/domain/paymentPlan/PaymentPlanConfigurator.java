@@ -372,7 +372,8 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                             if (TreasuryConstants.isGreaterThan(restInterestEntryBean, interestEntryAmount)) {
                                 restInterestEntryBean = interestEntryAmount;
                             }
-                            createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean, restInterestEntryBean);
+                            createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean,
+                                    Currency.getValueWithScale(restInterestEntryBean));
                             interestEntryAmount = interestEntryAmount.subtract(restInterestEntryBean);
                             intrestIndex++;
                         }
@@ -487,7 +488,6 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                 double daysBetweenInstallments =
                         Days.daysBetween(paymentPlanBean.getStartDate(), paymentPlanBean.getEndDate()).getDays()
                                 / (paymentPlanBean.getNbInstallments() - 1.00);
-
                 LocalDate installmentDueDate = paymentPlanBean.getStartDate();
                 for (int i = 1; i <= paymentPlanBean.getNbInstallments(); i++) {
                     if (i == paymentPlanBean.getNbInstallments()) {
