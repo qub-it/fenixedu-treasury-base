@@ -77,6 +77,7 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
+import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
@@ -84,6 +85,7 @@ import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
@@ -391,7 +393,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
             return result;
         }
         for (ISettlementInvoiceEntryBean element : invoiceEntriesToBeTreated) {
-            if (currentInvoiceEntryBean.getInvoiceEntry().equals(getOriginDebitEntryFromInterestEntry(element))) {
+            if (currentInvoiceEntryBean != element && currentInvoiceEntryBean.getInvoiceEntry().equals(getOriginDebitEntryFromInterestEntry(element))) {
                 result.add(element);
             }
         }
@@ -543,12 +545,17 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                     paymentPlanBean.addSettlementInvoiceEntryBean(interestEntryBean);
                 }
             }
+
             //PaymentPenalty Tax
-            if (Boolean.TRUE.equals(getUsePaymentPenalty()) && isDebitEntry(currentInvoiceEntryBean)) {
+            if (Boolean.TRUE.equals(getUsePaymentPenalty()) && isDebitEntry(currentInvoiceEntryBean) 
+                    && !getInterestEntryBean(currentInvoiceEntryBean, new ArrayList<>(paymentPlanBean.getSettlementInvoiceEntryBeans())).isEmpty()) {
                 //Penalty Tax
                 PaymentPenaltyEntryBean paymentPenaltyEntryBean = PaymentPenaltyTaxTreasuryEvent.calculatePaymentPenaltyTax(
-                        debitEntry, paymentPlanBean.getCreationDate(), paymentPlanBean.getCreationDate());
-                paymentPlanBean.addSettlementInvoiceEntryBean(paymentPenaltyEntryBean);
+                        debitEntry, paymentPlanBean.getEndDate(), paymentPlanBean.getCreationDate());
+                
+                if (paymentPenaltyEntryBean != null) {
+                    paymentPlanBean.addSettlementInvoiceEntryBean(paymentPenaltyEntryBean);
+                }
             }
         }
     }
