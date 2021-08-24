@@ -15,6 +15,7 @@ import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.FiscalCountryRegion;
+import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.ProductGroup;
 import org.fenixedu.treasury.domain.Vat;
@@ -22,6 +23,8 @@ import org.fenixedu.treasury.domain.VatExemptionReason;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.FinantialDocumentType;
+import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanNumberGenerator;
@@ -69,6 +72,12 @@ public class PaymentPlanTestsUtilities {
                 GlobalInterestRate.create(new LocalDate(1950, 1, 1), ls("Juro oficial para o ano 2021"), new BigDecimal("4.705"),
                         false, false);
                 PaymentPlanNumberGenerator.create(ls("Gerador"), "Plano-", 0);
+
+                FinantialDocumentType.createForSettlementNote("NP", ls("Nota de liquidação"), "NP", true);
+                FinantialDocumentType.createForDebitNote("ND", ls("Nota de dívida"), "ND", true);
+                Series.create(getFinatialInstitution(), "INT", ls("Série Interna"), false, true, false, true, true);
+
+                PaymentMethod.create("MB", ls("multibanco"), true);
 
                 return null;
             }, new AtomicInstance(TxMode.WRITE, true));
