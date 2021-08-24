@@ -13,6 +13,7 @@ import org.fenixedu.treasury.domain.AdhocCustomer;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.FiscalCountryRegion;
 import org.fenixedu.treasury.domain.PaymentMethod;
@@ -54,7 +55,7 @@ import pt.ist.standards.geographic.Municipality;
 import pt.ist.standards.geographic.Planet;
 
 public class PaymentPlanTestsUtilities {
-    private static final String DEBT_PRODUCT = "DEBT";
+    public static final String DEBT_PRODUCT = "DEBT";
 
     public static void startUp() {
         try {
@@ -194,6 +195,10 @@ public class PaymentPlanTestsUtilities {
         ISettlementInvoiceEntryBean interestEntryBean = new SettlementInterestEntryBean(debitEntry, interestRateBean);
         return interestEntryBean;
     }
+    
+    public static ISettlementInvoiceEntryBean createPenaltyTaxEntryBean(DebitEntry debitEntry, BigDecimal amount) {
+        return new PaymentPenaltyEntryBean(debitEntry, "Penalty Tax For: " + debitEntry.getDescription(), new LocalDate(), amount);
+    }
 
     public static DebitEntry createDebitEntry(BigDecimal debitAmount, LocalDate dueDate, boolean aplyInterest) {
         Vat vat =
@@ -280,11 +285,12 @@ public class PaymentPlanTestsUtilities {
     public static void createFinantialInstitution() {
         Country country = new Country(Planet.getEarth(), "portugal", "pt", "ptr", "1");
         District district = new District(country, "lisboa", "lisboa");
-        FinantialInstitution.create(FiscalCountryRegion.create("PT", ls("portugal")),
+        FinantialInstitution finantialInstitution = FinantialInstitution.create(FiscalCountryRegion.create("PT", ls("portugal")),
                 Currency.create("EUR", ls("Euro"), "EUR", "€"), "FinantialInstitution", "123456789", "companyId",
                 "Finantial Institution", "company name", "address", country, district,
                 new Municipality(district, "lisboa", "lisboa"), "", "");
 
+        FinantialEntity.create(finantialInstitution, "FINANTIAL_ENTITY", ls("Entidade Financeira"));
     }
 
     public static FinantialInstitution getFinatialInstitution() {

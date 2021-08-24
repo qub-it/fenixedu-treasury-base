@@ -102,9 +102,20 @@ public class PaymentPlanBean {
         allDebits = debtAccount.getPendingInvoiceEntriesSet().stream()
                 .filter(f -> f.isDebitNoteEntry() && !((DebitEntry) f).isInOpenPaymentPlan()).map((debitEntry) -> {
                     SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean((DebitEntry) debitEntry);
-                    debitEntryBean.setSettledAmount(debitEntry.getOpenAmountWithInterests());
+                    debitEntryBean.setSettledAmount(((DebitEntry) debitEntry).getOpenAmountWithInterestsAtDate(creationDate));
                     return debitEntryBean;
                 }).collect(Collectors.toList());
+    }
+    
+    public void updateDebitEntriesSettleAmountInPaymentPlan() {
+        for (ISettlementInvoiceEntryBean iSettlementInvoiceEntryBean : this.allDebits) {
+            if(!iSettlementInvoiceEntryBean.isForDebitEntry()) {
+                continue;
+            }
+            
+            SettlementDebitEntryBean debitEntryBean = (SettlementDebitEntryBean) iSettlementInvoiceEntryBean;
+            debitEntryBean.setSettledAmount(((DebitEntry) debitEntryBean.getDebitEntry()).getOpenAmountWithInterestsAtDate(this.creationDate));
+        }
     }
 
     public List<InstallmentBean> getInstallmentsBean() {
@@ -221,6 +232,7 @@ public class PaymentPlanBean {
 
     public void setCreationDate(LocalDate creationDate) {
         this.creationDate = creationDate;
+        this.isChanged = true;
     }
 
     public PaymentPlanConfigurator getPaymentPlanConfigurator() {

@@ -302,10 +302,6 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
     private static boolean shouldPenaltyBeCreatedForDebitEntry(DebitEntry originDebitEntry, LocalDate lastPaymentDate) {
 
-        if (originDebitEntry.getDebtAccount().getCustomer().isAdhocCustomer()) {
-            return false;
-        }
-
         if (PaymentPenaltyTaxSettings.findActiveForOriginDebitEntry(originDebitEntry).count() > 1) {
             throw new TreasuryDomainException(
                     "error.PaymentPenaltyTaxTreasuryEvent.more.than.one.configuration.active.for.origin.debit.entry");

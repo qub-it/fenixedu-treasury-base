@@ -72,8 +72,10 @@ import org.joda.time.LocalDate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
-@Deprecated
-// TODO: Delete all instances of this entity and then remove from domain
+// TODO: Delete all instances of this entity, replace with academic tariff
+/**
+ * The FixedTariff is useful for unit tests
+ */
 public class FixedTariff extends FixedTariff_Base {
 
     protected FixedTariff(final FinantialEntity finantialEntity, final Product product, final DateTime beginDate,
