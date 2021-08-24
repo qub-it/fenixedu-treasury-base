@@ -66,6 +66,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
@@ -77,7 +78,6 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
-import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
@@ -85,7 +85,6 @@ import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
@@ -394,7 +393,8 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
             return result;
         }
         for (ISettlementInvoiceEntryBean element : invoiceEntriesToBeTreated) {
-            if (currentInvoiceEntryBean != element && currentInvoiceEntryBean.getInvoiceEntry().equals(getOriginDebitEntryFromInterestEntry(element))) {
+            if (currentInvoiceEntryBean != element
+                    && currentInvoiceEntryBean.getInvoiceEntry().equals(getOriginDebitEntryFromInterestEntry(element))) {
                 result.add(element);
             }
         }
@@ -547,12 +547,13 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
             }
 
             //PaymentPenalty Tax
-            if (Boolean.TRUE.equals(getUsePaymentPenalty()) && isDebitEntry(currentInvoiceEntryBean) 
-                    && !getInterestEntryBean(currentInvoiceEntryBean, new ArrayList<>(paymentPlanBean.getSettlementInvoiceEntryBeans())).isEmpty()) {
+            if (Boolean.TRUE.equals(getUsePaymentPenalty()) && isDebitEntry(currentInvoiceEntryBean)
+                    && !getInterestEntryBean(currentInvoiceEntryBean,
+                            new ArrayList<>(paymentPlanBean.getSettlementInvoiceEntryBeans())).isEmpty()) {
                 //Penalty Tax
-                PaymentPenaltyEntryBean paymentPenaltyEntryBean = PaymentPenaltyTaxTreasuryEvent.calculatePaymentPenaltyTax(
-                        debitEntry, paymentPlanBean.getEndDate(), paymentPlanBean.getCreationDate());
-                
+                PaymentPenaltyEntryBean paymentPenaltyEntryBean = PaymentPenaltyTaxTreasuryEvent
+                        .calculatePaymentPenaltyTax(debitEntry, paymentPlanBean.getEndDate(), paymentPlanBean.getCreationDate());
+
                 if (paymentPenaltyEntryBean != null) {
                     paymentPlanBean.addSettlementInvoiceEntryBean(paymentPenaltyEntryBean);
                 }
@@ -605,7 +606,8 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
     }
 
     private static int compareDebitEntryDueDate(DebitEntry debitEntry1, DebitEntry debitEntry2) {
-        return (debitEntry1.getDueDate().compareTo(debitEntry2.getDueDate()) * 10)
-                + debitEntry1.getExternalId().compareTo(debitEntry2.getExternalId());
+        return new ComparatorChain((d1, d2) -> debitEntry1.getDueDate().compareTo(debitEntry2.getDueDate()))
+                .thenComparing((d1, d2) -> debitEntry1.getExternalId().compareTo(debitEntry2.getExternalId()))
+                .compare(debitEntry1, debitEntry2);
     }
 }
