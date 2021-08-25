@@ -343,7 +343,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                 if (isApplyInterest() && getInterestDistribution().isByInstallmentEntryAmount()
                         && isDebitEntry(currentInvoiceEntryBean)) {
 
-                    //get iterest referent at current invoice entry and that rest amount
+                    //get interestBeans referent at current invoice entry and that rest amount
                     List<ISettlementInvoiceEntryBean> interestEntryBeans =
                             getInterestEntryBean(currentInvoiceEntryBean, invoiceEntriesToBeTreated);
                     BigDecimal restAmountOfInterestEntryBean =
@@ -363,19 +363,8 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                         BigDecimal interestEntryAmount = restInstallmentMaxAmount.subtract(installmentEntryAmount);
                         restInstallmentMaxAmount = restInstallmentMaxAmount.subtract(interestEntryAmount);
 
-                        int intrestIndex = 0;
-                        while (TreasuryConstants.isPositive(interestEntryAmount)) {
-
-                            ISettlementInvoiceEntryBean interestEntryBean = interestEntryBeans.get(intrestIndex);
-                            BigDecimal restInterestEntryBean = getRestAmountOfBeanInPaymentPlan(interestEntryBean, installments);
-                            if (TreasuryConstants.isGreaterThan(restInterestEntryBean, interestEntryAmount)) {
-                                restInterestEntryBean = interestEntryAmount;
-                            }
-                            createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean,
-                                    Currency.getValueWithScale(restInterestEntryBean));
-                            interestEntryAmount = interestEntryAmount.subtract(restInterestEntryBean);
-                            intrestIndex++;
-                        }
+                        processInterestEntryBeansToInstallmentEntryBean(installments, currentInstallmentBean, interestEntryBeans,
+                                interestEntryAmount);
                     }
                 }
                 //CREATE InstallmentEntryBean for currentInvoiceEntryBean
@@ -384,6 +373,24 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
             }
         }
         return installments;
+    }
+
+    private void processInterestEntryBeansToInstallmentEntryBean(List<InstallmentBean> installments,
+            InstallmentBean currentInstallmentBean, List<ISettlementInvoiceEntryBean> interestEntryBeans,
+            BigDecimal interestEntryAmount) {
+        int intrestIndex = 0;
+        while (TreasuryConstants.isPositive(interestEntryAmount)) {
+
+            ISettlementInvoiceEntryBean interestEntryBean = interestEntryBeans.get(intrestIndex);
+            BigDecimal restInterestEntryBean = getRestAmountOfBeanInPaymentPlan(interestEntryBean, installments);
+            if (TreasuryConstants.isGreaterThan(restInterestEntryBean, interestEntryAmount)) {
+                restInterestEntryBean = interestEntryAmount;
+            }
+            createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean,
+                    Currency.getValueWithScale(restInterestEntryBean));
+            interestEntryAmount = interestEntryAmount.subtract(restInterestEntryBean);
+            intrestIndex++;
+        }
     }
 
     private List<ISettlementInvoiceEntryBean> getInterestEntryBean(ISettlementInvoiceEntryBean currentInvoiceEntryBean,
@@ -530,7 +537,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                 continue;
             }
             DebitEntry debitEntry = (DebitEntry) currentInvoiceEntryBean.getInvoiceEntry();
-            //Interest
+            //Apply Interest
             if (isApplyInterest() && debitEntry.isApplyInterests()) {
                 BigDecimal interestEntryAmout =
                         currentInvoiceEntryBean.getSettledAmount().subtract(currentInvoiceEntryBean.getEntryOpenAmount());
@@ -546,7 +553,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
                 }
             }
 
-            //PaymentPenalty Tax
+            //Apply PaymentPenalty Tax
             if (Boolean.TRUE.equals(getUsePaymentPenalty()) && isDebitEntry(currentInvoiceEntryBean)
                     && !getInterestEntryBean(currentInvoiceEntryBean,
                             new ArrayList<>(paymentPlanBean.getSettlementInvoiceEntryBeans())).isEmpty()) {

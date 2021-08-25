@@ -106,15 +106,15 @@ public class PaymentPlanBean {
                     return debitEntryBean;
                 }).collect(Collectors.toList());
     }
-    
+
     public void updateDebitEntriesSettleAmountInPaymentPlan() {
         for (ISettlementInvoiceEntryBean iSettlementInvoiceEntryBean : this.allDebits) {
-            if(!iSettlementInvoiceEntryBean.isForDebitEntry()) {
+            if (!iSettlementInvoiceEntryBean.isForDebitEntry()) {
                 continue;
             }
-            
+
             SettlementDebitEntryBean debitEntryBean = (SettlementDebitEntryBean) iSettlementInvoiceEntryBean;
-            debitEntryBean.setSettledAmount(((DebitEntry) debitEntryBean.getDebitEntry()).getOpenAmountWithInterestsAtDate(this.creationDate));
+            debitEntryBean.setSettledAmount(debitEntryBean.getDebitEntry().getOpenAmountWithInterestsAtDate(this.creationDate));
         }
     }
 
@@ -232,7 +232,6 @@ public class PaymentPlanBean {
 
     public void setCreationDate(LocalDate creationDate) {
         this.creationDate = creationDate;
-        this.isChanged = true;
     }
 
     public PaymentPlanConfigurator getPaymentPlanConfigurator() {
