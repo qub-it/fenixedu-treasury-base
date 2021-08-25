@@ -1,3 +1,5 @@
+- Improvement: Limit SibsPaymentCodePool payment request creation concurrency to avoid restarts
+
 8.0.3 (17-08-2021)
 - Bug Fix: Save sibs importation filename as comment in payment transaction, as before in deprecated sibs transaction detail
 - Bug Fix: Save sibs processing date in payment transaction

@@ -349,7 +349,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     @Atomic
-    private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+    private synchronized SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
 
         checkMaxActiveSibsPaymentRequests(debitEntries, installments);
