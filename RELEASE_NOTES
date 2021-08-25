@@ -1,3 +1,4 @@
+8.0.4 (25-08-2021)
 - Improvement: Limit SibsPaymentCodePool payment request creation concurrency to avoid restarts
 
 8.0.3 (17-08-2021)
