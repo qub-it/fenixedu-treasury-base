@@ -52,19 +52,21 @@
  */
 package org.fenixedu.treasury.domain.paymentPlan;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
@@ -76,8 +78,8 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
-import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
+import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
@@ -89,89 +91,121 @@ import org.joda.time.LocalDate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
-public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
+public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
 
-    private static final int MAX_LOOP = 10;
-    public static final Comparator<ISettlementInvoiceEntryBean> COMPARE_SETTLEMENT_INVOICE_ENTRY_BEAN = (s1, s2) -> {
-        if (s1.isForPendingDebitEntry() || s2.isForPendingDebitEntry()) {
-            return s1.isForPendingDebitEntry() ? -1 : 1;
-        }
-        /**
-         * Divida1
-         * Taxa1
-         * Juro1
-         * Divida2
-         * Taxa2
-         * Juro2
-         */
-        String descriçãoS1 = s1.getDescription();
-        String descriçãoS2 = s2.getDescription();
+    // Debt < Interest < PenaltyTax
+    private static final Comparator<ISettlementInvoiceEntryBean> COMPARE_SETTLEMENT_INVOICE_ENTRY_BEAN_PENALTY_TAX_AFTER =
+            (s1, s2) -> {
+                if (s1.isForPendingDebitEntry() || s2.isForPendingDebitEntry()) {
+                    return s1.isForPendingDebitEntry() ? -1 : 1;
+                }
+                DebitEntry interestEntryS1 = getOriginDebitEntryFromInterestEntry(s1);
+                DebitEntry penaltyTaxEntryS1 = interestEntryS1 == null ? getOriginDebitEntryFromPenaltyTaxEntry(s1) : null;
+                DebitEntry debitEntryS1 =
+                        penaltyTaxEntryS1 == null && interestEntryS1 == null ? (DebitEntry) s1.getInvoiceEntry() : null;
 
-        DebitEntry debitEntryS1 = null;
-        DebitEntry interestEntryS1 = null;
-        DebitEntry penaltyTaxEntryS1 = null;
+                DebitEntry interestEntryS2 = getOriginDebitEntryFromInterestEntry(s2);
+                DebitEntry penaltyTaxEntryS2 = interestEntryS2 == null ? getOriginDebitEntryFromPenaltyTaxEntry(s2) : null;
+                DebitEntry debitEntryS2 =
+                        penaltyTaxEntryS2 == null && interestEntryS2 == null ? (DebitEntry) s2.getInvoiceEntry() : null;
 
-        if (s1.isForPendingInterest() || (s1.isForDebitEntry() && ((DebitEntry) s1.getInvoiceEntry()).getDebitEntry() != null)) {
-            interestEntryS1 = s1.isForPendingInterest() ? ((SettlementInterestEntryBean) s1)
-                    .getDebitEntry() : ((DebitEntry) s1.getInvoiceEntry()).getDebitEntry();
-        } else if (s1.isForPaymentPenalty()
-                || (s1.isForDebitEntry() && ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent() != null
-                        && ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent)) {
-            penaltyTaxEntryS1 = s1.isForPaymentPenalty() ? ((PaymentPenaltyEntryBean) s1)
-                    .getDebitEntry() : ((PaymentPenaltyTaxTreasuryEvent) ((DebitEntry) s1.getInvoiceEntry()).getTreasuryEvent())
-                            .getOriginDebitEntry();
-        } else {
-            debitEntryS1 = (DebitEntry) s1.getInvoiceEntry();
-        }
+                if (debitEntryS1 != null) {
+                    if (debitEntryS2 != null) {
+                        return compareDebitEntryDueDate(debitEntryS1, debitEntryS2);
+                    }
+                    if (interestEntryS2 != null) {
+                        return debitEntryS1 == interestEntryS2 ? -1 : compareDebitEntryDueDate(debitEntryS1, interestEntryS2);
+                    }
+                    if (penaltyTaxEntryS2 != null) {
+                        return debitEntryS1 == penaltyTaxEntryS2 ? -1 : compareDebitEntryDueDate(debitEntryS1, penaltyTaxEntryS2);
+                    }
+                }
 
-        DebitEntry debitEntryS2 = null;
-        DebitEntry interestEntryS2 = null;
-        DebitEntry penaltyTaxEntryS2 = null;
+                if (interestEntryS1 != null) {
+                    if (debitEntryS2 != null) {
+                        return interestEntryS1 == debitEntryS2 ? 1 : compareDebitEntryDueDate(interestEntryS1, debitEntryS2);
+                    }
+                    if (interestEntryS2 != null) {
+                        return interestEntryS1 == interestEntryS2 ? (s1
+                                .isForPendingInterest() ? 1 : -1) : compareDebitEntryDueDate(interestEntryS1, interestEntryS2);
+                    }
+                    if (penaltyTaxEntryS2 != null) {
+                        return interestEntryS1 == penaltyTaxEntryS2 ? -1 : compareDebitEntryDueDate(interestEntryS1,
+                                penaltyTaxEntryS2);
+                    }
+                }
 
-        if (s2.isForPendingInterest() || (s2.isForDebitEntry() && ((DebitEntry) s2.getInvoiceEntry()).getDebitEntry() != null)) {
-            interestEntryS2 = s2.isForPendingInterest() ? ((SettlementInterestEntryBean) s2)
-                    .getDebitEntry() : ((DebitEntry) s2.getInvoiceEntry()).getDebitEntry();
-        } else if (s2.isForPaymentPenalty()
-                || (s2.isForDebitEntry() && ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent() != null
-                        && ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent)) {
-            penaltyTaxEntryS2 = s2.isForPaymentPenalty() ? ((PaymentPenaltyEntryBean) s2)
-                    .getDebitEntry() : ((PaymentPenaltyTaxTreasuryEvent) ((DebitEntry) s2.getInvoiceEntry()).getTreasuryEvent())
-                            .getOriginDebitEntry();
-        } else {
-            debitEntryS2 = (DebitEntry) s2.getInvoiceEntry();
-        }
+                if (penaltyTaxEntryS1 != null) {
+                    if (debitEntryS2 != null) {
+                        return penaltyTaxEntryS1 == debitEntryS2 ? 1 : compareDebitEntryDueDate(penaltyTaxEntryS1, debitEntryS2);
+                    }
+                    if (interestEntryS2 != null) {
+                        return penaltyTaxEntryS1 == interestEntryS2 ? 1 : compareDebitEntryDueDate(penaltyTaxEntryS1,
+                                interestEntryS2);
+                    }
+                    if (penaltyTaxEntryS2 != null) {
+                        return compareDebitEntryDueDate(penaltyTaxEntryS1, penaltyTaxEntryS2);
+                    }
+                }
+                return s1.getDueDate().compareTo(s2.getDueDate());
+            };
 
-        if (debitEntryS1 != null) {
-            if (debitEntryS2 != null) {
-                return compareDebitEntryDueDate(debitEntryS1, debitEntryS2);
-            } else {
-                DebitEntry debitAux = interestEntryS2 != null ? interestEntryS2 : penaltyTaxEntryS2;
-                return debitEntryS1 == debitAux ? -1 : compareDebitEntryDueDate(debitEntryS1, debitAux);
-            }
-        }
+    //PenaltyTax<Debt<Interest
+    private static final Comparator<ISettlementInvoiceEntryBean> COMPARE_SETTLEMENT_INVOICE_ENTRY_BEAN_PENALTY_TAX_BEFORE =
+            (s1, s2) -> {
+                if (s1.isForPendingDebitEntry() || s2.isForPendingDebitEntry()) {
+                    return s1.isForPendingDebitEntry() ? -1 : 1;
+                }
+                DebitEntry interestEntryS1 = getOriginDebitEntryFromInterestEntry(s1);
+                DebitEntry penaltyTaxEntryS1 = interestEntryS1 == null ? getOriginDebitEntryFromPenaltyTaxEntry(s1) : null;
+                DebitEntry debitEntryS1 =
+                        penaltyTaxEntryS1 == null && interestEntryS1 == null ? (DebitEntry) s1.getInvoiceEntry() : null;
 
-        if (interestEntryS1 != null) {
-            if (interestEntryS2 != null) {
-                return interestEntryS1 == interestEntryS2 ? (s1.isForPendingInterest() ? 1 : -1) : compareDebitEntryDueDate(
-                        interestEntryS1, interestEntryS2);
-            } else {
-                DebitEntry debitAux = debitEntryS2 != null ? debitEntryS2 : penaltyTaxEntryS2;
-                return interestEntryS1 == debitAux ? 1 : compareDebitEntryDueDate(interestEntryS1, debitAux);
-            }
+                DebitEntry interestEntryS2 = getOriginDebitEntryFromInterestEntry(s2);
+                DebitEntry penaltyTaxEntryS2 = interestEntryS2 == null ? getOriginDebitEntryFromPenaltyTaxEntry(s2) : null;
+                DebitEntry debitEntryS2 =
+                        penaltyTaxEntryS2 == null && interestEntryS2 == null ? (DebitEntry) s2.getInvoiceEntry() : null;
 
-        }
+                if (debitEntryS1 != null) {
+                    if (debitEntryS2 != null) {
+                        return compareDebitEntryDueDate(debitEntryS1, debitEntryS2);
+                    }
+                    if (interestEntryS2 != null) {
+                        return debitEntryS1 == interestEntryS2 ? -1 : compareDebitEntryDueDate(debitEntryS1, interestEntryS2);
+                    }
+                    if (penaltyTaxEntryS2 != null) {
+                        return debitEntryS1 == penaltyTaxEntryS2 ? 1 : compareDebitEntryDueDate(debitEntryS1, penaltyTaxEntryS2);
+                    }
+                }
 
-        if (penaltyTaxEntryS1 != null) {
-            if (penaltyTaxEntryS2 != null) {
-                return compareDebitEntryDueDate(penaltyTaxEntryS1, penaltyTaxEntryS2);
-            } else if (debitEntryS2 != null) {
-                return penaltyTaxEntryS1 == debitEntryS2 ? 1 : compareDebitEntryDueDate(penaltyTaxEntryS1, debitEntryS2);
-            } else {
-                return penaltyTaxEntryS1 == interestEntryS2 ? -1 : compareDebitEntryDueDate(penaltyTaxEntryS1, interestEntryS2);
-            }
-        }
-        return s1.getDueDate().compareTo(s2.getDueDate());
-    };
+                if (interestEntryS1 != null) {
+                    if (debitEntryS2 != null) {
+                        return interestEntryS1 == debitEntryS2 ? 1 : compareDebitEntryDueDate(interestEntryS1, debitEntryS2);
+                    }
+                    if (interestEntryS2 != null) {
+                        return interestEntryS1 == interestEntryS2 ? (s1
+                                .isForPendingInterest() ? 1 : -1) : compareDebitEntryDueDate(interestEntryS1, interestEntryS2);
+                    }
+                    if (penaltyTaxEntryS2 != null) {
+                        return interestEntryS1 == penaltyTaxEntryS2 ? 1 : compareDebitEntryDueDate(interestEntryS1,
+                                penaltyTaxEntryS2);
+                    }
+                }
+
+                if (penaltyTaxEntryS1 != null) {
+                    if (debitEntryS2 != null) {
+                        return penaltyTaxEntryS1 == debitEntryS2 ? -1 : compareDebitEntryDueDate(penaltyTaxEntryS1, debitEntryS2);
+                    }
+                    if (interestEntryS2 != null) {
+                        return penaltyTaxEntryS1 == interestEntryS2 ? -1 : compareDebitEntryDueDate(penaltyTaxEntryS1,
+                                interestEntryS2);
+                    }
+                    if (penaltyTaxEntryS2 != null) {
+                        return compareDebitEntryDueDate(penaltyTaxEntryS1, penaltyTaxEntryS2);
+                    }
+                }
+                return s1.getDueDate().compareTo(s2.getDueDate());
+            };
 
     public PaymentPlanConfigurator() {
         super();
@@ -180,23 +214,18 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         setTreasurySettings(TreasurySettings.getInstance());
     }
 
-    private static int compareDebitEntryDueDate(DebitEntry debitEntry1, DebitEntry debitEntry2) {
-        return (debitEntry1.getDueDate().compareTo(debitEntry2.getDueDate()) * 10)
-                + debitEntry1.getExternalId().compareTo(debitEntry2.getExternalId());
-    }
-
-    protected PaymentPlanConfigurator(LocalizedString name, LocalizedString installmentDescriptionFormat,
-            Boolean usePaymentPenalty, Boolean divideInterestsByInstallments, Boolean dividePaymentPenaltyInstallments,
+    public PaymentPlanConfigurator(LocalizedString name, LocalizedString installmentDescriptionFormat, Boolean usePaymentPenalty,
+            AddictionsCalculeTypeEnum interestDistribuition, AddictionsCalculeTypeEnum paymentPenaltyDistribuition,
             Product emolumentProduct, PaymentPlanNumberGenerator numberGenerator) {
         this();
 
         setName(name);
         setInstallmentDescriptionFormat(installmentDescriptionFormat);
         setUsePaymentPenalty(usePaymentPenalty);
-        setDivideInterestsByAllInstallments(divideInterestsByInstallments);
-        setDividePaymentPenaltyByAllInstallments(dividePaymentPenaltyInstallments);
         setEmolumentProduct(emolumentProduct);
         setNumberGenerators(numberGenerator);
+        setInterestDistribution(interestDistribuition);
+        setPaymentPenaltyDistribution(paymentPenaltyDistribuition);
 
         checkRules();
     }
@@ -224,176 +253,19 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         if (getNumberGenerators() == null) {
             throw new TreasuryDomainException("error.PaymentPlanSettings.NumberGenerators.required");
         }
-    }
 
-    public List<InstallmentBean> getInstallmentsBeansFor(PaymentPlanBean paymentPlanBean) {
-        return getInstallmentsBeansFor(paymentPlanBean, null);
-    }
-
-    public List<InstallmentBean> getInstallmentsBeansFor(PaymentPlanBean paymentPlanBean, List<LocalDate> dates) {
-        List<InstallmentBean> installments = createInstallments(paymentPlanBean, dates);
-        paymentPlanBean.setSettlementInvoiceEntryBeans(paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
-                .filter(bean -> bean.isForDebitEntry() || bean.isForPendingDebitEntry()).collect(Collectors.toSet()));
-
-        List<ISettlementInvoiceEntryBean> invoiceEntries = getInvoiceEntryBeans(paymentPlanBean, getPredicateToDebitEntry());
-        BigDecimal amount = getSumAmountOf(invoiceEntries, installments, paymentPlanBean);
-        BigDecimal installmentAmmount = getInstallmentAmount(amount, paymentPlanBean.getNbInstallments());
-        fillInstallmentsWithInvoiceEntries(installments, installmentAmmount, amount, invoiceEntries, paymentPlanBean);
-
-        if (!isDivideInterest() || !isDividePenaltyTax()) {
-            int i = 0;
-            while (diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents(installments, paymentPlanBean) && i < MAX_LOOP) {
-                installments = createInstallments(paymentPlanBean, dates);
-                invoiceEntries = getInvoiceEntryBeans(paymentPlanBean, getPredicateToDebitEntry());
-                amount = getSumAmountOf(invoiceEntries, installments, paymentPlanBean);
-                installmentAmmount = getInstallmentAmount(amount, paymentPlanBean.getNbInstallments());
-                fillInstallmentsWithInvoiceEntries(installments, installmentAmmount, amount, invoiceEntries, paymentPlanBean);
-                i++;
-            }
-        }
-        if (isDivideInterest()) {
-            invoiceEntries = getInvoiceEntryBeans(paymentPlanBean, getPredicateToInterestEntry());
-            amount = getSumAmountOf(invoiceEntries, installments, paymentPlanBean);
-            installmentAmmount = getInstallmentAmount(amount, paymentPlanBean.getNbInstallments());
-            fillInstallmentsWithInvoiceEntries(installments, installmentAmmount, amount, invoiceEntries, paymentPlanBean);
+        if (getInterestDistribution() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.interestDistribution.required");
         }
 
-        if (isDividePenaltyTax()) {
-            invoiceEntries = getInvoiceEntryBeans(paymentPlanBean, getPredicateToPenaltyTaxEntry());
-            amount = getSumAmountOf(invoiceEntries, installments, paymentPlanBean);
-            installmentAmmount = getInstallmentAmount(amount, paymentPlanBean.getNbInstallments());
-            fillInstallmentsWithInvoiceEntries(installments, installmentAmmount, amount, invoiceEntries, paymentPlanBean);
+        if (Boolean.TRUE.equals(getUsePaymentPenalty()) && getPaymentPenaltyDistribution() == null) {
+            throw new TreasuryDomainException("error.PaymentPlanSettings.paymentPenaltyDistribution.required");
         }
 
-        return installments;
-    }
-
-    protected void fillInstallmentsWithInvoiceEntries(List<InstallmentBean> result, BigDecimal installmentAmmount,
-            BigDecimal restAmount, List<ISettlementInvoiceEntryBean> invoiceEntries, PaymentPlanBean paymentPlanBean) {
-
-        if (invoiceEntries.isEmpty()) {
-            return;
-        }
-        ISettlementInvoiceEntryBean bean = invoiceEntries.get(0);
-        invoiceEntries.remove(0);
-
-        for (InstallmentBean installmentBean : result) {
-            if (installmentBean == result.get(result.size() - 1)) {
-                installmentAmmount = restAmount;
-            }
-            BigDecimal restInstallmentAmmount = installmentAmmount;
-            while (TreasuryConstants.isPositive(restInstallmentAmmount)) {
-                BigDecimal installmentEntryAmount = getRestAmountOf(bean, result, paymentPlanBean);
-                if (!TreasuryConstants.isPositive(installmentEntryAmount)) {
-                    bean = invoiceEntries.isEmpty() ? null : invoiceEntries.get(0);
-                    if (!invoiceEntries.isEmpty()) {
-                        invoiceEntries.remove(0);
-                    }
-                    continue;
-                }
-                if (TreasuryConstants.isGreaterThan(installmentEntryAmount, restInstallmentAmmount)) {
-                    installmentEntryAmount = restInstallmentAmmount;
-                }
-                installmentBean.addInstallmentEntries(new InstallmentEntryBean(bean, installmentEntryAmount));
-
-                restInstallmentAmmount = restInstallmentAmmount.subtract(installmentEntryAmount);
-
-                if (bean.isForDebitEntry() && !TreasuryConstants.isPositive(getRestAmountOf(bean, result, paymentPlanBean))) {
-                    SettlementInterestEntryBean interestEntryBean = updateRelatedInterests((SettlementDebitEntryBean) bean,
-                            paymentPlanBean, result, installmentBean.getDueDate());
-                    if (interestEntryBean != null && !isDivideInterest()) {
-                        if (!invoiceEntries.contains(interestEntryBean)) {
-                            invoiceEntries.add(0, interestEntryBean);
-                        }
-                        restAmount = getSumAmountOf(invoiceEntries, result, paymentPlanBean).add(installmentEntryAmount);
-                    }
-                    if (Boolean.TRUE.equals(getUsePaymentPenalty())) {
-                        PaymentPenaltyEntryBean paymentPenaltyEntryBean = updateRelatedPenaltyTax((SettlementDebitEntryBean) bean,
-                                paymentPlanBean, installmentBean.getDueDate());
-                        if (paymentPenaltyEntryBean != null && !isDividePenaltyTax()) {
-                            if (!invoiceEntries.contains(paymentPenaltyEntryBean)) {
-                                invoiceEntries.add(0, paymentPenaltyEntryBean);
-                            }
-                            restAmount = getSumAmountOf(invoiceEntries, result, paymentPlanBean).add(installmentEntryAmount);
-                        }
-                    }
-                    if (installmentBean == result.get(result.size() - 1)
-                            && !TreasuryConstants.isEqual(restAmount, restInstallmentAmmount)) {
-                        restInstallmentAmmount = getSumAmountOf(invoiceEntries, result, paymentPlanBean);
-                    }
-
-                }
-            }
-            restAmount = restAmount.subtract(installmentAmmount);
-        }
-    }
-
-    protected PaymentPenaltyEntryBean updateRelatedPenaltyTax(SettlementDebitEntryBean bean, PaymentPlanBean paymentPlanBean,
-            LocalDate dueDate) {
-        PaymentPenaltyEntryBean calculatePaymentPenaltyTax = PaymentPenaltyTaxTreasuryEvent
-                .calculatePaymentPenaltyTax(bean.getDebitEntry(), dueDate, paymentPlanBean.getCreationDate());
-        if (calculatePaymentPenaltyTax != null) {
-            paymentPlanBean.addSettlementInvoiceEntryBean(calculatePaymentPenaltyTax);
-        }
-        return calculatePaymentPenaltyTax;
-    }
-
-    protected SettlementInterestEntryBean updateRelatedInterests(SettlementDebitEntryBean bean, PaymentPlanBean paymentPlanBean,
-            List<InstallmentBean> result, LocalDate lastInstallmentDueDate) {
-
-        SettlementInterestEntryBean interestEntryBean =
-                (SettlementInterestEntryBean) paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
-                        .filter(interestbean -> interestbean.isForPendingInterest()
-                                && ((SettlementInterestEntryBean) interestbean).getDebitEntry() == bean.getInvoiceEntry())
-                        .findFirst().orElse(null);
-
-        BigDecimal interestBeforePaymentPlan = bean.getSettledAmount().subtract(bean.getEntryOpenAmount());
-
-        if (TreasuryConstants.isPositive(interestBeforePaymentPlan)) {
-            if (interestEntryBean == null) {
-                InterestRateBean interestRateBean = new InterestRateBean();
-                interestRateBean.setDescription(treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
-                        "label.InterestRateBean.interest.designation", bean.getDebitEntry().getDescription()));
-
-                interestRateBean.setInterestAmount(interestBeforePaymentPlan);
-                interestEntryBean = new SettlementInterestEntryBean(bean.getDebitEntry(), interestRateBean);
-                paymentPlanBean.addSettlementInvoiceEntryBean(interestEntryBean);
-            } else {
-                interestEntryBean.getInterest().setInterestAmount(interestBeforePaymentPlan);
-            }
-            return interestEntryBean;
-        } else if (interestEntryBean != null) {
-            paymentPlanBean.removeSettlementInvoiceEntryBean(interestEntryBean);
-        }
-        return null;
-
-    }
-
-    protected BigDecimal getRestAmountOf(ISettlementInvoiceEntryBean bean, List<InstallmentBean> result,
-            PaymentPlanBean paymentPlanBean) {
-        BigDecimal total = bean.isForDebitEntry() ? bean.getEntryOpenAmount() : bean.getSettledAmount();
-
-        BigDecimal used = result.stream().flatMap(inst -> inst.getInstallmentEntries().stream())
-                .filter(entry -> entry.getInvoiceEntry() == bean).map(entry -> entry.getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return total.subtract(used);
     }
 
     public boolean isApplyInterest() {
-        return true;
-    }
-
-    public boolean isInterestBlocked() {
-        return false;
-    };
-
-    public boolean isDivideInterest() {
-        return Boolean.TRUE.equals(getDivideInterestsByAllInstallments());
-    }
-
-    public boolean isDividePenaltyTax() {
-        return Boolean.TRUE.equals(getDividePaymentPenaltyByAllInstallments());
+        return Boolean.TRUE.equals(getApplyDebitEntryInterest());
     }
 
     @Override
@@ -420,10 +292,6 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         super.deleteDomainObject();
     }
 
-    /*
-     * SERVICES
-     */
-
     public static Stream<PaymentPlanConfigurator> findAll() {
         return FenixFramework.getDomainRoot().getPaymentPlanConfiguratorsSet().stream();
     }
@@ -432,129 +300,321 @@ public abstract class PaymentPlanConfigurator extends PaymentPlanConfigurator_Ba
         return findAll().filter(p -> Boolean.TRUE.equals(p.getActive()));
     }
 
-    protected LocalizedString getInstallmentDescription(int installmentNumber, String paymentPlanId) {
-        Map<String, String> values = new HashMap<>();
-        values.put("installmentNumber", "" + installmentNumber);
-        values.put("paymentPlanId", paymentPlanId);
+    public Comparator<ISettlementInvoiceEntryBean> getComparator() {
+        if (AddictionsCalculeTypeEnum.BEFORE_DEBIT_ENTRY == getPaymentPenaltyDistribution()) {
+            return PaymentPlanConfigurator.COMPARE_SETTLEMENT_INVOICE_ENTRY_BEAN_PENALTY_TAX_BEFORE;
+        } else {
+            return PaymentPlanConfigurator.COMPARE_SETTLEMENT_INVOICE_ENTRY_BEAN_PENALTY_TAX_AFTER;
+        }
+    }
 
-        LocalizedString ls = new LocalizedString();
-        for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
-            ls = ls.with(locale, StrSubstitutor.replace(getInstallmentDescriptionFormat().getContent(locale), values));
+    public List<InstallmentBean> getInstallmentsBeansFor(PaymentPlanBean paymentPlanBean) {
+        return getInstallmentsBeansFor(paymentPlanBean, null, null);
+    }
+
+    public List<InstallmentBean> getInstallmentsBeansFor(PaymentPlanBean paymentPlanBean, List<LocalDate> fixedDates,
+            List<BigDecimal> fixedAmountList) {
+
+        createInterestAndTaxBeans(paymentPlanBean);
+
+        List<InstallmentBean> installments = createInstallmentsList(paymentPlanBean, fixedDates);
+        List<BigDecimal> installmentsMaxAmount = createInstallmentMaxAmountList(paymentPlanBean, fixedAmountList);
+        List<ISettlementInvoiceEntryBean> invoiceEntriesToBeTreated =
+                paymentPlanBean.getSettlementInvoiceEntryBeans().stream().sorted(getComparator()).collect(Collectors.toList());
+
+        ISettlementInvoiceEntryBean currentInvoiceEntryBean = pullNextCurrentInvoiceEntryBean(invoiceEntriesToBeTreated);
+
+        for (int i = 0; i < installments.size(); i++) {
+            InstallmentBean currentInstallmentBean = installments.get(i);
+            BigDecimal installmentAmount = installmentsMaxAmount.get(i);
+            BigDecimal restInstallmentMaxAmount = installmentAmount;
+            while (currentInvoiceEntryBean != null && TreasuryConstants.isPositive(restInstallmentMaxAmount)) {
+                BigDecimal installmentEntryAmount = getRestAmountOfBeanInPaymentPlan(currentInvoiceEntryBean, installments);
+
+                if (!TreasuryConstants.isPositive(installmentEntryAmount)) {
+                    currentInvoiceEntryBean = pullNextCurrentInvoiceEntryBean(invoiceEntriesToBeTreated);
+                    continue;
+                }
+
+                if (TreasuryConstants.isGreaterThan(installmentEntryAmount, restInstallmentMaxAmount)) {
+                    installmentEntryAmount = restInstallmentMaxAmount;
+                }
+
+                if (isApplyInterest() && getInterestDistribution().isByInstallmentEntryAmount()
+                        && isDebitEntry(currentInvoiceEntryBean)) {
+
+                    //get interestBeans referent at current invoice entry and that rest amount
+                    List<ISettlementInvoiceEntryBean> interestEntryBeans =
+                            getInterestEntryBean(currentInvoiceEntryBean, invoiceEntriesToBeTreated);
+                    BigDecimal restAmountOfInterestEntryBean =
+                            interestEntryBeans.stream().map(bean -> getRestAmountOfBeanInPaymentPlan(bean, installments))
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    BigDecimal totalAmountOfInterestEntryBean = interestEntryBeans.stream().map(bean -> bean.getSettledAmount())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    if (TreasuryConstants.isPositive(restAmountOfInterestEntryBean) && TreasuryConstants
+                            .isGreaterThan(restAmountOfInterestEntryBean.add(installmentEntryAmount), restInstallmentMaxAmount)) {
+
+                        installmentEntryAmount = calculateDebitEntryAmountOnInstallment(restInstallmentMaxAmount,
+                                currentInvoiceEntryBean.getEntryOpenAmount(), totalAmountOfInterestEntryBean);
+
+                        //process interestEntryBean
+                        BigDecimal interestEntryAmount = restInstallmentMaxAmount.subtract(installmentEntryAmount);
+                        restInstallmentMaxAmount = restInstallmentMaxAmount.subtract(interestEntryAmount);
+
+                        processInterestEntryBeansToInstallmentEntryBean(installments, currentInstallmentBean, interestEntryBeans,
+                                interestEntryAmount);
+                    }
+                }
+                //CREATE InstallmentEntryBean for currentInvoiceEntryBean
+                createorUpdateInstallmentEntryBean(currentInstallmentBean, currentInvoiceEntryBean, installmentEntryAmount);
+                restInstallmentMaxAmount = restInstallmentMaxAmount.subtract(installmentEntryAmount);
+            }
+        }
+        return installments;
+    }
+
+    private void processInterestEntryBeansToInstallmentEntryBean(List<InstallmentBean> installments,
+            InstallmentBean currentInstallmentBean, List<ISettlementInvoiceEntryBean> interestEntryBeans,
+            BigDecimal interestEntryAmount) {
+        int intrestIndex = 0;
+        while (TreasuryConstants.isPositive(interestEntryAmount)) {
+
+            ISettlementInvoiceEntryBean interestEntryBean = interestEntryBeans.get(intrestIndex);
+            BigDecimal restInterestEntryBean = getRestAmountOfBeanInPaymentPlan(interestEntryBean, installments);
+            if (TreasuryConstants.isGreaterThan(restInterestEntryBean, interestEntryAmount)) {
+                restInterestEntryBean = interestEntryAmount;
+            }
+            createorUpdateInstallmentEntryBean(currentInstallmentBean, interestEntryBean,
+                    Currency.getValueWithScale(restInterestEntryBean));
+            interestEntryAmount = interestEntryAmount.subtract(restInterestEntryBean);
+            intrestIndex++;
+        }
+    }
+
+    private List<ISettlementInvoiceEntryBean> getInterestEntryBean(ISettlementInvoiceEntryBean currentInvoiceEntryBean,
+            List<ISettlementInvoiceEntryBean> invoiceEntriesToBeTreated) {
+        List<ISettlementInvoiceEntryBean> result = new ArrayList<>();
+        if (!isDebitEntry(currentInvoiceEntryBean)) {
+            return result;
+        }
+        for (ISettlementInvoiceEntryBean element : invoiceEntriesToBeTreated) {
+            if (currentInvoiceEntryBean != element
+                    && currentInvoiceEntryBean.getInvoiceEntry().equals(getOriginDebitEntryFromInterestEntry(element))) {
+                result.add(element);
+            }
+        }
+        return result;
+    }
+
+    private ISettlementInvoiceEntryBean pullNextCurrentInvoiceEntryBean(
+            List<ISettlementInvoiceEntryBean> invoiceEntriesToBeTreated) {
+        ISettlementInvoiceEntryBean currentInvoiceEntryBean =
+                invoiceEntriesToBeTreated.isEmpty() ? null : invoiceEntriesToBeTreated.get(0);
+        if (!invoiceEntriesToBeTreated.isEmpty()) {
+            invoiceEntriesToBeTreated.remove(0);
+        }
+        return currentInvoiceEntryBean;
+    }
+
+    /**
+     *
+     * IA = Rest amount of installment
+     * TD = Total of Debt
+     * TI = Total of interest amount of debt
+     * D = debt amount on installment
+     * I = interest amount on installment
+     *
+     * IA = D + I
+     *
+     * I = D / TD * TI
+     *
+     * IA = D + ( D / TD * TI)
+     * IA = (D (TD + TI)) / TD
+     *
+     * assuming that all variables are positive
+     *
+     * IA * TD = D ( TD + TI)
+     * D = (IA * TD) / (TD + TI)
+     */
+    private BigDecimal calculateDebitEntryAmountOnInstallment(BigDecimal restInstallmentMaxAmount, BigDecimal totalDebtAmount,
+            BigDecimal totalInterestAmount) {
+        BigDecimal IAxTD = restInstallmentMaxAmount.multiply(totalDebtAmount);
+        BigDecimal TDplusTI = totalDebtAmount.add(totalInterestAmount);
+        BigDecimal D = TreasuryConstants.divide(IAxTD, TDplusTI);
+        return Currency.getValueWithScale(D);
+    }
+
+    private BigDecimal getRestAmountOfBeanInPaymentPlan(ISettlementInvoiceEntryBean currInvoiceEntryBean,
+            Collection<InstallmentBean> installments) {
+        BigDecimal total = currInvoiceEntryBean.isForDebitEntry() ? currInvoiceEntryBean
+                .getEntryOpenAmount() : currInvoiceEntryBean.getSettledAmount();
+
+        Stream<InstallmentEntryBean> installmentEntryBeansWithInvoiceEntryBean =
+                installments.stream().flatMap(inst -> inst.getInstallmentEntries().stream())
+                        .filter(entry -> entry.getInvoiceEntry() == currInvoiceEntryBean);;
+
+        BigDecimal used = installmentEntryBeansWithInvoiceEntryBean.map(entry -> entry.getAmount()).reduce(BigDecimal.ZERO,
+                BigDecimal::add);
+
+        return total.subtract(used);
+    }
+
+    private List<BigDecimal> createInstallmentMaxAmountList(PaymentPlanBean paymentPlanBean, List<BigDecimal> fixedAmountList) {
+
+        if (fixedAmountList != null && !fixedAmountList.isEmpty()) {
+            return new ArrayList<>(fixedAmountList);
         }
 
-        return ls;
+        BigDecimal totalBeansAmount = paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
+                .map(bean -> bean.isForDebitEntry() ? bean.getEntryOpenAmount() : bean.getSettledAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal installmentAmount = Currency.getValueWithScale(
+                TreasuryConstants.divide(totalBeansAmount, new BigDecimal(paymentPlanBean.getNbInstallments())));
+
+        List<BigDecimal> result = new ArrayList<>();
+        for (int i = 0; i < paymentPlanBean.getNbInstallments() - 1; i++) {
+            result.add(installmentAmount);
+            totalBeansAmount = totalBeansAmount.subtract(installmentAmount);
+        }
+        result.add(Currency.getValueWithScale(totalBeansAmount));
+        return result;
     }
 
-    protected int getPlusDaysForInstallment(PaymentPlanBean paymentPlanBean, int i) {
-        double daysBeweenInstallments = paymentPlanBean.getNbInstallments() == 1 ? 0 : Days
-                .daysBetween(paymentPlanBean.getStartDate(), paymentPlanBean.getEndDate()).getDays()
-                / (paymentPlanBean.getNbInstallments() - 1.00);
-        return Double.valueOf(((i) * daysBeweenInstallments)).intValue();
-    }
+    private List<InstallmentBean> createInstallmentsList(PaymentPlanBean paymentPlanBean, List<LocalDate> dates) {
+        if (dates == null || dates.isEmpty()) {
+            /**
+             * Create installment dates with days between installments, end date - start date / number of installments
+             */
+            dates = new ArrayList<>();
 
-    protected BigDecimal getInstallmentAmount(BigDecimal totalAmount, int nbInstallments) {
-        return Currency.getValueWithScale(TreasuryConstants.divide(totalAmount, new BigDecimal(nbInstallments)));
-    }
-
-    protected List<InstallmentBean> createInstallments(PaymentPlanBean paymentPlanBean, List<LocalDate> dates) {
-        if (dates == null) {
-            dates = getDates(paymentPlanBean);
+            if (paymentPlanBean.getNbInstallments() == 1) {
+                dates.add(paymentPlanBean.getStartDate());
+            } else {
+                double daysBetweenInstallments =
+                        Days.daysBetween(paymentPlanBean.getStartDate(), paymentPlanBean.getEndDate()).getDays()
+                                / (paymentPlanBean.getNbInstallments() - 1.00);
+                LocalDate installmentDueDate = paymentPlanBean.getStartDate();
+                for (int i = 1; i <= paymentPlanBean.getNbInstallments(); i++) {
+                    if (i == paymentPlanBean.getNbInstallments()) {
+                        installmentDueDate = paymentPlanBean.getEndDate();
+                    }
+                    dates.add(installmentDueDate);
+                    installmentDueDate =
+                            paymentPlanBean.getStartDate().plusDays(Double.valueOf(((i) * daysBetweenInstallments)).intValue());
+                }
+            }
         }
 
         List<InstallmentBean> result = new ArrayList<InstallmentBean>();
-        for (int i = 1; i <= paymentPlanBean.getNbInstallments(); i++) {
-            LocalizedString installmentDescription =
-                    paymentPlanBean.getPaymentPlanConfigurator().getInstallmentDescription(i, paymentPlanBean.getPaymentPlanId());
-            result.add(new InstallmentBean(dates.get(i - 1), installmentDescription));
-        }
-        return result;
+        for (int installmentNumber = 1; installmentNumber <= paymentPlanBean.getNbInstallments(); installmentNumber++) {
+            Map<String, String> values = new HashMap<>();
+            values.put("installmentNumber", "" + installmentNumber);
+            values.put("paymentPlanId", paymentPlanBean.getPaymentPlanId());
 
-    }
-
-    protected List<LocalDate> getDates(PaymentPlanBean paymentPlanBean) {
-        List<LocalDate> result = new ArrayList<>();
-        LocalDate installmentDueDate = paymentPlanBean.getStartDate();
-        for (int i = 1; i <= paymentPlanBean.getNbInstallments(); i++) {
-            if (i == paymentPlanBean.getNbInstallments()) {
-                installmentDueDate = paymentPlanBean.getEndDate();
+            LocalizedString installmentDescription = new LocalizedString();
+            for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
+                installmentDescription = installmentDescription.with(locale,
+                        StrSubstitutor.replace(getInstallmentDescriptionFormat().getContent(locale), values));
             }
-            result.add(installmentDueDate);
-            installmentDueDate = paymentPlanBean.getStartDate().plusDays(getPlusDaysForInstallment(paymentPlanBean, i));
+
+            result.add(new InstallmentBean(dates.get(installmentNumber - 1), installmentDescription));
         }
         return result;
     }
 
-    protected List<ISettlementInvoiceEntryBean> getInvoiceEntryBeans(PaymentPlanBean paymentPlanBean,
-            Predicate<? super ISettlementInvoiceEntryBean> predicate) {
-        return paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(predicate)
-                .sorted(COMPARE_SETTLEMENT_INVOICE_ENTRY_BEAN).collect(Collectors.toList());
-    }
+    private void createInterestAndTaxBeans(PaymentPlanBean paymentPlanBean) {
 
-    protected BigDecimal getSumAmountOf(List<ISettlementInvoiceEntryBean> invoiceEntries, List<InstallmentBean> installments,
-            PaymentPlanBean paymentPlanBean) {
-        return invoiceEntries.stream().map(bean -> getRestAmountOf(bean, installments, paymentPlanBean)).reduce(BigDecimal.ZERO,
-                BigDecimal::add);
-    }
+        //reset settlementInvoiceEntries
+        paymentPlanBean.setSettlementInvoiceEntryBeans(paymentPlanBean.getSettlementInvoiceEntryBeans().stream()
+                .filter(bean -> bean.isForDebitEntry() || bean.isForPendingDebitEntry()).collect(Collectors.toSet()));
 
-    protected Predicate<? super ISettlementInvoiceEntryBean> getPredicateToDebitEntry() {
-        return bean -> {
-            if (isDivideInterest()) {
-                if (bean.isForPendingInterest()) {
-                    return false;
-                }
-                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null) {
-                    return false;
+        Set<ISettlementInvoiceEntryBean> newBeansSet = new HashSet<>(paymentPlanBean.getSettlementInvoiceEntryBeans());
+
+        for (ISettlementInvoiceEntryBean currentInvoiceEntryBean : newBeansSet) {
+            if (!isDebitEntry(currentInvoiceEntryBean)) {
+                continue;
+            }
+            DebitEntry debitEntry = (DebitEntry) currentInvoiceEntryBean.getInvoiceEntry();
+            //Apply Interest
+            if (isApplyInterest() && debitEntry.isApplyInterests()) {
+                BigDecimal interestEntryAmout =
+                        currentInvoiceEntryBean.getSettledAmount().subtract(currentInvoiceEntryBean.getEntryOpenAmount());
+
+                if (TreasuryConstants.isPositive(interestEntryAmout)) {
+                    InterestRateBean interestRateBean = new InterestRateBean();
+                    interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+                            "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
+
+                    interestRateBean.setInterestAmount(interestEntryAmout);
+                    SettlementInterestEntryBean interestEntryBean = new SettlementInterestEntryBean(debitEntry, interestRateBean);
+                    paymentPlanBean.addSettlementInvoiceEntryBean(interestEntryBean);
                 }
             }
-            if (isDividePenaltyTax()) {
-                if (bean.isForPaymentPenalty()) {
-                    return false;
-                }
-                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() != null
-                        && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent) {
-                    return false;
+
+            //Apply PaymentPenalty Tax
+            if (Boolean.TRUE.equals(getUsePaymentPenalty()) && isDebitEntry(currentInvoiceEntryBean)
+                    && !getInterestEntryBean(currentInvoiceEntryBean,
+                            new ArrayList<>(paymentPlanBean.getSettlementInvoiceEntryBeans())).isEmpty()) {
+                //Penalty Tax
+                PaymentPenaltyEntryBean paymentPenaltyEntryBean = PaymentPenaltyTaxTreasuryEvent
+                        .calculatePaymentPenaltyTax(debitEntry, paymentPlanBean.getEndDate(), paymentPlanBean.getCreationDate());
+
+                if (paymentPenaltyEntryBean != null) {
+                    paymentPlanBean.addSettlementInvoiceEntryBean(paymentPenaltyEntryBean);
                 }
             }
-            return true;
-        };
+        }
     }
 
-    protected Predicate<? super ISettlementInvoiceEntryBean> getPredicateToInterestEntry() {
-        return bean -> {
-            if (isDivideInterest()) {
-                if (bean.isForPendingInterest()) {
-                    return true;
-                }
-                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null) {
-                    return true;
-                }
-            }
-            return false;
-        };
+    private InstallmentEntryBean createorUpdateInstallmentEntryBean(InstallmentBean currentInstallmentBean,
+            ISettlementInvoiceEntryBean currentInvoiceEntryBean, BigDecimal installmentEntryAmount) {
+        Optional<InstallmentEntryBean> installmentEntryBeanOptional = currentInstallmentBean.getInstallmentEntries().stream()
+                .filter(bean -> bean.getInvoiceEntry() == currentInvoiceEntryBean).findFirst();
+        InstallmentEntryBean installmentEntryBean = null;
+        if (installmentEntryBeanOptional.isEmpty()) {
+            installmentEntryBean = new InstallmentEntryBean(currentInvoiceEntryBean, installmentEntryAmount);
+            currentInstallmentBean.addInstallmentEntries(installmentEntryBean);
+        } else {
+            installmentEntryBean = installmentEntryBeanOptional.get();
+            installmentEntryBean.setAmount(installmentEntryBean.getAmount().add(installmentEntryAmount));
+        }
+        return installmentEntryBean;
     }
 
-    protected Predicate<? super ISettlementInvoiceEntryBean> getPredicateToPenaltyTaxEntry() {
-        return bean -> {
-            if (isDividePenaltyTax()) {
-                if (bean.isForPaymentPenalty()) {
-                    return true;
-                }
-                if (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() != null
-                        && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent) {
-                    return true;
-                }
-            }
-            return false;
-        };
+    private boolean isDebitEntry(ISettlementInvoiceEntryBean currentInvoiceEntryBean) {
+        return currentInvoiceEntryBean.isForDebitEntry()
+                && ((DebitEntry) currentInvoiceEntryBean.getInvoiceEntry()).getDebitEntry() == null
+                && !(((DebitEntry) currentInvoiceEntryBean.getInvoiceEntry())
+                        .getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent);
     }
 
-    protected boolean diffFirstLastAmountGreaterOrEqualThanNbInstallmentsInCents(List<InstallmentBean> installments,
-            PaymentPlanBean paymentPlanBean) {
-        BigDecimal nbInstallmentsInCents = Currency.getValueWithScale(
-                TreasuryConstants.divide(new BigDecimal(paymentPlanBean.getNbInstallments()), TreasuryConstants.HUNDRED_PERCENT));
-        BigDecimal amountFirstInstallment = installments.get(0).getInstallmentAmount();
-        BigDecimal amountLastInstallment = installments.get(paymentPlanBean.getNbInstallments() - 1).getInstallmentAmount();
-        BigDecimal diffFirstLast = amountFirstInstallment.subtract(amountLastInstallment).abs();
-        return TreasuryConstants.isGreaterOrEqualThan(diffFirstLast, nbInstallmentsInCents);
+    protected static DebitEntry getOriginDebitEntryFromInterestEntry(ISettlementInvoiceEntryBean bean) {
+        DebitEntry debitEntry = null;
+        if (bean.isForPendingInterest()
+                || (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry() != null)) {
+            debitEntry = bean.isForPendingInterest() ? ((SettlementInterestEntryBean) bean)
+                    .getDebitEntry() : ((DebitEntry) bean.getInvoiceEntry()).getDebitEntry();
+        }
+        return debitEntry;
+    }
+
+    private static DebitEntry getOriginDebitEntryFromPenaltyTaxEntry(ISettlementInvoiceEntryBean bean) {
+        DebitEntry debitEntry = null;
+        if (bean.isForPaymentPenalty()
+                || (bean.isForDebitEntry() && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() != null
+                        && ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent() instanceof PaymentPenaltyTaxTreasuryEvent)) {
+            debitEntry = bean.isForPaymentPenalty() ? ((PaymentPenaltyEntryBean) bean)
+                    .getDebitEntry() : ((PaymentPenaltyTaxTreasuryEvent) ((DebitEntry) bean.getInvoiceEntry()).getTreasuryEvent())
+                            .getOriginDebitEntry();
+        }
+        return debitEntry;
+    }
+
+    private static int compareDebitEntryDueDate(DebitEntry debitEntry1, DebitEntry debitEntry2) {
+        return new ComparatorChain((d1, d2) -> debitEntry1.getDueDate().compareTo(debitEntry2.getDueDate()))
+                .thenComparing((d1, d2) -> debitEntry1.getExternalId().compareTo(debitEntry2.getExternalId()))
+                .compare(debitEntry1, debitEntry2);
     }
 }

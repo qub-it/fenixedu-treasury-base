@@ -81,9 +81,9 @@ public class ForwadPaymentController {
         String forwardPaymentId = httpRequest.getParameter("forwardPaymentId");
         Class screenClass = null;
         try {
-            screenClass = Class.forName(httpRequest.getParameter("screenName"));
+            String screenName = httpRequest.getParameter("screenName");
+            screenClass = Class.forName(screenName);
         } catch (ClassNotFoundException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         String url = "";
@@ -100,6 +100,7 @@ public class ForwadPaymentController {
                         false);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             url = implementation.getForwardPaymentURL(httpRequest.getContextPath(), screenClass, false, forwardPaymentId, true);
         } finally {
             response.sendRedirect(url);

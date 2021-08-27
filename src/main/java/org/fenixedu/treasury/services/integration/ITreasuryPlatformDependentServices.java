@@ -60,6 +60,7 @@ import javax.servlet.http.HttpSession;
 
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration;
@@ -67,6 +68,9 @@ import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceRes
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+
+import pt.ist.fenixframework.DomainObject;
 
 import pt.ist.fenixframework.DomainObject;
 
@@ -150,7 +154,7 @@ public interface ITreasuryPlatformDependentServices {
 
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
 
-    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnControllerURL);
+    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl, String cancelUrl);
 
     void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
 
@@ -167,4 +171,10 @@ public interface ITreasuryPlatformDependentServices {
     String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
             boolean isException);
 
+    /* Web Docs */
+    
+    public InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
+            LocalDate documentDateTo);
+    
+    public String exportDocumentFileExtension();
 }

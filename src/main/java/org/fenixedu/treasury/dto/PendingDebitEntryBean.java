@@ -77,6 +77,10 @@ public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITrea
     private BigDecimal amount;
     private LocalDate dueDate;
 
+    public PendingDebitEntryBean() {
+        super();
+    }
+
     public PendingDebitEntryBean(Product product, BigDecimal amount, LocalDate dueDate) {
         super();
         this.product = product;
@@ -181,7 +185,7 @@ public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITrea
         JsonObject jsonObject = new JsonObject();
         jsonObject.add(PRODUCT_SERIALIZER, new JsonPrimitive(product.getExternalId()));
         jsonObject.add(DUE_DATE, new JsonPrimitive(dueDate.toString()));
-        jsonObject.add(ISettlementEntryBeanSerializer.AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
+        jsonObject.add(AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
         return jsonObject.toString();
     }
 
@@ -189,7 +193,7 @@ public class PendingDebitEntryBean implements ISettlementInvoiceEntryBean, ITrea
     public void fillSerializable(JsonObject jsonObject) {
         this.product = FenixFramework.getDomainObject(jsonObject.get(PRODUCT_SERIALIZER).getAsString());
         this.dueDate = LocalDate.parse(jsonObject.get(DUE_DATE).getAsString());
-        this.amount = jsonObject.get(ISettlementEntryBeanSerializer.AMOUNT).getAsBigDecimal();
+        this.amount = jsonObject.get(AMOUNT).getAsBigDecimal();
     }
 
 }

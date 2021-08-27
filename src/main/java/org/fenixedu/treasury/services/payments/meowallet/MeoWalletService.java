@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.services.payments.meowallet;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -77,14 +76,13 @@ import org.joda.time.DateTime;
 import org.joda.time.Hours;
 import org.joda.time.format.ISODateTimeFormat;
 
+import com.fasterxml.jackson.datatype.joda.cfg.JacksonJodaDateFormat;
+import com.fasterxml.jackson.datatype.joda.ser.DateTimeSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.qubit.terra.framework.tools.gson.serializers.DateTimeSerializer;
 
 public class MeoWalletService {
 
@@ -143,14 +141,9 @@ public class MeoWalletService {
         }
         
         // TODO: Put this in the getGson()
-        Gson gson = new GsonBuilder().registerTypeAdapter(DateTime.class, new DateTimeSerializer() {
-
-            @Override
-            public JsonElement serialize(DateTime src, Type srcType, JsonSerializationContext context) {
-                return new JsonPrimitive(src.toString(ISODateTimeFormat.dateTimeNoMillis()));
-            }
-            
-        }).setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().registerTypeAdapter(DateTime.class, 
+                new DateTimeSerializer(new JacksonJodaDateFormat(ISODateTimeFormat.dateTimeNoMillis())))
+                .setPrettyPrinting().create();
 
         String requestLog = gson.toJson(payment);
         String responseLog = processPost(MB_PAY_PATH, requestLog);
@@ -255,7 +248,9 @@ public class MeoWalletService {
     }
 
     private Gson getGson() {
-        return new GsonBuilder().registerTypeAdapter(DateTime.class, new DateTimeSerializer()).setPrettyPrinting().create();
+        return new GsonBuilder()
+                .registerTypeAdapter(DateTime.class, new com.fasterxml.jackson.datatype.joda.ser.DateTimeSerializer())
+                .setPrettyPrinting().create();
     }
 
     private String processGetService(String path, String... queryParams) {

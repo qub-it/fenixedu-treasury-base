@@ -68,6 +68,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.InterestRateBean.CreatedInterestEntry;
@@ -89,12 +90,16 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
 
                 //Calculate interest only if we are making a FullPayment
                 InterestRateBean debitInterest =
-                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(settlementNoteBean.getDate());
+                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(settlementNoteBean.getDate().toLocalDate());
                 if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
                     SettlementInterestEntryBean interestEntryBean =
                             new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
                     interestEntryBean.setVirtualPaymentEntryHandler(this);
-                    interestEntryBean.setIncluded(true);
+                    
+                    // It will be included by default if TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() == false
+                    // and debit not is not exported in legacy ERP
+                    interestEntryBean.setIncluded(
+                            !debitEntryBean.getDebitEntry().isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices());
                     interestEntryBean.setCalculationDescription(getCalculationDescription(settlementNoteBean, interestEntryBean));
 
                     result.add(interestEntryBean);

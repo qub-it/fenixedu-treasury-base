@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.dto;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -68,17 +69,19 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
-import org.fenixedu.treasury.services.serializer.ISettlementEntryBeanSerializer;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
+import com.google.gson.reflect.TypeToken;
 
 import pt.ist.fenixframework.FenixFramework;
 
 public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean, ITreasuryBean, Serializable {
+
+    private static final String INTEREST_DESCRIPTION = "interestDescription";
 
     private static final String VIRTUAL_PAYMENT_ENTRY_HANDLER = "virtualPaymentEntryHandler";
 
@@ -235,11 +238,11 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
     @Override
     public String serialize() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.add(IntrospectorTool.TYPE, new JsonPrimitive(getClass().getName()));
-        jsonObject.add(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID, new JsonPrimitive(getDebitEntry().getExternalId()));
-        jsonObject.add(ISettlementEntryBeanSerializer.INCLUDED, new JsonPrimitive(isIncluded));
-        jsonObject.add(INTEREST_STATIC, new JsonPrimitive(IntrospectorTool.serialize(interest)));
-        jsonObject.add(DESCRIPTION, new JsonPrimitive(IntrospectorTool.serialize(calculationDescription)));
+        jsonObject.add(TYPE, new JsonPrimitive(getClass().getName()));
+        jsonObject.add(DEBIT_ENTRY_ID, new JsonPrimitive(getDebitEntry().getExternalId()));
+        jsonObject.add(INCLUDED, new JsonPrimitive(isIncluded));
+        jsonObject.add(INTEREST_STATIC, new JsonPrimitive(serializeInterest(interest)));
+        jsonObject.add(DESCRIPTION, new JsonPrimitive(serializeCalculationDescription(calculationDescription)));
         jsonObject.add(VIRTUAL_PAYMENT_ENTRY_HANDLER,
                 new JsonPrimitive(virtualPaymentEntryHandler != null ? virtualPaymentEntryHandler.getClass().getName() : ""));
 
@@ -248,12 +251,10 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
 
     @Override
     public void fillSerializable(JsonObject jsonObject) {
-        this.debitEntry =
-                FenixFramework.getDomainObject(jsonObject.get(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID).getAsString());
-        this.isIncluded = jsonObject.get(ISettlementEntryBeanSerializer.INCLUDED).getAsBoolean();
-        this.calculationDescription =
-                (Map<String, List<String>>) IntrospectorTool.deserialize(jsonObject.get(DESCRIPTION).getAsString());
-        this.interest = (InterestRateBean) IntrospectorTool.deserialize(jsonObject.get(INTEREST_STATIC).getAsString());
+        this.debitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
+        this.isIncluded = jsonObject.get(INCLUDED).getAsBoolean();
+        this.calculationDescription = deserializeCalculationDescription(jsonObject.get(DESCRIPTION).getAsString());
+        this.interest = deserializeInterest(new Gson().fromJson(jsonObject.get(INTEREST_STATIC).getAsString(), JsonObject.class));
 
         for (IVirtualPaymentEntryHandler handler : VirtualPaymentEntryFactory.implementation().getHandlers()) {
             String className = jsonObject.get(VIRTUAL_PAYMENT_ENTRY_HANDLER).getAsString();
@@ -261,6 +262,38 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
                 this.virtualPaymentEntryHandler = handler;
             }
         }
+    }
+
+    private String serializeInterest(InterestRateBean interest2) {
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add(INTEREST_DESCRIPTION, new JsonPrimitive(interest2.getDescription()));
+        jsonObject.add(AMOUNT, new JsonPrimitive(interest2.getInterestAmount()));
+
+        return jsonObject.toString();
+    }
+
+    private InterestRateBean deserializeInterest(JsonObject jsonObject) {
+
+        InterestRateBean interestRateBean = new InterestRateBean();
+        interestRateBean.setDescription(jsonObject.get(INTEREST_DESCRIPTION).getAsString());
+        interestRateBean.setInterestAmount(jsonObject.get(AMOUNT).getAsBigDecimal());
+
+        return interestRateBean;
+    }
+
+    private String serializeCalculationDescription(Map<String, List<String>> calculationDescription2) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<Map<String, List<String>>>() {
+        }.getType();
+        return gson.toJson(calculationDescription2, listType);
+    }
+
+    private Map<String, List<String>> deserializeCalculationDescription(String asString) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<Map<String, List<String>>>() {
+        }.getType();
+        return gson.fromJson(asString, listType);
     }
 
 }

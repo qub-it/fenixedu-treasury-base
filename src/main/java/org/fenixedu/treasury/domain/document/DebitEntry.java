@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -496,14 +497,28 @@ public class DebitEntry extends DebitEntry_Base {
         if (!TreasuryConstants.isPositive(amountForCreditWithoutVat)) {
             throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.amountForCredit.not.positive");
         }
-
+        CreditEntry creditEntry = null;
         if (treasuryExemption != null) {
-            return CreditEntry.createFromExemption(treasuryExemption, creditNote, description, amountForCreditWithoutVat,
+            creditEntry = CreditEntry.createFromExemption(treasuryExemption, creditNote, description, amountForCreditWithoutVat,
                     new DateTime(), this);
         } else {
-            return CreditEntry.create(creditNote, description, getProduct(), getVat(), amountForCreditWithoutVat, documentDate,
-                    this, BigDecimal.ONE);
+            creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), amountForCreditWithoutVat,
+                    documentDate, this, BigDecimal.ONE);
         }
+
+        try {
+
+            if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null
+                    && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
+                            .getERPExternalServiceImplementation() != null
+                    && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
+                            .getERPExternalServiceImplementation().isToSendCreditNoteWhenCreated()) {
+                creditNote.closeDocument();
+            }
+            return creditEntry;
+        } catch (TreasuryDomainException e) {
+            return creditEntry;
+        } 
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {

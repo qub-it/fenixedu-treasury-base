@@ -186,7 +186,7 @@ public class SAPExporter implements IERPExporter {
 
         // Build SAFT-AuditFile
         AuditFile auditFile = new AuditFile();
-        // ThreadInformation information = 
+        // ThreadInformation information =
         // SaftThreadRegister.retrieveCurrentThreadInformation();
 
         // Build SAFT-HEADER (Chapter 1 in AuditFile)
@@ -1516,14 +1516,16 @@ public class SAPExporter implements IERPExporter {
             return false;
         }
 
-        final IERPExternalService service = erpIntegrationConfiguration.getERPExternalServiceImplementation();
+        final IERPExternalService service = TreasuryPlataformDependentServicesFactory.implementation()
+                .getERPExternalServiceImplementation(erpIntegrationConfiguration);;
         logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.sending.inforation"));
 
         DocumentsInformationInput input = new DocumentsInformationInput();
         if (contents.length <= erpIntegrationConfiguration.getMaxSizeBytesToExportOnline()) {
             input.setData(contents);
             DocumentsInformationOutput sendInfoOnlineResult = service.sendInfoOnline(institution, input);
-
+            TreasuryPlataformDependentServicesFactory.implementation()
+                    .getERPExternalServiceImplementation(erpIntegrationConfiguration);
             logBean.appendIntegrationLog(
                     treasuryBundle("info.ERPExporter.sucess.sending.inforation.online", sendInfoOnlineResult.getRequestId()));
             logBean.setErpOperationId(sendInfoOnlineResult.getRequestId());
@@ -1534,11 +1536,6 @@ public class SAPExporter implements IERPExporter {
                         FinantialDocument.findByUiDocumentNumber(institution, status.getDocumentNumber());
 
                 boolean integratedWithSuccess = status.isIntegratedWithSuccess();
-//                if(document.isCreditNote()) {
-//                    final CreditNote creditNote = (CreditNote) document;
-//                    
-//                    creditNote.getRelatedSettlementEntries()
-//                }
 
                 // TODO: SINGAP 
                 if (integratedWithSuccess && isToIgnoreWsDocument(institution, status)) {
@@ -1701,7 +1698,7 @@ public class SAPExporter implements IERPExporter {
         }
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-            // If there is restriction on mixing payments exported in legacy ERP, 
+            // If there is restriction on mixing payments exported in legacy ERP,
             // then filter documents exported in legacy ERP
             result = result.stream().filter(d -> !d.isExportedInLegacyERP())
                     .filter(d -> !d.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE))
@@ -1993,6 +1990,7 @@ public class SAPExporter implements IERPExporter {
 
     private static final String SAP_CUSTOMER_ID_IN_LOG_PAT = "(?si).+clientes: \\(SAP n.? \\d+\\): \\[S\\].+";
 
+    @Override
     public boolean isCustomerMaybeIntegratedWithSuccess(final Customer customer) {
         for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
 

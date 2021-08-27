@@ -50,68 +50,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.services.integration.erp.dto;
+package org.fenixedu.treasury.domain.paymentPlan;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
+import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
+import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 
-public class DocumentStatusWS {
-    private String documentNumber;
-    private String certifiedDocumentURL;
-    private String sapDocumentNumber;
-    private StatusType integrationStatus;
-    private String errorDescription;
+@Deprecated
+public class PaymentPlanCalculateInstallmentsInterestsConfigurator
+        extends PaymentPlanCalculateInstallmentsInterestsConfigurator_Base {
 
-    public enum StatusType {
-        PENDING, ERROR, SUCCESS;
-
-        public LocalizedString getDescriptionI18N() {
-            return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
-        }
-    }
-
-    public String getDocumentNumber() {
-        return documentNumber;
+    public PaymentPlanCalculateInstallmentsInterestsConfigurator() {
+        super();
     }
 
-    public void setDocumentNumber(String documentNumber) {
-        this.documentNumber = documentNumber;
-    }
-    
-    public String getCertifiedDocumentURL() {
-        return certifiedDocumentURL;
-    }
-    
-    public void setCertifiedDocumentURL(String certifiedDocumentURL) {
-        this.certifiedDocumentURL = certifiedDocumentURL;
-    }
-    
-    public String getSapDocumentNumber() {
-        return sapDocumentNumber;
-    }
-    
-    public void setSapDocumentNumber(String sapDocumentNumber) {
-        this.sapDocumentNumber = sapDocumentNumber;
-    }
-    
-    public String getErrorDescription() {
-        return errorDescription;
+    @Override
+    public boolean isApplyInterest() {
+        return true;
     }
 
-    public void setErrorDescription(String errorDescription) {
-        this.errorDescription = errorDescription;
-    }
-
-    public StatusType getIntegrationStatus() {
-        return integrationStatus;
-    }
-
-    public void setIntegrationStatus(StatusType integrationStatus) {
-        this.integrationStatus = integrationStatus;
-    }
-
-    public boolean isIntegratedWithSuccess() {
-        return this.getIntegrationStatus() != null && this.getIntegrationStatus().equals(StatusType.SUCCESS);
-    }
 }

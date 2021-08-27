@@ -82,4 +82,7 @@ public interface IERPExternalService {
     public ReimbursementStateBean checkReimbursementState(final SettlementNote reimbursementNote,
             final IntegrationOperationLogBean logBean);
 
+    public default boolean isToSendCreditNoteWhenCreated() {
+        return false;
+    }
 }

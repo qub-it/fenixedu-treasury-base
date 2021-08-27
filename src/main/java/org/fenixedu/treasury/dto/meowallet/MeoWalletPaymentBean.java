@@ -58,7 +58,6 @@ import java.util.List;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.meowallet.MeoWallet;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
 

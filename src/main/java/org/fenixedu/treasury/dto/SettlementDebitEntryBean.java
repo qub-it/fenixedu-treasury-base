@@ -63,12 +63,10 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.services.serializer.ISettlementEntryBeanSerializer;
 import org.joda.time.LocalDate;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
 
 import pt.ist.fenixframework.FenixFramework;
 
@@ -225,21 +223,20 @@ public class SettlementDebitEntryBean implements ISettlementInvoiceEntryBean, IT
     @Override
     public String serialize() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.add(IntrospectorTool.TYPE, new JsonPrimitive(getClass().getName()));
-        jsonObject.add(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID, new JsonPrimitive(getInvoiceEntry().getExternalId()));
-        jsonObject.add(ISettlementEntryBeanSerializer.INCLUDED, new JsonPrimitive(isIncluded));
-        jsonObject.add(ISettlementEntryBeanSerializer.NOT_VALID, new JsonPrimitive(isNotValid));
-        jsonObject.add(ISettlementEntryBeanSerializer.AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
+        jsonObject.add(TYPE, new JsonPrimitive(getClass().getName()));
+        jsonObject.add(DEBIT_ENTRY_ID, new JsonPrimitive(getInvoiceEntry().getExternalId()));
+        jsonObject.add(INCLUDED, new JsonPrimitive(isIncluded));
+        jsonObject.add(NOT_VALID, new JsonPrimitive(isNotValid));
+        jsonObject.add(AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
         return jsonObject.toString();
     }
 
     @Override
     public void fillSerializable(JsonObject jsonObject) {
-        this.debitEntry =
-                FenixFramework.getDomainObject(jsonObject.get(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID).getAsString());
-        this.isIncluded = jsonObject.get(ISettlementEntryBeanSerializer.INCLUDED).getAsBoolean();
-        this.isNotValid = jsonObject.get(ISettlementEntryBeanSerializer.NOT_VALID).getAsBoolean();
-        this.debtAmount = jsonObject.get(ISettlementEntryBeanSerializer.AMOUNT).getAsBigDecimal();
+        this.debitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
+        this.isIncluded = jsonObject.get(INCLUDED).getAsBoolean();
+        this.isNotValid = jsonObject.get(NOT_VALID).getAsBoolean();
+        this.debtAmount = jsonObject.get(AMOUNT).getAsBigDecimal();
     }
 
 }

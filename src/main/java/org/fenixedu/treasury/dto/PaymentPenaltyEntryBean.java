@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.dto;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -67,12 +68,12 @@ import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
-import org.fenixedu.treasury.services.serializer.ISettlementEntryBeanSerializer;
 import org.joda.time.LocalDate;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
+import com.google.gson.reflect.TypeToken;
 
 import pt.ist.fenixframework.FenixFramework;
 
@@ -221,14 +222,14 @@ public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITr
     @Override
     public String serialize() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.add(IntrospectorTool.TYPE, new JsonPrimitive(getClass().getName()));
-        jsonObject.add(ISettlementEntryBeanSerializer.AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
-        jsonObject.add(CALCULATED_DESCRIPTION, new JsonPrimitive(IntrospectorTool.serialize(calculationDescription)));
+        jsonObject.add(TYPE, new JsonPrimitive(getClass().getName()));
+        jsonObject.add(AMOUNT, new JsonPrimitive(getSettledAmount().toPlainString()));
+        jsonObject.add(CALCULATED_DESCRIPTION, new JsonPrimitive(serializeCalculationDescription(calculationDescription)));
         jsonObject.add(DESCRIPTION, new JsonPrimitive(description));
         jsonObject.add(DUE_DATE, new JsonPrimitive(dueDate.toString()));
-        jsonObject.add(ISettlementEntryBeanSerializer.INCLUDED, new JsonPrimitive(isIncluded));
-        jsonObject.add(ISettlementEntryBeanSerializer.NOT_VALID, new JsonPrimitive(isNotValid));
-        jsonObject.add(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID, new JsonPrimitive(originDebitEntry.getExternalId()));
+        jsonObject.add(INCLUDED, new JsonPrimitive(isIncluded));
+        jsonObject.add(NOT_VALID, new JsonPrimitive(isNotValid));
+        jsonObject.add(DEBIT_ENTRY_ID, new JsonPrimitive(originDebitEntry.getExternalId()));
         jsonObject.add(VIRTUAL_PAYMENT_ENTRY_HANDLER,
                 new JsonPrimitive(virtualPaymentEntryHandler != null ? virtualPaymentEntryHandler.getClass().getName() : ""));
 
@@ -237,15 +238,13 @@ public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITr
 
     @Override
     public void fillSerializable(JsonObject jsonObject) {
-        this.amount = jsonObject.get(ISettlementEntryBeanSerializer.AMOUNT).getAsBigDecimal();
-        this.calculationDescription =
-                (Map<String, List<String>>) IntrospectorTool.deserialize(jsonObject.get(CALCULATED_DESCRIPTION).getAsString());
+        this.amount = jsonObject.get(AMOUNT).getAsBigDecimal();
+        this.calculationDescription = deserializeCalculationDescription(jsonObject.get(CALCULATED_DESCRIPTION).getAsString());
         this.description = jsonObject.get(DESCRIPTION).getAsString();
         this.dueDate = LocalDate.parse(jsonObject.get(DUE_DATE).getAsString());
-        this.isIncluded = jsonObject.get(ISettlementEntryBeanSerializer.INCLUDED).getAsBoolean();
-        this.isNotValid = jsonObject.get(ISettlementEntryBeanSerializer.NOT_VALID).getAsBoolean();
-        this.originDebitEntry =
-                FenixFramework.getDomainObject(jsonObject.get(ISettlementEntryBeanSerializer.DEBIT_ENTRY_ID).getAsString());
+        this.isIncluded = jsonObject.get(INCLUDED).getAsBoolean();
+        this.isNotValid = jsonObject.get(NOT_VALID).getAsBoolean();
+        this.originDebitEntry = FenixFramework.getDomainObject(jsonObject.get(DEBIT_ENTRY_ID).getAsString());
 
         for (IVirtualPaymentEntryHandler handler : VirtualPaymentEntryFactory.implementation().getHandlers()) {
             String className = jsonObject.get(VIRTUAL_PAYMENT_ENTRY_HANDLER).getAsString();
@@ -254,4 +253,19 @@ public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITr
             }
         }
     }
+
+    private String serializeCalculationDescription(Map<String, List<String>> calculationDescription2) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<Map<String, List<String>>>() {
+        }.getType();
+        return gson.toJson(calculationDescription2, listType);
+    }
+
+    private Map<String, List<String>> deserializeCalculationDescription(String asString) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<Map<String, List<String>>>() {
+        }.getType();
+        return gson.fromJson(asString, listType);
+    }
+
 }

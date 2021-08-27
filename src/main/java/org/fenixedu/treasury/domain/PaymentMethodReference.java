@@ -114,8 +114,8 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
         if (findDefaultPaymentMethodReference(getPaymentMethod(), getFinantialInstitution()).count() > 1) {
             throw new TreasuryDomainException("error.PaymentMethodReference.defaultPaymentMethodReference.not.unique");
         }
-        
-        if(isDefault() && !isActive()) {
+
+        if (isDefault() && !isActive()) {
             throw new TreasuryDomainException("error.PaymentMethodReference.default.must.be.active");
         }
     }
@@ -155,11 +155,11 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
 
         checkRules();
     }
-    
+
     public void edit(String name, String paymentReferenceId) {
         setName(name);
         setPaymentReferenceId(paymentReferenceId);
-        
+
         checkRules();
     }
 
@@ -209,8 +209,9 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
             FinantialInstitution finantialInstitution) {
         return find(paymentMethod, finantialInstitution).filter(p -> p.isDefault()).findFirst();
     }
-    
-    public static PaymentMethodReference create(PaymentMethod paymentMethod, FinantialInstitution finantialInstitution, String name, String paymentReferenceId) {
+
+    public static PaymentMethodReference create(PaymentMethod paymentMethod, FinantialInstitution finantialInstitution,
+            String name, String paymentReferenceId) {
         return new PaymentMethodReference(paymentMethod, finantialInstitution, name, paymentReferenceId);
     }
 }

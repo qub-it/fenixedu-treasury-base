@@ -50,68 +50,38 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.fenixedu.treasury.services.integration.erp.dto;
+package org.fenixedu.treasury.dto.PaymentPlans;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
+import java.util.List;
 
-import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
-public class DocumentStatusWS {
-    private String documentNumber;
-    private String certifiedDocumentURL;
-    private String sapDocumentNumber;
-    private StatusType integrationStatus;
-    private String errorDescription;
+public enum AddictionsCalculeTypeEnum {
+    BEFORE_DEBIT_ENTRY, BY_INSTALLMENT_ENTRY_AMOUNT, AFTER_DEBIT_ENTRY;
 
-    public enum StatusType {
-        PENDING, ERROR, SUCCESS;
-
-        public LocalizedString getDescriptionI18N() {
-            return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
-        }
+    public static List<AddictionsCalculeTypeEnum> getAddictionsCalculeTypesForInterest() {
+        return List.of(BY_INSTALLMENT_ENTRY_AMOUNT, AFTER_DEBIT_ENTRY);
     }
 
-    public String getDocumentNumber() {
-        return documentNumber;
+    public static List<AddictionsCalculeTypeEnum> getAddictionsCalculeTypesForPenaltyTax() {
+        return List.of(BEFORE_DEBIT_ENTRY, AFTER_DEBIT_ENTRY);
     }
 
-    public void setDocumentNumber(String documentNumber) {
-        this.documentNumber = documentNumber;
-    }
-    
-    public String getCertifiedDocumentURL() {
-        return certifiedDocumentURL;
-    }
-    
-    public void setCertifiedDocumentURL(String certifiedDocumentURL) {
-        this.certifiedDocumentURL = certifiedDocumentURL;
-    }
-    
-    public String getSapDocumentNumber() {
-        return sapDocumentNumber;
-    }
-    
-    public void setSapDocumentNumber(String sapDocumentNumber) {
-        this.sapDocumentNumber = sapDocumentNumber;
-    }
-    
-    public String getErrorDescription() {
-        return errorDescription;
+    public String getName() {
+        return TreasuryPlataformDependentServicesFactory.implementation().bundle(TreasuryConstants.BUNDLE,
+                "label.AddictionsCalculeTypeEnum." + name());
     }
 
-    public void setErrorDescription(String errorDescription) {
-        this.errorDescription = errorDescription;
+    public boolean isBeforeDebitEntry() {
+        return this.equals(BEFORE_DEBIT_ENTRY);
     }
 
-    public StatusType getIntegrationStatus() {
-        return integrationStatus;
+    public boolean isByInstallmentEntryAmount() {
+        return this.equals(BY_INSTALLMENT_ENTRY_AMOUNT);
     }
 
-    public void setIntegrationStatus(StatusType integrationStatus) {
-        this.integrationStatus = integrationStatus;
-    }
-
-    public boolean isIntegratedWithSuccess() {
-        return this.getIntegrationStatus() != null && this.getIntegrationStatus().equals(StatusType.SUCCESS);
+    public boolean isAfterDebitEntry() {
+        return this.equals(AFTER_DEBIT_ENTRY);
     }
 }

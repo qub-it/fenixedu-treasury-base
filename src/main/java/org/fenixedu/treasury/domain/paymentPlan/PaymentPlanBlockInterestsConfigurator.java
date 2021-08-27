@@ -52,6 +52,36 @@
  */
 package org.fenixedu.treasury.domain.paymentPlan;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang.text.StrSubstitutor;
+import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
+import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
+import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
+import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
+import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
+import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
+
+@Deprecated
 public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInterestsConfigurator_Base {
 
     public PaymentPlanBlockInterestsConfigurator() {
@@ -61,11 +91,6 @@ public class PaymentPlanBlockInterestsConfigurator extends PaymentPlanBlockInter
     @Override
     public boolean isApplyInterest() {
         return Boolean.TRUE.equals(getApplyDebitEntryInterest());
-    }
-
-    @Override
-    public boolean isInterestBlocked() {
-        return !isApplyInterest();
     }
 
 }

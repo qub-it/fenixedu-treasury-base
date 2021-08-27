@@ -126,9 +126,6 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsMerchantTransaction.required");
         }
 
-//        if (StringUtils.isEmpty(getTransactionId())) {
-//            throw new TreasuryDomainException("error.MbwayPaymentRequest.transactionId.required");
-//        }
 
         checkRules();
     }
@@ -244,7 +241,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         Set<SettlementNote> noteSet = new HashSet<>();
 
         SibsPaymentCodeTransaction transaction = SibsPaymentCodeTransaction.create(sibsReportFile, this, paymentDate, paidAmount,
-                sibsTransactionId, whenProcessedBySibs, noteSet);
+                sibsTransactionId, whenProcessedBySibs, sibsImportationFilename, noteSet);
 
         Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
                 (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);

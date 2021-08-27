@@ -93,7 +93,4 @@ public interface IForwardPaymentPlatformService {
 
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment);
 
-//    public ForwardPaymentStatusBean prepareCheckout(ForwardPaymentRequest forwardPayment, SibsBillingAddressBean addressBean);
-//    public List<ForwardPaymentStatusBean> verifyPaymentStatus(final ForwardPaymentRequest request);
-
 }

@@ -410,18 +410,19 @@ public class SettlementNote extends SettlementNote_Base {
                 }
 
                 final String creditDescription = creditEntryBean.getCreditEntry().getDescription();
-                SettlementEntry.create(creditEntry, creditAmountWithVat, creditDescription, this,
-                        bean.getDate().toDateTimeAtStartOfDay());
+                SettlementEntry.create(creditEntry, creditAmountWithVat, creditDescription, this, bean.getDate());
             }
         }
     }
 
     private void processDebtEntries(SettlementNoteBean bean) {
-        BigDecimal paymentEntriesAmount = bean.getPaymentEntries().stream().map(p -> p.getPaymentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal creditsAmount = bean.getCreditEntries().stream().filter(c -> c.isIncluded()).map(c -> c.getCreditAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+        BigDecimal paymentEntriesAmount =
+                bean.getPaymentEntries().stream().map(p -> p.getPaymentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal creditsAmount = bean.getCreditEntries().stream().filter(c -> c.isIncluded())
+                .map(c -> c.getCreditAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
         BigDecimal restAmountToUse = paymentEntriesAmount.add(creditsAmount);
-        
+
         DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
                 .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
@@ -432,12 +433,12 @@ public class SettlementNote extends SettlementNote_Base {
                 continue;
             }
 
-            if(!TreasuryConstants.isPositive(restAmountToUse)) {
+            if (!TreasuryConstants.isPositive(restAmountToUse)) {
                 debitEntryBean.setSettledAmount(BigDecimal.ZERO);
                 debitEntryBean.setIncluded(false);
                 continue;
             }
-            
+
             DebitEntry debitEntry = debitEntryBean.getDebitEntry();
 
             if (debitEntry.getFinantialDocument() == null) {
@@ -446,14 +447,14 @@ public class SettlementNote extends SettlementNote_Base {
                 debitEntry.getFinantialDocument().closeDocument();
             }
 
-            if(TreasuryConstants.isLessThan(restAmountToUse, debitEntryBean.getSettledAmount())) {
+            if (TreasuryConstants.isLessThan(restAmountToUse, debitEntryBean.getSettledAmount())) {
                 debitEntryBean.setSettledAmount(restAmountToUse);
             }
-            
+
             restAmountToUse = restAmountToUse.subtract(debitEntryBean.getSettledAmount());
-            
-            SettlementEntry settlementEntry = SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this,
-                    bean.getDate().toDateTimeAtStartOfDay());
+
+            SettlementEntry settlementEntry =
+                    SettlementEntry.create(debitEntry, debitEntryBean.getSettledAmount(), this, bean.getDate());
 
             InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(settlementEntry);
         }
@@ -462,19 +463,19 @@ public class SettlementNote extends SettlementNote_Base {
             if (!installmentPaymenPlanBean.isIncluded()) {
                 continue;
             }
-            
-            if(!TreasuryConstants.isPositive(restAmountToUse)) {
+
+            if (!TreasuryConstants.isPositive(restAmountToUse)) {
                 installmentPaymenPlanBean.setSettledAmount(BigDecimal.ZERO);
                 installmentPaymenPlanBean.setIncluded(false);
                 continue;
             }
-            
-            if(TreasuryConstants.isLessThan(restAmountToUse, installmentPaymenPlanBean.getSettledAmount())) {
+
+            if (TreasuryConstants.isLessThan(restAmountToUse, installmentPaymenPlanBean.getSettledAmount())) {
                 installmentPaymenPlanBean.setSettledAmount(restAmountToUse);
             }
 
             restAmountToUse = restAmountToUse.subtract(installmentPaymenPlanBean.getSettledAmount());
-            
+
             BigDecimal restToPay = installmentPaymenPlanBean.getSettledAmount();
 
             for (InstallmentEntry installmentEntry : installmentPaymenPlanBean.getInstallment()
@@ -499,21 +500,19 @@ public class SettlementNote extends SettlementNote_Base {
 
                 SettlementEntry settlementEntry = getSettlementEntryByDebitEntry(installmentEntry.getDebitEntry());
                 if (settlementEntry == null) {
-                    settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this,
-                            bean.getDate().toDateTimeAtStartOfDay());
+                    settlementEntry = SettlementEntry.create(installmentEntry.getDebitEntry(), debtAmount, this, bean.getDate());
                 } else {
                     settlementEntry.setAmount(settlementEntry.getAmount().add(debtAmount));
                 }
 
                 InstallmentSettlementEntry.create(installmentEntry, settlementEntry, debtAmount);
             }
-            
+
             installmentPaymenPlanBean.getInstallment().getPaymentPlan().tryClosePaymentPlanByPaidOff();
         }
 
         if (untiedDebitEntries.size() != 0) {
-            DebitNote debitNote =
-                    DebitNote.create(bean.getDebtAccount(), debitNoteSeries, bean.getDate().toDateTimeAtStartOfDay());
+            DebitNote debitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, bean.getDate());
             debitNote.addDebitNoteEntries(untiedDebitEntries);
             debitNote.closeDocument();
         }
@@ -842,10 +841,10 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     public static SettlementNote createSettlementNote(SettlementNoteBean bean) {
         DateTime documentDate = new DateTime();
-        SettlementNoteBean copy = bean.duplicate();
+        SettlementNoteBean copy = new SettlementNoteBean(bean);
 
         SettlementNote settlementNote = SettlementNote.create(copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
-                copy.getDate().toDateTimeAtStartOfDay(), copy.getOriginDocumentNumber(),
+                copy.getDate(), copy.getOriginDocumentNumber(),
                 !Strings.isNullOrEmpty(copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear()
                         + "/" + copy.getFinantialTransactionReference() : "");
 

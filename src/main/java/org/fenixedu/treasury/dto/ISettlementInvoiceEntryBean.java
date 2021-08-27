@@ -68,9 +68,19 @@ import org.joda.time.LocalDate;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.qubit.terra.framework.tools.serializer.IntrospectorTool;
 
 public interface ISettlementInvoiceEntryBean {
+    public static final String DUE_DATE = "dueDate";
+    public static final String CREATION_DATE = "creationDate";
+    public static final String DESCRITPION = "descritpion";
+    public static final String AMOUNT = "amount";
+
+    public static final String PRODUCT_ID = "productId";
+    public static final String INCLUDED = "included";
+    public static final String NOT_VALID = "notValid";
+
+    public static final String DEBIT_ENTRY_ID = "debitEntryId";
+    public static final String TYPE = "type";
 
     public InvoiceEntry getInvoiceEntry();
 
@@ -156,7 +166,7 @@ public interface ISettlementInvoiceEntryBean {
         try {
             JsonObject jsonObject = new Gson().fromJson(serializedObject, JsonObject.class);
 
-            Class<?> objectClass = Class.forName(jsonObject.get(IntrospectorTool.TYPE).getAsString());
+            Class<?> objectClass = Class.forName(jsonObject.get(TYPE).getAsString());
             ISettlementInvoiceEntryBean newInstance = (ISettlementInvoiceEntryBean) objectClass.getConstructor().newInstance();
             newInstance.fillSerializable(jsonObject);
             return newInstance;
@@ -165,23 +175,5 @@ public interface ISettlementInvoiceEntryBean {
             return null;
         }
     }
-
-    /**
-     * Descrição
-     *
-     * DueDate
-     *
-     * DebitAmount
-     *
-     * OpenAmount
-     *
-     * Iva
-     *
-     * SettlementAmount
-     *
-     * private boolean isIncluded;
-     * private boolean isNotValid;
-     *
-     */
 
 }

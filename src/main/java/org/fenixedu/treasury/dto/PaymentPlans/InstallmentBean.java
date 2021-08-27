@@ -54,10 +54,14 @@ package org.fenixedu.treasury.dto.PaymentPlans;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.joda.time.LocalDate;
 
 public class InstallmentBean {
@@ -91,6 +95,11 @@ public class InstallmentBean {
 
     public Set<InstallmentEntryBean> getInstallmentEntries() {
         return installmentEntries;
+    }
+
+    public List<InstallmentEntryBean> getSortedInstallmentEntries(Comparator<ISettlementInvoiceEntryBean> comparator) {
+        return getInstallmentEntries().stream().sorted((m1, m2) -> comparator.compare(m1.getInvoiceEntry(), m2.getInvoiceEntry()))
+                .collect(Collectors.toList());
     }
 
     public void setInstallmentEntries(Set<InstallmentEntryBean> installmentEntries) {

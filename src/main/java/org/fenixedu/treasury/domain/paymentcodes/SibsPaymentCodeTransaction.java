@@ -78,7 +78,8 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     }
 
     protected SibsPaymentCodeTransaction(SibsReportFile reportFile, SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
-            BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, Set<SettlementNote> settlementNotes) {
+            BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, String sibsImportationFilename, 
+            Set<SettlementNote> settlementNotes) {
         this();
 
         String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
@@ -91,6 +92,8 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         setSibsEntityReferenceCode(entityReferenceCode);
         setSibsPaymentReferenceCode(referenceCode);
         setSibsTransactionId(sibsTransactionId);
+        setSibsProcessingDate(sibsProcessingDate);
+        setComments(sibsImportationFilename);
 
         setSibsReportFile(reportFile);
 
@@ -174,7 +177,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
 
     public static SibsPaymentCodeTransaction create(SibsReportFile reportFile, SibsPaymentRequest sibsPaymentRequest,
             DateTime paymentDate, BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate,
-            Set<SettlementNote> settlementNotes) {
+            String sibsImportationFilename, Set<SettlementNote> settlementNotes) {
         String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
         String referenceCode = sibsPaymentRequest.getReferenceCode();
 
@@ -184,7 +187,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         }
 
         return new SibsPaymentCodeTransaction(reportFile, sibsPaymentRequest, paymentDate, paidAmount, sibsTransactionId,
-                sibsProcessingDate, settlementNotes);
+                sibsProcessingDate, sibsImportationFilename, settlementNotes);
     }
 
     public static SibsPaymentCodeTransaction create(SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,

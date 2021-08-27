@@ -52,6 +52,7 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes.integration;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -78,6 +79,11 @@ public interface ISibsPaymentCodePoolService {
             Set<Installment> installments);
 
     public SibsPaymentRequest createSibsPaymentRequest(SettlementNoteBean settlementNoteBean);
+
+    @Deprecated
+    // TODO: Only used by PaymentReferenceCodeController.createPaymentCodeForSeveralDebitEntries() method. Replace with settlement note bean
+    public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments, BigDecimal paymentAmount);
 
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate);

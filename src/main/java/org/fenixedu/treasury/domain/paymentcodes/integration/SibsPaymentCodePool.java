@@ -254,6 +254,24 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     @Override
+    @Deprecated
+    // TODO: Only used by PaymentReferenceCodeController.createPaymentCodeForSeveralDebitEntries() method. Replace with settlement note bean
+    public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+            Set<Installment> installments, BigDecimal payableAmount) {
+
+        LocalDate now = new LocalDate();
+        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+
+        if (validTo.isBefore(now)) {
+            validTo = now;
+        }
+
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+    }
+
+    @Override
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate) {
         if (!isActive()) {
@@ -331,7 +349,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     @Atomic
-    private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+    private synchronized SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
 
         checkMaxActiveSibsPaymentRequests(debitEntries, installments);
@@ -341,7 +359,6 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         SibsPaymentRequest paymentRequest =
                 SibsPaymentRequest.create(code, debtAccount, debitEntries, installments, payableAmount);
 
-        paymentRequest.setEntityReferenceCode(getEntityReferenceCode());
         return paymentRequest;
     }
 
