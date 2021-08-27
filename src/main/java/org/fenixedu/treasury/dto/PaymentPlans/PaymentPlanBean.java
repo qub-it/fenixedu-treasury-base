@@ -56,7 +56,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -71,24 +70,22 @@ import org.joda.time.LocalDate;
 public class PaymentPlanBean {
 
     private DebtAccount debtAccount;
+    private String paymentPlanId;
+    private LocalDate creationDate;
+    private String reason;
     private BigDecimal emolumentAmount;
     private int nbInstallments;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String reason;
-    private String paymentPlanId;
-    private List<InstallmentBean> installmentsBean;
-    private LocalDate creationDate;
-    private List<? extends ISettlementInvoiceEntryBean> allDebits;
-
     private PaymentPlanValidator paymentPlanValidator;
     private PaymentPlanConfigurator paymentPlanConfigurator;
+    private List<InstallmentBean> installmentsBean;
+    private String interestChangeReason;
+
+    private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
+    private List<? extends ISettlementInvoiceEntryBean> allDebits;
     private boolean isChanged;
     private boolean withInitialValues;
-    private Set<ISettlementInvoiceEntryBean> settlementInvoiceEntryBeans;
-    private Map<SettlementDebitEntryBean, BigDecimal> extraInterestWarning;
-
-    private String interestChangeReason;
 
     public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
         super();
@@ -120,8 +117,7 @@ public class PaymentPlanBean {
 
     public List<InstallmentBean> getInstallmentsBean() {
         if (installmentsBean == null || isChanged) {
-            installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this);
-            isChanged = false;
+            createInstallmentsBean(null, null);
         }
         return installmentsBean;
     }
@@ -193,12 +189,8 @@ public class PaymentPlanBean {
     }
 
     public BigDecimal getTotalInstallments() {
-        if (installmentsBean == null) {
-            installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this);
-        }
-
-        return installmentsBean.stream().map(i -> i.getInstallmentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2,
-                RoundingMode.HALF_UP);
+        return getInstallmentsBean().stream().map(i -> i.getInstallmentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     public DebtAccount getDebtAccount() {
@@ -261,7 +253,12 @@ public class PaymentPlanBean {
     }
 
     public void createInstallmentsBean(List<LocalDate> fixedDates, List<BigDecimal> fixedAmounts) {
+        if (fixedDates != null && !fixedDates.isEmpty()) {
+            setStartDate(fixedDates.get(0));
+            setEndDate(fixedDates.get(fixedDates.size() - 1));
+        }
         installmentsBean = paymentPlanConfigurator.getInstallmentsBeansFor(this, fixedDates, fixedAmounts);
+        isChanged = false;
     }
 
     public List<? extends ISettlementInvoiceEntryBean> getAllDebits() {
@@ -270,14 +267,6 @@ public class PaymentPlanBean {
 
     public void setAllDebits(List<? extends ISettlementInvoiceEntryBean> allDebits) {
         this.allDebits = allDebits;
-    }
-
-    public void setExtraInterestWarning(Map<SettlementDebitEntryBean, BigDecimal> result) {
-        this.extraInterestWarning = result;
-    }
-
-    public Map<SettlementDebitEntryBean, BigDecimal> getExtraInterestWarning() {
-        return this.extraInterestWarning;
     }
 
     public String getInterestChangeReason() {

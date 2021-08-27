@@ -463,7 +463,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
 
     private List<BigDecimal> createInstallmentMaxAmountList(PaymentPlanBean paymentPlanBean, List<BigDecimal> fixedAmountList) {
 
-        if (fixedAmountList != null) {
+        if (fixedAmountList != null && !fixedAmountList.isEmpty()) {
             return new ArrayList<>(fixedAmountList);
         }
 
@@ -483,7 +483,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
     }
 
     private List<InstallmentBean> createInstallmentsList(PaymentPlanBean paymentPlanBean, List<LocalDate> dates) {
-        if (dates == null) {
+        if (dates == null || dates.isEmpty()) {
             /**
              * Create installment dates with days between installments, end date - start date / number of installments
              */
