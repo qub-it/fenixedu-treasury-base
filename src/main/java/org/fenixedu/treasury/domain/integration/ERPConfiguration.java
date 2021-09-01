@@ -85,7 +85,7 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         setImplementationClassName(implementationClassName);
         setMaxSizeBytesToExportOnline(maxSizeBytesToExportOnline);
         setCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled(false);
-        
+
         checkRules();
     }
 
@@ -106,7 +106,8 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     @Atomic
     public void edit(boolean active, Series paymentsIntegrationSeries, String externalURL, String username, String password,
             boolean exportAnnulledRelatedDocuments, boolean exportOnlyRelatedDocumentsPerExport, String implementationClassName,
-            Long maxSizeBytesToExportOnline, String erpIdProcess) {
+            Long maxSizeBytesToExportOnline, String erpIdProcess, boolean closeCreditNoteWhenCreated,
+            boolean partialReimbursementSupported) {
         setActive(active);
         setPaymentsIntegrationSeries(paymentsIntegrationSeries);
         setExternalURL(externalURL);
@@ -117,6 +118,8 @@ public class ERPConfiguration extends ERPConfiguration_Base {
         setImplementationClassName(implementationClassName);
         setMaxSizeBytesToExportOnline(maxSizeBytesToExportOnline);
         setErpIdProcess(erpIdProcess);
+        setCloseCreditNoteWhenCreated(closeCreditNoteWhenCreated);
+        setPartialReimbursementSupported(partialReimbursementSupported);
 
         checkRules();
     }
@@ -140,6 +143,14 @@ public class ERPConfiguration extends ERPConfiguration_Base {
 
     public boolean isAllowFiscalFixWithLegacyDocsExportedLegacyERP() {
         return getAllowFiscalFixWithLegacyDocsExportedLegacyERP();
+    }
+
+    public boolean isToCloseCreditNoteWhenCreated() {
+        return Boolean.TRUE.equals(getCloseCreditNoteWhenCreated());
+    }
+
+    public boolean isPartialReimbursementSupported() {
+        return Boolean.TRUE.equals(getPartialReimbursementSupported());
     }
 
     @Atomic

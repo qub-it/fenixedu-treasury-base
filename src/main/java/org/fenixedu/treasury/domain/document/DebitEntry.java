@@ -480,6 +480,10 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.requires.finantial.document");
         }
 
+        if (creditNote != null && !creditNote.isPreparing()) {
+            throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.creditNote.is.not.preparing");
+        }
+
         final DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
                 finantialDocument.getDocumentNumberSeries().getSeries());
 
@@ -506,19 +510,13 @@ public class DebitEntry extends DebitEntry_Base {
                     documentDate, this, BigDecimal.ONE);
         }
 
-        try {
+        if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null && this.getDebtAccount()
+                .getFinantialInstitution().getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated()) {
+            creditNote.closeDocument();
+        }
 
-            if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null
-                    && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
-                            .getERPExternalServiceImplementation() != null
-                    && this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration()
-                            .getERPExternalServiceImplementation().isToSendCreditNoteWhenCreated()) {
-                creditNote.closeDocument();
-            }
-            return creditEntry;
-        } catch (TreasuryDomainException e) {
-            return creditEntry;
-        } 
+        return creditEntry;
+
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
