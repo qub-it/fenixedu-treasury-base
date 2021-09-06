@@ -315,7 +315,9 @@ public class BalanceTransferService {
                     final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null, null,
                             openAmountWithoutVat, null, null);
 
-                    newCreditEntry.getFinantialDocument().closeDocument();
+                    if(newCreditEntry.getFinantialDocument().isPreparing()) {
+                        newCreditEntry.getFinantialDocument().closeDocument();
+                    }
 
                     destinySettlementEntry = SettlementEntry.create(debitEntry, settlementNote, openAmount,
                             debitEntry.getDescription(), now, false);

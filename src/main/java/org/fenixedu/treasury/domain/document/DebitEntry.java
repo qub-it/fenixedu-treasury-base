@@ -510,8 +510,7 @@ public class DebitEntry extends DebitEntry_Base {
                     documentDate, this, BigDecimal.ONE);
         }
 
-        if (this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null && this.getDebtAccount()
-                .getFinantialInstitution().getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated()) {
+        if (isToCloseCreditNoteWhenCreated()) {
             creditNote.closeDocument();
         }
 
@@ -519,24 +518,39 @@ public class DebitEntry extends DebitEntry_Base {
 
     }
 
+    private boolean isToCloseCreditNoteWhenCreated() {
+        return this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null && this.getDebtAccount()
+                .getFinantialInstitution().getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated();
+    }
+
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
         final DocumentNumberSeries documentNumberSeriesSettlementNote = DocumentNumberSeries.find(
                 FinantialDocumentType.findForSettlementNote(), this.getFinantialDocument().getDocumentNumberSeries().getSeries());
 
-        if (!creditEntry.getFinantialDocument().isPreparing()) {
+        if (creditEntry.getFinantialDocument().isAnnulled()) {
+            throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.is.annulled");
+        }
+        
+        if (!creditEntry.getFinantialDocument().isPreparing() && !isToCloseCreditNoteWhenCreated()) {
             return;
         }
 
-        if (!TreasuryConstants.isPositive(getOpenAmount())) {
+        if (!TreasuryConstants.isPositive(this.getOpenAmount())) {
             return;
         }
 
-        if (TreasuryConstants.isLessThan(getOpenAmount(), creditEntry.getOpenAmount())) {
+        if (TreasuryConstants.isLessThan(creditEntry.getOpenAmount(), this.getOpenAmount())) {
+            throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.openAmount.is.less.than.debit.open.amount");
+        }
+        
+        if (TreasuryConstants.isLessThan(this.getOpenAmount(), creditEntry.getOpenAmount()) && creditEntry.getFinantialDocument().isPreparing()) {
             // split credit entry
-            creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(getOpenAmount()));
+            creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(this.getOpenAmount()));
         }
 
-        creditEntry.getFinantialDocument().closeDocument();
+        if(creditEntry.getFinantialDocument().isPreparing()) {
+            creditEntry.getFinantialDocument().closeDocument();
+        }
 
         final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
 
@@ -548,9 +562,9 @@ public class DebitEntry extends DebitEntry_Base {
         settlementNote
                 .setDocumentObservations(reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
 
-        SettlementEntry.create(creditEntry, settlementNote, creditEntry.getOpenAmount(),
+        SettlementEntry.create(creditEntry, settlementNote, this.getOpenAmount(),
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
-        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, creditEntry.getOpenAmount(),
+        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, this.getOpenAmount(),
                 reasonDescription + ": " + getDescription(), now, false);
 
         InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
