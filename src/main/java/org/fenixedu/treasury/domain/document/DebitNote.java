@@ -405,7 +405,7 @@ public class DebitNote extends DebitNote_Base {
                 // Annul payment reference codes
                 for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
                     if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
-                        ((SibsPaymentRequest) paymentCode).anull();
+                        paymentCode.anull();
                     }
                 }
 
@@ -443,7 +443,7 @@ public class DebitNote extends DebitNote_Base {
 
                 for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
                     if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
-                        ((SibsPaymentRequest) paymentCode).anull();
+                        paymentCode.anull();
                     }
                 }
             }

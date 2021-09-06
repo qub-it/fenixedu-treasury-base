@@ -74,15 +74,19 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.logging.LoggingFeature.Verbosity;
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
+import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.ISODateTimeFormat;
 
-import com.fasterxml.jackson.datatype.joda.cfg.JacksonJodaDateFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.joda.ser.DateTimeSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 
 public class MeoWalletService {
 
@@ -115,7 +119,7 @@ public class MeoWalletService {
 
     public MeoWalletPaymentBean generateMbwayReference(MeoWalletPaymentBean payment)
             throws OnlinePaymentsGatewayCommunicationException {
-        
+
         String requestLog = getGson().toJson(payment);
         String responseLog = processPost(PAYMENT_PATH, requestLog);
         try {
@@ -136,14 +140,13 @@ public class MeoWalletService {
     public MeoWalletPaymentBean generateMBPaymentReference(MeoWalletPaymentBean payment)
             throws OnlinePaymentsGatewayCommunicationException, IOException {
 
-        if(payment.getExpires() != null && Hours.hoursBetween(payment.getExpires(), DateTime.now()).getHours() < 32) {
+        if (payment.getExpires() != null && Hours.hoursBetween(payment.getExpires(), DateTime.now()).getHours() < 32) {
             payment.setExpires(payment.getExpires().plusDays(1));
         }
-        
+
         // TODO: Put this in the getGson()
-        Gson gson = new GsonBuilder().registerTypeAdapter(DateTime.class, 
-                new DateTimeSerializer(new JacksonJodaDateFormat(ISODateTimeFormat.dateTimeNoMillis())))
-                .setPrettyPrinting().create();
+        Gson gson = getGson();
+        //new GsonBuilder().registerTypeAdapter(DateTime.class, (JsonSerializer<DateTime>) (src, srcType, context) -> new JsonPrimitive(src.toString(ISODateTimeFormat.dateTimeNoMillis()))).setPrettyPrinting().create();
 
         String requestLog = gson.toJson(payment);
         String responseLog = processPost(MB_PAY_PATH, requestLog);
@@ -248,9 +251,16 @@ public class MeoWalletService {
     }
 
     private Gson getGson() {
+        //return new GsonBuilder().registerTypeAdapter(DateTime.class, new DateTimeSerializer()).setPrettyPrinting().create();
         return new GsonBuilder()
-                .registerTypeAdapter(DateTime.class, new com.fasterxml.jackson.datatype.joda.ser.DateTimeSerializer())
+                .registerTypeAdapter(DateTime.class,
+                        (JsonSerializer<DateTime>) (src, srcType,
+                                context) -> new JsonPrimitive(src.toString(ISODateTimeFormat.dateTimeNoMillis())))
+                .registerTypeAdapter(DateTime.class,
+                        (JsonDeserializer<DateTime>) (src, srcType, context) -> DateTime.parse(src.getAsString()))
+//                "2021-08-31T10:02:24+0000"
                 .setPrettyPrinting().create();
+
     }
 
     private String processGetService(String path, String... queryParams) {

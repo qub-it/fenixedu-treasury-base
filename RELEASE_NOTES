@@ -1,4 +1,5 @@
 - Improvement: Close credit notes when creating and Support for partial reimbursement on credits
+- Refactor: Change jackson dateTime serialization in MeoWallet service
 
 8.1.0 (31-08-2021)
 - Refactor: Simplify payment plan creation

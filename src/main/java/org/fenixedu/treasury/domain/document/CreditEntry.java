@@ -95,11 +95,11 @@ public class CreditEntry extends CreditEntry_Base {
         throw new RuntimeException("error.CreditEntry.use.init.without.finantialEntryType");
     }
 
-    protected void init(final FinantialDocument finantialDocument, final Product product, final Vat vat, final BigDecimal amountWithoutVat,
-            String description, BigDecimal quantity, final DateTime entryDateTime, final DebitEntry debitEntry,
-            final boolean fromExemption) {
-        super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat, amountWithoutVat,
-                description, quantity, entryDateTime);
+    protected void init(final FinantialDocument finantialDocument, final Product product, final Vat vat,
+            final BigDecimal amountWithoutVat, String description, BigDecimal quantity, final DateTime entryDateTime,
+            final DebitEntry debitEntry, final boolean fromExemption) {
+        super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat,
+                amountWithoutVat, description, quantity, entryDateTime);
         this.setDebitEntry(debitEntry);
         this.setFromExemption(fromExemption);
         recalculateAmountValues();
@@ -132,7 +132,8 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         if (this.getDebitEntry() != null) {
-            if (TreasuryConstants.isGreaterThan(this.getDebitEntry().getTotalCreditedAmount(), this.getDebitEntry().getTotalAmount())) {
+            if (TreasuryConstants.isGreaterThan(this.getDebitEntry().getTotalCreditedAmount(),
+                    this.getDebitEntry().getTotalAmount())) {
                 throw new TreasuryDomainException("error.CreditEntry.reated.debit.entry.invalid.total.credited.amount");
             }
         }
@@ -218,7 +219,7 @@ public class CreditEntry extends CreditEntry_Base {
     public BigDecimal getOpenAmountWithInterests() {
         return getOpenAmount();
     }
-    
+
     public CreditNote getCreditNote() {
         return (CreditNote) getFinantialDocument();
     }
@@ -253,11 +254,12 @@ public class CreditEntry extends CreditEntry_Base {
                 remainingAmountWithoutVatDividedByQuantity, getEntryDateTime(), getDebitEntry(), getQuantity());
         newCreditEntry.setFromExemption(isFromExemption());
 
-        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && getFinantialDocument().isExportedInLegacyERP()) {
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
+                && getFinantialDocument().isExportedInLegacyERP()) {
             newCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
             newCreditEntry.getFinantialDocument().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
         }
-        
+
         return newCreditEntry;
     }
 
