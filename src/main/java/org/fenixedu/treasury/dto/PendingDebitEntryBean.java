@@ -61,7 +61,6 @@ import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.services.serializer.ISettlementEntryBeanSerializer;
 import org.joda.time.LocalDate;
 
 import com.google.gson.JsonObject;

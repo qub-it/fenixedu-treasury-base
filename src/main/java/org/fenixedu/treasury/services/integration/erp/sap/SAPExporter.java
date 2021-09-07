@@ -1537,8 +1537,7 @@ public class SAPExporter implements IERPExporter {
 
                 boolean integratedWithSuccess = status.isIntegratedWithSuccess();
 
-                // TODO: SINGAP 
-                if (integratedWithSuccess && isToIgnoreWsDocument(institution, status)) {
+                if (integratedWithSuccess) {
 
                     if (document != null) {
                         final String message =
@@ -1580,24 +1579,6 @@ public class SAPExporter implements IERPExporter {
         }
 
         return success;
-    }
-
-    // TODO: SINGAP specific
-    private boolean isToIgnoreWsDocument(final FinantialInstitution finantialInstitution, final DocumentStatusWS status) {
-        String documentNumber = status.getDocumentNumber();
-        if (documentNumber != null) {
-            Optional<Product> product = Product.findUniqueByCode(documentNumber);
-            if (product.isPresent()) {
-                return true;
-            }
-
-            Stream<? extends Customer> customers = Customer.findByCode(documentNumber);
-            if (customers.findAny().isPresent()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void writeError(final ERPExportOperation operation, final IntegrationOperationLogBean logBean, final Throwable t) {

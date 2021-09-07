@@ -1,3 +1,6 @@
+- Improvement: Close credit notes when creating and Support for partial reimbursement on credits
+- Refactor: Change jackson dateTime serialization in MeoWallet service
+
 8.0.0 (02-09-2021)
 - Refactor: Simplify payment plan creation
 - Improvement: Allow creation of penalty tax for adhoc customers. It is useful for unit tests

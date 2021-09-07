@@ -1031,6 +1031,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
     }
 
+// TODO Check code Refactor/20210624-MergeWithISCTE
+// Check if this method is necessary
     public SettlementNoteBean duplicate() {
         String settlementNoteBean = IntrospectorTool.serialize(this);
         return (SettlementNoteBean) IntrospectorTool.deserialize(settlementNoteBean);

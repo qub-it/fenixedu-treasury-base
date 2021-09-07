@@ -123,7 +123,7 @@ public class CreditEntry extends CreditEntry_Base {
             throw new TreasuryDomainException("error.CreditEntry.product.must.be.the.same.as.debit.entry");
         }
 
-        /* If it is from exemption then ensure that there is no credit entries
+        /* If it is from exemption then ensure that there is no credit entries 
          * from exemption created.
          */
 

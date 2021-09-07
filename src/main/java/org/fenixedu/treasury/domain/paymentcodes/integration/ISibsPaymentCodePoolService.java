@@ -95,4 +95,5 @@ public interface ISibsPaymentCodePoolService {
     public PaymentRequestLog createLogForWebhookNotification();
 
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
+
 }

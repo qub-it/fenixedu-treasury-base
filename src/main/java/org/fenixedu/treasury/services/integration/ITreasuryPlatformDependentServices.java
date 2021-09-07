@@ -72,8 +72,6 @@ import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.DomainObject;
 
-import pt.ist.fenixframework.DomainObject;
-
 public interface ITreasuryPlatformDependentServices {
 
     /* ERP Integration */
