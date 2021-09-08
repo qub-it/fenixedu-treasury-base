@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.services.integration.erp;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -95,5 +96,7 @@ public interface IERPExporter {
     public boolean isCustomerWithFinantialDocumentsIntegratedInPreviousERP(final Customer customer);
     
     public boolean isCustomerWithFinantialDocumentsIntegratedInERP(final Customer customer);
+
+    public List<FinantialDocument> filterDocumentsToExport(final Stream<? extends FinantialDocument> finantialDocumentsStream);
 
 }
