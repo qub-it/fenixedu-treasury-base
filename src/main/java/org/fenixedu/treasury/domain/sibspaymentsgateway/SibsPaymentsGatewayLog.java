@@ -167,6 +167,16 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
         setSibsGatewayReferenceId(referenceId);
     }
 
+    @Override
+    public String getInternalMerchantTransactionId() {
+        return super.getSibsGatewayMerchantTransactionId();
+    }
+    
+    @Override
+    public String getExternalTransactionId() {
+        return super.getSibsGatewayTransactionId();
+    }
+
     // @formatter:off
     /*
      * ********

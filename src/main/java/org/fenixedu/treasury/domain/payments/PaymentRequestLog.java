@@ -131,6 +131,22 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setAuthorizationId(authorizationId);
         setAuthorizationDate(authorizationDate);
     }
+    
+    /**
+     * Returns the merchant transaction id and is used for search
+     * @return
+     */
+    public String getInternalMerchantTransactionId() {
+        return null;
+    }
+    
+    /**
+     * Returns the digital platform external transaction id and is used for search
+     * @return
+     */
+    public String getExternalTransactionId() {
+        return null;
+    }
 
     // @formatter:off
     /*

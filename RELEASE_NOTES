@@ -1,5 +1,6 @@
 - Improvement: Close credit notes when creating and Support for partial reimbursement on credits
 - Refactor: Change jackson dateTime serialization in MeoWallet service
+- Refactor: Declare methods in PaymentRequestLog that return the merchant transaction id and digital platform external transaction id
 
 8.1.0 (31-08-2021)
 - Refactor: Simplify payment plan creation
