@@ -31,12 +31,6 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     }
 
     @Override
-    public void scheduleSingleDocument(FinantialDocument finantialDocument) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public IERPExternalService getERPExternalServiceImplementation(ERPConfiguration erpConfiguration) {
         // TODO Auto-generated method stub
         return null;

@@ -77,8 +77,6 @@ public interface ITreasuryPlatformDependentServices {
     /* ERP Integration */
     void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
 
-    void scheduleSingleDocument(final FinantialDocument finantialDocument);
-
     IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
 
     /* File */

@@ -3,6 +3,9 @@
 - Refactor: Declare methods in PaymentRequestLog that return the merchant transaction id and digital platform external transaction id
 - Refactor: Add method isToCloseCreditNoteWhenCreated() to FinantialInstitution, to be easily invoked
 - Improvement: Possibility to export customer email in SAFT
+- Refactor: Remove scheduleDocumentForExportation from ITreasuryPlatformDependentServices, which is the same as scheduleDocumentForExportation
+- Refactor: Move ERP exporter finantial document filtering to specific integration
+- Refactor: Move reimbursement state update to specific IERPExporter (method processReimbursementStateChange())
 
 
 8.1.0 (31-08-2021)

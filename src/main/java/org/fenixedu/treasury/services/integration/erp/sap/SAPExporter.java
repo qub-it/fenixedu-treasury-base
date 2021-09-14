@@ -103,6 +103,7 @@ import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.ReimbursementEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
+import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
@@ -2064,4 +2065,94 @@ public class SAPExporter implements IERPExporter {
 
         return false;
     }
+
+    @Override
+    public List<FinantialDocument> filterDocumentsToExport(
+            final Stream<? extends FinantialDocument> finantialDocumentsStream) {
+        
+        List<? extends FinantialDocument> tempList = finantialDocumentsStream
+                .filter(d -> d.isDocumentToExport())
+                .filter(d -> !d.isCreditNote())
+                .filter(d -> d.isAnnulled() || d.isClosed())
+                .filter(d -> d.isDocumentSeriesNumberSet())
+                .filter(x -> x.getCloseDate() != null)
+                .filter(x -> x.isDebitNote() || (x.isSettlementNote() && !x.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)))
+                // TODO Anil Review comparator COMPARE_BY_DOCUMENT_TYPE which is buggy, for now do not sort
+                // .sorted(COMPARE_BY_DOCUMENT_TYPE)
+                .collect(Collectors.<FinantialDocument> toList());
+
+        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+            // If there is restriction on mixing payments exported in legacy ERP, then filter documents exported in legacy ERP
+            tempList = tempList.stream()
+                    .filter(d -> !d.isExportedInLegacyERP())
+                    .filter(d -> !d.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE))
+                    .collect(Collectors.<FinantialDocument> toList());
+        }
+        
+        final List<FinantialDocument> result = Lists.newArrayList();
+
+        // TODO: Put first debit notes and then settlement notes
+        result.addAll(tempList.stream().filter(d -> d.isDebitNote()).collect(Collectors.<FinantialDocument> toList()));
+        result.addAll(tempList.stream().filter(d -> d.isSettlementNote()).collect(Collectors.<FinantialDocument> toList()));
+        
+        if(tempList.size() != result.size()) {
+            throw new RuntimeException("error");
+        }
+        
+        return result;
+    }
+    
+    @Atomic
+    public void processReimbursementStateChange(SettlementNote reimbursementNote,
+            ReimbursementProcessStatusType reimbursementStatus, String exerciseYear, DateTime reimbursementStatusDate) {
+
+        if (reimbursementStatus == null) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementStatus");
+        }
+
+        if (!reimbursementNote.isReimbursement()) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.settlementNote");
+        }
+
+        if (!reimbursementNote.isClosed() && !reimbursementStatus.isInitialStatus()) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.state");
+        }
+
+        if (!reimbursementStatus.isInitialStatus() && reimbursementNote.getCurrentReimbursementProcessStatus() == null) {
+            throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
+        }
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null
+                && !reimbursementStatus.isAfter(reimbursementNote.getCurrentReimbursementProcessStatus())) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.next.status.invalid");
+        }
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null
+                && reimbursementNote.getCurrentReimbursementProcessStatus().isFinalStatus()) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.current.status.is.final");
+        }
+
+        reimbursementNote.setCurrentReimbursementProcessStatus(reimbursementStatus);
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() == null) {
+            throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
+        }
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus().isRejectedStatus() && reimbursementNote.isClosed()) {
+
+            final CreditNote creditNote = (CreditNote) reimbursementNote.getSettlemetEntries().findFirst().get().getInvoiceEntry()
+                    .getFinantialDocument();
+
+            if (!creditNote.isAdvancePayment()) {
+                creditNote.anullReimbursementCreditNoteAndCopy(
+                        treasuryBundle("error.SettlementNote.reimbursement.rejected.reason"));
+            }
+
+            reimbursementNote.anullDocument(
+                    treasuryBundle("label.ReimbursementProcessStatusType.annuled.reimbursement.by.annuled.process"), false);
+
+            reimbursementNote.markDocumentToExport();
+        }
+    }
+
 }
