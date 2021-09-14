@@ -1318,7 +1318,7 @@ public class SAPExporter implements IERPExporter {
         c.setCustomerTaxID(customer.getCustomerFiscalNumber());
 
         // Email
-        c.setEmail(customer.getCustomerEmail());
+//        c.setEmail(customer.getCustomerEmail());
 
         // Fax
         // c.setFax("");
