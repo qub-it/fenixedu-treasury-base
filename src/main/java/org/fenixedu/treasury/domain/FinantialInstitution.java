@@ -83,10 +83,10 @@ public class FinantialInstitution extends FinantialInstitution_Base {
 
     public static final Comparator<FinantialInstitution> COMPARATOR_BY_NAME = (o1, o2) -> {
         int c = o1.getName().compareTo(o2.getName());
-        
+
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     protected FinantialInstitution() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -110,9 +110,9 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         setLocality(locality);
         setZipCode(zipCode);
         setCurrency(currency);
-        
+
         ERPConfiguration.createEmpty(this);
-        
+
         checkRules();
     }
 
@@ -138,14 +138,14 @@ public class FinantialInstitution extends FinantialInstitution_Base {
 
 //        IFiscalContributor.findByFiscalNumber(getFiscalNumber());
     }
-    
+
     @Atomic
     public void editContacts(final String email, final String telephoneContact, final String webAddress) {
         setEmail(email);
         setTelephoneContact(telephoneContact);
         setWebAddress(webAddress);
     }
-    
+
     public String getComercialRegistrationCode() {
         return this.getFiscalNumber() + " " + this.getAddress();
     }
@@ -236,6 +236,63 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         series.setDefaultSeries(true);
     }
 
+    public Set<FinantialDocument> getExportableDocuments(DateTime fromDate, DateTime toDate) {
+        Set<FinantialDocument> result = new HashSet<FinantialDocument>();
+        for (Series series : this.getSeriesSet()) {
+            for (DocumentNumberSeries documentNumberSeries : series.getDocumentNumberSeriesSet()) {
+                result.addAll(documentNumberSeries.getFinantialDocumentsSet().stream()
+                        .filter(x -> x.getDocumentDate().isAfter(fromDate) && x.getDocumentDate().isBefore(toDate))
+                        .collect(Collectors.toSet()));
+            }
+        }
+
+        return result;
+    }
+
+    public Vat getActiveVat(VatType vatType, DateTime when) {
+        return this.getVatsSet().stream().filter(x -> x.isActive(when) && x.getVatType().equals(vatType)).findFirst()
+                .orElse(null);
+    }
+
+    public String getUiCompleteAddress() {
+
+        final StringBuilder sb = new StringBuilder();
+
+        if (!Strings.isNullOrEmpty(getAddress())) {
+            sb.append(getAddress()).append(", ");
+        }
+
+        if (!Strings.isNullOrEmpty(getZipCode())) {
+            sb.append(getZipCode()).append(", ");
+        }
+
+        if (!Strings.isNullOrEmpty(getLocality())) {
+            sb.append(getLocality()).append(", ");
+        }
+
+        if (getMunicipality() != null) {
+            sb.append(getMunicipality().name).append(", ");
+        }
+
+        if (getCountry() != null) {
+            sb.append(getCountry().alpha2).append(", ");
+        }
+
+        if (sb.length() > 0) {
+            sb.delete(sb.length() - 2, sb.length());
+        }
+
+        return sb.toString();
+    }
+
+    public boolean isToCloseCreditNoteWhenCreated() {
+        return getErpIntegrationConfiguration() != null && getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated();
+    }
+    
+    // ********
+    // SERVICES
+    // ********
+
     public static Stream<FinantialInstitution> findAll() {
         return FenixFramework.getDomainRoot().getFinantialInstitutionsSet().stream();
     }
@@ -262,57 +319,8 @@ public class FinantialInstitution extends FinantialInstitution_Base {
                 country, district, municipality, locality, zipCode);
     }
 
-    public Set<FinantialDocument> getExportableDocuments(DateTime fromDate, DateTime toDate) {
-        Set<FinantialDocument> result = new HashSet<FinantialDocument>();
-        for (Series series : this.getSeriesSet()) {
-            for (DocumentNumberSeries documentNumberSeries : series.getDocumentNumberSeriesSet()) {
-                result.addAll(documentNumberSeries.getFinantialDocumentsSet().stream()
-                        .filter(x -> x.getDocumentDate().isAfter(fromDate) && x.getDocumentDate().isBefore(toDate))
-                        .collect(Collectors.toSet()));
-            }
-        }
-
-        return result;
-    }
-
-    public Vat getActiveVat(VatType vatType, DateTime when) {
-        return this.getVatsSet().stream().filter(x -> x.isActive(when) && x.getVatType().equals(vatType)).findFirst()
-                .orElse(null);
-    }
-    
-    public String getUiCompleteAddress() {
-
-        final StringBuilder sb = new StringBuilder();
-        
-        if(!Strings.isNullOrEmpty(getAddress())) {
-            sb.append(getAddress()).append(", ");
-        }
-        
-        if(!Strings.isNullOrEmpty(getZipCode())) {
-            sb.append(getZipCode()).append(", ");
-        }
-
-        if(!Strings.isNullOrEmpty(getLocality())) {
-            sb.append(getLocality()).append(", ");
-        }
-
-        if(getMunicipality() != null) {
-            sb.append(getMunicipality().name).append(", ");
-        }
-        
-        if(getCountry() != null) {
-            sb.append(getCountry().alpha2).append(", ");
-        }
-        
-        if(sb.length() > 0) {
-            sb.delete(sb.length() - 2, sb.length());
-        }
-        
-        return sb.toString();
-    }
-
     public static Optional<FinantialInstitution> findUniqueByFiscalCode(String fiscalNumber) {
         return findAll().filter(x -> fiscalNumber.equals(x.getFiscalNumber())).findFirst();
     }
-    
+
 }

@@ -510,17 +510,12 @@ public class DebitEntry extends DebitEntry_Base {
                     documentDate, this, BigDecimal.ONE);
         }
 
-        if (isToCloseCreditNoteWhenCreated()) {
+        if (getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
             creditNote.closeDocument();
         }
 
         return creditEntry;
 
-    }
-
-    private boolean isToCloseCreditNoteWhenCreated() {
-        return this.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration() != null && this.getDebtAccount()
-                .getFinantialInstitution().getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated();
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
@@ -531,7 +526,7 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.is.annulled");
         }
         
-        if (!creditEntry.getFinantialDocument().isPreparing() && !isToCloseCreditNoteWhenCreated()) {
+        if (!creditEntry.getFinantialDocument().isPreparing() && !getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
             return;
         }
 

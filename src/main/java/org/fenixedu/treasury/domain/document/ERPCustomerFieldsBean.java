@@ -87,6 +87,9 @@ public class ERPCustomerFieldsBean {
     private static final int MAX_NAME = 100;
     private static final int MAX_STREET_NAME = 90;
 
+    private static final int MAX_TELEPHONE = 20;
+    private static final int MAX_EMAIL = 60;
+    
     private String customerId;
 
     private String customerBusinessId;
@@ -102,6 +105,9 @@ public class ERPCustomerFieldsBean {
     private String customerZipCode;
     private String customerRegion;
     private String customerCountry;
+    
+    private String customerTelephone;
+    private String customerEmail;
 
     public ERPCustomerFieldsBean() {
     }
@@ -182,6 +188,9 @@ public class ERPCustomerFieldsBean {
         bean.setCustomerFiscalCountry(customer.getFiscalCountry());
         bean.setCustomerNationality(customer.getNationalityCountryCode());
 
+        bean.setCustomerTelephone(Splitter.fixedLength(MAX_TELEPHONE).splitToList(customer.getPhoneNumber()).get(0));
+        bean.setCustomerEmail(Splitter.fixedLength(MAX_EMAIL).splitToList(customer.getEmail()).get(0));
+        
         bean.checkRules();
 
         return bean;
@@ -462,5 +471,22 @@ public class ERPCustomerFieldsBean {
     public void setCustomerCountry(String customerCountry) {
         this.customerCountry = customerCountry;
     }
+    
+    public String getCustomerTelephone() {
+        return customerTelephone;
+    }
+    
+    public void setCustomerTelephone(String customerTelephone) {
+        this.customerTelephone = customerTelephone;
+    }
 
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+    
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
+    }
+    
+    
 }
