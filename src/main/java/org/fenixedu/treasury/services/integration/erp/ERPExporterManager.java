@@ -357,11 +357,6 @@ public class ERPExporterManager {
             throw new TreasuryDomainException("error.ERPExporterManager.reimbursementStatus.unknown");
         }
 
-        if (reimbursementStateBean.getReimbursementProcessStatus().isRejectedStatus()) {
-            throw new TreasuryDomainException(
-                    "error.ERPExporterManager.reimbursementStatus.rejected.please.check.rejection.and.contact.support.if.needed");
-        }
-
         ReimbursementProcessStateLog stateLog = ReimbursementProcessStateLog.create(reimbursementNote,
                 reimbursementStateBean.getReimbursementProcessStatus(), UUID.randomUUID().toString(),
                 reimbursementStateBean.getReimbursementStateDate(), reimbursementStateBean.getExerciseYear());

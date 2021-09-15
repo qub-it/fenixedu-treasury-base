@@ -2110,6 +2110,12 @@ public class SAPExporter implements IERPExporter {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementStatus");
         }
 
+        // Requested by UL
+        if (reimbursementStatus.isRejectedStatus()) {
+            throw new TreasuryDomainException(
+                    "error.ERPExporterManager.reimbursementStatus.rejected.please.check.rejection.and.contact.support.if.needed");
+        }
+        
         if (!reimbursementNote.isReimbursement()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.settlementNote");
         }
@@ -2131,7 +2137,7 @@ public class SAPExporter implements IERPExporter {
                 && reimbursementNote.getCurrentReimbursementProcessStatus().isFinalStatus()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.current.status.is.final");
         }
-
+        
         reimbursementNote.setCurrentReimbursementProcessStatus(reimbursementStatus);
 
         if (reimbursementNote.getCurrentReimbursementProcessStatus() == null) {

@@ -5,6 +5,7 @@
 - Refactor: Move ERP exporter finantial document filtering to specific integration
 - Refactor: Move reimbursement state update to specific IERPExporter (method processReimbursementStateChange())
 - Bug Fix: Fix settlement between debit and credit entries, when debit entry is annulled or exempted partially
+- Refactor: Move reimbursement rejection update from ERPExportManager to SAPExporter
 
 8.1.1 (08-09-2021)
 - Refactor: Move ERP exporter finantial document filtering to specific integration

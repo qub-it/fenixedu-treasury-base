@@ -666,6 +666,7 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Atomic
+    @Deprecated
     public void processReimbursementStateChange(final ReimbursementProcessStatusType reimbursementStatus,
             final String exerciseYear, final DateTime reimbursementStatusDate) {
 
