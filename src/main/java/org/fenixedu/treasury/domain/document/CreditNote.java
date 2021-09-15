@@ -412,6 +412,10 @@ public class CreditNote extends CreditNote_Base {
 
         creditNote.editPayorDebtAccount(payorDebtAccount);
 
+        if(finantialInstitution.isToCloseCreditNoteWhenCreated()) {
+            creditNote.closeDocument();
+        }
+        
         return entry;
     }
 

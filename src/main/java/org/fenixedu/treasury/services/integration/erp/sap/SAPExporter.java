@@ -103,6 +103,7 @@ import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.ReimbursementEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
+import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
@@ -1318,7 +1319,7 @@ public class SAPExporter implements IERPExporter {
         c.setCustomerTaxID(customer.getCustomerFiscalNumber());
 
         // Email
-        // c.setEmail("");
+//        c.setEmail(customer.getCustomerEmail());
 
         // Fax
         // c.setFax("");
@@ -2101,4 +2102,57 @@ public class SAPExporter implements IERPExporter {
         return result;
     }
     
+    @Atomic
+    public void processReimbursementStateChange(SettlementNote reimbursementNote,
+            ReimbursementProcessStatusType reimbursementStatus, String exerciseYear, DateTime reimbursementStatusDate) {
+
+        if (reimbursementStatus == null) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementStatus");
+        }
+
+        if (!reimbursementNote.isReimbursement()) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.settlementNote");
+        }
+
+        if (!reimbursementNote.isClosed() && !reimbursementStatus.isInitialStatus()) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.state");
+        }
+
+        if (!reimbursementStatus.isInitialStatus() && reimbursementNote.getCurrentReimbursementProcessStatus() == null) {
+            throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
+        }
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null
+                && !reimbursementStatus.isAfter(reimbursementNote.getCurrentReimbursementProcessStatus())) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.next.status.invalid");
+        }
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null
+                && reimbursementNote.getCurrentReimbursementProcessStatus().isFinalStatus()) {
+            throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.current.status.is.final");
+        }
+
+        reimbursementNote.setCurrentReimbursementProcessStatus(reimbursementStatus);
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() == null) {
+            throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
+        }
+
+        if (reimbursementNote.getCurrentReimbursementProcessStatus().isRejectedStatus() && reimbursementNote.isClosed()) {
+
+            final CreditNote creditNote = (CreditNote) reimbursementNote.getSettlemetEntries().findFirst().get().getInvoiceEntry()
+                    .getFinantialDocument();
+
+            if (!creditNote.isAdvancePayment()) {
+                creditNote.anullReimbursementCreditNoteAndCopy(
+                        treasuryBundle("error.SettlementNote.reimbursement.rejected.reason"));
+            }
+
+            reimbursementNote.anullDocument(
+                    treasuryBundle("label.ReimbursementProcessStatusType.annuled.reimbursement.by.annuled.process"), false);
+
+            reimbursementNote.markDocumentToExport();
+        }
+    }
+
 }

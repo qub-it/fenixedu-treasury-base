@@ -366,9 +366,9 @@ public class ERPExporterManager {
                 reimbursementStateBean.getReimbursementProcessStatus(), UUID.randomUUID().toString(),
                 reimbursementStateBean.getReimbursementStateDate(), reimbursementStateBean.getExerciseYear());
 
-        reimbursementNote.processReimbursementStateChange(reimbursementStateBean.getReimbursementProcessStatus(),
+        erpExporter.processReimbursementStateChange(reimbursementNote, reimbursementStateBean.getReimbursementProcessStatus(),
                 reimbursementStateBean.getExerciseYear(), reimbursementStateBean.getReimbursementStateDate());
-
+        
         return stateLog;
     }
 

@@ -144,6 +144,24 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         setTransactionDuplicated(true);
     }
 
+    @Override
+    public String getInternalMerchantTransactionId() {
+        return super.getExtInvoiceId();
+    }
+    
+    @Override
+    public String getExternalTransactionId() {
+        return super.getMeoWalletId();
+    }
+    
+    // @formatter:off
+    /*
+     * ********
+     * SERVICES
+     * ********
+     */
+    // @formatter:on
+
     public static MeoWalletLog createPaymentRequestLog(PaymentRequest paymentRequest, String code,
             LocalizedString localizedName) {
         return new MeoWalletLog(paymentRequest, code, localizedName);
