@@ -6,7 +6,7 @@
 - Refactor: Remove scheduleDocumentForExportation from ITreasuryPlatformDependentServices, which is the same as scheduleDocumentForExportation
 - Refactor: Move ERP exporter finantial document filtering to specific integration
 - Refactor: Move reimbursement state update to specific IERPExporter (method processReimbursementStateChange())
-
+- Bug Fix: Fix settlement between debit and credit entries, when debit entry is annulled or exempted partially
 
 8.1.0 (31-08-2021)
 - Refactor: Simplify payment plan creation

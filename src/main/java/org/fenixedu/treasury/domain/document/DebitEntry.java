@@ -525,25 +525,29 @@ public class DebitEntry extends DebitEntry_Base {
         if (creditEntry.getFinantialDocument().isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.is.annulled");
         }
-        
-        if (!creditEntry.getFinantialDocument().isPreparing() && !getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
+
+        if (!creditEntry.getFinantialDocument().isPreparing()
+                && !getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
             return;
         }
 
-        if (!TreasuryConstants.isPositive(this.getOpenAmount())) {
+        BigDecimal minimumOpenAmount = creditEntry.getOpenAmount();
+
+        if (TreasuryConstants.isLessThan(this.getOpenAmount(), creditEntry.getOpenAmount())) {
+            minimumOpenAmount = this.getOpenAmount();
+        }
+
+        if (!TreasuryConstants.isPositive(minimumOpenAmount)) {
             return;
         }
 
-        if (TreasuryConstants.isLessThan(creditEntry.getOpenAmount(), this.getOpenAmount())) {
-            throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.openAmount.is.less.than.debit.open.amount");
-        }
-        
-        if (TreasuryConstants.isLessThan(this.getOpenAmount(), creditEntry.getOpenAmount()) && creditEntry.getFinantialDocument().isPreparing()) {
+        if (TreasuryConstants.isLessThan(minimumOpenAmount, creditEntry.getOpenAmount())
+                && creditEntry.getFinantialDocument().isPreparing()) {
             // split credit entry
-            creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(this.getOpenAmount()));
+            creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(minimumOpenAmount));
         }
 
-        if(creditEntry.getFinantialDocument().isPreparing()) {
+        if (creditEntry.getFinantialDocument().isPreparing()) {
             creditEntry.getFinantialDocument().closeDocument();
         }
 
@@ -557,9 +561,10 @@ public class DebitEntry extends DebitEntry_Base {
         settlementNote
                 .setDocumentObservations(reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
 
-        SettlementEntry.create(creditEntry, settlementNote, this.getOpenAmount(),
+        SettlementEntry.create(creditEntry, settlementNote, minimumOpenAmount,
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
-        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, this.getOpenAmount(),
+
+        SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, minimumOpenAmount,
                 reasonDescription + ": " + getDescription(), now, false);
 
         InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
