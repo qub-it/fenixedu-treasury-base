@@ -700,21 +700,6 @@ public class SettlementNote extends SettlementNote_Base {
         if (getCurrentReimbursementProcessStatus() == null) {
             throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
         }
-
-        if (getCurrentReimbursementProcessStatus().isRejectedStatus() && isClosed()) {
-
-            final CreditNote creditNote =
-                    (CreditNote) getSettlemetEntries().findFirst().get().getInvoiceEntry().getFinantialDocument();
-
-            if (!creditNote.isAdvancePayment()) {
-                creditNote.anullReimbursementCreditNoteAndCopy(
-                        treasuryBundle("error.SettlementNote.reimbursement.rejected.reason"));
-            }
-
-            anullDocument(treasuryBundle("label.ReimbursementProcessStatusType.annuled.reimbursement.by.annuled.process"), false);
-
-            markDocumentToExport();
-        }
     }
 
     public BigDecimal getTotalCreditAmount() {
