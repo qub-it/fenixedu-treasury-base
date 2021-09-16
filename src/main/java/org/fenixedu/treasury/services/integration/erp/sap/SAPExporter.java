@@ -2110,6 +2110,12 @@ public class SAPExporter implements IERPExporter {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementStatus");
         }
 
+        // Requested by UL
+        if (reimbursementStatus.isRejectedStatus()) {
+            throw new TreasuryDomainException(
+                    "error.ERPExporterManager.reimbursementStatus.rejected.please.check.rejection.and.contact.support.if.needed");
+        }
+        
         if (!reimbursementNote.isReimbursement()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.settlementNote");
         }
