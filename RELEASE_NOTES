@@ -1,3 +1,4 @@
+8.2.0 (16-09-2021)
 - Improvement: Remove the max limit of payment request code from online platforms
 - Improvement: Add the possibility of register a payment with multiple payment modes
 - Improvement: Close credit notes when creating and Support for partial reimbursement on credits
