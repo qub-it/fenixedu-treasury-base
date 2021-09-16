@@ -1424,6 +1424,7 @@ class settings.TreasurySettings {
 	boolean restrictPaymentMixingLegacyInvoices;
 	String forwardPaymentReturnDefaultURL;
 	Integer numberOfPaymentPlansActivesPerStudent;
+	boolean canRegisterPaymentWithMultipleMethods;
 }
 
 	relation TreasurySettingsBennu {

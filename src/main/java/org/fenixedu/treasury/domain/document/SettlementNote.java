@@ -190,18 +190,19 @@ public class SettlementNote extends SettlementNote_Base {
             }
         }
 
-        if (getPaymentEntriesSet().size() > 1) {
+        if (!TreasurySettings.getInstance().getCanRegisterPaymentWithMultipleMethods() && getPaymentEntriesSet().size() > 1) {
             throw new TreasuryDomainException("error.SettlementNote.only.one.payment.method.is.supported");
         }
-        
+
         // Check that the "not reimbursement settlement note" which has credit entries
         // also has debit entries
         {
             boolean hasCreditEntries = getSettlemetEntriesSet().stream().anyMatch(se -> se.getInvoiceEntry().isCreditNoteEntry());
             boolean hasDebitEntries = getSettlemetEntriesSet().stream().anyMatch(se -> se.getInvoiceEntry().isDebitNoteEntry());
-            
-            if(!isReimbursement() && hasCreditEntries && !hasDebitEntries) {
-                throw new TreasuryDomainException("error.SettlementNote.settlementNote.not.reimbursement.but.has.only.credits.settled");
+
+            if (!isReimbursement() && hasCreditEntries && !hasDebitEntries) {
+                throw new TreasuryDomainException(
+                        "error.SettlementNote.settlementNote.not.reimbursement.but.has.only.credits.settled");
             }
         }
     }
