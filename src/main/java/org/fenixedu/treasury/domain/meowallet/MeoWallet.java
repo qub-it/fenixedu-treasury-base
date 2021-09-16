@@ -487,10 +487,11 @@ public class MeoWallet extends MeoWallet_Base
         map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
         LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
-        if(settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate() && settlementNoteBean.getCustomSibsPaymentRequestDueDate() == null) {
+        if (settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate()
+                && settlementNoteBean.getCustomSibsPaymentRequestDueDate() == null) {
             throw new IllegalArgumentException("customSibsPaymentRequestDueDate is null");
         }
-        
+
         if (settlementNoteBean.getCustomSibsPaymentRequestDueDate() != null) {
             validTo = settlementNoteBean.getCustomSibsPaymentRequestDueDate();
         }
@@ -499,8 +500,8 @@ public class MeoWallet extends MeoWallet_Base
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo,
-                payableAmount, settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate());
+        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount,
+                settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate());
     }
 
     @Override
@@ -535,8 +536,8 @@ public class MeoWallet extends MeoWallet_Base
         if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
-
-        checkMaxActiveSibsPaymentRequests(debitEntries);
+        // Remove Max active payment requests to online plataforms
+        // checkMaxActiveSibsPaymentRequests(debitEntries);
 
         String merchantTransactionId = generateNewMerchantTransactionId();
 
@@ -587,10 +588,10 @@ public class MeoWallet extends MeoWallet_Base
                         sibsReferenceId);
                 log.setPaymentRequest(request);
 
-                if(limitSibsPaymentRequestToValidTo) {
+                if (limitSibsPaymentRequestToValidTo) {
                     request.setPaymentDueDate(validTo);
                 }
-                
+
                 return request;
             });
 
@@ -718,21 +719,6 @@ public class MeoWallet extends MeoWallet_Base
             });
 
             throw new RuntimeException(e);
-        }
-    }
-
-    private void checkMaxActiveSibsPaymentRequests(Set<DebitEntry> debitEntries) {
-        for (DebitEntry debitEntry : debitEntries) {
-            long numActiveSibsPaymentRequests =
-                    debitEntry.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
-                                    || r.getState() == PaymentReferenceCodeStateType.USED)
-                            .count();
-
-            if (numActiveSibsPaymentRequests >= 2) {
-                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
-                        debitEntry.getDescription());
-            }
         }
     }
 

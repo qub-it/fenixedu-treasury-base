@@ -643,21 +643,6 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
-    private void checkMaxActiveSibsPaymentRequests(Set<DebitEntry> debitEntries) {
-        for (DebitEntry debitEntry : debitEntries) {
-            long numActiveSibsPaymentRequests =
-                    debitEntry.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
-                                    || r.getState() == PaymentReferenceCodeStateType.USED)
-                            .count();
-
-            if (numActiveSibsPaymentRequests >= 2) {
-                throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
-                        debitEntry.getDescription());
-            }
-        }
-    }
-
     private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
         if (!isActive()) {
@@ -667,8 +652,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
-
-        checkMaxActiveSibsPaymentRequests(debitEntries);
+        //Remove Max active payment requests to online plataforms
+//        checkMaxActiveSibsPaymentRequests(debitEntries);
 
         String merchantTransactionId = generateNewMerchantTransactionId();
 
@@ -905,7 +890,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     public static String getPresentationName() {
         return TreasuryConstants.treasuryBundle("label.SibsPaymentsGateway.presentationName");
     }
-    
+
     @Override
     @Atomic(mode = TxMode.READ)
     public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
@@ -919,7 +904,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             return debitEntry.getOpenAmountWithInterests().add(penaltyTaxAmount);
         };
-        
+
         if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
