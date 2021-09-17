@@ -57,6 +57,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
@@ -75,11 +76,14 @@ public interface IERPExporter {
 
     public String exportsProductsToXML(FinantialInstitution finantialInstitution);
     public String exportsCustomersToXML(FinantialInstitution finantialInstitution);
-
+    public String exportCustomerToXML(DebtAccount debtAccount);
+    
     public ERPExportOperation exportProductsToIntegration(FinantialInstitution finantialInstitution);
     
     public ERPExportOperation exportCustomersToIntegration(FinantialInstitution finantialInstitution);
 
+    public ERPExportOperation exportCustomerToIntegration(DebtAccount debtAccount);
+    
     public void testExportToIntegration(FinantialInstitution finantialInstitution);
 
     // Deprecated
