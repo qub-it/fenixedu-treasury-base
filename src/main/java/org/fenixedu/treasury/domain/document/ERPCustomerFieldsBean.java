@@ -88,10 +88,8 @@ public class ERPCustomerFieldsBean {
     private static final int MAX_NAME = 100;
     private static final int MAX_STREET_NAME = 90;
 
-    private static final int MAX_TELEPHONE = 20;
-    private static final int MAX_EMAIL = 60;
-    
-    private Customer customer;
+    public static final int MAX_TELEPHONE = 20;
+    public static final int MAX_EMAIL = 60;
     
     private String customerId;
 
@@ -129,8 +127,6 @@ public class ERPCustomerFieldsBean {
     public static ERPCustomerFieldsBean fillFromCustomer(final Customer customer) {
         final ERPCustomerFieldsBean bean = new ERPCustomerFieldsBean();
 
-        bean.setCustomer(customer);
-        
         // AccountID
         /*
          * Deve ser indicada a respectiva conta corrente do cliente no plano de
@@ -370,14 +366,6 @@ public class ERPCustomerFieldsBean {
      */
     // @formatter:on
 
-    public Customer getCustomer() {
-        return customer;
-    }
-    
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
-    
     public String getCustomerBusinessId() {
         return customerBusinessId;
     }
