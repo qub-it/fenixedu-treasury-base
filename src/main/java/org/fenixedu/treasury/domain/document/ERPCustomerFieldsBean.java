@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.AdhocCustomer;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -188,8 +189,13 @@ public class ERPCustomerFieldsBean {
         bean.setCustomerFiscalCountry(customer.getFiscalCountry());
         bean.setCustomerNationality(customer.getNationalityCountryCode());
 
-        bean.setCustomerTelephone(Splitter.fixedLength(MAX_TELEPHONE).splitToList(customer.getPhoneNumber()).get(0));
-        bean.setCustomerEmail(Splitter.fixedLength(MAX_EMAIL).splitToList(customer.getEmail()).get(0));
+        if(StringUtils.isNotEmpty(customer.getPhoneNumber())) {
+            bean.setCustomerTelephone(Splitter.fixedLength(MAX_TELEPHONE).splitToList(customer.getPhoneNumber()).get(0));
+        }
+        
+        if(StringUtils.isNotEmpty(customer.getEmail())) {
+            bean.setCustomerEmail(Splitter.fixedLength(MAX_EMAIL).splitToList(customer.getEmail()).get(0));
+        }
         
         bean.checkRules();
 

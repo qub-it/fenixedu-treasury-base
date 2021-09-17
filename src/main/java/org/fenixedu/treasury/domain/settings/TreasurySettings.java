@@ -72,11 +72,12 @@ public class TreasurySettings extends TreasurySettings_Base {
 
     @Atomic
     public void edit(final Currency defaultCurrency, Product interestProduct, Product advancePaymentProduct,
-            Integer numberOfPaymentPlansActivesPerStudent) {
+            Integer numberOfPaymentPlansActivesPerStudent, Boolean canRegisterPaymentWithMultipleMethods) {
         setDefaultCurrency(defaultCurrency);
         setInterestProduct(interestProduct);
         setAdvancePaymentProduct(advancePaymentProduct);
         setNumberOfPaymentPlansActivesPerStudent(numberOfPaymentPlansActivesPerStudent);
+        setCanRegisterPaymentWithMultipleMethods(canRegisterPaymentWithMultipleMethods);
     }
 
     public boolean isRestrictPaymentMixingLegacyInvoices() {

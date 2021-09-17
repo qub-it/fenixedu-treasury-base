@@ -1,3 +1,6 @@
+- Improvement: Remove the max limit of payment request code from online platforms
+- Improvement: Add the possibility of register a payment with multiple payment modes
+
 8.2.0 (15-09-2021)
 - Refactor: Declare methods in PaymentRequestLog that return the merchant transaction id and digital platform external transaction id
 - Refactor: Add method isToCloseCreditNoteWhenCreated() to FinantialInstitution, to be easily invoked
