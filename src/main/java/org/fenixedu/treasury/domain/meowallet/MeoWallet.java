@@ -115,6 +115,7 @@ public class MeoWallet extends MeoWallet_Base
 
     public static final String STATUS_FAIL = "FAIL";
     public static final String STATUS_COMPLETED = "COMPLETED";
+    public static final String STATUS_VOIDED = "VOIDED";
 
     public MeoWallet() {
         super();
@@ -590,6 +591,7 @@ public class MeoWallet extends MeoWallet_Base
 
                 if (limitSibsPaymentRequestToValidTo) {
                     request.setPaymentDueDate(validTo);
+                    request.setExpiresDate(paymentBean.getExpires());
                 }
 
                 return request;
@@ -704,7 +706,7 @@ public class MeoWallet extends MeoWallet_Base
                     throw new RuntimeException(e);
                 }
 
-            } else if (STATUS_FAIL.equals(bean.getPaymentResultCode())) {
+            } else if (STATUS_FAIL.equals(bean.getPaymentResultCode()) || STATUS_VOIDED.equals(bean.getPaymentResultCode())) {
                 FenixFramework.atomic(() -> {
                     log.setStateCode(PaymentReferenceCodeStateType.ANNULLED.name());
 
