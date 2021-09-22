@@ -340,7 +340,9 @@ public class BalanceTransferService {
 
                     }
 
-                    regulationCreditEntry.getFinantialDocument().closeDocument();
+                    if(regulationCreditEntry.getFinantialDocument().isPreparing()) {
+                        regulationCreditEntry.getFinantialDocument().closeDocument();
+                    }
 
                     destinySettlementEntry = SettlementEntry.create(debitEntry, settlementNote, openAmount,
                             debitEntry.getDescription(), now, false);

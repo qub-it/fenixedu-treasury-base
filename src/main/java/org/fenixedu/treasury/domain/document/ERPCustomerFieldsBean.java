@@ -88,8 +88,8 @@ public class ERPCustomerFieldsBean {
     private static final int MAX_NAME = 100;
     private static final int MAX_STREET_NAME = 90;
 
-    private static final int MAX_TELEPHONE = 20;
-    private static final int MAX_EMAIL = 60;
+    public static final int MAX_TELEPHONE = 20;
+    public static final int MAX_EMAIL = 60;
     
     private String customerId;
 

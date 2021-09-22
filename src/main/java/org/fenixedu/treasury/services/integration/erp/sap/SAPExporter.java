@@ -2137,7 +2137,7 @@ public class SAPExporter implements IERPExporter {
                 && reimbursementNote.getCurrentReimbursementProcessStatus().isFinalStatus()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.current.status.is.final");
         }
-
+        
         reimbursementNote.setCurrentReimbursementProcessStatus(reimbursementStatus);
 
         if (reimbursementNote.getCurrentReimbursementProcessStatus() == null) {
@@ -2159,6 +2159,141 @@ public class SAPExporter implements IERPExporter {
 
             reimbursementNote.markDocumentToExport();
         }
+    }
+
+    @Override
+    public String exportCustomerToXML(DebtAccount debtAccount) {
+        UnaryOperator<AuditFile> auditFilePreProcess = getAuditFilePreProcessOperator(debtAccount.getFinantialInstitution());
+        return exportCustomerToXML(debtAccount, auditFilePreProcess);
+    }
+
+    protected String exportCustomerToXML(DebtAccount debtAccount, UnaryOperator<AuditFile> preProcessFunctionBeforeSerialize) {
+        DateTime fromDate = new DateTime();
+        DateTime toDate = new DateTime();
+        FinantialInstitution institution = debtAccount.getFinantialInstitution();
+        
+        // Build SAFT-AuditFile
+        AuditFile auditFile = new AuditFile();
+        // ThreadInformation information = 
+        // SaftThreadRegister.retrieveCurrentThreadInformation();
+
+        // Build SAFT-HEADER (Chapter 1 in AuditFile)
+        Header header = this.createSAFTHeader(fromDate, toDate, institution, ERP_HEADER_VERSION_1_00_00);
+        // SetHeader
+        auditFile.setHeader(header);
+
+        // Build Master-Files
+        org.fenixedu.treasury.generated.sources.saft.sap.AuditFile.MasterFiles masterFiles =
+                new org.fenixedu.treasury.generated.sources.saft.sap.AuditFile.MasterFiles();
+
+        // SetMasterFiles
+        auditFile.setMasterFiles(masterFiles);
+
+        // Build SAFT-MovementOfGoods (Customer and Products are built inside)
+        // ProductsTable (Chapter 2.4 in AuditFile)
+        List<org.fenixedu.treasury.generated.sources.saft.sap.Product> productList = masterFiles.getProduct();
+        Map<String, org.fenixedu.treasury.generated.sources.saft.sap.Product> productMap =
+                new HashMap<String, org.fenixedu.treasury.generated.sources.saft.sap.Product>();
+        Set<String> productCodes = new HashSet<String>();
+
+        // ClientsTable (Chapter 2.2 in AuditFile)
+        List<org.fenixedu.treasury.generated.sources.saft.sap.Customer> customerList = masterFiles.getCustomer();
+        final Map<String, ERPCustomerFieldsBean> customerMap = new HashMap<String, ERPCustomerFieldsBean>();
+
+        ERPCustomerFieldsBean customerBean = ERPCustomerFieldsBean.fillFromCustomer(debtAccount.getCustomer());
+        org.fenixedu.treasury.generated.sources.saft.sap.Customer saftCustomer = this.convertCustomerToSAFTCustomer(customerBean);
+        customerMap.put(saftCustomer.getCustomerID(), customerBean);
+        customerList.add(saftCustomer);
+
+        // TaxTable (Chapter 2.5 in AuditFile)
+        org.fenixedu.treasury.generated.sources.saft.sap.TaxTable taxTable =
+                new org.fenixedu.treasury.generated.sources.saft.sap.TaxTable();
+        masterFiles.setTaxTable(taxTable);
+
+        for (Vat vat : institution.getVatsSet()) {
+            if (vat.isActiveNow()) {
+                taxTable.getTaxTableEntry().add(this.convertVATtoTaxTableEntry(vat, institution));
+            }
+        }
+
+        // Set MovementOfGoods in SourceDocuments(AuditFile)
+        org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments sourceDocuments =
+                new org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments();
+        auditFile.setSourceDocuments(sourceDocuments);
+
+        SourceDocuments.SalesInvoices invoices = new SourceDocuments.SalesInvoices();
+        SourceDocuments.WorkingDocuments workingDocuments = new SourceDocuments.WorkingDocuments();
+        Payments paymentsDocuments = new Payments();
+
+        BigInteger numberOfPaymentsDocuments = BigInteger.ZERO;
+        BigDecimal totalDebitOfPaymentsDocuments = BigDecimal.ZERO;
+        BigDecimal totalCreditOfPaymentsDocuments = BigDecimal.ZERO;
+
+        BigInteger numberOfWorkingDocuments = BigInteger.ZERO;
+        BigDecimal totalDebitOfWorkingDocuments = BigDecimal.ZERO;
+        BigDecimal totalCreditOfWorkingDocuments = BigDecimal.ZERO;
+
+        invoices.setNumberOfEntries(BigInteger.ZERO);
+        invoices.setTotalCredit(BigDecimal.ZERO);
+        invoices.setTotalDebit(BigDecimal.ZERO);
+
+        // Update Totals of Workingdocuments
+        workingDocuments.setNumberOfEntries(numberOfWorkingDocuments);
+        workingDocuments.setTotalCredit(totalCreditOfWorkingDocuments.setScale(2, RoundingMode.HALF_EVEN));
+        workingDocuments.setTotalDebit(totalDebitOfWorkingDocuments.setScale(2, RoundingMode.HALF_EVEN));
+
+        sourceDocuments.setWorkingDocuments(workingDocuments);
+
+        //PROCESSING PAYMENTS TABLE
+
+        paymentsDocuments.setNumberOfEntries(BigInteger.ZERO);
+        paymentsDocuments.setTotalCredit(BigDecimal.ZERO);
+        paymentsDocuments.setTotalDebit(BigDecimal.ZERO);
+
+        // Update Totals of Payment Documents
+        paymentsDocuments.setNumberOfEntries(numberOfPaymentsDocuments);
+        paymentsDocuments.setTotalCredit(totalCreditOfPaymentsDocuments.setScale(2, RoundingMode.HALF_EVEN));
+        paymentsDocuments.setTotalDebit(totalDebitOfPaymentsDocuments.setScale(2, RoundingMode.HALF_EVEN));
+        sourceDocuments.setPayments(paymentsDocuments);
+
+        if (preProcessFunctionBeforeSerialize != null) {
+            auditFile = preProcessFunctionBeforeSerialize.apply(auditFile);
+        }
+        
+        String xml = exportAuditFileToXML(auditFile);
+
+        logger.debug("SAFT File export concluded with success.");
+        return xml;
+    }
+
+    @Override
+    public ERPExportOperation exportCustomerToIntegration(DebtAccount debtAccount) {
+        final IntegrationOperationLogBean logBean = new IntegrationOperationLogBean();
+        final ERPExportOperation operation =
+                createSaftExportOperation(null, debtAccount.getFinantialInstitution(), new DateTime());
+        try {
+            logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.starting.customers.integration"));
+
+            UnaryOperator<AuditFile> preProcessFunctionBeforeSerialize =
+                    getAuditFilePreProcessOperator(debtAccount.getFinantialInstitution());
+            String xml = exportCustomerToXML(debtAccount, preProcessFunctionBeforeSerialize);
+            logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
+
+            writeContentToExportOperation(xml, operation);
+
+            boolean success = sendDocumentsInformationToIntegration(debtAccount.getFinantialInstitution(),
+                    xml.getBytes(SAFT_PT_ENCODING), logBean);
+            logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.finished.customers.integration"));
+
+            operation.setSuccess(success);
+        } catch (Exception ex) {
+            writeError(operation, logBean, ex);
+        } finally {
+            operation.appendLog(logBean.getErrorLog(), logBean.getIntegrationLog(), logBean.getSoapInboundMessage(),
+                    logBean.getSoapOutboundMessage());
+        }
+
+        return operation;
     }
 
 }
