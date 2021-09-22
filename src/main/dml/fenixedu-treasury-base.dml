@@ -903,6 +903,7 @@ class paymentcodes.SibsPaymentRequest extends payments.PaymentRequest {
 	String entityReferenceCode;
 	String referenceCode;
 	PaymentReferenceCodeStateType state;
+	DateTime expiresDate;
 }
 
 class paymentcodes.SibsReferenceCode {
