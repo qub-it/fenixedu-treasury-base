@@ -1,3 +1,4 @@
+8.2.6 (23-09-2021)
 - Bug Fix: Return null in getEmail() and getPhoneNumber() of AdhocCustomer, instead of throwing a RuntimeException
 
 8.2.5 (22-09-2021)
