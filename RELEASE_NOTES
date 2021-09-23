@@ -1,6 +1,7 @@
 - Improvement: Send Debt Account to ERP
 - Bug Fix: In BalanceTransferService only close regulationCreditEntry document if it is preparing
 - Improvement: Add expireDate to SibsPaymentRequest and anull that are voided
+- Bug Fix: Check if CreditNote of regulation series does not have debit note associated
 
 8.2.0 (16-09-2021)
 - Improvement: Remove the max limit of payment request code from online platforms
