@@ -310,12 +310,12 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
     @Override
     public String getEmail() {
-        throw new RuntimeException("not supported");
+        return null;
     }
 
     @Override
     public String getPhoneNumber() {
-        throw new RuntimeException("not supported");
+        return null;
     }
 
     @Override
