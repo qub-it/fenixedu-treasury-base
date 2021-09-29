@@ -107,7 +107,7 @@ public class BalanceTransferService {
     private Map<DebitEntry, SettlementEntry> settlementOfDebitEntryMap;
 
     private Set<PaymentPlan> openPaymentPlans;
-    
+
     public BalanceTransferService(final DebtAccount objectDebtAccount, final DebtAccount destinyDebtAccount) {
         this.objectDebtAccount = objectDebtAccount;
         this.destinyDebtAccount = destinyDebtAccount;
@@ -125,7 +125,7 @@ public class BalanceTransferService {
             p.setStateReason(treasuryBundle("label.BalanceTransferService.paymentPlan.reason",
                     destinyDebtAccount.getCustomer().getFiscalNumber()));
         });
-        
+
         final BigDecimal initialGlobalBalance = objectDebtAccount.getCustomer().getGlobalBalance();
 
         final FinantialInstitution finantialInstitution = objectDebtAccount.getFinantialInstitution();
@@ -211,7 +211,6 @@ public class BalanceTransferService {
             //Add Revision to Payment Plan
             objectPaymentPlan.addPaymentPlanRevisions(destinyPaymentPlan);
 
-            
             //Validate Rules
             objectPaymentPlan.checkRules();
             destinyPaymentPlan.checkRules();
@@ -315,7 +314,7 @@ public class BalanceTransferService {
                     final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null, null,
                             openAmountWithoutVat, null, null);
 
-                    if(newCreditEntry.getFinantialDocument().isPreparing()) {
+                    if (newCreditEntry.getFinantialDocument().isPreparing()) {
                         newCreditEntry.getFinantialDocument().closeDocument();
                     }
 
@@ -416,12 +415,11 @@ public class BalanceTransferService {
                     debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
                     debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
 
-            if (debitEntry.getTreasuryExemption() != null) {
-                final TreasuryExemption treasuryExemption = debitEntry.getTreasuryExemption();
+            debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
                 TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), debitEntry.getTreasuryEvent(),
                         treasuryExemption.getReason(), treasuryExemption.getValueToExempt(), newDebitEntry);
 
-            }
+            });
 
             newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),
                     debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());

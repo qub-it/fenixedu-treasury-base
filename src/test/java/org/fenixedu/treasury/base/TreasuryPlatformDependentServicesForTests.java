@@ -155,20 +155,17 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
 
     @Override
     public String bundle(String bundleName, String key, String... args) {
-        // TODO Auto-generated method stub
-        return null;
+        return key;
     }
 
     @Override
     public String bundle(Locale locale, String bundleName, String key, String... args) {
-        // TODO Auto-generated method stub
-        return null;
+        return key;
     }
 
     @Override
     public LocalizedString bundleI18N(String bundleName, String key, String... args) {
-        // TODO Auto-generated method stub
-        return null;
+        return BasicTreasuryUtils.ls(key);
     }
 
     @Override

@@ -276,7 +276,7 @@ public class DebitNote extends DebitNote_Base {
 
         for (final FinantialDocumentEntry finantialDocumentEntry : debitNoteToCopy.getFinantialDocumentEntriesSet()) {
             final DebitEntry sourceDebitEntry = (DebitEntry) finantialDocumentEntry;
-            final boolean applyExemptionOnDebitEntry = applyExemptions && (sourceDebitEntry.getTreasuryExemption() != null
+            final boolean applyExemptionOnDebitEntry = applyExemptions && (!sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
                     && TreasuryConstants.isPositive(sourceDebitEntry.getExemptedAmount()));
 
             final DebitEntry debitEntryCopy = DebitEntry.copyDebitEntry(sourceDebitEntry, result, applyExemptionOnDebitEntry);
@@ -288,7 +288,7 @@ public class DebitNote extends DebitNote_Base {
         if (applyExemptions) {
             for (final FinantialDocumentEntry finantialDocumentEntry : debitNoteToCopy.getFinantialDocumentEntriesSet()) {
                 final DebitEntry sourceDebitEntry = (DebitEntry) finantialDocumentEntry;
-                final boolean exemptionAppliedWithCreditNote = sourceDebitEntry.getTreasuryExemption() != null
+                final boolean exemptionAppliedWithCreditNote = !sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
                         && !TreasuryConstants.isPositive(sourceDebitEntry.getExemptedAmount());
 
                 if (!exemptionAppliedWithCreditNote) {
@@ -300,11 +300,10 @@ public class DebitNote extends DebitNote_Base {
                 }
 
                 final DebitEntry debitEntryCopy = debitEntriesMap.get(sourceDebitEntry);
-
-                final TreasuryExemption treasuryExemptionToCopy = sourceDebitEntry.getTreasuryExemption();
-                TreasuryExemption.create(treasuryExemptionToCopy.getTreasuryExemptionType(),
-                        treasuryExemptionToCopy.getTreasuryEvent(), treasuryExemptionToCopy.getReason(),
-                        treasuryExemptionToCopy.getValueToExempt(), debitEntryCopy);
+                sourceDebitEntry.getTreasuryExemptionsSet().forEach(exemption -> {
+                    TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
+                            exemption.getReason(), exemption.getValueToExempt(), debitEntryCopy);
+                });
             }
         }
 
@@ -314,14 +313,14 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
         debitEntries.forEach(d -> {
-            if(d.getFinantialDocument() != null && !d.getFinantialDocument().isPreparing()) {
+            if (d.getFinantialDocument() != null && !d.getFinantialDocument().isPreparing()) {
                 throw new IllegalArgumentException("debit entry with finantial document that is not in preparing state");
             }
-            
-            if(d.getFinantialDocument() != null && d.getDebitNote().getPayorDebtAccount() != getPayorDebtAccount()) {
+
+            if (d.getFinantialDocument() != null && d.getDebitNote().getPayorDebtAccount() != getPayorDebtAccount()) {
                 throw new IllegalArgumentException("debit entry with preparing debit note, but payor debt account mismatch");
             }
-            
+
             this.addFinantialDocumentEntries(d);
         });
         checkRules();
@@ -377,10 +376,11 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void anullDebitNoteWithCreditNote(String reason, boolean anullGeneratedInterests) {
 
-        if(getDebitEntriesSet().stream().anyMatch(d -> d.getOpenPaymentPlan() != null)) {
-            throw new TreasuryDomainException("error.DebitNote.anullDebitNoteWithCreditNote.cannot.anull.debt.with.open.paymentPlan");
+        if (getDebitEntriesSet().stream().anyMatch(d -> d.getOpenPaymentPlan() != null)) {
+            throw new TreasuryDomainException(
+                    "error.DebitNote.anullDebitNoteWithCreditNote.cannot.anull.debt.with.open.paymentPlan");
         }
-        
+
         if (this.getFinantialDocumentEntriesSet().size() > 0 && this.isClosed()) {
 
             final DateTime now = new DateTime();
@@ -470,7 +470,7 @@ public class DebitNote extends DebitNote_Base {
             final BigDecimal amountForCreditWithoutVat = entry.getCurrency().getValueWithScale(
                     TreasuryConstants.divide(entry.getAvailableAmountForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
 
-            if (TreasuryConstants.isZero(amountForCreditWithoutVat) && entry.getTreasuryExemption() != null) {
+            if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
                 continue;
             }
 
@@ -492,7 +492,7 @@ public class DebitNote extends DebitNote_Base {
                 final BigDecimal amountForCreditWithoutVat = interestEntry.getCurrency().getValueWithScale(TreasuryConstants
                         .divide(interestEntry.getAvailableAmountForCredit(), BigDecimal.ONE.add(rationalVatRate(interestEntry))));
 
-                if (TreasuryConstants.isZero(amountForCreditWithoutVat) && interestEntry.getTreasuryExemption() != null) {
+                if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !interestEntry.getTreasuryExemptionsSet().isEmpty()) {
                     continue;
                 }
 
@@ -581,11 +581,10 @@ public class DebitNote extends DebitNote_Base {
                     debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
                     debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
 
-            if (debitEntry.getTreasuryExemption() != null) {
-                final TreasuryExemption treasuryExemption = debitEntry.getTreasuryExemption();
+            debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
                 TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), debitEntry.getTreasuryEvent(),
                         treasuryExemption.getReason(), treasuryExemption.getValueToExempt(), newDebitEntry);
-            }
+            });
 
             newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),
                     debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());

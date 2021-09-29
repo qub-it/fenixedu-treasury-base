@@ -560,6 +560,17 @@ class exemption.TreasuryExemption {
 	relation TreasuryExemptionDebitEntry
 	{
 		document.DebitEntry playsRole debitEntry {
+			multiplicity 1..1;
+		}
+		
+		exemption.TreasuryExemption playsRole treasuryExemptions {
+			multiplicity *;
+		}
+	}
+
+	relation TreasuryExemptionCreditEntry
+	{
+		document.CreditEntry playsRole creditEntry {
 			multiplicity 0..1;
 		}
 		

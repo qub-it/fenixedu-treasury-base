@@ -209,8 +209,8 @@ public class DebitEntry extends DebitEntry_Base {
     public void delete() {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
-        if (getTreasuryExemption() != null) {
-            getTreasuryExemption().delete();
+        if (!getTreasuryExemptionsSet().isEmpty()) {
+            getTreasuryExemptionsSet().forEach(exemption -> exemption.delete());
         }
 
         if (this.getInterestRate() != null) {
@@ -417,7 +417,7 @@ public class DebitEntry extends DebitEntry_Base {
         return getBlockAcademicActsOnDebt();
     }
 
-    public boolean exempt(final TreasuryExemption treasuryExemption, final BigDecimal amountWithVat) {
+    public boolean exempt(final TreasuryExemption treasuryExemption) {
         if (treasuryExemption.getTreasuryEvent() != getTreasuryEvent()) {
             throw new RuntimeException("wrong call");
         }
@@ -430,13 +430,18 @@ public class DebitEntry extends DebitEntry_Base {
             throw new RuntimeException("error.DebitEntry.is.event.annuled.cannot.be.exempted");
         }
 
-        final BigDecimal amountWithoutVat = TreasuryConstants.divide(amountWithVat, BigDecimal.ONE.add(rationalVatRate(this)));
+        if (TreasuryConstants.isGreaterThan(treasuryExemption.getExemptedAmount(), getAvailableAmountForCredit())) {
+            throw new RuntimeException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
+        }
+
+        final BigDecimal exemptedAmountWithoutVat =
+                TreasuryConstants.divide(treasuryExemption.getExemptedAmount(), BigDecimal.ONE.add(rationalVatRate(this)));
 
         if (isProcessedInClosedDebitNote()) {
             // If there is at least one credit entry then skip...
-            if (!getCreditEntriesSet().isEmpty()) {
-                return false;
-            }
+//            if (!getCreditEntriesSet().isEmpty()) {
+//                return false;
+//            }
 
             final DateTime now = new DateTime();
 
@@ -444,19 +449,14 @@ public class DebitEntry extends DebitEntry_Base {
                     treasuryExemption.getTreasuryExemptionType().getName().getContent());
 
             final CreditEntry creditEntryFromExemption =
-                    createCreditEntry(now, getDescription(), null, null, amountWithoutVat, treasuryExemption, null);
+                    createCreditEntry(now, getDescription(), null, null, exemptedAmountWithoutVat, treasuryExemption, null);
 
             closeCreditEntryIfPossible(reason, now, creditEntryFromExemption);
 
         } else {
-            BigDecimal originalAmount = getAmount();
-            if (TreasuryConstants.isPositive(getExemptedAmount())) {
-                originalAmount = originalAmount.add(getExemptedAmount());
-                setExemptedAmount(BigDecimal.ZERO);
-            }
 
-            setAmount(originalAmount.subtract(amountWithoutVat));
-            setExemptedAmount(amountWithoutVat);
+            setAmount(getAmount().subtract(exemptedAmountWithoutVat));
+            setExemptedAmount(getExemptedAmount().add(exemptedAmountWithoutVat));
 
             recalculateAmountValues();
 
@@ -625,8 +625,8 @@ public class DebitEntry extends DebitEntry_Base {
             return false;
         }
 
-        setAmount(getAmount().add(getExemptedAmount()));
-        setExemptedAmount(BigDecimal.ZERO);
+        setAmount(getAmount().add(treasuryExemption.getExemptedAmount()));
+        setExemptedAmount(getExemptedAmount().subtract(treasuryExemption.getExemptedAmount()));
 
         recalculateAmountValues();
 
@@ -759,11 +759,11 @@ public class DebitEntry extends DebitEntry_Base {
 
         result.setPayorDebtAccount(debitEntryToCopy.getPayorDebtAccount());
 
-        if (applyExemption && debitEntryToCopy.getTreasuryExemption() != null) {
-            final TreasuryExemption treasuryExemptionToCopy = debitEntryToCopy.getTreasuryExemption();
-            TreasuryExemption.create(treasuryExemptionToCopy.getTreasuryExemptionType(),
-                    treasuryExemptionToCopy.getTreasuryEvent(), treasuryExemptionToCopy.getReason(),
-                    treasuryExemptionToCopy.getValueToExempt(), result);
+        if (applyExemption) {
+            debitEntryToCopy.getTreasuryExemptionsSet().forEach(exemption -> {
+                TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
+                        exemption.getReason(), exemption.getValueToExempt(), result);
+            });
         }
 
         return result;
