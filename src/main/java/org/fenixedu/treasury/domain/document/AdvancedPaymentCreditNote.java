@@ -147,7 +147,9 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
             throw new TreasuryDomainException("error.CreditNote.cannot.delete");
         }
 
-        setDebitNote(null);
+        super.setDebitNote(null);
+        super.setAdvancedPaymentSettlementNote(null);
+
         super.delete(deleteEntries);
     }
 
