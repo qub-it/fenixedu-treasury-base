@@ -52,8 +52,6 @@
  */
 package org.fenixedu.treasury.domain.exemption;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.isGreaterThan;
-
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
@@ -114,9 +112,9 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             throw new TreasuryDomainException("error.TreasuryExemption.treasuryExemptionType.required");
         }
 
-        if (getTreasuryEvent() == null) {
-            throw new TreasuryDomainException("error.TreasuryExemption.treasuryEvent.required");
-        }
+//        if (getTreasuryEvent() == null) {
+//            throw new TreasuryDomainException("error.TreasuryExemption.treasuryEvent.required");
+//        }
 
         if (getValueToExempt() == null) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.required");

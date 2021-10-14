@@ -538,7 +538,7 @@ class exemption.TreasuryExemption {
 	
 	relation TreasuryExemptionTreasuryEvent {
 		event.TreasuryEvent playsRole treasuryEvent {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
 		
 		exemption.TreasuryExemption playsRole treasuryExemptions {
