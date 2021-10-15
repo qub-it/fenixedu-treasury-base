@@ -653,4 +653,15 @@ public class DebitNote extends DebitNote_Base {
                 Maps.newHashMap(), product, entryDescription, BigDecimal.ONE, interestRate, entryDate);
     }
 
+    @Atomic
+    public void updateAllDueDates(LocalDate newDueDate) {
+
+        this.setDocumentDueDate(newDueDate);
+
+        this.getDebitEntries().forEach(entry -> {
+            entry.updateDueDate(newDueDate);
+        });
+        checkRules();
+    }
+
 }

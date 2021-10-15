@@ -1111,4 +1111,9 @@ public class DebitEntry extends DebitEntry_Base {
         return super.getForwardPaymentsSet();
     }
 
+    public void updateDueDate(LocalDate newDueDate) {
+        setDueDate(newDueDate);
+        checkRules();
+    }
+
 }
