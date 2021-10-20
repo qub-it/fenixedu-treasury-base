@@ -400,4 +400,8 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     public static Optional<ForwardPaymentRequest> findUniqueByMerchantTransactionId(String merchantTransactionId) {
         return findAll().filter(pr -> pr.getMerchantTransactionId().equals(merchantTransactionId)).findFirst();
     }
+
+    public String getUiDescription() {
+        return String.format("%s ( %s )", getPaymentMethod().getName().getContent(), getOrderNumber());
+    }
 }

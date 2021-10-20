@@ -1,3 +1,4 @@
+- Improvement: Add method getUiDescription on paymentRequest
 - Bug fix: Correction on PaymentPlatforms to process forward payments webhooks
 - Improvement: Add button to update all due dates of debt note and debit entries 
 
