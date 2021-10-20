@@ -1,3 +1,4 @@
+- Bug fix: Correction on PaymentPlatforms to process forward payments webhooks
 - Improvement: Add button to update all due dates of debt note and debit entries 
 
 8.2.1 (24-09-2021)

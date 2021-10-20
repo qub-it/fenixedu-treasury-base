@@ -59,6 +59,7 @@ import java.util.function.Function;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
+import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 
@@ -92,5 +93,7 @@ public interface IForwardPaymentPlatformService {
     public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
 
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment);
+
+    public PostProcessPaymentStatusBean processForwardPaymentFromWebhook(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
 }
