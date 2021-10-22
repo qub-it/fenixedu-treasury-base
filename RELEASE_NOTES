@@ -1,6 +1,8 @@
 - Improvement: Add method getUiDescription on paymentRequest
 - Bug fix: Correction on PaymentPlatforms to process forward payments webhooks
 - Improvement: Add button to update all due dates of debt note and debit entries 
+- Improvement: Make compatible forward payment request notification handle by webhook and by customer controller, in order to avoid errors due to race conditions arised by handling payment by both ways
+- New Fixture: Support multiple exemptions
 
 8.2.1 (24-09-2021)
 - Improvement: Send Debt Account to ERP

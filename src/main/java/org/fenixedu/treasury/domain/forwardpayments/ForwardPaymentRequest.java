@@ -62,6 +62,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -398,7 +399,8 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     }
 
     public static Optional<ForwardPaymentRequest> findUniqueByMerchantTransactionId(String merchantTransactionId) {
-        return findAll().filter(pr -> pr.getMerchantTransactionId().equals(merchantTransactionId)).findFirst();
+        return findAll().filter(pr -> StringUtils.isNotEmpty(pr.getMerchantTransactionId()))
+                .filter(pr -> pr.getMerchantTransactionId().equals(merchantTransactionId)).findFirst();
     }
 
     public String getUiDescription() {

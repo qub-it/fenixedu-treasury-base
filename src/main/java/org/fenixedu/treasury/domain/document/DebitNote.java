@@ -288,6 +288,10 @@ public class DebitNote extends DebitNote_Base {
         if (applyExemptions) {
             for (final FinantialDocumentEntry finantialDocumentEntry : debitNoteToCopy.getFinantialDocumentEntriesSet()) {
                 final DebitEntry sourceDebitEntry = (DebitEntry) finantialDocumentEntry;
+
+                // TODO : To verify if debit entry has exemptions applied with credit entries, we can check if
+                // there are credit entries with exemptions associated. But first associate credit entries with
+                // the exemptions in all running instances
                 final boolean exemptionAppliedWithCreditNote = !sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
                         && !TreasuryConstants.isPositive(sourceDebitEntry.getExemptedAmount());
 

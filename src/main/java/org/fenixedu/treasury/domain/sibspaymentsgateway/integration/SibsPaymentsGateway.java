@@ -1249,8 +1249,6 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         SibsPaymentsGatewayLog log = (SibsPaymentsGatewayLog) paymentRequestLog;
         PaymentStateBean bean = (PaymentStateBean) digitalPlatformResultBean;
         try {
-
-
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(bean.getOperationResultType(), bean.isPaid());
 
@@ -1261,9 +1259,12 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             result.editTransactionDetails(bean.getTransactionId(), bean.getPaymentDate(), bean.getAmount());
 
             if (forwardPayment.getState().isPayed() || forwardPayment.getState().isRejected()) {
-                log.setTransactionWithPayment(forwardPayment.getState().isPayed());
-                log.setOperationCode("processDuplicated");
-                log.setOperationSuccess(true);
+                FenixFramework.atomic(() -> {
+                    log.setTransactionWithPayment(forwardPayment.getState().isPayed());
+                    log.setOperationCode("processDuplicated");
+                    log.setOperationSuccess(true);
+                });
+
                 return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
             }
 
@@ -1276,6 +1277,27 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             PostProcessPaymentStatusBean returnBean =
                     new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
             returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands(bean.getPaymentBrand());
+
+            // First of all save sibsTransactionId
+            FenixFramework.atomic(() -> {
+                if (StringUtils.isEmpty(forwardPayment.getTransactionId())) {
+                    // Not set by customer controller
+                    forwardPayment.setTransactionId(bean.getTransactionId());
+                }
+            });
+
+            // The payment request might be processed by the customer controller
+            // If yes the above write transation was restarted and the forwardPayment was updated
+            // Check again if the forwardPayment is already paid or rejected
+            if (forwardPayment.getState().isPayed() || forwardPayment.getState().isRejected()) {
+                FenixFramework.atomic(() -> {
+                    log.setTransactionWithPayment(forwardPayment.getState().isPayed());
+                    log.setOperationCode("processDuplicated");
+                    log.setOperationSuccess(true);
+                });
+
+                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
+            }
 
             if (bean.isPaid()) {
                 FenixFramework.atomic(() -> {

@@ -158,29 +158,19 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         return getValueToExempt();
     }
 
-    private void revertExemptionIfPossible() {
-        if (getDebitEntry().isAnnulled()) {
-            return;
-        }
-
-        if (getDebitEntry().isProcessedInClosedDebitNote()) {
-            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
-        }
-
-        if (!getDebitEntry().revertExemptionIfPossible(this)) {
-            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
-        }
-    }
-
     public boolean isDeletable() {
         boolean creditNoteIsPreparing = getCreditEntry() != null
-                && (getCreditEntry().getFinantialDocument() == null || getDebitEntry().getFinantialDocument().isPreparing());
+                && (getCreditEntry().getFinantialDocument() == null || getCreditEntry().getFinantialDocument().isPreparing());
+
         boolean debitNoteIsPreparing = getCreditEntry() == null
                 && (getDebitEntry().getFinantialDocument() == null || getDebitEntry().getFinantialDocument().isPreparing());
+
         return getDebitEntry().isAnnulled() || creditNoteIsPreparing || debitNoteIsPreparing;
     }
 
-    @Atomic
+    /**
+     * Should not be called directly except by DebitEntry when deleting debit entry
+     */
     public void delete() {
 
         super.setDomainRoot(null);
@@ -190,6 +180,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         super.setProduct(null);
         super.setDebitEntry(null);
         super.setCreditEntry(null);
+
         super.deleteDomainObject();
     }
 
@@ -213,11 +204,16 @@ public class TreasuryExemption extends TreasuryExemption_Base {
                 getCreditEntry().getCreditNote()
                         .setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
             }
-        } else {
-            revertExemptionIfPossible();
-        }
-        delete();
+        } else if (!getDebitEntry().isAnnulled()) {
+            if (getDebitEntry().isProcessedInClosedDebitNote()) {
+                throw new TreasuryDomainException(
+                        "error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
+            }
 
+            getDebitEntry().revertExemptionIfPossible(this);
+        }
+
+        delete();
     }
 
     // @formatter: off

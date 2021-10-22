@@ -430,7 +430,7 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         if (TreasuryConstants.isGreaterThan(treasuryExemption.getExemptedAmount(), getAvailableAmountForCredit())) {
-            throw new RuntimeException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
+            throw new TreasuryDomainException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
         }
 
         final BigDecimal exemptedAmountWithoutVat =
@@ -611,17 +611,18 @@ public class DebitEntry extends DebitEntry_Base {
         return amountToPay;
     }
 
-    public boolean revertExemptionIfPossible(final TreasuryExemption treasuryExemption) {
+    public void revertExemptionIfPossible(final TreasuryExemption treasuryExemption) {
         if (isAnnulled()) {
-            return false;
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
         if (isProcessedInClosedDebitNote()) {
-            return false;
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
-        if (!treasuryExemption.getDebitEntry().getCreditEntriesSet().isEmpty()) {
-            return false;
+        // TODO: This check can be removed?
+        if (!getCreditEntriesSet().isEmpty()) {
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
         setAmount(getAmount().add(treasuryExemption.getExemptedAmount()));
@@ -630,8 +631,6 @@ public class DebitEntry extends DebitEntry_Base {
         recalculateAmountValues();
 
         checkRules();
-
-        return true;
     }
 
     @Atomic
