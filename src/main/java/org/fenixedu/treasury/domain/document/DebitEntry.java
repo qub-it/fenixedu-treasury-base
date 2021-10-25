@@ -69,7 +69,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -209,8 +208,8 @@ public class DebitEntry extends DebitEntry_Base {
     public void delete() {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
-        if (getTreasuryExemption() != null) {
-            getTreasuryExemption().delete();
+        if (!getTreasuryExemptionsSet().isEmpty()) {
+            getTreasuryExemptionsSet().forEach(exemption -> exemption.delete());
         }
 
         if (this.getInterestRate() != null) {
@@ -322,12 +321,12 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.description.required");
         }
 
-        // If it exempted then it must be on itself or with credit entry but not both
-        if (isPositive(getExemptedAmount())
-                && CreditEntry.findActive(getTreasuryEvent(), getProduct()).filter(c -> c.getDebitEntry() == this).count() > 0) {
-            throw new TreasuryDomainException(
-                    "error.DebitEntry.exemption.cannot.be.on.debit.entry.and.with.credit.entry.at.same.time");
-        }
+//        //If it exempted then it must be on itself or with credit entry but not both
+//        if (isPositive(getExemptedAmount())
+//                && CreditEntry.findActive(getTreasuryEvent(), getProduct()).filter(c -> c.getDebitEntry() == this).count() > 0) {
+//            throw new TreasuryDomainException(
+//                    "error.DebitEntry.exemption.cannot.be.on.debit.entry.and.with.credit.entry.at.same.time");
+//        }
 
         if (getTreasuryEvent() != null && getProduct().isTransferBalanceProduct()) {
             throw new TreasuryDomainException("error.DebitEntry.transferBalanceProduct.cannot.be.associated.to.academic.event");
@@ -417,7 +416,7 @@ public class DebitEntry extends DebitEntry_Base {
         return getBlockAcademicActsOnDebt();
     }
 
-    public boolean exempt(final TreasuryExemption treasuryExemption, final BigDecimal amountWithVat) {
+    public boolean exempt(final TreasuryExemption treasuryExemption) {
         if (treasuryExemption.getTreasuryEvent() != getTreasuryEvent()) {
             throw new RuntimeException("wrong call");
         }
@@ -430,13 +429,18 @@ public class DebitEntry extends DebitEntry_Base {
             throw new RuntimeException("error.DebitEntry.is.event.annuled.cannot.be.exempted");
         }
 
-        final BigDecimal amountWithoutVat = TreasuryConstants.divide(amountWithVat, BigDecimal.ONE.add(rationalVatRate(this)));
+        if (TreasuryConstants.isGreaterThan(treasuryExemption.getExemptedAmount(), getAvailableAmountForCredit())) {
+            throw new TreasuryDomainException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
+        }
+
+        final BigDecimal exemptedAmountWithoutVat =
+                TreasuryConstants.divide(treasuryExemption.getExemptedAmount(), BigDecimal.ONE.add(rationalVatRate(this)));
 
         if (isProcessedInClosedDebitNote()) {
             // If there is at least one credit entry then skip...
-            if (!getCreditEntriesSet().isEmpty()) {
-                return false;
-            }
+//            if (!getCreditEntriesSet().isEmpty()) {
+//                return false;
+//            }
 
             final DateTime now = new DateTime();
 
@@ -444,19 +448,14 @@ public class DebitEntry extends DebitEntry_Base {
                     treasuryExemption.getTreasuryExemptionType().getName().getContent());
 
             final CreditEntry creditEntryFromExemption =
-                    createCreditEntry(now, getDescription(), null, null, amountWithoutVat, treasuryExemption, null);
+                    createCreditEntry(now, getDescription(), null, null, exemptedAmountWithoutVat, treasuryExemption, null);
 
             closeCreditEntryIfPossible(reason, now, creditEntryFromExemption);
 
         } else {
-            BigDecimal originalAmount = getAmount();
-            if (TreasuryConstants.isPositive(getExemptedAmount())) {
-                originalAmount = originalAmount.add(getExemptedAmount());
-                setExemptedAmount(BigDecimal.ZERO);
-            }
 
-            setAmount(originalAmount.subtract(amountWithoutVat));
-            setExemptedAmount(amountWithoutVat);
+            setAmount(getAmount().subtract(exemptedAmountWithoutVat));
+            setExemptedAmount(getExemptedAmount().add(exemptedAmountWithoutVat));
 
             recalculateAmountValues();
 
@@ -612,27 +611,26 @@ public class DebitEntry extends DebitEntry_Base {
         return amountToPay;
     }
 
-    public boolean revertExemptionIfPossible(final TreasuryExemption treasuryExemption) {
+    public void revertExemptionIfPossible(final TreasuryExemption treasuryExemption) {
         if (isAnnulled()) {
-            return false;
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
         if (isProcessedInClosedDebitNote()) {
-            return false;
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
-        if (!treasuryExemption.getDebitEntry().getCreditEntriesSet().isEmpty()) {
-            return false;
+        // TODO: This check can be removed?
+        if (!getCreditEntriesSet().isEmpty()) {
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
-        setAmount(getAmount().add(getExemptedAmount()));
-        setExemptedAmount(BigDecimal.ZERO);
+        setAmount(getAmount().add(treasuryExemption.getExemptedAmount()));
+        setExemptedAmount(getExemptedAmount().subtract(treasuryExemption.getExemptedAmount()));
 
         recalculateAmountValues();
 
         checkRules();
-
-        return true;
     }
 
     @Atomic
@@ -759,11 +757,11 @@ public class DebitEntry extends DebitEntry_Base {
 
         result.setPayorDebtAccount(debitEntryToCopy.getPayorDebtAccount());
 
-        if (applyExemption && debitEntryToCopy.getTreasuryExemption() != null) {
-            final TreasuryExemption treasuryExemptionToCopy = debitEntryToCopy.getTreasuryExemption();
-            TreasuryExemption.create(treasuryExemptionToCopy.getTreasuryExemptionType(),
-                    treasuryExemptionToCopy.getTreasuryEvent(), treasuryExemptionToCopy.getReason(),
-                    treasuryExemptionToCopy.getValueToExempt(), result);
+        if (applyExemption) {
+            debitEntryToCopy.getTreasuryExemptionsSet().forEach(exemption -> {
+                TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
+                        exemption.getReason(), exemption.getValueToExempt(), result);
+            });
         }
 
         return result;
@@ -1110,6 +1108,11 @@ public class DebitEntry extends DebitEntry_Base {
     @Override
     public Set<ForwardPayment> getForwardPaymentsSet() {
         return super.getForwardPaymentsSet();
+    }
+
+    public void updateDueDate(LocalDate newDueDate) {
+        setDueDate(newDueDate);
+        checkRules();
     }
 
 }

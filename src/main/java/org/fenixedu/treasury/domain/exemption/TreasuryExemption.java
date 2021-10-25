@@ -52,8 +52,6 @@
  */
 package org.fenixedu.treasury.domain.exemption;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.isGreaterThan;
-
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
@@ -61,9 +59,12 @@ import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
 
@@ -80,10 +81,6 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     protected TreasuryExemption(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
             final String reason, final BigDecimal valueToExempt, final DebitEntry debitEntry) {
         this();
-
-        if (debitEntry.getTreasuryExemption() != null) {
-            throw new TreasuryDomainException("error.TreasuryExemption.debitEntry.already.exempted");
-        }
 
         for (final CreditEntry creditEntry : debitEntry.getCreditEntriesSet()) {
             if (!creditEntry.getFinantialDocument().isAnnulled() && !creditEntry.isFromExemption()) {
@@ -106,7 +103,8 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 
         checkRules();
 
-        exemptEventIfWithDebtEntries();
+        getDebitEntry().exempt(this);
+
     }
 
     private void checkRules() {
@@ -114,9 +112,9 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             throw new TreasuryDomainException("error.TreasuryExemption.treasuryExemptionType.required");
         }
 
-        if (getTreasuryEvent() == null) {
-            throw new TreasuryDomainException("error.TreasuryExemption.treasuryEvent.required");
-        }
+//        if (getTreasuryEvent() == null) {
+//            throw new TreasuryDomainException("error.TreasuryExemption.treasuryEvent.required");
+//        }
 
         if (getValueToExempt() == null) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.required");
@@ -160,57 +158,20 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         return getValueToExempt();
     }
 
-    private void exemptEventIfWithDebtEntries() {
-        // We're in conditions to create credit entries. But first
-        // calculate the amount to exempt
-        final BigDecimal amountToExempt = getValueToExempt().subtract(exemptedAmount(getDebitEntry()));
+    public boolean isDeletable() {
+        boolean creditNoteIsPreparing = getCreditEntry() != null
+                && (getCreditEntry().getFinantialDocument() == null || getCreditEntry().getFinantialDocument().isPreparing());
 
-        if (!TreasuryConstants.isPositive(amountToExempt)) {
-            return;
-        }
+        boolean debitNoteIsPreparing = getCreditEntry() == null
+                && (getDebitEntry().getFinantialDocument() == null || getDebitEntry().getFinantialDocument().isPreparing());
 
-        final BigDecimal amountWithVat = getDebitEntry().getAmountWithVat();
-        final BigDecimal amountToUse = isGreaterThan(amountWithVat, amountToExempt) ? amountToExempt : amountWithVat;
-
-        getDebitEntry().exempt(this, amountToUse);
+        return getDebitEntry().isAnnulled() || creditNoteIsPreparing || debitNoteIsPreparing;
     }
 
-    private BigDecimal exemptedAmount(final DebitEntry debitEntry) {
-        BigDecimal result = debitEntry.getExemptedAmount();
-
-        result = result.add(debitEntry.getCreditEntriesSet().stream().map(l -> l.getAmountWithVat()).reduce((a, b) -> a.add(b))
-                .orElse(BigDecimal.ZERO));
-
-        return result;
-    }
-
-    private void revertExemptionIfPossible() {
-        if(getDebitEntry().isAnnulled()) {
-            return;
-        }
-        
-        if(getDebitEntry().isProcessedInClosedDebitNote()) {
-            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
-        }
-        
-        if (!getDebitEntry().revertExemptionIfPossible(this)) {
-            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
-        }
-    }
-
-    private boolean isDeletable() {
-        return getDebitEntry().isAnnulled() || 
-                getDebitEntry().getFinantialDocument() == null || 
-                getDebitEntry().getFinantialDocument().isPreparing();
-    }
-
-    @Atomic
+    /**
+     * Should not be called directly except by DebitEntry when deleting debit entry
+     */
     public void delete() {
-        if (!isDeletable()) {
-            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible");
-        }
-
-        revertExemptionIfPossible();
 
         super.setDomainRoot(null);
 
@@ -218,8 +179,41 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         super.setTreasuryEvent(null);
         super.setProduct(null);
         super.setDebitEntry(null);
+        super.setCreditEntry(null);
 
         super.deleteDomainObject();
+    }
+
+    @Atomic
+    public void revertExemption() {
+
+        if (!isDeletable()) {
+            throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
+        }
+
+        if (getCreditEntry() != null) {
+            getCreditEntry().getCreditNote().setState(FinantialDocumentStateType.ANNULED);
+
+            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+            String reason = "Exemption deleted";
+            if (!Strings.isNullOrEmpty(loggedUsername)) {
+                getCreditEntry().getCreditNote().setAnnulledReason(
+                        reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+            } else {
+                getCreditEntry().getCreditNote()
+                        .setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+            }
+        } else if (!getDebitEntry().isAnnulled()) {
+            if (getDebitEntry().isProcessedInClosedDebitNote()) {
+                throw new TreasuryDomainException(
+                        "error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
+            }
+
+            getDebitEntry().revertExemptionIfPossible(this);
+        }
+
+        delete();
     }
 
     // @formatter: off
@@ -238,7 +232,8 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     public static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent) {
-        return FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream().filter(t -> t.getTreasuryEvent() == treasuryEvent);
+        return FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream()
+                .filter(t -> t.getTreasuryEvent() == treasuryEvent);
     }
 
     protected static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent, final Product product) {
@@ -257,10 +252,11 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     @Atomic
     public static TreasuryExemption create(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
             final String reason, final BigDecimal valueToExempt, final DebitEntry debitEntry) {
-        if(TreasuryConstants.isGreaterThan(debitEntry.getQuantity(), BigDecimal.ONE)) {
-            throw new TreasuryDomainException("error.TreasuryExemption.not.possible.to.exempt.debit.entry.with.more.than.one.in.quantity");
+        if (TreasuryConstants.isGreaterThan(debitEntry.getQuantity(), BigDecimal.ONE)) {
+            throw new TreasuryDomainException(
+                    "error.TreasuryExemption.not.possible.to.exempt.debit.entry.with.more.than.one.in.quantity");
         }
-        
+
         return new TreasuryExemption(treasuryExemptionType, treasuryEvent, reason, valueToExempt, debitEntry);
     }
 

@@ -203,4 +203,8 @@ public class MbwayRequest extends MbwayRequest_Base {
                 merchantTransactionId);
     }
 
+    public String getUiDescription() {
+        return String.format("%s ( %s )", getPaymentMethod().getName().getContent(), getPhoneNumber());
+    }
+
 }

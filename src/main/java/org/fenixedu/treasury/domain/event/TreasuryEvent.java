@@ -358,8 +358,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public void invokeSettlementCallbacks() {
     }
     
-    public Set<TreasuryExemption> getActiveTreasuryEvents() {
-        return getTreasuryExemptionsSet().stream().filter(t -> !t.getDebitEntry().isEventAnnuled())
+    public Set<TreasuryExemption> getActiveTreasuryExemptions() {
+        return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream())
                 .collect(Collectors.<TreasuryExemption> toSet());
     }
 

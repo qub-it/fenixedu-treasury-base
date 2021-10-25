@@ -166,7 +166,7 @@ public class MeoWalletWebhooksController {
                 FenixFramework.atomic(() -> {
                     log.setPaymentRequest(forwardPaymentRequest);
                 });
-                digitalPaymentPlatform.processForwardPayment(log, bean);
+                digitalPaymentPlatform.processForwardPaymentFromWebhook(log, bean);
             } else {
                 FenixFramework.atomic(() -> {
                     log.logRequestReceiveDateAndData(bean.getTransactionId(), "Notification", bean.getPaymentType(),

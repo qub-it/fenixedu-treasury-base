@@ -384,4 +384,8 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
                 merchantTransactionId, sibsReferenceId);
     }
 
+    public String getUiDescription() {
+        return String.format("%s ( %s - %s )", getPaymentMethod().getName().getContent(), getEntityReferenceCode(),
+                getReferenceCode());
+    }
 }

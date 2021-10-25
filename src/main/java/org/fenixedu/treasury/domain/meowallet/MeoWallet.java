@@ -1084,10 +1084,13 @@ public class MeoWallet extends MeoWallet_Base
         return postProcessPayment(forwardPayment, "", Optional.of(forwardPayment.getCheckoutId()));
     }
 
-    public PostProcessPaymentStatusBean processForwardPayment(MeoWalletLog log, MeoWalletCallbackBean bean) {
+    @Override
+    public PostProcessPaymentStatusBean processForwardPaymentFromWebhook(PaymentRequestLog paymentRequestLog,
+            DigitalPlatformResultBean digitalPlatformResultBean) {
 
-        ForwardPaymentRequest forwardPayment = (ForwardPaymentRequest) log.getPaymentRequest();
-
+        ForwardPaymentRequest forwardPayment = (ForwardPaymentRequest) paymentRequestLog.getPaymentRequest();
+        MeoWalletLog log = (MeoWalletLog) paymentRequestLog;
+        MeoWalletCallbackBean bean = (MeoWalletCallbackBean) digitalPlatformResultBean;
         try {
 
             final ForwardPaymentStateType stateType = translateForwardPaymentStateType(bean.getOperation_status());

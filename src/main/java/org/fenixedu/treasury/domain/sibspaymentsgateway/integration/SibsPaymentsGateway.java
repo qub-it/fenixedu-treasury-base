@@ -89,7 +89,6 @@ import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaym
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentPlatformService;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessPaymentStatusBean;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentCodeTransaction;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
@@ -517,7 +516,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     log.setSibsGatewayTransactionId(bean.getTransactionId());
                 });
 
-            } else {
+            } else if (bean.isInRejectedState()) {
                 FenixFramework.atomic(() -> {
                     SibsPaymentsGatewayLog log = (SibsPaymentsGatewayLog) forwardPayment.reject("postProcessPayment",
                             bean.getStatusCode(), bean.getStatusMessage(), bean.getRequestBody(), bean.getResponseBody());
@@ -526,7 +525,6 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     log.setRequestReceiveDate(requestReceiveDate);
                     log.setSibsGatewayTransactionId(bean.getTransactionId());
                 });
-
             }
 
             return returnBean;
@@ -1244,4 +1242,100 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         }
     }
 
+    @Override
+    public PostProcessPaymentStatusBean processForwardPaymentFromWebhook(PaymentRequestLog paymentRequestLog,
+            DigitalPlatformResultBean digitalPlatformResultBean) {
+        ForwardPaymentRequest forwardPayment = (ForwardPaymentRequest) paymentRequestLog.getPaymentRequest();
+        SibsPaymentsGatewayLog log = (SibsPaymentsGatewayLog) paymentRequestLog;
+        PaymentStateBean bean = (PaymentStateBean) digitalPlatformResultBean;
+        try {
+            final ForwardPaymentStateType stateType =
+                    translateForwardPaymentStateType(bean.getOperationResultType(), bean.isPaid());
+
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, bean.getPaymentGatewayResultCode(),
+                            bean.getPaymentGatewayResultDescription(), "", "");
+
+            result.editTransactionDetails(bean.getTransactionId(), bean.getPaymentDate(), bean.getAmount());
+
+            if (forwardPayment.getState().isPayed() || forwardPayment.getState().isRejected()) {
+                FenixFramework.atomic(() -> {
+                    log.setTransactionWithPayment(forwardPayment.getState().isPayed());
+                    log.setOperationCode("processDuplicated");
+                    log.setOperationSuccess(true);
+                });
+
+                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
+            }
+
+            if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
+                    .contains(result.getStateType())) {
+                // Do nothing
+                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
+            }
+
+            PostProcessPaymentStatusBean returnBean =
+                    new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
+            returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands(bean.getPaymentBrand());
+
+            // First of all save sibsTransactionId
+            FenixFramework.atomic(() -> {
+                if (StringUtils.isEmpty(forwardPayment.getTransactionId())) {
+                    // Not set by customer controller
+                    forwardPayment.setTransactionId(bean.getTransactionId());
+                }
+            });
+
+            // The payment request might be processed by the customer controller
+            // If yes the above write transation was restarted and the forwardPayment was updated
+            // Check again if the forwardPayment is already paid or rejected
+            if (forwardPayment.getState().isPayed() || forwardPayment.getState().isRejected()) {
+                FenixFramework.atomic(() -> {
+                    log.setTransactionWithPayment(forwardPayment.getState().isPayed());
+                    log.setOperationCode("processDuplicated");
+                    log.setOperationSuccess(true);
+                });
+
+                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
+            }
+
+            if (bean.isPaid()) {
+                FenixFramework.atomic(() -> {
+                    forwardPayment.advanceToPaidState(result.getStatusCode(), result.getPayedAmount(),
+                            result.getTransactionDate(), result.getTransactionId(), null);
+                    log.setSibsGatewayTransactionId(bean.getTransactionId());
+                });
+
+            } else if (!bean.isOperationSuccess()) {
+                FenixFramework.atomic(() -> {
+                    forwardPayment.reject();
+                    log.setSibsGatewayTransactionId(bean.getTransactionId());
+                });
+            }
+
+            return returnBean;
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                PaymentRequestLog log2 = forwardPayment.logException(e);
+                if (!StringUtils.isEmpty(requestBody)) {
+                    log.saveRequest(requestBody);
+                }
+
+                if (!StringUtils.isEmpty(responseBody)) {
+                    log.saveResponse(responseBody);
+                }
+            });
+
+            throw new TreasuryDomainException(e,
+                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
+        }
+    }
 }

@@ -74,6 +74,7 @@ import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaym
 import org.fenixedu.treasury.domain.forwardpayments.implementations.IForwardPaymentPlatformService;
 import org.fenixedu.treasury.domain.forwardpayments.implementations.PostProcessPaymentStatusBean;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
@@ -85,7 +86,6 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import pt.ist.fenixframework.Atomic;
@@ -415,6 +415,11 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
     @Override
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment) {
         return postProcessPayment(forwardPayment, "", null);
+    }
+
+    @Override
+    public PostProcessPaymentStatusBean processForwardPaymentFromWebhook(PaymentRequestLog log, DigitalPlatformResultBean bean) {
+        throw new RuntimeException("not implemented");
     }
 
 }

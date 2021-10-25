@@ -121,6 +121,10 @@ public class CreditNote extends CreditNote_Base {
             throw new TreasuryDomainException("error.CreditNote.debit.note.cannot.be.from.regulation.series");
         }
 
+        if (getDebitNote() != null && getDocumentNumberSeries().getSeries().isRegulationSeries()) {
+            throw new TreasuryDomainException("error.CreditNote.debit.note.cannot.be.from.regulation.series");
+        }
+        
         super.checkRules();
     }
 

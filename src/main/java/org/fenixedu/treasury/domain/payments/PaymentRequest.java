@@ -461,4 +461,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     public static Optional<? extends PaymentRequest> findUniqueBySibsGatewayTransactionId(String transactionId) {
         return findBySibsGatewayTransactionId(transactionId).findAny();
     }
+
+    public abstract String getUiDescription();
+
 }
