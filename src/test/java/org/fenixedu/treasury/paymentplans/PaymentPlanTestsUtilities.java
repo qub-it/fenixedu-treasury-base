@@ -2,34 +2,23 @@ package org.fenixedu.treasury.paymentplans;
 
 import static org.junit.Assert.assertEquals;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.treasury.base.TreasuryPlatformDependentServicesForTests;
+import org.fenixedu.treasury.base.BasicTreasuryUtils;
 import org.fenixedu.treasury.domain.AdhocCustomer;
-import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
-import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.FiscalCountryRegion;
-import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
-import org.fenixedu.treasury.domain.ProductGroup;
 import org.fenixedu.treasury.domain.Vat;
-import org.fenixedu.treasury.domain.VatExemptionReason;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
-import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanNumberGenerator;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.tariff.InterestType;
@@ -42,49 +31,39 @@ import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.PaymentPlanBean;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
 
-import pt.ist.esw.advice.pt.ist.fenixframework.AtomicInstance;
-import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
-import pt.ist.standards.geographic.Country;
-import pt.ist.standards.geographic.District;
-import pt.ist.standards.geographic.Municipality;
-import pt.ist.standards.geographic.Planet;
 
 public class PaymentPlanTestsUtilities {
-    public static final String DEBT_PRODUCT = "DEBT";
+    public static final String DEBT_PRODUCT = "PAGAMENTO";
 
     public static void startUp() {
-        try {
-            FenixFramework.getTransactionManager().withTransaction(() -> {
-                createFinantialInstitution();
-                createEmolumentProduct();
-                createDebtProduct();
-                createDebtAccount();
-                createTreasurySettings();
 
-                TreasuryPlataformDependentServicesFactory.registerImplementation(new TreasuryPlatformDependentServicesForTests());
+        BasicTreasuryUtils.startup(() -> {
+            createDebtAccount();
+            Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
+                    new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate( new BigDecimal("0"));
 
-                Vat.create(VatType.findByCode("INT"), getFinatialInstitution(), new BigDecimal("0"),
-                        new LocalDate(2000, 1, 1).toDateTimeAtStartOfDay(), new LocalDate(2050, 1, 1).toDateTimeAtStartOfDay());
-                GlobalInterestRate.create(new LocalDate(1950, 1, 1), ls("Juro oficial para o ano 2021"), new BigDecimal("4.705"),
-                        false, false);
-                PaymentPlanNumberGenerator.create(ls("Gerador"), "Plano-", 0);
+            GlobalInterestRate globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2020, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2021, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2022, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2023, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2024, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
 
-                FinantialDocumentType.createForSettlementNote("NP", ls("Nota de liquidação"), "NP", true);
-                FinantialDocumentType.createForDebitNote("ND", ls("Nota de dívida"), "ND", true);
-                Series.create(getFinatialInstitution(), "INT", ls("Série Interna"), false, true, false, true, true);
-
-                PaymentMethod.create("MB", ls("multibanco"), true);
-
-                return null;
-            }, new AtomicInstance(TxMode.WRITE, true));
-        } catch (Exception e) {
-            throw new UndeclaredThrowableException(e);
-        }
+            return null;
+        });
     }
 
     public static void runTests(PaymentPlanBean paymentPlanBean, List<InstallmentBean> expectedInstallments) {
@@ -240,7 +219,7 @@ public class PaymentPlanTestsUtilities {
         configurator.setActive(true);
         configurator.setInstallmentDescriptionFormat(new LocalizedString(TreasuryConstants.DEFAULT_LANGUAGE,
                 "${installmentNumber}º prestação do plano de pagamento: ${paymentPlanId}"));
-        configurator.setEmolumentProduct(Product.findUniqueByCode("EMULUMENTO").get());
+        configurator.setEmolumentProduct(Product.findUniqueByCode("PAYMENT_PLAN_EMOL").get());
         configurator.setNumberGenerators(FenixFramework.getDomainRoot().getPaymentPlanNumberGeneratorsSet().iterator().next());
 
         configurator.setApplyDebitEntryInterest(applyDebitEntryInterest);
@@ -251,46 +230,11 @@ public class PaymentPlanTestsUtilities {
         return configurator;
     }
 
-    public static Product createEmolumentProduct() {
-        return Product.create(ProductGroup.create("JUnitProductGroup", ls("JUnit ProductGroup")), "EMULUMENTO",
-                ls("Adiantamento de Pagamento"), ls("Unidade"), true, false, 0, VatType.create("INT", ls("INT")),
-                List.of(getFinatialInstitution()), VatExemptionReason.create("VatExemptionReason", ls("VatExemptionReason")));
-    }
-
-    public static Product createDebtProduct() {
-        return Product.create(ProductGroup.findByCode("JUnitProductGroup"), DEBT_PRODUCT, ls("interest de Pagamento"),
-                ls("Unidade"), true, false, 0, VatType.findByCode("INT"), List.of(getFinatialInstitution()),
-                VatExemptionReason.findByCode("VatExemptionReason"));
-    }
-
-    public static void createTreasurySettings() {
-        TreasurySettings instance = TreasurySettings.getInstance();
-        instance.setInterestProduct(createInterestProduct());
-        instance.setNumberOfPaymentPlansActivesPerStudent(999);
-    }
-
-    public static Product createInterestProduct() {
-        return Product.create(ProductGroup.findByCode("JUnitProductGroup"), "Interest", ls("interest de Pagamento"),
-                ls("Unidade"), true, false, 0, VatType.findByCode("INT"), List.of(getFinatialInstitution()),
-                VatExemptionReason.findByCode("VatExemptionReason"));
-    }
-
     public static void createDebtAccount() {
-        CustomerType customerType = CustomerType.create("CT", ls("CustomerType"));
-        AdhocCustomer create = AdhocCustomer.create(customerType, Customer.DEFAULT_FISCAL_NUMBER, "Diogo", "morada", "", "", "",
+        AdhocCustomer create = AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(),
+                Customer.DEFAULT_FISCAL_NUMBER, "Diogo", "morada", "", "", "",
                 "pt", "", List.of(getFinatialInstitution()));
         DebtAccount.create(getFinatialInstitution(), create);
-    }
-
-    public static void createFinantialInstitution() {
-        Country country = new Country(Planet.getEarth(), "portugal", "pt", "ptr", "1");
-        District district = new District(country, "lisboa", "lisboa");
-        FinantialInstitution finantialInstitution = FinantialInstitution.create(FiscalCountryRegion.create("PT", ls("portugal")),
-                Currency.create("EUR", ls("Euro"), "EUR", "€"), "FinantialInstitution", "123456789", "companyId",
-                "Finantial Institution", "company name", "address", country, district,
-                new Municipality(district, "lisboa", "lisboa"), "", "");
-
-        FinantialEntity.create(finantialInstitution, "FINANTIAL_ENTITY", ls("Entidade Financeira"));
     }
 
     public static FinantialInstitution getFinatialInstitution() {

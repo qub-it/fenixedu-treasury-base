@@ -2,22 +2,18 @@ package org.fenixedu.treasury.finantialdocuments;
 
 import static org.junit.Assert.assertEquals;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.base.BasicTreasuryUtils;
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
 import org.fenixedu.treasury.domain.AdhocCustomer;
-import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.FiscalCountryRegion;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.ProductGroup;
 import org.fenixedu.treasury.domain.Vat;
@@ -29,7 +25,6 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -40,11 +35,7 @@ import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEven
 import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
-import org.fenixedu.treasury.domain.tariff.InterestRate;
-import org.fenixedu.treasury.domain.tariff.InterestType;
-import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.paymentplans.PaymentPlanTestsUtilities;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -52,44 +43,46 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Basic;
-
-import pt.ist.esw.advice.pt.ist.fenixframework.AtomicInstance;
-import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
-import pt.ist.standards.geographic.Country;
-import pt.ist.standards.geographic.District;
-import pt.ist.standards.geographic.Municipality;
-import pt.ist.standards.geographic.Planet;
 
 @RunWith(FenixFrameworkRunner.class)
 
 public class TreasuryExemptionTest {
-    public static final String DEBT_PRODUCT = "DEBT";
+    public static final String DEBT_PRODUCT = "PAGAMENTO";
     private DebitEntry debitEntry;
     private TreasuryEvent treasuryEvent;
 
     @BeforeClass
     public static void startUp() {
         BasicTreasuryUtils.startup(() -> {
-            ProductGroup productGroup = ProductGroup.create("JUnitProductGroup", BasicTreasuryUtils.ls("JUnit ProductGroup"));
 
-            Product product = Product.create(productGroup, DEBT_PRODUCT, BasicTreasuryUtils.ls("Dívida Pagamento"),
-                    BasicTreasuryUtils.ls("Unidade"), true, false, 0, VatType.findByCode("INT"),
-                    List.of(getFinatialInstitution()), VatExemptionReason.findByCode("M07"));
-
-            Series series = Series.create(getFinatialInstitution(), "SERIES", BasicTreasuryUtils.ls("series"), false, false,
-                    false, true, true);
-            Vat.create(VatType.findByCode("INT"), getFinatialInstitution(), new BigDecimal("0"),
-                    new LocalDate(2000, 1, 1).toDateTimeAtStartOfDay(), new LocalDate(2050, 1, 1).toDateTimeAtStartOfDay());
-
-            AdhocCustomer customer = AdhocCustomer.create(CustomerType.findByCode("STUDENT").findFirst().get(),
+            AdhocCustomer customer = AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(),
                     Customer.DEFAULT_FISCAL_NUMBER, "Diogo", "morada", "", "", "", "pt", "", List.of(getFinatialInstitution()));
 
-            DebtAccount debtAccount = DebtAccount.create(getFinatialInstitution(), customer);
+            DebtAccount.create(getFinatialInstitution(), customer);
 
-            TreasuryExemptionType exemptionType = TreasuryExemptionType.create("TreasuryExemptionType",
+            TreasuryExemptionType.create("TreasuryExemptionType",
                     BasicTreasuryUtils.ls("TreasuryExemptionType"), null, true);
+
+            Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
+                    new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
+
+            GlobalInterestRate globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2020, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2021, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2022, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2023, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2024, 1, 1)).get();
+            globalInterestRate.setRate(new BigDecimal("4.705"));
+            globalInterestRate.setApplyPaymentMonth(false);
+
             createPenaltyTaxSettings();
             return null;
         });
@@ -101,7 +94,7 @@ public class TreasuryExemptionTest {
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
         DebitNote debitNote = DebitNote.create(getDebtAccount(), DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), Series.findByCode(getFinatialInstitution(), "SERIES")), date);
+                .find(FinantialDocumentType.findForDebitNote(), Series.findByCode(getFinatialInstitution(), "INT")), date);
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
 
         debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, new BigDecimal(1000), dueDate, null,
@@ -310,7 +303,7 @@ public class TreasuryExemptionTest {
 
     private static void createPenaltyTaxSettings() {
         if (!Product.findUniqueByCode("TX_PEN_ATRASO_PAG").isPresent()) {
-            Product.create(ProductGroup.findByCode("JUnitProductGroup"), "TX_PEN_ATRASO_PAG",
+            Product.create(ProductGroup.findByCode("OTHER"), "TX_PEN_ATRASO_PAG",
                     PaymentPlanTestsUtilities.ls("Taxa de penalizacao por atraso no pagamento"),
                     PaymentPlanTestsUtilities.ls("Unidade"), true, false, 0, VatType.findByCode("INT"),
                     FinantialInstitution.findAll().collect(Collectors.toList()),
