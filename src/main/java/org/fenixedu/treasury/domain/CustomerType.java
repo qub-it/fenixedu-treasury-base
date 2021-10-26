@@ -52,14 +52,10 @@
  */
 package org.fenixedu.treasury.domain;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
-import java.util.Locale;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
 import pt.ist.fenixframework.Atomic;
@@ -134,16 +130,6 @@ public class CustomerType extends CustomerType_Base {
     @Atomic
     public static CustomerType create(final String code, final LocalizedString name) {
         return new CustomerType(code, name);
-    }
-
-    @Atomic
-    public static void initializeCustomerType() {
-
-        if (CustomerType.findAll().count() == 0) {
-            CustomerType.create("CANDIDATE", treasuryBundleI18N("label.CustomerType.CANDIDATE"));
-            CustomerType.create("STUDENT", treasuryBundleI18N("label.CustomerType.STUDENT"));
-            CustomerType.create("ADHOC", treasuryBundleI18N("label.CustomerType.ADHOC"));
-        }
     }
 
 }

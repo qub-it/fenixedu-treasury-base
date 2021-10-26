@@ -52,15 +52,11 @@
  */
 package org.fenixedu.treasury.domain;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
 import pt.ist.fenixframework.Atomic;
@@ -122,17 +118,6 @@ public class PaymentMethod extends PaymentMethod_Base {
         setDomainRoot(null);
 
         deleteDomainObject();
-    }
-
-    @Atomic
-    public static void initializePaymentMethod() {
-        if (PaymentMethod.findAll().count() == 0) {
-            PaymentMethod.create("NU", treasuryBundleI18N("label.PaymentMethod.MON"), true);
-            PaymentMethod.create("TB", treasuryBundleI18N("label.PaymentMethod.WTR"), true);
-            PaymentMethod.create("MB", treasuryBundleI18N("label.PaymentMethod.ELE"), true);
-            PaymentMethod.create("CD", treasuryBundleI18N("label.PaymentMethod.CCR"), true);
-            PaymentMethod.create("CH", treasuryBundleI18N("label.PaymentMethod.CH"), true);
-        }
     }
 
     public static Stream<PaymentMethod> findAll() {

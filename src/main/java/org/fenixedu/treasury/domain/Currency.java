@@ -52,9 +52,6 @@
  */
 package org.fenixedu.treasury.domain;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.stream.Collectors;
@@ -70,13 +67,6 @@ import pt.ist.fenixframework.FenixFramework;
 public class Currency extends Currency_Base {
 
     public static String EURO_CODE = "EUR";
-
-    @Atomic
-    public static void initializeCurrency() {
-        if (Currency.findAll().count() == 0) {
-            Currency.create("EUR", treasuryBundleI18N("label.Currency.EUR"), treasuryBundle("label.Currency.EUR"), "€");
-        }
-    }
 
     protected Currency() {
         super();

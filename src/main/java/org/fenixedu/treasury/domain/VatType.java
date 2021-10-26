@@ -52,15 +52,11 @@
  */
 package org.fenixedu.treasury.domain;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
 import pt.ist.fenixframework.Atomic;
@@ -122,16 +118,6 @@ public class VatType extends VatType_Base {
      * SERVICES *
      ************/
     // @formatter: on
-    @Atomic
-    public static void initializeVatType() {
-
-        if (VatType.findAll().count() == 0) {
-            VatType.create("RED", treasuryBundleI18N("label.VatType.RED"));
-            VatType.create("INT", treasuryBundleI18N("label.VatType.INT"));
-            VatType.create("NOR", treasuryBundleI18N("label.VatType.NOR"));
-            VatType.create("ISE", treasuryBundleI18N("label.VatType.ISE"));
-        }
-    }
 
     public static Stream<VatType> findAll() {
         return FenixFramework.getDomainRoot().getVatTypesSet().stream();

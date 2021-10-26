@@ -157,8 +157,4 @@ public class ProductGroup extends ProductGroup_Base {
     public static ProductGroup create(final String code, final LocalizedString name) {
         return new ProductGroup(code, name);
     }
-
-    public static void initializeProductGroup() {
-    }
-
 }

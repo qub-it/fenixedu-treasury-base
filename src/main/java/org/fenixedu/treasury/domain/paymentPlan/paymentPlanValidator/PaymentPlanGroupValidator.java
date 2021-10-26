@@ -164,6 +164,15 @@ public class PaymentPlanGroupValidator extends PaymentPlanGroupValidator_Base {
         return findRootGroupValidators().stream().filter(p -> Boolean.TRUE.equals(p.getActive())).collect(Collectors.toSet());
     }
 
+    public static PaymentPlanGroupValidator create(LocalizedString newName, Boolean active) {
+        PaymentPlanGroupValidator result = new PaymentPlanGroupValidator();
+        result.setName(newName);
+        result.setActive(active);
+        result.setConjunction(Boolean.TRUE);
+
+        return result;
+    }
+
     public static PaymentPlanGroupValidator create(LocalizedString newName, Boolean active, PaymentPlanGroupValidator base) {
         PaymentPlanGroupValidator result = new PaymentPlanGroupValidator();
         result.setName(newName);
@@ -176,7 +185,6 @@ public class PaymentPlanGroupValidator extends PaymentPlanGroupValidator_Base {
 
         return result;
     }
-
     @Override
     protected PaymentPlanValidator clone() {
         PaymentPlanGroupValidator result = new PaymentPlanGroupValidator();
