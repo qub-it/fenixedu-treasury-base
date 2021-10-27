@@ -15,7 +15,7 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.FiscalCountryRegion;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.fenixedu.treasury.util.TreasuryBootstrapUtil;
+//import org.fenixedu.treasury.util.TreasuryBootstrapUtil;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
 import pt.ist.esw.advice.pt.ist.fenixframework.AtomicInstance;
@@ -33,7 +33,7 @@ public class BasicTreasuryUtils {
         try {
             FenixFramework.getTransactionManager().withTransaction(() -> {
                 TreasuryPlataformDependentServicesFactory.registerImplementation(new TreasuryPlatformDependentServicesForTests());
-                TreasuryBootstrapUtil.InitializeDomain();
+//                TreasuryBootstrapUtil.InitializeDomain();
                 FinantialInstitution finantialInstitution = createFinantialInstitution();
                 createFinantialEntity(finantialInstitution);
                 startup.call();
