@@ -18,6 +18,7 @@ import org.fenixedu.treasury.domain.CustomerType;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.FiscalCountryRegion;
+import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.ProductGroup;
@@ -66,6 +67,13 @@ public class TreasuryBootstrapper {
 
     }
 
+    private static void initializeFiscalYear(FinantialInstitution finantialInstitution) {
+        int lastYear = LocalDate.now().getYear() + 10;
+        for (int year = LocalDate.now().getYear() - 10; year <= lastYear; year++) {
+            FiscalYear.create(finantialInstitution, year, new LocalDate(year, 12, 31));
+        }
+    }
+
     private static void initializePaymentPlanConfigurations() {
         LocalizedString name = new LocalizedString(new Locale("pt", "PT"), "Sem validação").with(Locale.UK, "Without validation");
         PaymentPlanGroupValidator.create(name, Boolean.TRUE);
@@ -97,6 +105,8 @@ public class TreasuryBootstrapper {
         initializeSeries(finantialInstitution);
         initializeFinantialIntitutionProducts(finantialInstitution);
         initializeRegulationDocumentNumberSeries(finantialInstitution);
+        initializeFiscalYear(finantialInstitution);
+
     }
 
     private static void initializeFiscalRegion(String countryCode) {
