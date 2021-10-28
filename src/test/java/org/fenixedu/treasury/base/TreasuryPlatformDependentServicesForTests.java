@@ -10,6 +10,7 @@ import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
@@ -251,6 +252,12 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
 
     @Override
     public String exportDocumentFileExtension() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote) {
         // TODO Auto-generated method stub
         return null;
     }

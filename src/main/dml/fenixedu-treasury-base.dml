@@ -1437,6 +1437,7 @@ class settings.TreasurySettings {
 	String forwardPaymentReturnDefaultURL;
 	Integer numberOfPaymentPlansActivesPerStudent;
 	boolean canRegisterPaymentWithMultipleMethods;
+	String settlementNoteReceiptTemplateCode;
 }
 
 	relation TreasurySettingsBennu {

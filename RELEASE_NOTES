@@ -1,3 +1,5 @@
+- Improvement: Change Settlement note receipt from odt to webdocs 
+
 8.3.0 (25-10-2021)
 - Improvement: Add method getUiDescription on paymentRequest
 - Bug fix: Correction on PaymentPlatforms to process forward payments webhooks
