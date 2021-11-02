@@ -75,19 +75,17 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializePaymentPlanConfigurations() {
-        LocalizedString name = new LocalizedString(new Locale("pt", "PT"), "Sem validação").with(Locale.UK, "Without validation");
+        LocalizedString name = treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.WITHOUT_VALIDATION");
         PaymentPlanGroupValidator.create(name, Boolean.TRUE);
 
         LocalizedString numberGeneratorName =
-                new LocalizedString(new Locale("pt", "PT"), "Gerador por omissão").with(Locale.UK, "Default generator");
+                treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DEFAULT_GENERATOR");
         PaymentPlanNumberGenerator numberGenerator = PaymentPlanNumberGenerator.create(numberGeneratorName, "PP", 1);
         
         LocalizedString paymentPlanConfiguratorName =
-                new LocalizedString(new Locale("pt", "PT"), "Configurador por omissão").with(Locale.UK, "Default configurator");
+                treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.CONFIGURATOR");
         LocalizedString installmentDescriptionFormat =
-                new LocalizedString(new Locale("pt", "PT"),
-                        "${installmentNumber}ª prestação do plano de pagamento: ${paymentPlanId}").with(Locale.UK,
-                                "${installmentNumber} installment of payment plan: ${paymentPlanId}");
+                treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DESCRIPTION");
 
         PaymentPlanConfigurator configurator =
                 new PaymentPlanConfigurator(paymentPlanConfiguratorName, installmentDescriptionFormat, Boolean.FALSE,
@@ -224,9 +222,16 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeReimbursementProcessStatusType() {
-        ReimbursementProcessStatusType.create("PENDING", "Reembolso pendente", 1, true, false, false);
-        ReimbursementProcessStatusType.create("ANNULED", "Reembolso anulado", 2, false, true, true);
-        ReimbursementProcessStatusType.create("CONCLUDED", "Reembolso concluído", 3, false, true, false);
+        ReimbursementProcessStatusType.create("PENDING",
+                treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING").getContent(Locale.getDefault()),
+                1, true, false, false);
+        ReimbursementProcessStatusType.create("ANNULED",
+                treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED").getContent(Locale.getDefault()),
+                2, false, true, true);
+        ReimbursementProcessStatusType.create("CONCLUDED",
+                treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
+                        .getContent(Locale.getDefault()),
+                3, false, true, false);
     }
 
     private static FinantialInstitution initializeFinantialInstituition(String institutionName, String institutionInitials,
