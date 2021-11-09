@@ -1,4 +1,6 @@
 - Improvement: Change Settlement note receipt from odt to webdocs 
+- Improvement: Control the creation of payment reference codes in payment plans
+- Bug Fix: Limit the size of customerBusinessId in ERP integration with SAP (#UL-REIT-2583)
 
 8.3.0 (25-10-2021)
 - Improvement: Add method getUiDescription on paymentRequest

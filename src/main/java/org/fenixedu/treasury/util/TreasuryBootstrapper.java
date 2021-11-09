@@ -90,7 +90,7 @@ public class TreasuryBootstrapper {
         PaymentPlanConfigurator configurator =
                 new PaymentPlanConfigurator(paymentPlanConfiguratorName, installmentDescriptionFormat, Boolean.FALSE,
                         AddictionsCalculeTypeEnum.AFTER_DEBIT_ENTRY, null, Product.findUniqueByCode("PAYMENT_PLAN_EMOL").get(),
-                        numberGenerator);
+                        numberGenerator, true);
         configurator.setApplyDebitEntryInterest(Boolean.TRUE);
         configurator.setCanIncreaseInterestAmount(Boolean.FALSE);
         configurator.setActive(Boolean.TRUE);
