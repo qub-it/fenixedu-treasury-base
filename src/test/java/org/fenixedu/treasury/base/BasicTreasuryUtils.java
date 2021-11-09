@@ -1,6 +1,7 @@
 package org.fenixedu.treasury.base;
 
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -17,6 +18,7 @@ public class BasicTreasuryUtils {
     public static void startup(Callable<?> startup) {
         try {
             FenixFramework.getTransactionManager().withTransaction(() -> {
+                Locale.setDefault(new Locale("PT", "pt"));
                 TreasuryPlataformDependentServicesFactory.registerImplementation(new TreasuryPlatformDependentServicesForTests());
                 TreasuryBootstrapper.bootstrap("teste", "teste", "PT");
                 startup.call();

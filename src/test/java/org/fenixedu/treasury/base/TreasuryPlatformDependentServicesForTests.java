@@ -2,6 +2,7 @@ package org.fenixedu.treasury.base;
 
 import java.io.InputStream;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.servlet.http.HttpSession;
@@ -166,7 +167,14 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
 
     @Override
     public LocalizedString bundleI18N(String bundleName, String key, String... args) {
-        return BasicTreasuryUtils.ls(key);
+        ResourceBundle bundlePt = ResourceBundle.getBundle(bundleName, Locale.getDefault());
+        if (bundlePt.containsKey(key)) {
+            final Locale enLocale = new Locale("en", "GB");
+            ResourceBundle bundleEn = ResourceBundle.getBundle(bundleName, Locale.getDefault());
+            return new LocalizedString(Locale.getDefault(), bundlePt.getString(key)).with(enLocale, bundleEn.getString(key));
+        } else {
+            return BasicTreasuryUtils.ls(key);
+        }
     }
 
     @Override
