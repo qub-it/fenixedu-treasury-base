@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.treasury.domain.PaymentMethodReference;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -157,11 +158,6 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
 
     public boolean isInStateToPostProcessPayment() {
         return !isInAnnuledState() && !isInRejectedState() && !isInPaidState();
-    }
-
-    @Override
-    public String fillPaymentEntryMethodId() {
-        return null;
     }
 
     @Override

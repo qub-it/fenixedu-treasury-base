@@ -177,12 +177,12 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializePaymentMethod() {
-        PaymentMethod.create("NU", treasuryBundleI18N("label.PaymentMethod.MON"), true);
-        PaymentMethod.create("TB", treasuryBundleI18N("label.PaymentMethod.WTR"), true);
-        PaymentMethod.create("MB", treasuryBundleI18N("label.PaymentMethod.ELE"), true);
-        PaymentMethod.create("CD", treasuryBundleI18N("label.PaymentMethod.CCR"), true);
-        PaymentMethod.create("CH", treasuryBundleI18N("label.PaymentMethod.CH"), true);
-        PaymentMethod.create("MW", treasuryBundleI18N("label.PaymentMethod.MW"), true);
+        PaymentMethod.create("NU", treasuryBundleI18N("label.PaymentMethod.MON"), true, false);
+        PaymentMethod.create("TB", treasuryBundleI18N("label.PaymentMethod.WTR"), true, false);
+        PaymentMethod.create("MB", treasuryBundleI18N("label.PaymentMethod.ELE"), true, false);
+        PaymentMethod.create("CD", treasuryBundleI18N("label.PaymentMethod.CCR"), true, false);
+        PaymentMethod.create("CH", treasuryBundleI18N("label.PaymentMethod.CH"), true, false);
+        PaymentMethod.create("MW", treasuryBundleI18N("label.PaymentMethod.MW"), true, false);
 
     }
 

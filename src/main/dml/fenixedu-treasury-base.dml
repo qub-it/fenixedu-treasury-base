@@ -112,6 +112,7 @@ class PaymentMethod {
 	String code;
 	LocalizedStringT name;
 	boolean availableForPaymentInApplication;
+	Boolean requirePaymentMethodReference;
 }
 
 	relation PaymentMethodBennu {
@@ -3258,7 +3259,8 @@ class PaymentMethodReference {
 	String name;
 	String paymentReferenceId;
 	boolean paymentMethodReferenceActive;
-	boolean defaultReference;
+	
+	Boolean forDigitalPayments;
 }
 	
 	relation PaymentMethodReferenceDomainRoot {

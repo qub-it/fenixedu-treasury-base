@@ -65,6 +65,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
+import org.fenixedu.treasury.domain.PaymentMethodReference;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -180,7 +181,16 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         return map.stream().sorted().findFirst().orElse(null);
     }
 
-    public abstract String fillPaymentEntryMethodId();
+    public String fillPaymentEntryMethodId() {
+        Optional<PaymentMethodReference> methodReference = PaymentMethodReference
+                .findUniqueActiveAndForDigitalPayments(getPaymentMethod(), getDebtAccount().getFinantialInstitution());
+
+        if (methodReference.isPresent()) {
+            return methodReference.get().buildPaymentReferenceId(this);
+        }
+
+        return null;
+    }
 
     public abstract IPaymentRequestState getCurrentState();
 

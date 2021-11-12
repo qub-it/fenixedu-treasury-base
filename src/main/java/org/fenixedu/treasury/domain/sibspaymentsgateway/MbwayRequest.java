@@ -136,11 +136,6 @@ public class MbwayRequest extends MbwayRequest_Base {
     }
 
     @Override
-    public String fillPaymentEntryMethodId() {
-        return null;
-    }
-
-    @Override
     public PaymentReferenceCodeStateType getCurrentState() {
         return super.getState();
     }

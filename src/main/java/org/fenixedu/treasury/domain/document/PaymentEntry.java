@@ -87,16 +87,6 @@ public class PaymentEntry extends PaymentEntry_Base {
         setPaymentMethodId(paymentMethodId);
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
 
-        if (StringUtils.isEmpty(getPaymentMethodId()) && PaymentMethodReference.isPaymentMethodReferencesApplied()) {
-            // Apply default payment method reference if exists
-            Optional<PaymentMethodReference> defaultMethodReference = PaymentMethodReference.findUniqueDefaultPaymentMethodReference(getPaymentMethod(),
-                    getSettlementNote().getDebtAccount().getFinantialInstitution());
-            
-            if(defaultMethodReference.isPresent()) {
-                setPaymentMethodId(defaultMethodReference.get().getPaymentReferenceId());
-            }
-        }
-
         checkRules();
     }
 

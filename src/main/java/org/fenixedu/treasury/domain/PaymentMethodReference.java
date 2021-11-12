@@ -53,11 +53,17 @@
 package org.fenixedu.treasury.domain;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentCodeTransaction;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.payments.PaymentRequest;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
@@ -73,15 +79,15 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
     }
 
     protected PaymentMethodReference(PaymentMethod paymentMethod, FinantialInstitution finantialInstitution, String name,
-            String paymentReferenceId) {
+            String paymentReferenceId, boolean forDigitalPayments) {
         this();
 
         setPaymentMethod(paymentMethod);
         setFinantialInstitution(finantialInstitution);
         setName(name);
         setPaymentReferenceId(paymentReferenceId);
-        setDefaultReference(false);
         setPaymentMethodReferenceActive(true);
+        setForDigitalPayments(forDigitalPayments);
 
         checkRules();
     }
@@ -107,40 +113,17 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
             throw new TreasuryDomainException("error.PaymentMethodReference.paymentReferenceId.required");
         }
 
-        if (findByPaymentReferenceId(getPaymentMethod(), getFinantialInstitution(), getPaymentReferenceId()).count() > 1) {
-            throw new TreasuryDomainException("error.PaymentMethodReference.paymentReferenceId.duplicated");
+        if (getForDigitalPayments() == null) {
+            throw new TreasuryDomainException("error.PaymentMethodReference.forDigitalPayments.required");
         }
 
-        if (findDefaultPaymentMethodReference(getPaymentMethod(), getFinantialInstitution()).count() > 1) {
-            throw new TreasuryDomainException("error.PaymentMethodReference.defaultPaymentMethodReference.not.unique");
+        if (findActiveAndForDigitalPayments(getPaymentMethod(), getFinantialInstitution()).count() > 1) {
+            throw new TreasuryDomainException("error.PaymentMethodReference.forDigitalPayments.active.more.than.one");
         }
-
-        if (isDefault() && !isActive()) {
-            throw new TreasuryDomainException("error.PaymentMethodReference.default.must.be.active");
-        }
-    }
-
-    public boolean isDefault() {
-        return Boolean.TRUE.equals(getDefaultReference());
     }
 
     public boolean isActive() {
         return Boolean.TRUE.equals(getPaymentMethodReferenceActive());
-    }
-
-    public void markAsDefault() {
-        // Mark all others as not default
-        find(getPaymentMethod(), getFinantialInstitution()).forEach(p -> p.setDefaultReference(false));
-
-        setDefaultReference(true);
-
-        checkRules();
-    }
-
-    public void markAsNotDefault() {
-        setDefaultReference(false);
-
-        checkRules();
     }
 
     public void activate() {
@@ -150,15 +133,15 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
     }
 
     public void deactivate() {
-        setDefaultReference(false);
         setPaymentMethodReferenceActive(false);
 
         checkRules();
     }
 
-    public void edit(String name, String paymentReferenceId) {
+    public void edit(String name, String paymentReferenceId, boolean forDigitalPayments) {
         setName(name);
         setPaymentReferenceId(paymentReferenceId);
+        setForDigitalPayments(forDigitalPayments);
 
         checkRules();
     }
@@ -172,13 +155,25 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
         super.deleteDomainObject();
     }
 
+    public String buildPaymentReferenceId(PaymentRequest paymentRequest) {
+        Map<String, String> valueMap = new HashMap<String, String>();
+
+        if (paymentRequest instanceof SibsPaymentRequest) {
+            valueMap.put("sibsEntityReferenceCode",
+                    ((SibsPaymentRequest) paymentRequest).getEntityReferenceCode());
+            valueMap.put("sibsReferenceCode", ((SibsPaymentRequest) paymentRequest).getReferenceCode());
+        }
+
+        return StrSubstitutor.replace(getPaymentReferenceId(), valueMap);
+    }
+
     /* ********
      * SERVICES
      * ********
      */
 
     public static boolean isPaymentMethodReferencesApplied() {
-        return findAll().count() > 0;
+        return findAll().filter(p -> p.isActive() && !Boolean.TRUE.equals(p.getForDigitalPayments())).count() > 0;
     }
 
     public static Stream<PaymentMethodReference> findAll() {
@@ -195,23 +190,28 @@ public class PaymentMethodReference extends PaymentMethodReference_Base {
         return find(paymentMethod, finantialInstitution).filter(p -> p.isActive());
     }
 
+    public static Stream<PaymentMethodReference> findActiveForSettlementNoteRegistrationInBackoffice(PaymentMethod paymentMethod,
+            FinantialInstitution finantialInstitution) {
+        return findActive(paymentMethod, finantialInstitution).filter(p -> !Boolean.TRUE.equals(p.getForDigitalPayments()));
+    }
+
+    public static Stream<PaymentMethodReference> findActiveAndForDigitalPayments(PaymentMethod paymentMethod,
+            FinantialInstitution finantialInstitution) {
+        return findActive(paymentMethod, finantialInstitution).filter(p -> Boolean.TRUE.equals(p.getForDigitalPayments()));
+    }
+
+    public static Optional<PaymentMethodReference> findUniqueActiveAndForDigitalPayments(PaymentMethod paymentMethod,
+            FinantialInstitution finantialInstitution) {
+        return findActiveAndForDigitalPayments(paymentMethod, finantialInstitution).findFirst();
+    }
+
     public static Stream<PaymentMethodReference> findByPaymentReferenceId(PaymentMethod paymentMethod,
             FinantialInstitution finantialInstitution, String paymentReferenceId) {
         return find(paymentMethod, finantialInstitution).filter(p -> paymentReferenceId.equals(p.getPaymentReferenceId()));
     }
 
-    public static Stream<PaymentMethodReference> findDefaultPaymentMethodReference(PaymentMethod paymentMethod,
-            FinantialInstitution finantialInstitution) {
-        return find(paymentMethod, finantialInstitution).filter(p -> p.isDefault());
-    }
-
-    public static Optional<PaymentMethodReference> findUniqueDefaultPaymentMethodReference(PaymentMethod paymentMethod,
-            FinantialInstitution finantialInstitution) {
-        return find(paymentMethod, finantialInstitution).filter(p -> p.isDefault()).findFirst();
-    }
-
     public static PaymentMethodReference create(PaymentMethod paymentMethod, FinantialInstitution finantialInstitution,
-            String name, String paymentReferenceId) {
-        return new PaymentMethodReference(paymentMethod, finantialInstitution, name, paymentReferenceId);
+            String name, String paymentReferenceId, boolean forDigitalPayments) {
+        return new PaymentMethodReference(paymentMethod, finantialInstitution, name, paymentReferenceId, forDigitalPayments);
     }
 }

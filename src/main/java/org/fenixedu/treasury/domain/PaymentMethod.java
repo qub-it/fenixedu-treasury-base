@@ -69,11 +69,13 @@ public class PaymentMethod extends PaymentMethod_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected PaymentMethod(final String code, final LocalizedString name, final boolean availableForPaymentInApplication) {
+    protected PaymentMethod(String code, LocalizedString name, boolean availableForPaymentInApplication,
+            boolean requirePaymentMethodReference) {
         this();
         setCode(code);
         setName(name);
         setAvailableForPaymentInApplication(availableForPaymentInApplication);
+        setRequirePaymentMethodReference(requirePaymentMethodReference);
 
         checkRules();
     }
@@ -87,6 +89,10 @@ public class PaymentMethod extends PaymentMethod_Base {
             throw new TreasuryDomainException("error.PaymentMethod.name.required");
         }
 
+        if (getRequirePaymentMethodReference() == null) {
+            throw new TreasuryDomainException("error.PaymentMethod.requirePaymentMethodReference.required");
+        }
+
         findByCode(getCode());
         getName().getLocales().stream().forEach(l -> findByName(getName().getContent(l)));
     }
@@ -96,10 +102,12 @@ public class PaymentMethod extends PaymentMethod_Base {
     }
 
     @Atomic
-    public void edit(final String code, final LocalizedString name, final boolean availableForPaymentInApplication) {
+    public void edit(String code, LocalizedString name, boolean availableForPaymentInApplication,
+            boolean requirePaymentMethodReference) {
         setCode(code);
         setName(name);
         setAvailableForPaymentInApplication(availableForPaymentInApplication);
+        setRequirePaymentMethodReference(requirePaymentMethodReference);
 
         checkRules();
     }
@@ -166,8 +174,9 @@ public class PaymentMethod extends PaymentMethod_Base {
     }
 
     @Atomic
-    public static PaymentMethod create(final String code, final LocalizedString name, boolean availableForPaymentInApplication) {
-        return new PaymentMethod(code, name, availableForPaymentInApplication);
+    public static PaymentMethod create(final String code, final LocalizedString name, boolean availableForPaymentInApplication,
+            boolean requirePaymentMethodReference) {
+        return new PaymentMethod(code, name, availableForPaymentInApplication, requirePaymentMethodReference);
     }
 
 }
