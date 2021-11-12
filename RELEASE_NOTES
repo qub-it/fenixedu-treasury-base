@@ -1,3 +1,4 @@
+8.4.0 (12-11-2021)
 - Improvement: Property in payment method to check if requires a payment method reference, when registering a settlement note in backoffice
 - Refactor: Remove defaultReference property in PaymentMethodReference. Replace with "forDigitalPayments" property which if marked, the reference will be applied in digital payments
 - Refactor: Remove hardcoded "COB PAG SERV <sibsEntity>" and replace by payment reference code marked with "forDigitalPayments" property
