@@ -1,3 +1,11 @@
+- Improvement: Property in payment method to check if requires a payment method reference, when registering a settlement note in backoffice
+- Refactor: Remove defaultReference property in PaymentMethodReference. Replace with "forDigitalPayments" property which if marked, the reference will be applied in digital payments
+- Refactor: Remove hardcoded "COB PAG SERV <sibsEntity>" and replace by payment reference code marked with "forDigitalPayments" property
+- Improvement: Change Settlement note receipt from odt to webdocs 
+- Improvement: Control the creation of payment reference codes in payment plans
+- Bug Fix: Limit the size of customerBusinessId in ERP integration with SAP (#UL-REIT-2583)
+- Improvement: Treasury dependent platform for tests supports bundled keys for default locale and english locale
+
 8.3.0 (27-10-2021)
 - Bug Fix: Check if CreditNote of regulation series does not have debit note associated
 - Improvement: Add method getUiDescription on paymentRequest

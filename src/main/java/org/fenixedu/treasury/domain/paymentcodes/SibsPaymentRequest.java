@@ -273,12 +273,6 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         return transaction;
     }
 
-    @Override
-    public String fillPaymentEntryMethodId() {
-        // ANIL (2017-09-13) Required by used ERP at this date
-        return String.format("COB PAG SERV %s", getEntityReferenceCode());
-    }
-
     private Map<String, String> fillPaymentEntryPropertiesMap(final String sibsTransactionId) {
         final Map<String, String> paymentEntryPropertiesMap = new HashMap<>();
 

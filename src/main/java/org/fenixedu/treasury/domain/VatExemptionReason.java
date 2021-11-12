@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain;
 
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,55 +67,6 @@ public class VatExemptionReason extends VatExemptionReason_Base {
     protected VatExemptionReason() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
-    }
-
-    @Atomic
-    public static void initializeVatExemption() {
-        if (VatExemptionReason.findAll().count() == 0) {
-            String[] codes =
-                    new String[] { "M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10", "M11", "M12", "M13",
-                            "M14", "M15", "M16", "M99" };
-
-            for (String code : codes) {
-                if (code.equals("M07")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Isento Artigo 9.º do CIVA (Ou similar)"));
-                } else if (code.equals("M01")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Artigo 16.º n.º 6 alínea c) do CIVA (Ou similar)"));
-                } else if (code.equals("M02")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Artigo 6.º do Decreto‐Lei n.º 198/90, de 19 de Junho"));
-                } else if (code.equals("M03")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), "Exigibilidade de caixa"));
-                } else if (code.equals("M04")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Isento Artigo 13.º do CIVA (Ou similar)"));
-                } else if (code.equals("M05")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Isento Artigo 14.º do CIVA (Ou similar)"));
-                } else if (code.equals("M06")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Isento Artigo 15.º do CIVA (Ou similar)"));
-                } else if (code.equals("M08")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), "IVA - Autoliquidação"));
-                } else if (code.equals("M09")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "IVA ‐ Não confere direito a dedução"));
-                } else if (code.equals("M10")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), "IVA - Regime de isenção"));
-                } else if (code.equals("M16")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Isento Artigo 14.º do RITI (Ou similar)"));
-                } else if (code.equals("M99")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(),
-                            "Não sujeito; não tributado (Ou similar)"));
-                } else {
-
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), code));
-                }
-            }
-        }
     }
 
     protected VatExemptionReason(final String code, final LocalizedString name) {

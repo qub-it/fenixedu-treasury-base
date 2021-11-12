@@ -172,6 +172,7 @@ public class SAPExporter implements IERPExporter {
     private static final int MAX_REASON = 50;
     private static final String MORADA_DESCONHECIDO = "Desconhecido";
     private static final int MAX_STREET_NAME = 90;
+    private static final int MAX_BUSINESS_ID = 30;
 
     public static final String SAFT_PT_ENCODING = "UTF-8";
     public final static String ERP_HEADER_VERSION_1_00_00 = "1.0.3";
@@ -1313,6 +1314,10 @@ public class SAPExporter implements IERPExporter {
         c.setCustomerID(customer.getCustomerId());
 
         c.setCustomerBusinessID(customer.getCustomerBusinessId());
+
+        if (StringUtils.isNotEmpty(c.getCustomerBusinessID())) {
+            c.setCustomerBusinessID(Splitter.fixedLength(MAX_BUSINESS_ID).splitToList(customer.getCustomerBusinessId()).get(0));
+        }
 
         // CustomerTaxID
 

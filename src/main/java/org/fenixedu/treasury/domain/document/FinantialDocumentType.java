@@ -52,16 +52,12 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
 import pt.ist.fenixframework.Atomic;
@@ -252,27 +248,6 @@ public class FinantialDocumentType extends FinantialDocumentType_Base {
             final String documentNumberSeriesPrefix, boolean invoice) {
         return new FinantialDocumentType(FinantialDocumentTypeEnum.REIMBURSEMENT_NOTE, code, name, documentNumberSeriesPrefix,
                 invoice);
-    }
-
-    @Atomic
-    public static void initializeFinantialDocumentType() {
-        if (FinantialDocumentType.findAll().count() == 0) {
-            FinantialDocumentType.createForCreditNote(
-                    "NA",
-                    treasuryBundleI18N("label.FinantialDocumentType.CreditNote"), "NA", true);
-            FinantialDocumentType.createForDebitNote(
-                    "ND",
-                    treasuryBundleI18N("label.FinantialDocumentType.DebitNote"), "ND", true);
-            FinantialDocumentType.createForSettlementNote(
-                    "NP",
-                    treasuryBundleI18N("label.FinantialDocumentType.SettlementNote"), "NP", true);
-
-            FinantialDocumentType.createForReimbursementNote(
-                    "NR",
-                    treasuryBundleI18N("label.FinantialDocumentType.ReimbursementNote"), "NR", true);
-
-        }
-
     }
 
 }

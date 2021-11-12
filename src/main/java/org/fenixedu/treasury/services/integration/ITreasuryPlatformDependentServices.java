@@ -62,6 +62,7 @@ import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
@@ -173,4 +174,7 @@ public interface ITreasuryPlatformDependentServices {
             LocalDate documentDateTo);
     
     public String exportDocumentFileExtension();
+
+    public InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
+
 }

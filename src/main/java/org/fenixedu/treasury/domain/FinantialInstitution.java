@@ -52,8 +52,6 @@
  */
 package org.fenixedu.treasury.domain;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.DEFAULT_LANGUAGE;
-
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Optional;
@@ -67,8 +65,8 @@ import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
+import org.fenixedu.treasury.util.TreasuryBootstrapper;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
@@ -112,6 +110,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         setCurrency(currency);
 
         ERPConfiguration.createEmpty(this);
+        TreasuryBootstrapper.bootstrapFinantialInstitution(this);
 
         checkRules();
     }

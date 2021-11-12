@@ -112,6 +112,7 @@ class PaymentMethod {
 	String code;
 	LocalizedStringT name;
 	boolean availableForPaymentInApplication;
+	Boolean requirePaymentMethodReference;
 }
 
 	relation PaymentMethodBennu {
@@ -453,41 +454,6 @@ class document.ReimbursementEntry {
 	}
 
 
-/*************
-* ACCESS CONTROL
-****************/
-//
-//public class accesscontrol.academicAdministration.TreasuryAccessRule {
-//    protected DateTime created (REQUIRED);
-//    protected DateTime revoked;
-//    protected TreasuryAccessOperation operation (REQUIRED);
-//}
-//class accesscontrol.PersistentTreasuryOperationGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
-//    public TreasuryOperationType operation;
-//    public TreasuryOperationTypeScope scope;
-//}
-//
-//
-//relation TreasuryAuthorizationGroupFinantialInstitution {
-//    public accesscontrol.PersistentTreasuryOperationGroup playsRole treasuryAuthorizationGroup {
-//        multiplicity *;
-//    }
-//    public FinantialInstitution playsRole finantialInstitution {
-//        multiplicity *;
-//    }
-//}
-//
-//relation TreasuryAuthorizationGroupFinantialEntity {
-//    public accesscontrol.PersistentTreasuryOperationGroup playsRole treasuryAuthorizationGroup {
-//        multiplicity *;
-//    }
-//    public FinantialEntity playsRole finantialEntity {
-//        multiplicity *;
-//    }
-//}
-
-
-
 /*-----------
  * Exemptions 
  * ----------*/
@@ -512,6 +478,8 @@ relation TreasuryExemptionTypeBennu {
 
 class exemption.TreasuryExemption {
 	String reason;
+	
+	// deprecated - it is always exempted by value
 	boolean exemptByPercentage;
 	BigDecimalT valueToExempt;
 }
@@ -1437,6 +1405,7 @@ class settings.TreasurySettings {
 	String forwardPaymentReturnDefaultURL;
 	Integer numberOfPaymentPlansActivesPerStudent;
 	boolean canRegisterPaymentWithMultipleMethods;
+	String settlementNoteReceiptTemplateCode;
 }
 
 	relation TreasurySettingsBennu {
@@ -3128,6 +3097,7 @@ class paymentPlan.PaymentPlanConfigurator{
 	AddictionsCalculeType paymentPenaltyDistribution;
 	Boolean applyDebitEntryInterest;
 	Boolean canIncreaseInterestAmount;
+	Boolean createPaymentCode;
 }	
 	relation PaymentPlanConfiguratorDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
@@ -3289,7 +3259,8 @@ class PaymentMethodReference {
 	String name;
 	String paymentReferenceId;
 	boolean paymentMethodReferenceActive;
-	boolean defaultReference;
+	
+	Boolean forDigitalPayments;
 }
 	
 	relation PaymentMethodReferenceDomainRoot {

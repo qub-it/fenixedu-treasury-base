@@ -2,6 +2,7 @@ package org.fenixedu.treasury.base;
 
 import java.io.InputStream;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.servlet.http.HttpSession;
@@ -10,6 +11,7 @@ import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration;
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
@@ -165,7 +167,14 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
 
     @Override
     public LocalizedString bundleI18N(String bundleName, String key, String... args) {
-        return BasicTreasuryUtils.ls(key);
+        ResourceBundle bundlePt = ResourceBundle.getBundle(bundleName, Locale.getDefault());
+        if (bundlePt.containsKey(key)) {
+            final Locale enLocale = new Locale("en", "GB");
+            ResourceBundle bundleEn = ResourceBundle.getBundle(bundleName, Locale.getDefault());
+            return new LocalizedString(Locale.getDefault(), bundlePt.getString(key)).with(enLocale, bundleEn.getString(key));
+        } else {
+            return BasicTreasuryUtils.ls(key);
+        }
     }
 
     @Override
@@ -251,6 +260,12 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
 
     @Override
     public String exportDocumentFileExtension() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote) {
         // TODO Auto-generated method stub
         return null;
     }

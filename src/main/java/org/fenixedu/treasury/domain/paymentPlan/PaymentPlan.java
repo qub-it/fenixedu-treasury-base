@@ -117,7 +117,11 @@ public class PaymentPlan extends PaymentPlan_Base {
         Map<ISettlementInvoiceEntryBean, DebitEntry> createdEntries = createDebitEntriesMap(paymentPlanBean);
 
         createInstallments(paymentPlanBean, createdEntries);
-        createPaymentReferenceCode();
+
+        if (Boolean.TRUE.equals(paymentPlanBean.getPaymentPlanConfigurator().getCreatePaymentCode())) {
+            createPaymentReferenceCode();
+        }
+
         annulPaymentReferenceCodeFromDebitEntries(
                 paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(bean -> bean.isForDebitEntry())
                         .map(bean -> ((SettlementDebitEntryBean) bean).getDebitEntry()).collect(Collectors.toList()));

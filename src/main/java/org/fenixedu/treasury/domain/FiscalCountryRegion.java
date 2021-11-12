@@ -52,15 +52,11 @@
  */
 package org.fenixedu.treasury.domain;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 
 import pt.ist.fenixframework.Atomic;
@@ -79,15 +75,6 @@ public class FiscalCountryRegion extends FiscalCountryRegion_Base {
         setName(name);
 
         checkRules();
-    }
-
-    @Atomic
-    public static void initializeFiscalRegion() {
-        if (FiscalCountryRegion.findAll().count() == 0) {
-            FiscalCountryRegion.create("PT", treasuryBundleI18N("label.FiscalCountryRegion.PT"));
-            FiscalCountryRegion.create("PT_MA", treasuryBundleI18N("label.FiscalCountryRegion.PT_MA"));
-            FiscalCountryRegion.create("PT_AZ", treasuryBundleI18N("label.FiscalCountryRegion.PT_AZ"));
-        }
     }
 
     private void checkRules() {

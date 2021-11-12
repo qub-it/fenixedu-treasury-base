@@ -216,7 +216,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
 
     public PaymentPlanConfigurator(LocalizedString name, LocalizedString installmentDescriptionFormat, Boolean usePaymentPenalty,
             AddictionsCalculeTypeEnum interestDistribuition, AddictionsCalculeTypeEnum paymentPenaltyDistribuition,
-            Product emolumentProduct, PaymentPlanNumberGenerator numberGenerator) {
+            Product emolumentProduct, PaymentPlanNumberGenerator numberGenerator, boolean createPaymentCode) {
         this();
 
         setName(name);
@@ -226,6 +226,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
         setNumberGenerators(numberGenerator);
         setInterestDistribution(interestDistribuition);
         setPaymentPenaltyDistribution(paymentPenaltyDistribuition);
+        setCreatePaymentCode(createPaymentCode);
 
         checkRules();
     }
