@@ -91,9 +91,8 @@ public abstract class Customer extends Customer_Base {
     protected Customer() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
+        setCode(getExternalId());
     }
-
-    public abstract String getCode();
 
     public abstract String getFiscalNumber();
 
@@ -497,4 +496,25 @@ public abstract class Customer extends Customer_Base {
         return value.toLowerCase();
     }
 
+    @Atomic
+    public int nextFinantialDocumentNumber() {
+        int number = 0;
+        if (getFinantialDocumentCounter() != null) {
+            number = getFinantialDocumentCounter();
+        }
+        number += 1;
+        setFinantialDocumentCounter(number);
+        return number;
+    }
+
+    @Atomic
+    public int nextFinantialDocumentEntryNumber() {
+        int number = 0;
+        if (getFinantialDocumentEntryCounter() != null) {
+            number = getFinantialDocumentEntryCounter();
+        }
+        number += 1;
+        setFinantialDocumentEntryCounter(number);
+        return number;
+    }
 }

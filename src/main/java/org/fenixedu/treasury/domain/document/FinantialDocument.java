@@ -68,7 +68,6 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.domain.integration.ERPImportOperation;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.ERPExporterManager;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -131,8 +130,13 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setCurrency(debtAccount.getFinantialInstitution().getCurrency());
         setState(FinantialDocumentStateType.PREPARING);
         setAddress(debtAccount.getCustomer().getAddress());
+
+        super.setCode(String.format("FF-%s-FD-%d", debtAccount.getCustomer().getCode(),
+                debtAccount.getCustomer().nextFinantialDocumentNumber()));
         checkRules();
     }
+
+
 
     protected void checkRules() {
 
@@ -207,6 +211,9 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             if (((InvoiceEntry) entry).getDebtAccount() != getDebtAccount()) {
                 throw new TreasuryDomainException("error.FinantialDocument.entries.belongs.different.debt.account");
             }
+        }
+        if (FinantialDocument.findByCode(getDebtAccount(), getCode()).count() > 1) {
+            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
         }
     }
 
@@ -607,4 +614,29 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         return null;
     }
 
+    @Override
+    public void setCode(String code) {
+        super.setCode(code);
+        if (FinantialDocument.findByCode(getDebtAccount(), code).count() > 1) {
+            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
+        }
+    }
+
+    public static Stream<FinantialDocument> findByCode(String code) {
+        return FenixFramework.getDomainRoot().getFinantialDocumentsSet().stream()
+                .filter(document -> document.getCode().equals(code));
+    }
+
+    public static Optional<FinantialDocument> findUniqueByCode(String code) {
+        return findByCode(code).findFirst();
+    }
+
+
+    public static Stream<FinantialDocument> findByCode(DebtAccount debtAccount, String code) {
+        return debtAccount.getFinantialDocumentsSet().stream().filter(document -> document.getCode().equals(code));
+    }
+
+    public static Optional<FinantialDocument> findUniqueByCode(DebtAccount debtAccount, String code) {
+        return findByCode(debtAccount, code).findFirst();
+    }
 }

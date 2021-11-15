@@ -66,8 +66,8 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.AdhocCustomerBean;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
@@ -104,7 +104,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             final String identificationNumber, final List<FinantialInstitution> finantialInstitutions) {
         this();
         setCustomerType(customerType);
-        setCode(getExternalId());
+//        setCode(getExternalId());
         setFiscalNumber(fiscalNumber);
         setName(name);
         setAddress(address);
