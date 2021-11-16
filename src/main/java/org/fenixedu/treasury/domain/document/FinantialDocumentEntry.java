@@ -54,8 +54,11 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -211,15 +214,15 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     public static Stream<FinantialDocumentEntry> findByCode(DebtAccount debtAccount, String code) {
-//        Set<FinantialDocumentEntry> invoiceEntrySet = new HashSet<>();
-//        Set<FinantialDocumentEntry> entriesOfFinantialDocuments = debtAccount.getFinantialDocumentsSet().stream()
-//                .flatMap(document -> document.getFinantialDocumentEntriesSet().stream()).collect(Collectors.toSet());
-//
-//        invoiceEntrySet.addAll(debtAccount.getInvoiceEntrySet());
-//        invoiceEntrySet.addAll(entriesOfFinantialDocuments);
+        Set<FinantialDocumentEntry> invoiceEntrySet = new HashSet();
+        Set<FinantialDocumentEntry> entriesOfFinantialDocuments = debtAccount.getFinantialDocumentsSet().stream()
+                .flatMap(document -> document.getFinantialDocumentEntriesSet().stream()).collect(Collectors.toSet());
 
-//        return invoiceEntrySet.stream().filter(document -> document.getCode().equals(code));
-        return Stream.empty();
+        invoiceEntrySet.addAll(debtAccount.getInvoiceEntrySet());
+        invoiceEntrySet.addAll(entriesOfFinantialDocuments);
+
+        return invoiceEntrySet.stream().filter(document -> document.getCode().equals(code));
+//        return Stream.empty();
     }
 
     public static Optional<FinantialDocumentEntry> findUniqueByCode(DebtAccount debtAccount, String code) {

@@ -107,7 +107,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
 
         String transactionId =
-                String.format("%s-%s-%s", entityReferenceCode, referenceCode, getPaymentDate().toString(DATE_TIME_FORMAT));
+                String.format("%s-%s-%s", entityReferenceCode, referenceCode, paymentDate.toString(DATE_TIME_FORMAT));
         this.init(sibsPaymentRequest, transactionId, paymentDate, paidAmount, settlementNotes);
 
         setSibsEntityReferenceCode(entityReferenceCode);

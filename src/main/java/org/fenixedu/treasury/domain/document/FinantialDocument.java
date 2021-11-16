@@ -624,7 +624,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
 
     public static Stream<FinantialDocument> findByCode(String code) {
         return FenixFramework.getDomainRoot().getFinantialDocumentsSet().stream()
-                .filter(document -> document.getCode().equals(code));
+                .filter(document -> document.getCode() != null && document.getCode().equals(code));
     }
 
     public static Optional<FinantialDocument> findUniqueByCode(String code) {
