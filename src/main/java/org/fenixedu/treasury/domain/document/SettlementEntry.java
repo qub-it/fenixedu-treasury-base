@@ -138,8 +138,6 @@ public class SettlementEntry extends SettlementEntry_Base {
                 }
             }
         }
-
-        BennuSignalsServices.emitSignalForSettlement(finantialDocument);
     }
 
     @Override

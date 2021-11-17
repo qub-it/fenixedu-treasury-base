@@ -1,3 +1,6 @@
+- Improvement: Emit settlement note bennu signal when settlement note is closed, instead of settlement entry creation
+- Refactor: Created an interface to declare a bennu signal handler or callback
+
 8.4.0 (12-11-2021)
 - Improvement: Property in payment method to check if requires a payment method reference, when registering a settlement note in backoffice
 - Refactor: Remove defaultReference property in PaymentMethodReference. Replace with "forDigitalPayments" property which if marked, the reference will be applied in digital payments
