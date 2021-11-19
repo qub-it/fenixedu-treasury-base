@@ -94,10 +94,10 @@ public abstract class Tariff extends Tariff_Base {
     }
 
     protected void checkRules() {
-        if(getFinantialEntity() == null) {
+        if (getFinantialEntity() == null) {
             throw new TreasuryDomainException("error.Tariff.finantialEntity.required");
         }
-        
+
         if (getProduct() == null) {
             throw new TreasuryDomainException("error.Tariff.product.required");
         }
@@ -203,15 +203,17 @@ public abstract class Tariff extends Tariff_Base {
 
         super.deleteDomainObject();
     }
-    
+
     public abstract BigDecimal amountToPay();
 
     /**
-     * Return if the tariff is specificed without any additional parameters for matching like degreeType, degree, cycle, and so on...
+     * Return if the tariff is specificed without any additional parameters for matching like degreeType, degree, cycle, and so
+     * on...
+     * 
      * @return
      */
     public abstract boolean isBroadTariffForFinantialEntity();
-    
+
     // @formatter: off
     /************
      * UTILS *
@@ -235,22 +237,31 @@ public abstract class Tariff extends Tariff_Base {
     }
 
     public LocalDate dueDate(final LocalDate requestDate) {
+        DueDateCalculationType dueDateCalculationType = getDueDateCalculationType();
+        int numberOfDaysAfterCreationForDueDate = getNumberOfDaysAfterCreationForDueDate();
+        LocalDate fixedDueDate = getFixedDueDate();
 
-        if (getDueDateCalculationType().isFixedDate()) {
-            return getFixedDueDate();
+        return calculateDueDate(requestDate, dueDateCalculationType, numberOfDaysAfterCreationForDueDate, fixedDueDate);
+    }
+
+    public static LocalDate calculateDueDate(final LocalDate requestDate, DueDateCalculationType dueDateCalculationType,
+            int numberOfDaysAfterCreationForDueDate, LocalDate fixedDueDate) {
+
+        if (dueDateCalculationType.isFixedDate()) {
+            return fixedDueDate;
         }
 
-        if (getDueDateCalculationType().isBestOfFixedDateAndDaysAfterCreation()) {
-            final LocalDate daysAfterCreation = requestDate.plusDays(getNumberOfDaysAfterCreationForDueDate());
+        if (dueDateCalculationType.isBestOfFixedDateAndDaysAfterCreation()) {
+            final LocalDate daysAfterCreation = requestDate.plusDays(numberOfDaysAfterCreationForDueDate);
 
-            if (daysAfterCreation.isAfter(getFixedDueDate())) {
+            if (daysAfterCreation.isAfter(fixedDueDate)) {
                 return daysAfterCreation;
             } else {
-                return getFixedDueDate();
+                return fixedDueDate;
             }
         }
 
-        return requestDate.plusDays(getNumberOfDaysAfterCreationForDueDate());
+        return requestDate.plusDays(numberOfDaysAfterCreationForDueDate);
     }
 
     // @formatter: off

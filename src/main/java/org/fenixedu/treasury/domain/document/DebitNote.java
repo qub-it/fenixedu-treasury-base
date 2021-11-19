@@ -420,9 +420,9 @@ public class DebitNote extends DebitNote_Base {
                     debitEntry.annulOnEvent();
                 }
 
-                for (final CreditEntry creditEntry : debitEntry.getCreditEntriesSet()) {
-                    debitEntry.closeCreditEntryIfPossible(reason, now, creditEntry);
-                }
+                debitEntry.getCreditEntriesSet().stream().filter(e -> !e.isAnnulled()).forEach(c -> {
+                    debitEntry.closeCreditEntryIfPossible(reason, now, c);
+                });
             }
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
