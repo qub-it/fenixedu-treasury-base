@@ -163,7 +163,8 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     }
 
     @Override
-    protected void init(FinantialDocument finantialDocument, FinantialEntryType finantialEntryType, BigDecimal amount,
+    protected void init(DebtAccount debtAccount, FinantialDocument finantialDocument, FinantialEntryType finantialEntryType,
+            BigDecimal amount,
             String description, DateTime entryDateTime) {
         throw new RuntimeException("error.InvoiceEntry.use.init.with.product");
     }
@@ -171,7 +172,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     protected void init(final FinantialDocument finantialDocument, final DebtAccount debtAccount, final Product product,
             final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal amount, String description,
             BigDecimal quantity, DateTime entryDateTime) {
-        super.init(finantialDocument, finantialEntryType, amount, description, entryDateTime);
+        super.init(debtAccount, finantialDocument, finantialEntryType, amount, description, entryDateTime);
 
         if (debtAccount.getClosed()) {
             throw new TreasuryDomainException("error.InvoiceEntry.debtAccount.closed");

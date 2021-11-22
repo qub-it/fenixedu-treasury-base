@@ -106,8 +106,10 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
 
         String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
 
+        // TODO: Check why the getPaymentDate().toString(DATE_TIME..) was not resulting in NPE..
+        // Maybe this constructor is only called by importation
         String transactionId =
-                String.format("%s-%s-%s", entityReferenceCode, referenceCode, getPaymentDate().toString(DATE_TIME_FORMAT));
+                String.format("%s-%s-%s", entityReferenceCode, referenceCode, paymentDate.toString(DATE_TIME_FORMAT));
         this.init(sibsPaymentRequest, transactionId, paymentDate, paidAmount, settlementNotes);
 
         setSibsEntityReferenceCode(entityReferenceCode);
@@ -190,7 +192,8 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
                 sibsProcessingDate, sibsImportationFilename, settlementNotes);
     }
 
-    public static SibsPaymentCodeTransaction create(SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
+    // TODO: Confirm that this method is only called by importation
+    public static SibsPaymentCodeTransaction createForImportation(SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
             BigDecimal paidAmount, String referenceCode, String sibsTransactionId, Set<SettlementNote> settlementNotes) {
         String entityReferenceCode = sibsPaymentRequest.getEntityReferenceCode();
 

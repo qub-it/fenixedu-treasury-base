@@ -1,3 +1,6 @@
+- Refactor: Add code field to customer, finantial document and finantial document entry
+- Refactor: Rename one of SibsPaymentCodeTransaction.create method to distinguish from the other create method
+
 8.5.0 (19-11-2021)
 - Improvement: Property in payment method to check if requires a payment method reference, when registering a settlement note in backoffice
 - Refactor: Remove defaultReference property in PaymentMethodReference. Replace with "forDigitalPayments" property which if marked, the reference will be applied in digital payments

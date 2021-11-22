@@ -104,7 +104,6 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             final String identificationNumber, final List<FinantialInstitution> finantialInstitutions) {
         this();
         setCustomerType(customerType);
-        setCode(getExternalId());
         setFiscalNumber(fiscalNumber);
         setName(name);
         setAddress(address);
