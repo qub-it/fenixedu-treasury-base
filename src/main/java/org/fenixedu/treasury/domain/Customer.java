@@ -496,7 +496,6 @@ public abstract class Customer extends Customer_Base {
         return value.toLowerCase();
     }
 
-    @Atomic
     public int nextFinantialDocumentNumber() {
         int number = 0;
         if (getFinantialDocumentCounter() != null) {
@@ -507,7 +506,6 @@ public abstract class Customer extends Customer_Base {
         return number;
     }
 
-    @Atomic
     public int nextFinantialDocumentEntryNumber() {
         int number = 0;
         if (getFinantialDocumentEntryCounter() != null) {

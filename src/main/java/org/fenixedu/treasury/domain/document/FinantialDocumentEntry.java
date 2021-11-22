@@ -88,7 +88,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         setAmount(amount);
         setDescription(description);
         setEntryDateTime(entryDateTime);
-        super.setCode(String.format("FF%s-FE%d", debtAccount.getCustomer().getCode(),
+        super.setCode(String.format("FF-%s-FE-%d", debtAccount.getCustomer().getCode(),
                 debtAccount.getCustomer().nextFinantialDocumentEntryNumber()));
     }
 
