@@ -56,10 +56,14 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -76,13 +80,16 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected void init(final FinantialDocument finantialDocument, final FinantialEntryType finantialEntryType,
+    protected void init(final DebtAccount debtAccount, final FinantialDocument finantialDocument,
+            final FinantialEntryType finantialEntryType,
             final BigDecimal amount, String description, DateTime entryDateTime) {
         setFinantialDocument(finantialDocument);
         setFinantialEntryType(finantialEntryType);
         setAmount(amount);
         setDescription(description);
         setEntryDateTime(entryDateTime);
+        super.setCode(String.format("FF%s-FE%d", debtAccount.getCustomer().getCode(),
+                debtAccount.getCustomer().nextFinantialDocumentEntryNumber()));
     }
 
     @Override
@@ -109,6 +116,11 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         if (TreasuryConstants.isNegative(getAmount())) {
             throw new TreasuryDomainException("error.FinantialDocumentEntry.amount.less.than.zero");
         }
+
+	// TODO: Apply only when code is filled in all entries
+//        if (FinantialDocumentEntry.findByCode(getDebtAccount(), getCode()).count() > 1) {
+//            throw new TreasuryDomainException("error.FinantialDocumentEntry.code.must.be.unique");
+//        }
     }
 
     public boolean isFinantialDocumentRequired() {
@@ -119,7 +131,8 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
-            blockers.add(treasuryBundle("error.finantialdocumententry.cannot.be.deleted.document.is.not.preparing"));
+            blockers.add(
+                    TreasuryConstants.treasuryBundle("error.finantialdocumententry.cannot.be.deleted.document.is.not.preparing"));
         }
     }
 
@@ -177,4 +190,51 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     public abstract BigDecimal getNetAmount();
+
+
+    @Override
+    public void setCode(String code) {
+        super.setCode(code);
+
+	// TODO: Apply only when code is filled in all entries
+//        if (FinantialDocument.findByCode(getDebtAccount(), code).count() > 1) {
+//            throw new TreasuryDomainException("error.FinantialDocumentEntry.code.must.be.unique");
+//        }
+    }
+
+	// TODO: Add relation for finantial document entry with debt account
+    public DebtAccount getDebtAccount() {
+        if (getFinantialDocument() != null) {
+            return getFinantialDocument().getDebtAccount();
+        }
+        return null;
+    }
+
+    public static Stream<FinantialDocumentEntry> findByCode(String code) {
+        return FenixFramework.getDomainRoot().getFinantialDocumentEntriesSet().stream()
+		.filter(entry -> entry.getCode() != null)
+                .filter(entry -> entry.getCode().equals(code));
+    }
+
+    public static Optional<FinantialDocumentEntry> findUniqueByCode(String code) {
+        return findByCode(code).findFirst();
+    }
+
+    public static Stream<FinantialDocumentEntry> findByCode(DebtAccount debtAccount, String code) {
+        Set<FinantialDocumentEntry> invoiceEntrySet = new HashSet();
+        Set<FinantialDocumentEntry> entriesOfFinantialDocuments = debtAccount.getFinantialDocumentsSet().stream()
+                .flatMap(document -> document.getFinantialDocumentEntriesSet().stream()).collect(Collectors.toSet());
+
+        invoiceEntrySet.addAll(debtAccount.getInvoiceEntrySet());
+        invoiceEntrySet.addAll(entriesOfFinantialDocuments);
+
+        return invoiceEntrySet.stream()
+	.filter(document -> document.getCode() != null)
+	.filter(document -> document.getCode().equals(code));
+//        return Stream.empty();
+    }
+
+    public static Optional<FinantialDocumentEntry> findUniqueByCode(DebtAccount debtAccount, String code) {
+        return findByCode(debtAccount, code).findFirst();
+    }
 }

@@ -131,6 +131,9 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setCurrency(debtAccount.getFinantialInstitution().getCurrency());
         setState(FinantialDocumentStateType.PREPARING);
         setAddress(debtAccount.getCustomer().getAddress());
+
+        super.setCode(String.format("FF-%s-FD-%d", debtAccount.getCustomer().getCode(),
+                debtAccount.getCustomer().nextFinantialDocumentNumber()));
         checkRules();
     }
 
@@ -208,6 +211,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
                 throw new TreasuryDomainException("error.FinantialDocument.entries.belongs.different.debt.account");
             }
         }
+
+	// TODO: Apply when all finantial documents have code
+//        if (FinantialDocument.findByCode(getDebtAccount(), getCode()).count() > 1) {
+//            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
+//        }
     }
 
     protected boolean isDocumentEmpty() {
@@ -607,4 +615,33 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         return null;
     }
 
+    @Override
+    public void setCode(String code) {
+        super.setCode(code);
+	
+	// TODO: apply when all finantial documents have code filled
+//        if (FinantialDocument.findByCode(getDebtAccount(), code).count() > 1) {
+//            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
+//        }
+    }
+
+    public static Stream<FinantialDocument> findByCode(String code) {
+        return FenixFramework.getDomainRoot().getFinantialDocumentsSet().stream()
+                .filter(document -> document.getCode() != null && document.getCode().equals(code));
+    }
+
+    public static Optional<FinantialDocument> findUniqueByCode(String code) {
+        return findByCode(code).findFirst();
+    }
+
+
+    public static Stream<FinantialDocument> findByCode(DebtAccount debtAccount, String code) {
+        return debtAccount.getFinantialDocumentsSet().stream()
+		.filter(document -> document.getCode() != null)
+		.filter(document -> document.getCode().equals(code));
+    }
+
+    public static Optional<FinantialDocument> findUniqueByCode(DebtAccount debtAccount, String code) {
+        return findByCode(debtAccount, code).findFirst();
+    }
 }

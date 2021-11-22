@@ -1,3 +1,5 @@
+- Refactor: Add code field to customer, finantial document and finantial document entry
+- Refactor: Rename one of SibsPaymentCodeTransaction.create method to distinguish from the other create method
 - Bug Fix: Only try to close credit entries with debit entries if they are not annuled (#UL-ISCSP-714)
 - Refactor: Predicates in TreasuryEvent to check if it is related with tuition debts, and if the event discount on tuition total amount
 - Refactor: Set method in Tariff, to calculate due date as static, so it can be reused
