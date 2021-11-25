@@ -152,9 +152,13 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         
         // For now ensure only one sibsPaymentRequest for the same entityCode and referenceCode exists
         // Later we may remove this restriction
-        if(find(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
-            throw new TreasuryDomainException("error.SibsPaymentRequest.request.already.exists.for.entityCode.and.referenceCode");
-        }
+        // TODO Refactor/20210624-MergeWithISCTE : Later remove this restriction in master. For SibsPaymentCodePool, SibsReferenceCode entity already protect against duplication
+        // For automatic payments, the payment is notified by the transactionId of payment reference code
+
+//        if (find(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
+//            throw new TreasuryDomainException("error.SibsPaymentRequest.request.already.exists.for.entityCode.and.referenceCode");
+//        }
+
     }
 
     @Override
@@ -284,6 +288,22 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         }
 
         return paymentEntryPropertiesMap;
+    }
+
+    @Override
+    public void delete() {
+        super.setDomainRoot(null);
+
+        super.setDigitalPaymentPlatform(null);
+        super.setDebtAccount(null);
+        super.setPaymentMethod(null);
+        super.setSibsReferenceCode(null);
+        super.getDebitEntriesSet().clear();
+        super.getInstallmentsSet().clear();
+        super.getPaymentRequestLogsSet().clear();
+        super.getPaymentTransactionsSet().forEach(t -> t.delete());
+
+        super.deleteDomainObject();
     }
 
     // @formatter:off

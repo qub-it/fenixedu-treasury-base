@@ -94,8 +94,8 @@ public class PaymentTransaction extends PaymentTransaction_Base {
         setPaymentDate(paymentDate);
         setTransactionId(transactionId);
         setPaidAmount(paidAmount);
-        getSettlementNotesSet().addAll(settlementNotes);
 
+        getSettlementNotesSet().addAll(settlementNotes);
     }
     
     public void checkRules() {
@@ -121,6 +121,16 @@ public class PaymentTransaction extends PaymentTransaction_Base {
         }
     }
     
+    public void delete() {
+        super.setDomainRoot(null);
+
+        super.setPaymentRequest(null);
+        super.setPaymentRequestLog(null);
+        super.getSettlementNotesSet().clear();
+
+        super.deleteDomainObject();
+    }
+
     // @formatter:off
     /*
      * ********

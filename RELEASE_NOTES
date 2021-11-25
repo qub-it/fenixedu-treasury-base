@@ -3,6 +3,9 @@
 - Bug Fix: Only try to close credit entries with debit entries if they are not annuled (#UL-ISCSP-714)
 - Refactor: Predicates in TreasuryEvent to check if it is related with tuition debts, and if the event discount on tuition total amount
 - Refactor: Set method in Tariff, to calculate due date as static, so it can be reused
+- Improvement: Remove restriction of reimbursement for one credit entry only. Now reimbursement notes allow settlement of various credit entries.
+- Refactor: Deletion methods for ForwardPaymentRequest, SibsPaymentRequest and PaymentTransaction
+- Refactor: Remove restriction of having one SibsPaymentRequest for the same SIBS entity and reference code. 
 
 8.4.1 (17-11-2021)
 - Improvement: Emit settlement note bennu signal when settlement note is closed, instead of settlement entry creation
