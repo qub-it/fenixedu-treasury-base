@@ -1,3 +1,5 @@
+- Improvement: Payment plan is created even though mb reference code fail
+
 8.5.1 (22-11-2021)
 - Refactor: Add code field to customer, finantial document and finantial document entry
 - Refactor: Rename one of SibsPaymentCodeTransaction.create method to distinguish from the other create method

@@ -118,9 +118,7 @@ public class PaymentPlan extends PaymentPlan_Base {
 
         createInstallments(paymentPlanBean, createdEntries);
 
-        if (Boolean.TRUE.equals(paymentPlanBean.getPaymentPlanConfigurator().getCreatePaymentCode())) {
-            createPaymentReferenceCode();
-        }
+
 
         annulPaymentReferenceCodeFromDebitEntries(
                 paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(bean -> bean.isForDebitEntry())
@@ -128,9 +126,20 @@ public class PaymentPlan extends PaymentPlan_Base {
         checkRules();
     }
 
-    @Atomic
     public static PaymentPlan createPaymentPlan(PaymentPlanBean paymentPlanBean) {
-        return new PaymentPlan(paymentPlanBean);
+        
+        PaymentPlan paymentPlan;
+        try {
+            paymentPlan = FenixFramework.atomic(() -> new PaymentPlan(paymentPlanBean));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (Boolean.TRUE.equals(paymentPlanBean.getPaymentPlanConfigurator().getCreatePaymentCode())) {
+            paymentPlan.createPaymentReferenceCode();
+        }
+        return paymentPlan;
+
     }
 
     @Atomic
@@ -290,7 +299,6 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public void createPaymentReferenceCode() {
-
         DigitalPaymentPlatform paymentCodePool = getDebtAccount().getFinantialInstitution().getDefaultDigitalPaymentPlatform();
 
         if (paymentCodePool == null) {
@@ -298,8 +306,11 @@ public class PaymentPlan extends PaymentPlan_Base {
         }
 
         for (Installment installment : getInstallmentsSet()) {
-            paymentCodePool.castToSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(), Collections.emptySet(),
-                    Set.of(installment));
+            if (installment.getPaymentRequestsSet().stream().filter(request -> request instanceof SibsPaymentRequest)
+                    .count() == 0) {
+                paymentCodePool.castToSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(),
+                        Collections.emptySet(), Set.of(installment));
+            }
         }
     }
 
