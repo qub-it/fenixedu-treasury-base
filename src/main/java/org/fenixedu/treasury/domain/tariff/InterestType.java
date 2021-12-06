@@ -61,6 +61,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 
 public enum InterestType {
 
+    @Deprecated
     DAILY, GLOBAL_RATE, FIXED_AMOUNT;
 
     public boolean isDaily() {

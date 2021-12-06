@@ -113,6 +113,10 @@ public class InterestRate extends InterestRate_Base {
         if (getInterestType() == null) {
             throw new TreasuryDomainException("error.InterestRate.interestType.required");
         }
+        
+        if(getInterestType() != InterestType.GLOBAL_RATE && getInterestType() != InterestType.FIXED_AMOUNT) {
+            throw new RuntimeException("error.InterestRate.interestType.not.supported");
+        }
 
         if (getInterestType().isDaily() && getRate() == null) {
             throw new TreasuryDomainException("error.InterestRate.rate.required");
