@@ -388,7 +388,17 @@ public class DebitNote extends DebitNote_Base {
         if (this.getFinantialDocumentEntriesSet().size() > 0 && this.isClosed()) {
 
             final DateTime now = new DateTime();
-
+            
+            //Annul open interest debit entry
+            getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream())
+                    .filter(interest -> interest.getFinantialDocument() == null || interest.getFinantialDocument().isPreparing())
+                    .forEach(interest -> {
+                         if(interest.getFinantialDocument() == null ) {
+                            interest.annulDebitEntry(reason);
+                         }else {
+                             interest.getDebitNote().anullDebitNoteWithCreditNote(reason, false);
+                         }
+                    });
             //1. criar nota de acerto
             //2. percorrer os itens de divida, criar correspondente item de acerto com o valor "aberto"
             //2.1 verificar se existiram "juros" gerados correspondentes
@@ -493,6 +503,10 @@ public class DebitNote extends DebitNote_Base {
 
         for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
             for (DebitEntry interestEntry : debitEntry.getInterestDebitEntriesSet()) {
+                if(!interestEntry.getFinantialDocument().isClosed()) {
+                    continue;
+                }
+                
                 final BigDecimal amountForCreditWithoutVat = interestEntry.getCurrency().getValueWithScale(TreasuryConstants
                         .divide(interestEntry.getAvailableAmountForCredit(), BigDecimal.ONE.add(rationalVatRate(interestEntry))));
 
