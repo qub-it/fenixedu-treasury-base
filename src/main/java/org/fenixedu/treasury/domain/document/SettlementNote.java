@@ -344,18 +344,8 @@ public class SettlementNote extends SettlementNote_Base {
         setAdvancePaymentSetByUser(bean.isAdvancePayment());
 
         if (isReimbursement()) {
-            // Ensure only one settlement entry with credit entry
-            if (getSettlemetEntries().count() != 1) {
-                throw new TreasuryDomainException("error.SettlementNote.reimbursement.supports.only.one.settlement.entry");
-            }
-
-            CreditNote creditNote = (CreditNote) getSettlemetEntries().findFirst().get().getInvoiceEntry().getFinantialDocument();
-            if (!creditNote.isCreditNote()) {
-                throw new TreasuryDomainException("error.SettlementNote.reimbursement.invoice.entry.not.from.credit.note.");
-            }
-
-            if (!creditNote.isAdvancePayment() && ReimbursementUtils.isCreditNoteSettledWithPayment(creditNote)) {
-                throw new TreasuryDomainException("error.CreditNote.reimbursement.over.credit.with.payments.not.possible");
+            if (getSettlemetEntries().anyMatch(se -> !se.getInvoiceEntry().isCreditNoteEntry())) {
+                throw new TreasuryDomainException("error.SettlementNote.reimbursement.invoice.entry.not.from.credit.note");
             }
         }
     }

@@ -338,6 +338,21 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return paymentEntryPropertiesMap;
     }
 
+    @Override
+    public void delete() {
+        super.setDomainRoot(null);
+
+        super.setDigitalPaymentPlatform(null);
+        super.setDebtAccount(null);
+        super.setPaymentMethod(null);
+        super.getDebitEntriesSet().clear();
+        super.getInstallmentsSet().clear();
+        super.getPaymentRequestLogsSet().clear();
+        super.getPaymentTransactionsSet().forEach(t -> t.delete());
+
+        super.deleteDomainObject();
+    }
+
     // @formatter:off
     /*
      * ********
