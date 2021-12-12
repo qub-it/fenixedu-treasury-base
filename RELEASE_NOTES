@@ -1,3 +1,8 @@
+- Bug Fix: Annul pending interests debit entries if anullGeneratedInterests is true
+- Improvement: Payment plan is created even though mb reference code fail
+- Improvement: Validate if interest type is global rate or fixed interest 
+- Improvement: When a debit note is annulled, then the interests debit entries are annulled too
+
 8.5.0 (25-11-2021)
 - Refactor: Add code field to customer, finantial document and finantial document entry
 - Refactor: Rename one of SibsPaymentCodeTransaction.create method to distinguish from the other create method
