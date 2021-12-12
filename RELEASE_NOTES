@@ -1,3 +1,4 @@
+8.5.4 (12-12-2021)
 - Bug Fix: Annul pending interests debit entries if anullGeneratedInterests is true
 
 8.5.3 (11-12-2021)
