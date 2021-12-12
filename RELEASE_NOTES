@@ -1,3 +1,5 @@
+- Bug Fix: Annul pending interests debit entries if anullGeneratedInterests is true
+
 8.5.3 (11-12-2021)
 - Improvement: Remove restriction of reimbursement for one credit entry only. Now reimbursement notes allow settlement of various credit entries.
 - Refactor: Deletion methods for ForwardPaymentRequest, SibsPaymentRequest and PaymentTransaction
