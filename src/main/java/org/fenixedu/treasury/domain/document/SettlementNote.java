@@ -83,6 +83,7 @@ import org.fenixedu.treasury.dto.SettlementCreditEntryBean;
 import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -571,7 +572,14 @@ public class SettlementNote extends SettlementNote_Base {
             }
 
             setState(FinantialDocumentStateType.ANNULED);
-            setAnnulledReason(anulledReason);
+
+            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+            if (!Strings.isNullOrEmpty(loggedUsername)) {
+                setAnnulledReason(anulledReason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+            } else {
+                setAnnulledReason(anulledReason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+            }
 
             // Settlement note can never free entries
             if (markDocumentToExport) {

@@ -1,3 +1,5 @@
+- Bug Fix: Save username and datetime in Settlement annulment message
+
 8.5.4 (12-12-2021)
 - Bug Fix: Annul pending interests debit entries if anullGeneratedInterests is true
 
