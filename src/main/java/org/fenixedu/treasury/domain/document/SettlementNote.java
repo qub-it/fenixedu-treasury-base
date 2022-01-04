@@ -58,6 +58,8 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +85,7 @@ import org.fenixedu.treasury.dto.SettlementCreditEntryBean;
 import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -96,6 +99,22 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class SettlementNote extends SettlementNote_Base {
 
+    public static Comparator<SettlementNote> COMPARE_BY_PAYMENT_DATE = (s1, s2) -> {
+        int c = s1.getPaymentDate().compareTo(s2.getPaymentDate());
+        
+        if (c != 0) {
+            return c;
+        }
+
+        c = s1.getDocumentDate().compareTo(s2.getDocumentDate());
+
+        if (c != 0) {
+            return c;
+        }
+
+        return s1.getExternalId().compareTo(s2.getExternalId());
+    };
+    
     protected SettlementNote() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -571,7 +590,14 @@ public class SettlementNote extends SettlementNote_Base {
             }
 
             setState(FinantialDocumentStateType.ANNULED);
-            setAnnulledReason(anulledReason);
+
+            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+            if (!Strings.isNullOrEmpty(loggedUsername)) {
+                setAnnulledReason(anulledReason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+            } else {
+                setAnnulledReason(anulledReason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+            }
 
             // Settlement note can never free entries
             if (markDocumentToExport) {
