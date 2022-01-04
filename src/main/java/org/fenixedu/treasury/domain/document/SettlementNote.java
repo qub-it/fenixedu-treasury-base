@@ -58,6 +58,8 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +99,22 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class SettlementNote extends SettlementNote_Base {
 
+    public static Comparator<SettlementNote> COMPARE_BY_PAYMENT_DATE = (s1, s2) -> {
+        int c = s1.getPaymentDate().compareTo(s2.getPaymentDate());
+        
+        if (c != 0) {
+            return c;
+        }
+
+        c = s1.getDocumentDate().compareTo(s2.getDocumentDate());
+
+        if (c != 0) {
+            return c;
+        }
+
+        return s1.getExternalId().compareTo(s2.getExternalId());
+    };
+    
     protected SettlementNote() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());

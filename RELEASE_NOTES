@@ -1,3 +1,5 @@
+- Refactor: Comparator for SettlementNote by payment date
+
 8.5.5 (16-12-2021)
 - Bug Fix: Save username and datetime in Settlement annulment message
 
