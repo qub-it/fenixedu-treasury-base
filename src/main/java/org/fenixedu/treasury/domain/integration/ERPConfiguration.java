@@ -57,7 +57,6 @@ import java.util.Collection;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 
 import pt.ist.fenixframework.Atomic;
@@ -183,7 +182,15 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     }
 
     public IERPExternalService getERPExternalServiceImplementation() {
-        return TreasuryPlataformDependentServicesFactory.implementation().getERPExternalServiceImplementation(this);
+        //#TODO REVIEW this method
+        try {
+            return (IERPExternalService) Class.forName(getImplementationClassName()).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
+//                return TreasuryPlataformDependentServicesFactory.implementation().getERPExternalServiceImplementation(this);
     }
 
 }
