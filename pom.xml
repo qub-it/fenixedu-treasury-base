@@ -12,7 +12,7 @@
 
 	<groupId>com.qubit.solution.qubEdu.module</groupId>
 	<artifactId>fenixedu-treasury-base-iscte</artifactId>
-	<version>8.5.1</version>
+	<version>8.5.2</version>
 	<packaging>jar</packaging>
 
 	<name>Treasury Base ISCTE</name>
