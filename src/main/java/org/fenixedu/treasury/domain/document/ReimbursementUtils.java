@@ -78,6 +78,10 @@ public class ReimbursementUtils {
     }
 
     public static boolean isCreditNoteForReimbursementMustBeClosedWithDebitNoteAndCreatedNew(final CreditEntry creditEntry) {
+        if (creditEntry.getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
+            return false;
+        }
+        
         final CreditNote creditNote = (CreditNote) creditEntry.getFinantialDocument();
 
         if (creditNote.isAnnulled()) {

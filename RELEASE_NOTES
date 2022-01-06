@@ -1,5 +1,6 @@
 - Refactor: Comparator for SettlementNote by payment date
 - Bug Fix: Save username and datetime in Settlement annulment message
+- Bug Fix: Apply creation of new credit when registering a reimbursement if credit notes are not to be closed immediatelly
 
 8.5.1 (12-12-2021)
 - Bug Fix: Annul pending interests debit entries if anullGeneratedInterests is true
