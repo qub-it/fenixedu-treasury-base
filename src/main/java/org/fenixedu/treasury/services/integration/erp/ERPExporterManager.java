@@ -151,7 +151,7 @@ public class ERPExporterManager {
                     .getSaftExporterConfiguration(erpIntegrationConfiguration);
             try {
                 byte[] contents = saftExporterConfiguration
-                        .generateSaftForFinantialDocuments(Collections.singleton(finantialDocument), true);
+                        .generateSaftForFinantialDocuments(Collections.singletonList(finantialDocument), true);
 
                 return new String(contents, saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
@@ -310,8 +310,8 @@ public class ERPExporterManager {
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.starting.finantialdocuments.integration"));
 
                 byte[] contents = null;
-                contents = saftExporterConfiguration.generateSaftForFinantialDocuments(Collections.singleton(finantialDocument),
-                        false);
+                contents = saftExporterConfiguration
+                        .generateSaftForFinantialDocuments(Collections.singletonList(finantialDocument), false);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
@@ -623,6 +623,33 @@ public class ERPExporterManager {
 
     }
 
+    public static String exportPendingDocumentsForFinantialInstitutionToXML(FinantialInstitution finantialInstitution,
+            LocalDate startDate, LocalDate endDate) {
+        final ERPConfiguration erpIntegrationConfiguration = finantialInstitution.getErpIntegrationConfiguration();
+        final IERPExporter erpExporter = erpIntegrationConfiguration.getERPExternalServiceImplementation().getERPExporter();
+
+        if (TreasuryPlataformDependentServicesFactory.implementation()
+                .getSaftExporterConfiguration(erpIntegrationConfiguration) != null) {
+
+            ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
+                    .getSaftExporterConfiguration(erpIntegrationConfiguration);
+            try {
+                Stream<FinantialDocument> stream = finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream()
+                        .filter(document -> (endDate == null || !endDate.isBefore(document.getDocumentDate().toLocalDate()))
+                                && (startDate == null || !startDate.isAfter(document.getDocumentDate().toLocalDate())));
+                final List<FinantialDocument> sortedDocuments = erpExporter.filterDocumentsToExport(stream);
+
+                byte[] contents = saftExporterConfiguration.generateSaftForFinantialDocuments(sortedDocuments, true);
+                return new String(contents, saftExporterConfiguration.getEncoding());
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new RuntimeException("Operation.not.supported");
+        }
+
+    }
+
     @Atomic(mode = TxMode.WRITE)
     public ERPExportOperation exportCustomersToIntegration(FinantialInstitution institution) {
         final ERPConfiguration erpIntegrationConfiguration = institution.getErpIntegrationConfiguration();
@@ -638,9 +665,8 @@ public class ERPExporterManager {
                 ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                         .getSaftExporterConfiguration(erpIntegrationConfiguration);
 
-                byte[] contents =
-                        saftExporterConfiguration
-                                .generateSaftForCustomers(Customer.find(institution).collect(Collectors.toSet()), false);
+                byte[] contents = saftExporterConfiguration
+                        .generateSaftForCustomers(Customer.find(institution).collect(Collectors.toSet()), false);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
@@ -679,8 +705,7 @@ public class ERPExporterManager {
                 ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                         .getSaftExporterConfiguration(erpIntegrationConfiguration);
 
-                byte[] contents =
-                        saftExporterConfiguration.generateSaftForProducts(institution.getAvailableProductsSet(), false);
+                byte[] contents = saftExporterConfiguration.generateSaftForProducts(institution.getAvailableProductsSet(), false);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
