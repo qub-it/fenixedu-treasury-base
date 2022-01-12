@@ -58,6 +58,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -66,10 +67,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
+import org.fenixedu.treasury.domain.document.CreditNote;
 import org.fenixedu.treasury.domain.document.ERPCustomerFieldsBean;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
@@ -149,9 +152,15 @@ public class ERPExporterManager {
                 .getSaftExporterConfiguration(erpIntegrationConfiguration) != null) {
             ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                     .getSaftExporterConfiguration(erpIntegrationConfiguration);
+            List<FinantialDocument> documentsToExport = new ArrayList<>();
+            documentsToExport.add(finantialDocument);
+            documentsToExport = erpExporter.processCreditNoteSettlementsInclusion(documentsToExport);
+            documentsToExport.stream()
+                    .forEach(document -> validateDocumentWithERPConfiguration(document, erpIntegrationConfiguration));
+
             try {
                 byte[] contents = saftExporterConfiguration
-                        .generateSaftForFinantialDocuments(Collections.singletonList(finantialDocument), true);
+                        .generateSaftForFinantialDocuments(documentsToExport, true);
 
                 return new String(contents, saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
@@ -173,8 +182,13 @@ public class ERPExporterManager {
             return Lists.newArrayList();
         }
 
-        final List<FinantialDocument> sortedDocuments = erpExporter
-                .filterDocumentsToExport(finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream());
+        Stream<FinantialDocument> stream = finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream();
+
+        if (isUsingSaftConfiguration(finantialInstitution)) {
+            stream = applyAdditionalFilterForSaftConfiguration(stream);
+        }
+
+        final List<FinantialDocument> sortedDocuments = erpExporter.filterDocumentsToExport(stream);
 
         if (sortedDocuments.isEmpty()) {
             return Lists.newArrayList();
@@ -206,6 +220,66 @@ public class ERPExporterManager {
 
         // return Lists.newArrayList(erpExporter.exportFinantialDocumentToIntegration(finantialInstitution, sortedDocuments));
         return Lists.newArrayList();
+    }
+
+    public static List<ERPExportOperation> exportPendingDocumentsForFinantialInstitution(
+            final FinantialInstitution finantialInstitution, Runnable runnable) {
+
+        final IERPExporter erpExporter =
+                finantialInstitution.getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
+
+        if (!finantialInstitution.getErpIntegrationConfiguration().getActive()) {
+            return Lists.newArrayList();
+        }
+
+        Stream<FinantialDocument> stream = finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream();
+
+        if (isUsingSaftConfiguration(finantialInstitution)) {
+            stream = applyAdditionalFilterForSaftConfiguration(stream);
+        }
+
+        final List<FinantialDocument> sortedDocuments = erpExporter.filterDocumentsToExport(stream);
+
+        if (sortedDocuments.isEmpty()) {
+            return Lists.newArrayList();
+        }
+
+        if (finantialInstitution.getErpIntegrationConfiguration().getExportOnlyRelatedDocumentsPerExport()) {
+            final List<ERPExportOperation> result = Lists.newArrayList();
+
+            while (!sortedDocuments.isEmpty()) {
+                final FinantialDocument doc = sortedDocuments.iterator().next();
+
+                //remove the related documents from the original Set
+                sortedDocuments.remove(doc);
+
+                // Limit exportation of documents in which customer has invalid addresses
+                final Customer customer = doc.getDebtAccount().getCustomer();
+                final List<String> errorMessages = Lists.newArrayList();
+                if (!ERPCustomerFieldsBean.validateAddress(customer, errorMessages)) {
+                    if (!doc.getErpExportOperationsSet().isEmpty()) {
+                        continue;
+                    }
+                }
+                runnable.run();
+                result.add(exportSingleDocument(doc));
+            }
+
+            return result;
+        }
+
+        // return Lists.newArrayList(erpExporter.exportFinantialDocumentToIntegration(finantialInstitution, sortedDocuments));
+        return Lists.newArrayList();
+    }
+
+    private static boolean isUsingSaftConfiguration(final FinantialInstitution finantialInstitution) {
+        return TreasuryPlataformDependentServicesFactory.implementation()
+                .getSaftExporterConfiguration(finantialInstitution.getErpIntegrationConfiguration()) != null;
+    }
+
+    private static Stream<FinantialDocument> applyAdditionalFilterForSaftConfiguration(Stream<FinantialDocument> stream) {
+        // TODO Auto-generated method stub
+        return stream;
     }
 
     public static List<ReimbursementProcessStateLog> updatePendingReimbursementNotes(
@@ -275,6 +349,7 @@ public class ERPExporterManager {
         services.scheduleDocumentForExportation(finantialDocument);
     }
 
+    @Atomic(mode = TxMode.WRITE)
     public static ERPExportOperation exportSingleDocument(final FinantialDocument finantialDocument) {
         // ALTERAR
         final FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
@@ -307,11 +382,14 @@ public class ERPExporterManager {
 
             documentsToExport.forEach(document -> operation.addFinantialDocuments(document));
             try {
+                documentsToExport = erpExporter.processCreditNoteSettlementsInclusion(documentsToExport);
+                documentsToExport.stream()
+                        .forEach(document -> validateDocumentWithERPConfiguration(document, erpIntegrationConfiguration));
+
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.starting.finantialdocuments.integration"));
 
                 byte[] contents = null;
-                contents = saftExporterConfiguration
-                        .generateSaftForFinantialDocuments(Collections.singletonList(finantialDocument), false);
+                contents = saftExporterConfiguration.generateSaftForFinantialDocuments(documentsToExport, false);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
@@ -333,6 +411,25 @@ public class ERPExporterManager {
         } else {
             return erpExporter.exportFinantialDocumentToIntegration(finantialInstitution, documentsToExport);
         }
+    }
+
+    private static boolean validateDocumentWithERPConfiguration(FinantialDocument document,
+            ERPConfiguration erpIntegrationConfiguration) {
+
+        if (!erpIntegrationConfiguration.isIntegratedDocumentsExportationEnabled() && !document.isDocumentToExport()) {
+            throw new TreasuryDomainException("error.ERPExporter.document.already.exported", document.getUiDocumentNumber());
+        }
+        if (!erpIntegrationConfiguration.isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled() && document.isCreditNote()) {
+            CreditNote creditNote = (CreditNote) document;
+            if (!creditNote.isAdvancePayment() && !creditNote.isExportedInLegacyERP() && creditNote.getDebitNote() != null
+                    && creditNote.getDebitNote().isExportedInLegacyERP()
+                    && StringUtils.isEmpty(creditNote.getDebitNote().getLegacyERPCertificateDocumentReference())) {
+                throw new TreasuryDomainException(
+                        "error.ERPExporter.credit.note.of.legacy.debit.note.without.legacyERPCertificateDocumentReference",
+                        creditNote.getDebitNote().getUiDocumentNumber(), creditNote.getUiDocumentNumber());
+            }
+        }
+        return true;
     }
 
     public static ERPExportOperation exportSettlementNote(final SettlementNote settlementNote) {
@@ -623,8 +720,7 @@ public class ERPExporterManager {
 
     }
 
-    public static String exportPendingDocumentsForFinantialInstitutionToXML(FinantialInstitution finantialInstitution,
-            LocalDate startDate, LocalDate endDate) {
+    public static String exportPendingDocumentsForFinantialInstitutionToXML(FinantialInstitution finantialInstitution) {
         final ERPConfiguration erpIntegrationConfiguration = finantialInstitution.getErpIntegrationConfiguration();
         final IERPExporter erpExporter = erpIntegrationConfiguration.getERPExternalServiceImplementation().getERPExporter();
 
@@ -634,10 +730,8 @@ public class ERPExporterManager {
             ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                     .getSaftExporterConfiguration(erpIntegrationConfiguration);
             try {
-                Stream<FinantialDocument> stream = finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream()
-                        .filter(document -> (endDate == null || !endDate.isBefore(document.getDocumentDate().toLocalDate()))
-                                && (startDate == null || !startDate.isAfter(document.getDocumentDate().toLocalDate())));
-                final List<FinantialDocument> sortedDocuments = erpExporter.filterDocumentsToExport(stream);
+                final List<FinantialDocument> sortedDocuments = erpExporter
+                        .filterDocumentsToExport(finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream());
 
                 byte[] contents = saftExporterConfiguration.generateSaftForFinantialDocuments(sortedDocuments, true);
                 return new String(contents, saftExporterConfiguration.getEncoding());
@@ -651,7 +745,7 @@ public class ERPExporterManager {
     }
 
     @Atomic(mode = TxMode.WRITE)
-    public ERPExportOperation exportCustomersToIntegration(FinantialInstitution institution) {
+    public static ERPExportOperation exportCustomersToIntegration(FinantialInstitution institution) {
         final ERPConfiguration erpIntegrationConfiguration = institution.getErpIntegrationConfiguration();
 
         if (TreasuryPlataformDependentServicesFactory.implementation()
