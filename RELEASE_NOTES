@@ -1,5 +1,7 @@
 - Improvement: Improvement of Saft and ERP Export
 - Refactor: Comparator for SettlementNote by payment date
+- Refactor: Methods to check if credit note must be created when reimbursed
+- Bug Fix: Apply creation of new credit when registering a reimbursement if credit notes are not to be closed immediatelly
 
 8.5.5 (16-12-2021)
 - Bug Fix: Save username and datetime in Settlement annulment message
