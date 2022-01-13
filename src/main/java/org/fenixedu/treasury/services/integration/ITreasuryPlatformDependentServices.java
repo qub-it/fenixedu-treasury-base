@@ -68,6 +68,7 @@ import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration
 import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
+import org.fenixedu.treasury.services.integration.erp.ISaftExporterConfiguration;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -177,4 +178,5 @@ public interface ITreasuryPlatformDependentServices {
 
     public InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
 
+    public ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration);
 }

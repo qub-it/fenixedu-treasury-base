@@ -67,6 +67,7 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 public class ERPExportOperation extends ERPExportOperation_Base {
 
@@ -129,6 +130,17 @@ public class ERPExportOperation extends ERPExportOperation_Base {
         }
 
         super.delete();
+    }
+
+    // ********** //
+    // SERVICES   //
+    // ********** //
+
+    @Atomic(mode = TxMode.WRITE)
+    public static ERPExportOperation createSaftExportOperation(byte[] data, FinantialInstitution institution, DateTime when) {
+        String filename = institution.getFiscalNumber() + "_" + when.toString() + ".xml";
+        ERPExportOperation operation = ERPExportOperation.create(data, filename, institution, null, when, false, false, false);
+        return operation;
     }
 
     @Atomic

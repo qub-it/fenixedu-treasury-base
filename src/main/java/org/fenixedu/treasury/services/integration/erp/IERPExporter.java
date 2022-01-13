@@ -108,4 +108,5 @@ public interface IERPExporter {
     public void processReimbursementStateChange(SettlementNote settlementNote, ReimbursementProcessStatusType reimbursementStatus,
             String exerciseYear, DateTime reimbursementStatusDate);
 
+    public List<FinantialDocument> processCreditNoteSettlementsInclusion(List<FinantialDocument> documents);
 }

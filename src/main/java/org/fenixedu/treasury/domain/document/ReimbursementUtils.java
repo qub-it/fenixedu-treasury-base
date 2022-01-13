@@ -89,7 +89,7 @@ public class ReimbursementUtils {
         if (!isInReimbursementCreditsRestrictionModeOfSAP(creditEntry)) {
             return false;
         }
-        
+
         final CreditNote creditNote = (CreditNote) creditEntry.getFinantialDocument();
 
         if (creditNote.isAnnulled()) {
