@@ -174,52 +174,7 @@ public class ERPExporterManager {
 
     public static List<ERPExportOperation> exportPendingDocumentsForFinantialInstitution(
             final FinantialInstitution finantialInstitution) {
-
-        final IERPExporter erpExporter =
-                finantialInstitution.getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
-
-        if (!finantialInstitution.getErpIntegrationConfiguration().getActive()) {
-            return Lists.newArrayList();
-        }
-
-        Stream<FinantialDocument> stream = finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream();
-
-        if (isUsingSaftConfiguration(finantialInstitution)) {
-            stream = applyAdditionalFilterForSaftConfiguration(stream);
-        }
-
-        final List<FinantialDocument> sortedDocuments = erpExporter.filterDocumentsToExport(stream);
-
-        if (sortedDocuments.isEmpty()) {
-            return Lists.newArrayList();
-        }
-
-        if (finantialInstitution.getErpIntegrationConfiguration().getExportOnlyRelatedDocumentsPerExport()) {
-            final List<ERPExportOperation> result = Lists.newArrayList();
-
-            while (!sortedDocuments.isEmpty()) {
-                final FinantialDocument doc = sortedDocuments.iterator().next();
-
-                //remove the related documents from the original Set
-                sortedDocuments.remove(doc);
-
-                // Limit exportation of documents in which customer has invalid addresses
-                final Customer customer = doc.getDebtAccount().getCustomer();
-                final List<String> errorMessages = Lists.newArrayList();
-                if (!ERPCustomerFieldsBean.validateAddress(customer, errorMessages)) {
-                    if (!doc.getErpExportOperationsSet().isEmpty()) {
-                        continue;
-                    }
-                }
-
-                result.add(exportSingleDocument(doc));
-            }
-
-            return result;
-        }
-
-        // return Lists.newArrayList(erpExporter.exportFinantialDocumentToIntegration(finantialInstitution, sortedDocuments));
-        return Lists.newArrayList();
+        return exportPendingDocumentsForFinantialInstitution(finantialInstitution, null);
     }
 
     public static List<ERPExportOperation> exportPendingDocumentsForFinantialInstitution(
@@ -261,7 +216,10 @@ public class ERPExporterManager {
                         continue;
                     }
                 }
-                runnable.run();
+                if (runnable != null) {
+                    runnable.run();
+                }
+
                 result.add(exportSingleDocument(doc));
             }
 
