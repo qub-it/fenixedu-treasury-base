@@ -60,6 +60,7 @@ import javax.servlet.http.HttpSession;
 
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -120,6 +121,8 @@ public interface ITreasuryPlatformDependentServices {
     /* User */
 
     String getLoggedUsername();
+
+    String getCustomerEmail(Customer customer);
 
     /* Locales */
 
