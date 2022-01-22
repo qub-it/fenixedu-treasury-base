@@ -9,6 +9,7 @@ import javax.servlet.http.HttpSession;
 
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -137,6 +138,12 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
 
     @Override
     public String getLoggedUsername() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+    @Override
+    public String getCustomerEmail(Customer customer) {
         // TODO Auto-generated method stub
         return null;
     }
