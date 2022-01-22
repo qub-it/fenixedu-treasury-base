@@ -1653,6 +1653,7 @@ public class SAPExporter implements IERPExporter {
                 preProcessFunctionBeforeSerialize);
     }
 
+    @Override
     public List<FinantialDocument> processCreditNoteSettlementsInclusion(List<FinantialDocument> documents) {
         List<FinantialDocument> result = Lists.newArrayList(documents);
 
