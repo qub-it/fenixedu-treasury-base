@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.domain.integration;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,6 +62,7 @@ import java.util.stream.Stream;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import com.google.common.collect.Sets;
@@ -69,6 +71,17 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public class ERPImportOperation extends ERPImportOperation_Base {
+
+    public static final Comparator<ERPImportOperation> COMPARE_BY_VERSIONING_CREATION_DATE =
+            new Comparator<ERPImportOperation>() {
+
+                @Override
+                public int compare(final ERPImportOperation o1, final ERPImportOperation o2) {
+                    int c = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o1)
+                            .compareTo(TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o2));
+                    return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+                }
+            };
 
     protected ERPImportOperation() {
         super();
