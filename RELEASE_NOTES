@@ -1,3 +1,5 @@
+- Bug Fix: Fix translation of payment plan validators
+
 8.6.0 (26-01-2022)
 - Improvement: Improvement of Saft and ERP Export
 - Refactor: Comparator for SettlementNote by payment date
