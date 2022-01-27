@@ -193,6 +193,8 @@ public class DebitNote extends DebitNote_Base {
         setDocumentDueDate(maxDebitEntryDueDate());
 
         super.closeDocument(markDocumentToExport);
+
+        TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
     }
 
     private LocalDate maxDebitEntryDueDate() {

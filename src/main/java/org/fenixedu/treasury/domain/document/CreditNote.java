@@ -216,6 +216,13 @@ public class CreditNote extends CreditNote_Base {
         checkRules();
     }
 
+    @Override
+    public void closeDocument(boolean markDocumentToExport) {
+        super.closeDocument(markDocumentToExport);
+
+        TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
+    }
+
     /* Method is not used anywhere */
     @Atomic
     private void deprecatedEdit(final DebitNote debitNote, final DebtAccount payorDebtAccount,

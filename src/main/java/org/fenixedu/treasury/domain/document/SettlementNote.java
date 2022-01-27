@@ -682,6 +682,8 @@ public class SettlementNote extends SettlementNote_Base {
 
         checkRules();
 
+        TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
+
         BennuSignalsServices.emitSignalForSettlement(this);
     }
 
