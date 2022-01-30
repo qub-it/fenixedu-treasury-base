@@ -452,6 +452,9 @@ public class DebitEntry extends DebitEntry_Base {
 
             closeCreditEntryIfPossible(reason, now, creditEntryFromExemption);
 
+            creditEntryFromExemption.getFinantialDocument().setDocumentObservations(String.format("[%s] - %s",
+                    treasuryExemption.getTreasuryExemptionType().getName().getContent(), treasuryExemption.getReason()));
+
         } else {
 
             setAmount(getAmount().subtract(exemptedAmountWithoutVat));
@@ -1026,7 +1029,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         final DateTime now = new DateTime();
         final CreditEntry creditEntry =
-                createCreditEntry(now, getDescription(), null, null, amountForCreditWithoutVat, null, null);
+                createCreditEntry(now, getDescription(), reason, null, amountForCreditWithoutVat, null, null);
 
         // Close creditEntry with debitEntry if it is possible
         closeCreditEntryIfPossible(reason, now, creditEntry);
