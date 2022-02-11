@@ -1070,7 +1070,7 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         if (Strings.isNullOrEmpty(reason)) {
-            throw new TreasuryDomainException("error.DebitEntry.annul.debit.entry,requires.reason");
+            throw new TreasuryDomainException("error.DebitEntry.annul.debit.entry.requires.reason");
         }
 
         final DebitNote debitNote = DebitNote.create(getDebtAccount(), DocumentNumberSeries
