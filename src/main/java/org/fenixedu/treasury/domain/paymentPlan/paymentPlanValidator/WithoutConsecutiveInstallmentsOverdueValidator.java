@@ -86,7 +86,8 @@ public class WithoutConsecutiveInstallmentsOverdueValidator extends WithoutConse
     public Boolean validate(LocalDate date, List<Installment> sortedInstallments) {
         int count = 0;
         for (Installment installment : sortedInstallments) {
-            if (installment.isOverdue(date) && installment.getDueDate().isBefore(date.minusDays(getNumberDaysToTakeEffect()))) {
+            int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(installment.getDueDate(), date);
+            if (installment.isOverdue(date) && numberOfWorkDaysBetween > getNumberDaysToTakeEffect()) {
                 count++;
                 if (count == getNumberInstallments()) {
                     return false;

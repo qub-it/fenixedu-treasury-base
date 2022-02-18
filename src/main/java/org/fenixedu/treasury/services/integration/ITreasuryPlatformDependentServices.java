@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.services.integration;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -72,6 +73,7 @@ import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.fenixedu.treasury.services.integration.erp.ISaftExporterConfiguration;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.Partial;
 
 import pt.ist.fenixframework.DomainObject;
 
@@ -182,4 +184,8 @@ public interface ITreasuryPlatformDependentServices {
     public InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
 
     public ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration);
+
+    /* Holidays */
+
+    public Set<Partial> getHolidays();
 }

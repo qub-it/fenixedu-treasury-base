@@ -60,14 +60,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.IntBinaryOperator;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.Days;
 import org.joda.time.Interval;
 import org.joda.time.LocalDate;
+import org.joda.time.Partial;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -249,6 +256,26 @@ public class TreasuryConstants {
         DateTimeFormatter dateTimePattern = DateTimeFormat.forPattern(pattern);
 
         return dateTimePattern.parseLocalDate(strValue);
+    }
+
+    public static Set<Partial> getHolidays() {
+        return TreasuryPlataformDependentServicesFactory.implementation().getHolidays();
+    }
+
+    public static boolean isHoliday(LocalDate localDate) {
+        return getHolidays().stream().anyMatch(p -> p.isMatch(localDate));
+    }
+
+    public static boolean isHoliday(DateTime dateTime) {
+        return getHolidays().stream().anyMatch(p -> p.isMatch(dateTime));
+    }
+
+    public static int countNumberOfWorkDaysBetween(LocalDate startDate, LocalDate endDate) {
+        Predicate<LocalDate> isWeekend = date -> date.getDayOfWeek() == DateTimeConstants.SATURDAY
+                || date.getDayOfWeek() == DateTimeConstants.SUNDAY || getHolidays().stream().anyMatch(h -> h.isMatch(date));
+        
+        return IntStream.range(0, Days.daysBetween(startDate, endDate).getDays())
+                .map(d -> isWeekend.test(startDate.plusDays(d)) ? 0 : 1).reduce(0, (a, b) -> a + b);
     }
 
     // @formatter:off

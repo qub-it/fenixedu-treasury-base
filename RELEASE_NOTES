@@ -1,4 +1,6 @@
 - Bug Fix: Fix translation of payment plan validators
+- Refactor: Service to get holidays from platform
+- Bug Fix: Calculate validation of payment plans based on workdays (also excluding holidays)
 
 8.6.0 (26-01-2022)
 - Improvement: Improvement of Saft and ERP Export

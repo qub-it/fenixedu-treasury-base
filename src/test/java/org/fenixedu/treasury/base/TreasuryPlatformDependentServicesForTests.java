@@ -1,6 +1,7 @@
 package org.fenixedu.treasury.base;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -23,6 +24,7 @@ import org.fenixedu.treasury.services.integration.erp.ISaftExporterConfiguration
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.Partial;
 
 import pt.ist.fenixframework.DomainObject;
 
@@ -282,5 +284,10 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     public ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration) {
         // TODO Auto-generated method stub
         return null;
+    }
+    
+    @Override
+    public Set<Partial> getHolidays() {
+        return Collections.emptySet();
     }
 }
