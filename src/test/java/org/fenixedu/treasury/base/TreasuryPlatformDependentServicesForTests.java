@@ -296,4 +296,9 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     @Override
     public void certifyDocument(FinantialDocument finantialDocument) {
     }
+    
+    @Override
+    public void updateCertifiedDocument(FinantialDocument finantialDocument) {
+    }
+    
 }

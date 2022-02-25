@@ -88,6 +88,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
     protected FinantialInstitution() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
+        setInvoiceRegistrationMode(InvoiceRegistrationMode.ERP_INTEGRATION);
     }
 
     protected FinantialInstitution(final FiscalCountryRegion fiscalCountryRegion, final Currency currency, final String code,
@@ -288,6 +289,14 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         return getErpIntegrationConfiguration() != null && getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated();
     }
     
+    public boolean isInvoiceRegistrationByErpIntegration() {
+        return getInvoiceRegistrationMode() == InvoiceRegistrationMode.ERP_INTEGRATION;
+    }
+
+    public boolean isInvoiceRegistrationByTreasuryCertification() {
+        return getInvoiceRegistrationMode() == InvoiceRegistrationMode.TREASURY_CERTIFICATION;
+    }
+
     // ********
     // SERVICES
     // ********

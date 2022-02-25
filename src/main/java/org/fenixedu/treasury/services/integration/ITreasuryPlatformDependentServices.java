@@ -192,4 +192,6 @@ public interface ITreasuryPlatformDependentServices {
     /* Tax Authority Certification */
 
     public void certifyDocument(FinantialDocument finantialDocument);
+
+    public void updateCertifiedDocument(FinantialDocument finantialDocument);
 }
