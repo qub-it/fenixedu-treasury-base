@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -194,6 +195,28 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
     public PaymentRequestLog log(PaymentRequest paymentRequest) {
         return PaymentRequestLog.create(paymentRequest, paymentRequest.getCurrentState().getCode(),
                 paymentRequest.getCurrentState().getLocalizedName());
+    }
+
+    public void updateFinantialInstitutionInfoHeader(boolean overrideFinantialInstitutionInfoHeader,
+            LocalizedString finantialInstitutionInfoHeader) {
+        if (finantialInstitutionInfoHeader != null) {
+            finantialInstitutionInfoHeader.forEach((locale, text) -> {
+                // Avoid XSS vulnerability
+                String startTag = "<script>";
+                String endTag = "</script>";
+                if (text.indexOf(startTag) > 0 && text.indexOf(endTag) > 0) {
+                    String textToRemove = text.substring(text.indexOf(startTag) + startTag.length(), text.indexOf(endTag));
+                    text = text.replace(textToRemove, "");
+                }
+
+                text = text.replace(startTag, "").replace(endTag, "");
+
+                finantialInstitutionInfoHeader.getOrDefault(locale, text);
+            });
+        }
+
+        super.setOverrideFinantialInstitutionInfoHeader(overrideFinantialInstitutionInfoHeader);
+        super.setFinantialInstitutionInfoHeader(finantialInstitutionInfoHeader);
     }
 
     // @formatter:off

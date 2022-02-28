@@ -1,3 +1,5 @@
+- Improvement: Override information of finantial institution info header in online payments
+
 8.6.1 (19-02-2022)
 - Bug Fix: Fix translation of payment plan validators
 - Refactor: Service to get holidays from platform

@@ -158,7 +158,7 @@ class FinantialInstitution {
 	String telephoneContact;
 	String webAddress; 
 	String locality;
-	String zipCode;
+	String zipCode;	
 }
 
 class FinantialEntity {
@@ -595,6 +595,15 @@ class payments.integration.DigitalPaymentPlatform {
 	String name;
 	boolean active;
 	String migrationCode;
+	
+	// Used to override the finantial institution data displayed in the online payments header
+	// This info is required in every page used in the checkout process.
+	// By default the data is provided by Finantial Institution, but some institutions want
+	// override the information presented.
+	
+	Boolean overrideFinantialInstitutionInfoHeader;
+	// Save data in rich text
+	LocalizedStringT finantialInstitutionInfoHeader;
 }
 
 	relation DigitalPaymentPlatformDomainRoot {
