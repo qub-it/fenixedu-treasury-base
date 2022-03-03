@@ -277,7 +277,7 @@ public class DebitNote extends DebitNote_Base {
         for (final FinantialDocumentEntry finantialDocumentEntry : debitNoteToCopy.getFinantialDocumentEntriesSet()) {
             final DebitEntry sourceDebitEntry = (DebitEntry) finantialDocumentEntry;
             final boolean applyExemptionOnDebitEntry = applyExemptions && (!sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
-                    && TreasuryConstants.isPositive(sourceDebitEntry.getExemptedAmount()));
+                    && TreasuryConstants.isPositive(sourceDebitEntry.getNetExemptedAmount()));
 
             final DebitEntry debitEntryCopy = DebitEntry.copyDebitEntry(sourceDebitEntry, result, applyExemptionOnDebitEntry);
 
@@ -293,7 +293,7 @@ public class DebitNote extends DebitNote_Base {
                 // there are credit entries with exemptions associated. But first associate credit entries with
                 // the exemptions in all running instances
                 final boolean exemptionAppliedWithCreditNote = !sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
-                        && !TreasuryConstants.isPositive(sourceDebitEntry.getExemptedAmount());
+                        && !TreasuryConstants.isPositive(sourceDebitEntry.getNetExemptedAmount());
 
                 if (!exemptionAppliedWithCreditNote) {
                     continue;
@@ -598,7 +598,7 @@ public class DebitNote extends DebitNote_Base {
             // TODO Use DebitEntry.copyDebitEntry service
             DebitEntry newDebitEntry = DebitEntry.create(Optional.of(newDebitNote), debitEntry.getDebtAccount(),
                     debitEntry.getTreasuryEvent(), debitEntry.getVat(),
-                    debitEntry.getAmount().add(debitEntry.getExemptedAmount()), debitEntry.getDueDate(),
+                    debitEntry.getAmount().add(debitEntry.getNetExemptedAmount()), debitEntry.getDueDate(),
                     debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
                     debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
 

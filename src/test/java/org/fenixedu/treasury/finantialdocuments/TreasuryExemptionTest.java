@@ -112,8 +112,8 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(10), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(10), exemption.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(10), debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(10), exemption.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(10), debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 
@@ -123,8 +123,8 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(1000), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(1000), exemption.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(1000), debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(1000), exemption.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(1000), debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 
@@ -156,8 +156,8 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getNetExemptedAmount().setScale(0));
         assertEquals("Credit Entry Exempted amount not equals", new BigDecimal(100),
                 exemption.getCreditEntry().getTotalAmount().setScale(0));
 
@@ -169,15 +169,15 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption1.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(100), debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption1.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(100), debitEntry.getNetExemptedAmount().setScale(0));
 
         TreasuryExemption exemption2 =
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(50), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(50), exemption2.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(150), debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(50), exemption2.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(150), debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 
@@ -187,23 +187,23 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals E = 100", new BigDecimal(100), exemption.getExemptedAmount());
+        assertEquals("Exemption Exempted amount not equals E = 100", new BigDecimal(100), exemption.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals E = 100", new BigDecimal(100),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
 
         exemption = TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                 treasuryEvent, "reason", new BigDecimal(50), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals E = 50", new BigDecimal(50), exemption.getExemptedAmount());
+        assertEquals("Exemption Exempted amount not equals E = 50", new BigDecimal(50), exemption.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals E = 50", new BigDecimal(150),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
 
         exemption = TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                 treasuryEvent, "reason", new BigDecimal(25), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals E = 25", new BigDecimal(25), exemption.getExemptedAmount());
+        assertEquals("Exemption Exempted amount not equals E = 25", new BigDecimal(25), exemption.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals E = 25", new BigDecimal(175),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
     }
 
     @Test
@@ -212,21 +212,21 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals E = 100", new BigDecimal(100), exemption1.getExemptedAmount());
+        assertEquals("Exemption Exempted amount not equals E = 100", new BigDecimal(100), exemption1.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals E = 100", new BigDecimal(100),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
 
         TreasuryExemption exemption2 =
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(50), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals E = 50", new BigDecimal(50), exemption2.getExemptedAmount());
+        assertEquals("Exemption Exempted amount not equals E = 50", new BigDecimal(50), exemption2.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals E = 50", new BigDecimal(150),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
 
         exemption1.revertExemption();
         assertEquals("Debit Entry Exempted amount not equals Delete E = 100", new BigDecimal(50),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 
@@ -236,9 +236,9 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals E = 100", new BigDecimal(100), exemption1.getExemptedAmount());
+        assertEquals("Exemption Exempted amount not equals E = 100", new BigDecimal(100), exemption1.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals E = 100", new BigDecimal(100),
-                debitEntry.getExemptedAmount().setScale(0));
+                debitEntry.getNetExemptedAmount().setScale(0));
 
         debitEntry.getDebitNote().closeDocument();
         assertEquals("DebitEntry closed", FinantialDocumentStateType.CLOSED, debitEntry.getDebitNote().getState());
@@ -255,8 +255,8 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getNetExemptedAmount().setScale(0));
         assertEquals("Credit Entry Exempted amount not equals", new BigDecimal(100),
                 exemption.getCreditEntry().getTotalAmount().setScale(0));
         exemption.getCreditEntry().getCreditNote().closeDocument();
@@ -271,8 +271,8 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getNetExemptedAmount());
+        assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getNetExemptedAmount().setScale(0));
         assertEquals("Debit Entry Available amount not equals", new BigDecimal(900.00).setScale(2),
                 debitEntry.getAvailableAmountForCredit());
         assertEquals("Credit Entry Exempted amount not equals", new BigDecimal(100),
@@ -282,8 +282,8 @@ public class TreasuryExemptionTest {
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
-        assertEquals("1 Exemption Exempted amount not equals", new BigDecimal(100), exemption1.getExemptedAmount());
-        assertEquals("1 Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getExemptedAmount().setScale(0));
+        assertEquals("1 Exemption Exempted amount not equals", new BigDecimal(100), exemption1.getNetExemptedAmount());
+        assertEquals("1 Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getNetExemptedAmount().setScale(0));
         assertEquals("1 Debit Entry Available amount not equals", new BigDecimal(800.00).setScale(2),
                 debitEntry.getAvailableAmountForCredit());
         assertEquals("1 Credit Entry Exempted amount not equals", new BigDecimal(100),

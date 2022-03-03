@@ -400,7 +400,7 @@ public class BalanceTransferService {
 
         for (final FinantialDocumentEntry objectEntry : objectDebitNote.getFinantialDocumentEntriesSet()) {
             final DebitEntry debitEntry = (DebitEntry) objectEntry;
-            final BigDecimal amountWithExemptedAmount = debitEntry.getAmount().add(debitEntry.getExemptedAmount());
+            final BigDecimal amountWithExemptedAmount = debitEntry.getAmount().add(debitEntry.getNetExemptedAmount());
 
             if (!isPositive(amountWithExemptedAmount)) {
                 continue;

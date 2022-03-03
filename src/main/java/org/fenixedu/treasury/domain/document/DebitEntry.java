@@ -242,7 +242,7 @@ public class DebitEntry extends DebitEntry_Base {
         setTreasuryEvent(treasuryEvent);
         setDueDate(dueDate);
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
-        setExemptedAmount(BigDecimal.ZERO);
+        setNetExemptedAmount(BigDecimal.ZERO);
         setInterestRate(interestRate);
 
         /*
@@ -320,13 +320,6 @@ public class DebitEntry extends DebitEntry_Base {
         if (Strings.isNullOrEmpty(getDescription())) {
             throw new TreasuryDomainException("error.DebitEntry.description.required");
         }
-
-//        //If it exempted then it must be on itself or with credit entry but not both
-//        if (isPositive(getExemptedAmount())
-//                && CreditEntry.findActive(getTreasuryEvent(), getProduct()).filter(c -> c.getDebitEntry() == this).count() > 0) {
-//            throw new TreasuryDomainException(
-//                    "error.DebitEntry.exemption.cannot.be.on.debit.entry.and.with.credit.entry.at.same.time");
-//        }
 
         if (getTreasuryEvent() != null && getProduct().isTransferBalanceProduct()) {
             throw new TreasuryDomainException("error.DebitEntry.transferBalanceProduct.cannot.be.associated.to.academic.event");
@@ -429,12 +422,12 @@ public class DebitEntry extends DebitEntry_Base {
             throw new RuntimeException("error.DebitEntry.is.event.annuled.cannot.be.exempted");
         }
 
-        if (TreasuryConstants.isGreaterThan(treasuryExemption.getExemptedAmount(), getAvailableAmountForCredit())) {
+        if (TreasuryConstants.isGreaterThan(treasuryExemption.getNetExemptedAmount(), getAvailableAmountForCredit())) {
             throw new TreasuryDomainException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
         }
 
         final BigDecimal exemptedAmountWithoutVat =
-                TreasuryConstants.divide(treasuryExemption.getExemptedAmount(), BigDecimal.ONE.add(rationalVatRate(this)));
+                TreasuryConstants.divide(treasuryExemption.getNetExemptedAmount(), BigDecimal.ONE.add(rationalVatRate(this)));
 
         if (isProcessedInClosedDebitNote()) {
             // If there is at least one credit entry then skip...
@@ -455,7 +448,7 @@ public class DebitEntry extends DebitEntry_Base {
         } else {
 
             setAmount(getAmount().subtract(exemptedAmountWithoutVat));
-            setExemptedAmount(getExemptedAmount().add(exemptedAmountWithoutVat));
+            setNetExemptedAmount(getNetExemptedAmount().add(exemptedAmountWithoutVat));
 
             recalculateAmountValues();
 
@@ -625,8 +618,8 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
         }
 
-        setAmount(getAmount().add(treasuryExemption.getExemptedAmount()));
-        setExemptedAmount(getExemptedAmount().subtract(treasuryExemption.getExemptedAmount()));
+        setAmount(getAmount().add(treasuryExemption.getNetExemptedAmount()));
+        setNetExemptedAmount(getNetExemptedAmount().subtract(treasuryExemption.getNetExemptedAmount()));
 
         recalculateAmountValues();
 
@@ -664,8 +657,28 @@ public class DebitEntry extends DebitEntry_Base {
         return settlementNote.get().getPaymentDate();
     }
 
-    public BigDecimal getExemptedAmountWithVat() {
-        return getExemptedAmount().multiply(BigDecimal.ONE.add(rationalVatRate(this)));
+    @Override
+    @Deprecated
+    // TODO deprecated - this should be renamed as netExemptedAmount         
+    public BigDecimal getExemptedAmount() {
+        return super.getExemptedAmount();
+    }
+
+    @Override
+    @Deprecated
+    // TODO deprecated - this should be renamed as netExemptedAmount         
+    public void setExemptedAmount(BigDecimal exemptedAmount) {
+        super.setExemptedAmount(exemptedAmount);
+    }
+
+    // TODO: Replace exemptedAmount this by this
+    public BigDecimal getNetExemptedAmount() {
+        return super.getExemptedAmount();
+    }
+
+    // TODO: Replace exemptedAmount this by this
+    public void setNetExemptedAmount(BigDecimal exemptedAmount) {
+        super.setExemptedAmount(exemptedAmount);
     }
 
     /**
@@ -740,7 +753,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         final DebitEntry result = DebitEntry.create(Optional.ofNullable(debitNoteToAssociate), debitEntryToCopy.getDebtAccount(),
                 debitEntryToCopy.getTreasuryEvent(), debitEntryToCopy.getVat(),
-                debitEntryToCopy.getAmount().add(debitEntryToCopy.getExemptedAmount()), debitEntryToCopy.getDueDate(),
+                debitEntryToCopy.getAmount().add(debitEntryToCopy.getNetExemptedAmount()), debitEntryToCopy.getDueDate(),
                 propertiesMap, debitEntryToCopy.getProduct(), debitEntryToCopy.getDescription(), debitEntryToCopy.getQuantity(),
                 debitEntryToCopy.getInterestRate(), debitEntryToCopy.getEntryDateTime());
 

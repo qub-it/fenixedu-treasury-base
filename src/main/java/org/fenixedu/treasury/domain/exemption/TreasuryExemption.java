@@ -141,7 +141,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         }
 
         if (TreasuryConstants.isGreaterThan(getNetAmountToExempt(),
-                getDebitEntry().getAmountWithVat().add(getDebitEntry().getExemptedAmount()))) {
+                getDebitEntry().getAmountWithVat().add(getDebitEntry().getNetExemptedAmount()))) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.higher.than.debitEntry");
         }
     }
@@ -150,7 +150,13 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         return super.getExemptByPercentage();
     }
 
+    @Deprecated
+    // TODO: Remove this method when all references are cleaned
     public BigDecimal getExemptedAmount() {
+        return this.getNetExemptedAmount();
+    }
+
+    public BigDecimal getNetExemptedAmount() {
         if (isExemptByPercentage()) {
             throw new TreasuryDomainException("error.TreasuryExemption.exempted.by.percentage.not.supported");
         }

@@ -366,6 +366,8 @@ class document.FinantialDocumentEntry {
 	class document.DebitEntry extends document.InvoiceEntry {
 			boolean eventAnnuled;
 			LocalDate dueDate;
+
+			// deprecated - this should be renamed as netExemptedAmount			
 			BigDecimalT exemptedAmount;
 	
 			// This property has academic significance but  
