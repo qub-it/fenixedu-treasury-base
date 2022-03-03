@@ -417,7 +417,7 @@ public class BalanceTransferService {
 
             debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
                 TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), debitEntry.getTreasuryEvent(),
-                        treasuryExemption.getReason(), treasuryExemption.getValueToExempt(), newDebitEntry);
+                        treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry);
 
             });
 

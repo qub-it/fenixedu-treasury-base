@@ -79,7 +79,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     protected TreasuryExemption(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
-            final String reason, final BigDecimal valueToExempt, final DebitEntry debitEntry) {
+            final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
         this();
 
         for (final CreditEntry creditEntry : debitEntry.getCreditEntriesSet()) {
@@ -96,7 +96,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
          * For now percentages are not supported because they are complex to deal with
          */
         setExemptByPercentage(false);
-        setValueToExempt(valueToExempt);
+        setNetAmountToExempt(netAmountToExempt);
 
         setDebitEntry(debitEntry);
         setProduct(debitEntry.getProduct());
@@ -116,11 +116,11 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 //            throw new TreasuryDomainException("error.TreasuryExemption.treasuryEvent.required");
 //        }
 
-        if (getValueToExempt() == null) {
+        if (getNetAmountToExempt() == null) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.required");
         }
 
-        if (!TreasuryConstants.isPositive(getValueToExempt())) {
+        if (!TreasuryConstants.isPositive(getNetAmountToExempt())) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.positive.required");
         }
 
@@ -140,7 +140,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             throw new TreasuryDomainException("error.TreasuryExemption.debit.entry.annuled.in.event");
         }
 
-        if (TreasuryConstants.isGreaterThan(getValueToExempt(),
+        if (TreasuryConstants.isGreaterThan(getNetAmountToExempt(),
                 getDebitEntry().getAmountWithVat().add(getDebitEntry().getExemptedAmount()))) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.higher.than.debitEntry");
         }
@@ -155,7 +155,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             throw new TreasuryDomainException("error.TreasuryExemption.exempted.by.percentage.not.supported");
         }
 
-        return getValueToExempt();
+        return getNetAmountToExempt();
     }
 
     public boolean isDeletable() {
@@ -216,6 +216,30 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         delete();
     }
 
+    @Override
+    @Deprecated(forRemoval = true)
+    // TODO: deprecated - this should be renamed as netAmountToExempt 
+    public BigDecimal getValueToExempt() {
+        return super.getValueToExempt();
+    }
+
+    @Override
+    @Deprecated(forRemoval = true)
+    // TODO: deprecated - this should be renamed as netAmountToExempt
+    public void setValueToExempt(BigDecimal valueToExempt) {
+        super.setValueToExempt(valueToExempt);
+    }
+
+    // TODO: Replace valueToExempt this by this
+    public BigDecimal getNetAmountToExempt() {
+        return super.getValueToExempt();
+    }
+
+    // TODO: Replace valueToExempt this by this
+    public void setNetAmountToExempt(BigDecimal value) {
+        super.setValueToExempt(value);
+    }
+
     // @formatter: off
     /************
      * SERVICES *
@@ -251,13 +275,13 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 
     @Atomic
     public static TreasuryExemption create(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
-            final String reason, final BigDecimal valueToExempt, final DebitEntry debitEntry) {
+            final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
         if (TreasuryConstants.isGreaterThan(debitEntry.getQuantity(), BigDecimal.ONE)) {
             throw new TreasuryDomainException(
                     "error.TreasuryExemption.not.possible.to.exempt.debit.entry.with.more.than.one.in.quantity");
         }
 
-        return new TreasuryExemption(treasuryExemptionType, treasuryEvent, reason, valueToExempt, debitEntry);
+        return new TreasuryExemption(treasuryExemptionType, treasuryEvent, reason, netAmountToExempt, debitEntry);
     }
 
 }

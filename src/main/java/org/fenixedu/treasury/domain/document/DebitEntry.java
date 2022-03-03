@@ -760,7 +760,7 @@ public class DebitEntry extends DebitEntry_Base {
         if (applyExemption) {
             debitEntryToCopy.getTreasuryExemptionsSet().forEach(exemption -> {
                 TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
-                        exemption.getReason(), exemption.getValueToExempt(), result);
+                        exemption.getReason(), exemption.getNetAmountToExempt(), result);
             });
         }
 

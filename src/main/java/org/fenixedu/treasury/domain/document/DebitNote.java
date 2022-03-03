@@ -306,7 +306,7 @@ public class DebitNote extends DebitNote_Base {
                 final DebitEntry debitEntryCopy = debitEntriesMap.get(sourceDebitEntry);
                 sourceDebitEntry.getTreasuryExemptionsSet().forEach(exemption -> {
                     TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
-                            exemption.getReason(), exemption.getValueToExempt(), debitEntryCopy);
+                            exemption.getReason(), exemption.getNetAmountToExempt(), debitEntryCopy);
                 });
             }
         }
@@ -604,7 +604,7 @@ public class DebitNote extends DebitNote_Base {
 
             debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
                 TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), debitEntry.getTreasuryEvent(),
-                        treasuryExemption.getReason(), treasuryExemption.getValueToExempt(), newDebitEntry);
+                        treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry);
             });
 
             newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),

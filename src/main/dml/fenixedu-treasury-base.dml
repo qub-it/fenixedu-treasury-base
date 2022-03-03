@@ -485,6 +485,8 @@ class exemption.TreasuryExemption {
 	
 	// deprecated - it is always exempted by value
 	boolean exemptByPercentage;
+	
+	// deprecated - this should be renamed as netAmountToExempt
 	BigDecimalT valueToExempt;
 }
 

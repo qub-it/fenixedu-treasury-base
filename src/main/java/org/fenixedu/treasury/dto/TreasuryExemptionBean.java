@@ -74,7 +74,7 @@ public class TreasuryExemptionBean implements ITreasuryBean, Serializable {
     private List<TreasuryTupleDataSourceBean> debitEntries;
     private TreasuryExemptionType treasuryExemptionType;
     private DebitEntry debitEntry;
-    private BigDecimal valuetoexempt;
+    private BigDecimal netAmountToExempt;
     private String reason;
     private String currencySymbol;
 
@@ -149,12 +149,12 @@ public class TreasuryExemptionBean implements ITreasuryBean, Serializable {
         this.debitEntries = debitEntries;
     }
 
-    public BigDecimal getValuetoexempt() {
-        return valuetoexempt;
+    public BigDecimal getNetAmountToExempt() {
+        return this.netAmountToExempt;
     }
 
-    public void setValuetoexempt(BigDecimal valuetoexempt) {
-        this.valuetoexempt = valuetoexempt;
+    public void setNetAmountToExempt(BigDecimal netAmountToExempt) {
+        this.netAmountToExempt = netAmountToExempt;
     }
 
     public String getReason() {
