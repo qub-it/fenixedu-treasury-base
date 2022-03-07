@@ -222,7 +222,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
     }
 
-    public BigDecimal getNetExemptedAmount() {
+    @Deprecated
+    /** Must be replaced by {@link IAcademicTreasuryEvent#getNetExemptedAmount()} */
+    public BigDecimal getExemptedAmount() {
         BigDecimal result =
                 DebitEntry.findActive(this).map(l -> l.getNetExemptedAmount()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);
 
@@ -230,6 +232,11 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 .reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO));
 
         return result;
+    }
+
+    // TODO: Ensure ::getExemptedAmount is replaced by ::getNetExemptedAmount
+    public BigDecimal getNetExemptedAmount() {
+        return getExemptedAmount();
     }
 
     public Map<String, String> getPropertiesMap() {
