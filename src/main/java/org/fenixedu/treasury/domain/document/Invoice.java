@@ -128,13 +128,6 @@ public abstract class Invoice extends Invoice_Base {
         return super.isDeletable();
     }
 
-    @Atomic
-    public void recalculateAmountValues() {
-        for (FinantialDocumentEntry entry : this.getFinantialDocumentEntriesSet()) {
-            ((InvoiceEntry) entry).recalculateAmountValues();
-        }
-    }
-
     @Override
     @Atomic
     public void delete(boolean deleteEntries) {

@@ -1,3 +1,8 @@
+- Bug Fix: Fix calculation of exemptions, assuming the exemptedAmount is without vat
+- Improvement: Add checks to ensure the cents of netAmount, vatAmount, exemptedAmount and amountWithVat are atmost 2
+- Improvement: In spliting credits, check that the old netAmount is equal to the sum of both new netAmounts
+- Improvement: In spliting credits, check that the old amountWithVat is equal to the sum of both new amountWithVat
+
 8.6.3 (07-03-2022)
 - Refactor: Mark TreasuryExemption::valueToExempt as deprecated and replace with TreasuryExemption.netAmountToExempt
 - Refactor: Mark DebitEntry::exemptedAmount as deprecated and replace with DebitEntry::netExemptedAmount

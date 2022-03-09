@@ -68,6 +68,9 @@ public class Currency extends Currency_Base {
 
     public static String EURO_CODE = "EUR";
 
+    // TODO: The decimal places should be parameterized in the Currency entity
+    public static int EURO_CENTS_DECIMAL_PLACES = 2;
+
     protected Currency() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -81,6 +84,10 @@ public class Currency extends Currency_Base {
         setSymbol(symbol);
 
         checkRules();
+    }
+
+    public int getDecimalPlacesForCents() {
+        return EURO_CENTS_DECIMAL_PLACES;
     }
 
     private void checkRules() {
@@ -192,11 +199,11 @@ public class Currency extends Currency_Base {
     }
 
     public static BigDecimal getValueWithScale(BigDecimal amount) {
-        return getValueWithScale(amount, 2);
+        return getValueWithScale(amount, EURO_CENTS_DECIMAL_PLACES);
     }
 
     public static BigDecimal getValueWithScale(BigDecimal amount, int decimalPlaces) {
-        return amount.setScale(decimalPlaces, RoundingMode.HALF_EVEN);
+        return amount.setScale(decimalPlaces, RoundingMode.HALF_UP);
     }
 
 }

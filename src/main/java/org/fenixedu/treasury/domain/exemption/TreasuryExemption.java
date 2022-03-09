@@ -96,6 +96,13 @@ public class TreasuryExemption extends TreasuryExemption_Base {
          * For now percentages are not supported because they are complex to deal with
          */
         setExemptByPercentage(false);
+
+        // Check the scale of netAmountToExempt has at most the decimal places for cents
+        if (netAmountToExempt.scale() > debitEntry.getDebtAccount().getFinantialInstitution().getCurrency()
+                .getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The netAmountToExempt has scale above the currency decimal places for cents");
+        }
+
         setNetAmountToExempt(netAmountToExempt);
 
         setDebitEntry(debitEntry);
@@ -103,18 +110,18 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 
         checkRules();
 
-        getDebitEntry().exempt(this);
+        if (getNetAmountToExempt().scale() > getDebitEntry().getDebtAccount().getFinantialInstitution().getCurrency()
+                .getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The netAmountToExempt has scale above the currency decimal places for cents");
+        }
 
+        getDebitEntry().exempt(this);
     }
 
     private void checkRules() {
         if (getTreasuryExemptionType() == null) {
             throw new TreasuryDomainException("error.TreasuryExemption.treasuryExemptionType.required");
         }
-
-//        if (getTreasuryEvent() == null) {
-//            throw new TreasuryDomainException("error.TreasuryExemption.treasuryEvent.required");
-//        }
 
         if (getNetAmountToExempt() == null) {
             throw new TreasuryDomainException("error.TreasuryExemption.valueToExempt.required");
@@ -216,7 +223,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
                         "error.TreasuryExemption.delete.impossible.due.to.processed.debit.or.credit.entry");
             }
 
-            getDebitEntry().revertExemptionIfPossible(this);
+            getDebitEntry().revertExemptionIfPossibleInPreparingState(this);
         }
 
         delete();

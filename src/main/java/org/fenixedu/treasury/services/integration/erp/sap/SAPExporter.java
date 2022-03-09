@@ -982,9 +982,17 @@ public class SAPExporter implements IERPExporter {
         line.setProductDescription(currentProduct.getProductDescription());
 
         // Quantity
+        if (!TreasuryConstants.isEqual(entry.getQuantity(), BigDecimal.ONE)) {
+            // With the change of how netAmount is calculated
+            // Integration with SAP is not supported, if the quantity is different than one
+            // The unit price 
+            throw new RuntimeException("error.SAPExporter.quantity.different.than.one.not.supported");
+        }
+
         line.setQuantity(entry.getQuantity());
 
         // SettlementAmount
+        // In case of DebitEntry should be filled with the DebitEntry::netExemptedAmount
         line.setSettlementAmount(BigDecimal.ZERO);
 
         // Tax
@@ -1013,12 +1021,17 @@ public class SAPExporter implements IERPExporter {
 
         // UnitOfMeasure
         line.setUnitOfMeasure(product.getUnitOfMeasure().getContent());
+
         // UnitPrice
-        line.setUnitPrice(entry.getAmount().setScale(2, RoundingMode.HALF_EVEN));
+        //
+        // With the change of how netAmount is calculated
+        // Integration with SAP is not supported, if the quantity is different than one
+        // The unit price is equal to netAmount
+        line.setUnitPrice(entry.getNetAmount().setScale(2, RoundingMode.HALF_EVEN));
 
         if (entry.getFinantialDocument().isExportedInLegacyERP()) {
-            line.setUnitPrice(TreasuryConstants
-                    .divide(SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE), entry.getQuantity())
+            line.setUnitPrice(
+                    SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE)
                     .setScale(2, RoundingMode.HALF_EVEN));
         }
 

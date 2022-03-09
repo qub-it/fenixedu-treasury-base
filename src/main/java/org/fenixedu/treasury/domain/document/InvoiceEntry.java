@@ -69,6 +69,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.MbwayPaymentRequest;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -170,9 +171,9 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     }
 
     protected void init(final FinantialDocument finantialDocument, final DebtAccount debtAccount, final Product product,
-            final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal amount, String description,
+            final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal unitAmount, String description,
             BigDecimal quantity, DateTime entryDateTime) {
-        super.init(debtAccount, finantialDocument, finantialEntryType, amount, description, entryDateTime);
+        super.init(debtAccount, finantialDocument, finantialEntryType, unitAmount, description, entryDateTime);
 
         if (debtAccount.getClosed()) {
             throw new TreasuryDomainException("error.InvoiceEntry.debtAccount.closed");
@@ -224,12 +225,11 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         if (checkAmountValues() == false) {
             throw new TreasuryDomainException("error.InvoiceEntry.amount.invalid.consistency");
         }
-
     }
 
     protected boolean checkAmountValues() {
         if (getNetAmount() != null && getVatAmount() != null && getAmountWithVat() != null) {
-            BigDecimal netAmount = getCurrency().getValueWithScale(getQuantity().multiply(getAmount()));
+            BigDecimal netAmount = calculateNetAmount();
             BigDecimal vatAmount = getCurrency().getValueWithScale(getNetAmount().multiply(rationalVatRate(this)));
             BigDecimal amountWithVat =
                     getCurrency().getValueWithScale(getNetAmount().multiply(BigDecimal.ONE.add(rationalVatRate(this))));
@@ -241,24 +241,55 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return true;
     }
 
-    @Atomic
     protected void recalculateAmountValues() {
         if (this.getVatRate() == null) {
             this.setVatRate(super.getVat().getTaxRate());
         }
-        setNetAmount(getCurrency().getValueWithScale(getQuantity().multiply(getAmount())));
 
-        // TODO
+        // Net Amount with scale of 2
+        BigDecimal netAmount = calculateNetAmount();
+        setNetAmount(netAmount);
+
         // Check: The rounding mode used was HALF_EVEN which was giving incorrect result
         // For example 12.5 by 5% IVA is 0.63 but with RoundingMode.HALF_EVEN give 0.62
         //
-        BigDecimal rationalVatRate = rationalVatRate(this);
-        BigDecimal netAmount = getNetAmount();
-        BigDecimal vatAmount = netAmount.multiply(rationalVatRate);
-        BigDecimal amountWithVat = netAmount.multiply(BigDecimal.ONE.add(rationalVatRate));
+        // Changed to HALF_UP, also in Currency::getValueWithScale method
+        // Also read the comments in Currency::getValueWithScale method
+        BigDecimal rationalVatRate = TreasuryConstants.rationalVatRate(this);
 
-        setVatAmount(vatAmount.setScale(2, RoundingMode.HALF_UP));
-        setAmountWithVat(amountWithVat.setScale(2, RoundingMode.HALF_UP));
+        // Vat Amount with scale of 2
+        BigDecimal vatAmount = Currency.getValueWithScale(netAmount.multiply(rationalVatRate));
+
+        // Amount with VAT with scale of 2, assuming summing two numbers with scale of 2, will result 
+        // in a number with scale of 2
+        BigDecimal amountWithVat = netAmount.add(vatAmount);
+
+        setVatAmount(vatAmount);
+
+        // Set scale of 2, just in case something goes wrong
+        setAmountWithVat(Currency.getValueWithScale(amountWithVat));
+
+        // Ensure the netAmount, vatAmount and amountWithVat have at most the decimal places for cents
+        // defined in the currency
+        //
+        // TODO: First ensure in all instances that the following verifications are checked
+        // then move to InvoiceEntry::checkRules
+        if (getNetAmount().scale() > getDebtAccount().getFinantialInstitution().getCurrency().getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The netAmount has scale above the currency decimal places for cents");
+        }
+
+        if (getVatAmount().scale() > getDebtAccount().getFinantialInstitution().getCurrency().getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The vatAmount has scale above the currency decimal places for cents");
+        }
+
+        if (getAmountWithVat().scale() > getDebtAccount().getFinantialInstitution().getCurrency().getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The amountWithVat has scale above the currency decimal places for cents");
+        }
+    }
+
+    protected BigDecimal calculateNetAmount() {
+        BigDecimal netAmount = Currency.getValueWithScale(getQuantity().multiply(getAmount()));
+        return netAmount;
     }
 
     public static Stream<? extends InvoiceEntry> findAll() {

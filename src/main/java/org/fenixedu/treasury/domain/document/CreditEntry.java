@@ -52,8 +52,7 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.divide;
-import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import java.math.BigDecimal;
 import java.util.stream.Stream;
@@ -67,7 +66,6 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -77,9 +75,9 @@ import com.google.common.collect.Sets;
 public class CreditEntry extends CreditEntry_Base {
 
     protected CreditEntry(final FinantialDocument finantialDocument, final Product product, final Vat vat,
-            final BigDecimal amountWithoutVat, String description, BigDecimal quantity, final DateTime entryDateTime,
+            final BigDecimal unitAmount, String description, BigDecimal quantity, final DateTime entryDateTime,
             final DebitEntry debitEntry, final TreasuryExemption treasuryExemption) {
-        init(finantialDocument, product, vat, amountWithoutVat, description, quantity, entryDateTime, debitEntry,
+        init(finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime, debitEntry,
                 treasuryExemption);
 
     }
@@ -97,10 +95,10 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     protected void init(final FinantialDocument finantialDocument, final Product product, final Vat vat,
-            final BigDecimal amountWithoutVat, String description, BigDecimal quantity, final DateTime entryDateTime,
+            final BigDecimal unitAmount, String description, BigDecimal quantity, final DateTime entryDateTime,
             final DebitEntry debitEntry, final TreasuryExemption treasuryExemption) {
         super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat,
-                amountWithoutVat, description, quantity, entryDateTime);
+                unitAmount, description, quantity, entryDateTime);
         this.setDebitEntry(debitEntry);
         this.setFromExemption(treasuryExemption != null);
         this.setTreasuryExemption(treasuryExemption);
@@ -196,24 +194,23 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
-            BigDecimal amount, final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
+            BigDecimal unitAmount, final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
         CreditEntry cr =
-                new CreditEntry(finantialDocument, product, vat, amount, description, quantity, entryDateTime, debitEntry, null);
+                new CreditEntry(finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime, debitEntry,
+                        null);
         return cr;
     }
 
     public static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
-            final FinantialDocument finantialDocument, final String description, final BigDecimal amount,
-            final DateTime entryDateTime, final DebitEntry debitEntry) {
+            final FinantialDocument finantialDocument, final String description, final BigDecimal unitAmount,
+            final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
 
         if (treasuryExemption == null) {
             throw new TreasuryDomainException("error.CreditEntry.createFromExemption.requires.treasuryExemption");
         }
 
-        final CreditEntry cr = new CreditEntry(finantialDocument, debitEntry.getProduct(), debitEntry.getVat(), amount,
-                description, BigDecimal.ONE, entryDateTime, debitEntry, treasuryExemption);
-
-        cr.recalculateAmountValues();
+        final CreditEntry cr = new CreditEntry(finantialDocument, debitEntry.getProduct(), debitEntry.getVat(), unitAmount,
+                description, quantity, entryDateTime, debitEntry, treasuryExemption);
 
         return cr;
     }
@@ -227,8 +224,10 @@ public class CreditEntry extends CreditEntry_Base {
         return (CreditNote) getFinantialDocument();
     }
 
-    public CreditEntry splitCreditEntry(final BigDecimal remainingAmount) {
-        if (!TreasuryConstants.isLessThan(remainingAmount, getOpenAmount())) {
+    // TODO: Review the calculation of remainingUnitAmount, which might be losing
+    // precision
+    public CreditEntry splitCreditEntry(BigDecimal remainingAmountWithVat) {
+        if (!TreasuryConstants.isLessThan(remainingAmountWithVat, getOpenAmount())) {
             throw new TreasuryDomainException("error.CreditEntry.splitCreditEntry.remainingAmount.less.than.open.amount");
         }
 
@@ -236,24 +235,34 @@ public class CreditEntry extends CreditEntry_Base {
             throw new TreasuryDomainException("error.CreditEntry.splitCreditEntry.finantialDocument.not.preparing");
         }
 
-        final Currency currency = getDebtAccount().getFinantialInstitution().getCurrency();
+        BigDecimal oldNetAmount = getNetAmount();
+        BigDecimal oldAmountWithVat = getAmountWithVat();
 
-        final BigDecimal remainingAmountWithoutVatDividedByQuantity = currency
-                .getValueWithScale(divide(divide(remainingAmount, BigDecimal.ONE.add(rationalVatRate(this))), getQuantity()));
+        Currency currency = getDebtAccount().getFinantialInstitution().getCurrency();
 
-        final CreditNote newCreditNote = CreditNote.create(this.getDebtAccount(),
+        CreditNote newCreditNote = CreditNote.create(this.getDebtAccount(),
                 getFinantialDocument().getDocumentNumberSeries(), getFinantialDocument().getDocumentDate(),
                 ((CreditNote) getFinantialDocument()).getDebitNote(), getFinantialDocument().getOriginDocumentNumber());
         newCreditNote.setDocumentObservations(getFinantialDocument().getDocumentObservations());
         newCreditNote.setDocumentTermsAndConditions(getFinantialDocument().getDocumentTermsAndConditions());
 
-        final BigDecimal newOpenAmountWithoutVatDividedByQuantity =
-                divide(divide(getOpenAmount(), BigDecimal.ONE.add(rationalVatRate(this))), getQuantity());
+        // TODO: Check if precision is lost in cents
+        BigDecimal remainingAmountWithoutVatDividedByQuantity = currency
+                .getValueWithScale(TreasuryConstants.divide(
+                        TreasuryConstants.divide(remainingAmountWithVat,
+                                BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
+                        getQuantity()));
+
+        // TODO: the amountPerUnit should be truncated to fewer decimal places?
+        BigDecimal newOpenAmountWithoutVatDividedByQuantity =
+                TreasuryConstants.divide(
+                        TreasuryConstants.divide(getOpenAmount(), BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
+                        getQuantity());
 
         setAmount(newOpenAmountWithoutVatDividedByQuantity.subtract(remainingAmountWithoutVatDividedByQuantity));
         recalculateAmountValues();
 
-        final CreditEntry newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(),
+        CreditEntry newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(),
                 remainingAmountWithoutVatDividedByQuantity, getEntryDateTime(), getDebitEntry(), getQuantity());
         newCreditEntry.setFromExemption(isFromExemption());
 
@@ -261,6 +270,16 @@ public class CreditEntry extends CreditEntry_Base {
                 && getFinantialDocument().isExportedInLegacyERP()) {
             newCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
             newCreditEntry.getFinantialDocument().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
+        }
+
+        // Ensure the netAmount before and after are equals
+        if (oldNetAmount.compareTo(getNetAmount().add(newCreditEntry.getNetAmount())) != 0) {
+            throw new IllegalStateException("error.CreditEntry.splitCreditEntry.netAmount.before.after.not.equal");
+        }
+
+        // Ensure the amountWithVat before and after are equals
+        if (oldAmountWithVat.compareTo(getAmountWithVat().add(newCreditEntry.getAmountWithVat())) != 0) {
+            throw new IllegalStateException("error.CreditEntry.splitCreditEntry.amountWithVat.before.after.not.equal");
         }
 
         return newCreditEntry;

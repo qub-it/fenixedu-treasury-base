@@ -64,6 +64,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -669,7 +670,9 @@ public class DebitNote extends DebitNote_Base {
         final DebitNote debitNote = DebitNote.create(debtAccount, payorDebtAccount, numberSeries, new DateTime(),
                 new DateTime().toLocalDate(), originNumber);
 
-        final BigDecimal amountWithoutVat = TreasuryConstants.divide(amountWithVat, BigDecimal.ONE.add(transferVat.getTaxRate()));
+        final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
+                TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
+
         return DebitEntry.create(Optional.of(debitNote), debtAccount, null, transferVat, amountWithoutVat, dueDate,
                 Maps.newHashMap(), product, entryDescription, BigDecimal.ONE, interestRate, entryDate);
     }

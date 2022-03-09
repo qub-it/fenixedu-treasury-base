@@ -410,7 +410,9 @@ public class CreditNote extends CreditNote_Base {
 
         final CreditNote creditNote = create(debtAccount, numberSeries, documentDate, null, originNumber);
 
-        final BigDecimal amountWithoutVat = TreasuryConstants.divide(amountWithVat, BigDecimal.ONE.add(transferVat.getTaxRate()));
+        final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
+                TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
+
         CreditEntry entry = CreditEntry.create(creditNote, entryDescription, product, transferVat, amountWithoutVat, documentDate,
                 null, BigDecimal.ONE);
 
