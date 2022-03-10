@@ -1,3 +1,4 @@
+8.6.4 (10-03-2022)
 - Bug Fix: Fix calculation of exemptions, assuming the exemptedAmount is without vat
 - Improvement: Add checks to ensure the cents of netAmount, vatAmount, exemptedAmount and amountWithVat are atmost 2
 - Improvement: In spliting credits, check that the old netAmount is equal to the sum of both new netAmounts
