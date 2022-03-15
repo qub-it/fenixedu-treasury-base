@@ -211,7 +211,11 @@ public class DebitEntry extends DebitEntry_Base {
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
         if (!getTreasuryExemptionsSet().isEmpty()) {
-            getTreasuryExemptionsSet().forEach(exemption -> exemption.delete());
+            getTreasuryExemptionsSet().forEach(exemption -> {
+                // This is to avoid calling delete directly
+                exemption.setDebitEntry(null);
+                exemption.delete();
+            });
         }
 
         if (this.getInterestRate() != null) {

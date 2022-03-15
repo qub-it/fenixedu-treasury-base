@@ -191,7 +191,6 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         super.setTreasuryExemptionType(null);
         super.setTreasuryEvent(null);
         super.setProduct(null);
-        super.setDebitEntry(null);
         super.setCreditEntry(null);
 
         super.deleteDomainObject();
@@ -226,6 +225,8 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             getDebitEntry().revertExemptionIfPossibleInPreparingState(this);
         }
 
+        // This is to avoid calling delete directly
+        super.setDebitEntry(null);
         delete();
     }
 

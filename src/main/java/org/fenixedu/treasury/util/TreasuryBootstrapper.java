@@ -54,9 +54,6 @@ package org.fenixedu.treasury.util;
 
 import static org.fenixedu.treasury.domain.Currency.EURO_CODE;
 import static org.fenixedu.treasury.domain.FiscalCountryRegion.findByRegionCode;
-import static org.fenixedu.treasury.domain.document.FinantialDocumentType.findForCreditNote;
-import static org.fenixedu.treasury.domain.document.FinantialDocumentType.findForDebitNote;
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -127,17 +124,17 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializePaymentPlanConfigurations() {
-        LocalizedString name = treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.WITHOUT_VALIDATION");
+        LocalizedString name = TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.WITHOUT_VALIDATION");
         PaymentPlanGroupValidator.create(name, Boolean.TRUE);
 
         LocalizedString numberGeneratorName =
-                treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DEFAULT_GENERATOR");
+                TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DEFAULT_GENERATOR");
         PaymentPlanNumberGenerator numberGenerator = PaymentPlanNumberGenerator.create(numberGeneratorName, "PP", 1);
         
         LocalizedString paymentPlanConfiguratorName =
-                treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.CONFIGURATOR");
+                TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.CONFIGURATOR");
         LocalizedString installmentDescriptionFormat =
-                treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DESCRIPTION");
+                TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DESCRIPTION");
 
         PaymentPlanConfigurator configurator =
                 new PaymentPlanConfigurator(paymentPlanConfiguratorName, installmentDescriptionFormat, Boolean.FALSE,
@@ -160,25 +157,25 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeFiscalRegion(String countryCode) {
-        FiscalCountryRegion.create("PT", treasuryBundleI18N("label.FiscalCountryRegion.PT"));
-        FiscalCountryRegion.create("PT_MA", treasuryBundleI18N("label.FiscalCountryRegion.PT_MA"));
-        FiscalCountryRegion.create("PT_AZ", treasuryBundleI18N("label.FiscalCountryRegion.PT_AZ"));
+        FiscalCountryRegion.create("PT", TreasuryConstants.treasuryBundleI18N("label.FiscalCountryRegion.PT"));
+        FiscalCountryRegion.create("PT_MA", TreasuryConstants.treasuryBundleI18N("label.FiscalCountryRegion.PT_MA"));
+        FiscalCountryRegion.create("PT_AZ", TreasuryConstants.treasuryBundleI18N("label.FiscalCountryRegion.PT_AZ"));
     }
 
     private static void initializeCustomerType() {
-        CustomerType.create("ADHOC", treasuryBundleI18N("label.CustomerType.ADHOC"));
+        CustomerType.create("ADHOC", TreasuryConstants.treasuryBundleI18N("label.CustomerType.ADHOC"));
     }
 
     private static void initializeProductGroup() {
-        ProductGroup.create("EMOLUMENT", treasuryBundleI18N("label.productGroup.emolument"));
-        ProductGroup.create("OTHER", treasuryBundleI18N("label.ProductGroup.Other"));
+        ProductGroup.create("EMOLUMENT", TreasuryConstants.treasuryBundleI18N("label.productGroup.emolument"));
+        ProductGroup.create("OTHER", TreasuryConstants.treasuryBundleI18N("label.ProductGroup.Other"));
     }
 
     private static void initializeVatType() {
-        VatType.create("RED", treasuryBundleI18N("label.VatType.RED"));
-        VatType.create("INT", treasuryBundleI18N("label.VatType.INT"));
-        VatType.create("NOR", treasuryBundleI18N("label.VatType.NOR"));
-        VatType.create("ISE", treasuryBundleI18N("label.VatType.ISE"));
+        VatType.create("RED", TreasuryConstants.treasuryBundleI18N("label.VatType.RED"));
+        VatType.create("INT", TreasuryConstants.treasuryBundleI18N("label.VatType.INT"));
+        VatType.create("NOR", TreasuryConstants.treasuryBundleI18N("label.VatType.NOR"));
+        VatType.create("ISE", TreasuryConstants.treasuryBundleI18N("label.VatType.ISE"));
     }
 
     private static void initializeVatExemption(String countryCode) {
@@ -229,26 +226,29 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializePaymentMethod() {
-        PaymentMethod.create("NU", treasuryBundleI18N("label.PaymentMethod.MON"), true, false);
-        PaymentMethod.create("TB", treasuryBundleI18N("label.PaymentMethod.WTR"), true, false);
-        PaymentMethod.create("MB", treasuryBundleI18N("label.PaymentMethod.ELE"), true, false);
-        PaymentMethod.create("CD", treasuryBundleI18N("label.PaymentMethod.CCR"), true, false);
-        PaymentMethod.create("CH", treasuryBundleI18N("label.PaymentMethod.CH"), true, false);
-        PaymentMethod.create("MW", treasuryBundleI18N("label.PaymentMethod.MW"), true, false);
-
+        PaymentMethod.create("NU", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MON"), true, false);
+        PaymentMethod.create("TB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.WTR"), true, false);
+        PaymentMethod.create("MB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.ELE"), true, false);
+        PaymentMethod.create("CD", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CCR"), true, false);
+        PaymentMethod.create("CH", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CH"), true, false);
+        PaymentMethod.create("MW", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MW"), true, false);
+        PaymentMethod.create("CC", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CC"), true, false);
     }
 
     private static void initializeCurrency() {
-        Currency.create("EUR", treasuryBundleI18N("label.Currency.EUR"), "EUR", "€");
+        Currency.create("EUR", TreasuryConstants.treasuryBundleI18N("label.Currency.EUR"), "EUR", "€");
     }
 
     private static void initializeFinantialDocumentType() {
-        FinantialDocumentType.createForCreditNote("NA", treasuryBundleI18N("label.FinantialDocumentType.CreditNote"), "NA", true);
-        FinantialDocumentType.createForDebitNote("ND", treasuryBundleI18N("label.FinantialDocumentType.DebitNote"), "ND", true);
-        FinantialDocumentType.createForSettlementNote("NP", treasuryBundleI18N("label.FinantialDocumentType.SettlementNote"),
+        FinantialDocumentType.createForCreditNote("NA",
+                TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.CreditNote"), "NA", true);
+        FinantialDocumentType.createForDebitNote("ND",
+                TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.DebitNote"), "ND", true);
+        FinantialDocumentType.createForSettlementNote("NP",
+                TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.SettlementNote"),
                 "NP", true);
         FinantialDocumentType.createForReimbursementNote("NR",
-                treasuryBundleI18N("label.FinantialDocumentType.ReimbursementNote"), "NR", true);
+                TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.ReimbursementNote"), "NR", true);
     }
 
     private static void initializeGlobalInterestRate() {
@@ -257,7 +257,8 @@ public class TreasuryBootstrapper {
         while (year <= new LocalDate().getYear()) {
             if (!GlobalInterestRate.findUniqueByYear(year).isPresent()) {
                 GlobalInterestRate.create(new LocalDate(year, 1, 1),
-                        treasuryBundleI18N("label.interest.for.year", String.valueOf(year)), BigDecimal.ZERO, true, false);
+                        TreasuryConstants.treasuryBundleI18N("label.interest.for.year", String.valueOf(year)), BigDecimal.ZERO,
+                        true, false);
             }
             year++;
         }
@@ -269,19 +270,21 @@ public class TreasuryBootstrapper {
                 Product.findUniqueByCode("PAGAMENTO").get(), 1, Boolean.FALSE);
         instance.setMbPaymentMethod(PaymentMethod.findByCode("MB"));
         instance.setMbWayPaymentMethod(PaymentMethod.findByCode("MW"));
-        instance.setCreditCardPaymentMethod(PaymentMethod.findByCode("CD"));
+        instance.setCreditCardPaymentMethod(PaymentMethod.findByCode("CC"));
 
     }
 
     private static void initializeReimbursementProcessStatusType() {
         ReimbursementProcessStatusType.create("PENDING",
-                treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING").getContent(Locale.getDefault()),
+                TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING")
+                        .getContent(Locale.getDefault()),
                 1, true, false, false);
         ReimbursementProcessStatusType.create("ANNULED",
-                treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED").getContent(Locale.getDefault()),
+                TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED")
+                        .getContent(Locale.getDefault()),
                 2, false, true, true);
         ReimbursementProcessStatusType.create("CONCLUDED",
-                treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
+                TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
                         .getContent(Locale.getDefault()),
                 3, false, true, false);
     }
@@ -308,7 +311,7 @@ public class TreasuryBootstrapper {
 
     private static void initializeFinantialEntity(FinantialInstitution finantialInstitution) {
         FinantialEntity.create(finantialInstitution, finantialInstitution.getCode() + "_" + "ACADEMIC",
-                treasuryBundleI18N("label.finantialEntity.name", finantialInstitution.getCode()));
+                TreasuryConstants.treasuryBundleI18N("label.finantialEntity.name", finantialInstitution.getCode()));
     }
 
     private static void initializeVat(FinantialInstitution finantialInstitution) {
@@ -349,22 +352,27 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeSeries(FinantialInstitution finantialInstitution) {
-        Series.create(finantialInstitution, "INT", treasuryBundleI18N("label.internal.serie"), false, true, false, true, true);
-        Series.create(finantialInstitution, "LEG", treasuryBundleI18N("label.legacy.serie"), false, true, true, false, true);
-        Series.create(finantialInstitution, "REG", treasuryBundleI18N("label.reg.serie"), true, true, false, false, false);
-        Series.create(finantialInstitution, "EXT", treasuryBundleI18N("label.external.serie"), true, true, false, false, false);
+        Series.create(finantialInstitution, "INT", TreasuryConstants.treasuryBundleI18N("label.internal.serie"), false, true,
+                false, true, true);
+        Series.create(finantialInstitution, "LEG", TreasuryConstants.treasuryBundleI18N("label.legacy.serie"), false, true, true,
+                false, true);
+        Series.create(finantialInstitution, "REG", TreasuryConstants.treasuryBundleI18N("label.reg.serie"), true, true, false,
+                false, false);
+        Series.create(finantialInstitution, "EXT", TreasuryConstants.treasuryBundleI18N("label.external.serie"), true, true,
+                false, false, false);
     }
 
     private static void initializeProducts() {
-        Product.create(ProductGroup.findByCode("OTHER"), "INTEREST", treasuryBundleI18N("label.interest"),
-                treasuryBundleI18N("label.unit"), true, false, 0, VatType.findByCode("ISE"), null, null);
+        Product.create(ProductGroup.findByCode("OTHER"), "INTEREST", TreasuryConstants.treasuryBundleI18N("label.interest"),
+                TreasuryConstants.treasuryBundleI18N("label.unit"), true, false, 0, VatType.findByCode("ISE"), null, null);
 
-        Product.create(ProductGroup.findByCode("OTHER"), "PAGAMENTO", treasuryBundleI18N("label.advancedPayment"),
-                treasuryBundleI18N("label.unit"), true, false, 0, VatType.findByCode("ISE"), null, null);
+        Product.create(ProductGroup.findByCode("OTHER"), "PAGAMENTO",
+                TreasuryConstants.treasuryBundleI18N("label.advancedPayment"), TreasuryConstants.treasuryBundleI18N("label.unit"),
+                true, false, 0, VatType.findByCode("ISE"), null, null);
 
         Product.create(ProductGroup.findByCode("EMOLUMENT"), "PAYMENT_PLAN_EMOL",
-                treasuryBundleI18N("label.paymentPlanEmolumentProduct"),
-                treasuryBundleI18N("label.unit"), true, false, 0, VatType.findByCode("ISE"), null, null);
+                TreasuryConstants.treasuryBundleI18N("label.paymentPlanEmolumentProduct"),
+                TreasuryConstants.treasuryBundleI18N("label.unit"), true, false, 0, VatType.findByCode("ISE"), null, null);
     }
 
     private static void initializeFinantialIntitutionProducts(FinantialInstitution finantialInstitution) {
@@ -400,8 +408,8 @@ public class TreasuryBootstrapper {
 
         finantialInstitution.setRegulationSeries(regulationSeries);
 
-        DocumentNumberSeries.find(findForDebitNote(), regulationSeries).editReplacingPrefix(true, "NY");
-        DocumentNumberSeries.find(findForCreditNote(), regulationSeries).editReplacingPrefix(true, "NZ");
+        DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), regulationSeries).editReplacingPrefix(true, "NY");
+        DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), regulationSeries).editReplacingPrefix(true, "NZ");
     }
 
     private static DateTime fromDate(int year, int month, int day) {

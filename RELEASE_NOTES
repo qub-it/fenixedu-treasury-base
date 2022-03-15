@@ -1,3 +1,7 @@
+- Refactor: In deletion of TreasuryExemption, do not disconnect the debitEntry relation, in order to avoid calling it directly
+- Bug Fix: Fix label used in voiding the payment plan by non compliance infered by payment plan validators
+- Improvement: Create payment method in bootstrap, for credit card
+
 8.6.4 (10-03-2022)
 - Bug Fix: Fix calculation of exemptions, assuming the exemptedAmount is without vat
 - Improvement: Add checks to ensure the cents of netAmount, vatAmount, exemptedAmount and amountWithVat are atmost 2
