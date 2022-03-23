@@ -228,7 +228,7 @@ public class TreasuryBootstrapper {
     private static void initializePaymentMethod() {
         PaymentMethod.create("NU", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MON"), true, false);
         PaymentMethod.create("TB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.WTR"), true, false);
-        PaymentMethod.create("MB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.ELE"), true, false);
+        PaymentMethod.create("MB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MB"), true, false);
         PaymentMethod.create("CD", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CCR"), true, false);
         PaymentMethod.create("CH", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CH"), true, false);
         PaymentMethod.create("MW", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MW"), true, false);
