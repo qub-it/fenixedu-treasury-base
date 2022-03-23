@@ -201,7 +201,7 @@ public class CreditEntry extends CreditEntry_Base {
         return cr;
     }
 
-    public static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
+    static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
             final FinantialDocument finantialDocument, final String description, final BigDecimal unitAmount,
             final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
 

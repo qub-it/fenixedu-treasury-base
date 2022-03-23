@@ -177,7 +177,7 @@ public class InterestRate extends InterestRate_Base {
 
             result.addDetail(partialInterestAmount, key, eventDate.minusDays(1), amountPerDay, event.amountToPay,
                     TreasuryConstants.defaultScale(event.interestRate).multiply(TreasuryConstants.HUNDRED_PERCENT).setScale(4,
-                            RoundingMode.HALF_EVEN));
+                            RoundingMode.HALF_UP));
 
             totalInterestAmount = totalInterestAmount.add(partialInterestAmount);
             totalOfDays += numberOfDays.intValue();

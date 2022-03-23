@@ -202,6 +202,13 @@ public class Currency extends Currency_Base {
         return getValueWithScale(amount, EURO_CENTS_DECIMAL_PLACES);
     }
 
+    // Important: The RoundingMode must be HALF_UP instead of HALF_EVEN
+    // 
+    // Try this examples with jshell:
+    //
+    // new BigDecimal("1.225").setScale(2, RoundingMode.HALF_UP) ==> 1.23
+    // but new BigDecimal("1.225").setScale(2, RoundingMode.HALF_EVEN) ==> 1.22
+    //
     public static BigDecimal getValueWithScale(BigDecimal amount, int decimalPlaces) {
         return amount.setScale(decimalPlaces, RoundingMode.HALF_UP);
     }

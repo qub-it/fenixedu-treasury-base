@@ -201,11 +201,11 @@ public class TreasuryConstants {
     }
 
     public static BigDecimal defaultScale(final BigDecimal v) {
-        return v.setScale(20, RoundingMode.HALF_EVEN);
+        return v.setScale(SCALE, RoundingMode.HALF_UP);
     }
 
     public static BigDecimal divide(final BigDecimal a, BigDecimal b) {
-        return a.divide(b, SCALE, RoundingMode.HALF_EVEN);
+        return a.divide(b, SCALE, RoundingMode.HALF_UP);
     }
 
     public static BigDecimal rationalVatRate(final InvoiceEntry entry) {

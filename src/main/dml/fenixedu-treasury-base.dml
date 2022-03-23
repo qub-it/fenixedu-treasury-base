@@ -10,6 +10,7 @@ enum org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType       
 enum org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayEnviromentMode	as SibsOnlinePaymentsGatewayEnviromentMode;
 enum org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType 									as PaymentPlanStateType;
 enum org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum								as AddictionsCalculeType;
+enum org.fenixedu.treasury.domain.InvoiceRegistrationMode                                           as InvoiceRegistrationMode;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -159,6 +160,7 @@ class FinantialInstitution {
 	String webAddress; 
 	String locality;
 	String zipCode;	
+	InvoiceRegistrationMode invoiceRegistrationMode;
 }
 
 class FinantialEntity {

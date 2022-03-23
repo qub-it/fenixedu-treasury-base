@@ -188,4 +188,10 @@ public interface ITreasuryPlatformDependentServices {
     /* Holidays */
 
     public Set<Partial> getHolidays();
+
+    /* Tax Authority Certification */
+
+    public void certifyDocument(FinantialDocument finantialDocument);
+
+    public void updateCertifiedDocument(FinantialDocument finantialDocument);
 }

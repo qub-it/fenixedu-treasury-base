@@ -290,4 +290,15 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     public Set<Partial> getHolidays() {
         return Collections.emptySet();
     }
+
+    /* Tax Authority Certification */
+
+    @Override
+    public void certifyDocument(FinantialDocument finantialDocument) {
+    }
+    
+    @Override
+    public void updateCertifiedDocument(FinantialDocument finantialDocument) {
+    }
+    
 }

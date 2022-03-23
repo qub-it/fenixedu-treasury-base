@@ -1,3 +1,8 @@
+- New Fixture: Treasury invoice certification
+- Improvement: Invoice certification mode by finantial institution
+- Bug Fix: Use rounding mode HALF_UP, instead of HALF_EVEN, in interests calculation
+- Bug Fix: Use rounding mode HALF_UP, instead of HALF_EVEN, in dividing with scale of 20. This change does not impact in the calculations, because the scale is 20
+
 8.6.5 (15-03-2022)
 - Refactor: In deletion of TreasuryExemption, do not disconnect the debitEntry relation, in order to avoid calling it directly
 - Bug Fix: Fix label used in voiding the payment plan by non compliance infered by payment plan validators
