@@ -7,7 +7,8 @@ import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.joda.time.DateTime;
 
 public class PayPalLog extends PayPalLog_Base {
-    
+    public static final String WEBHOOK_NOTIFICATION = "WEBHOOK_NOTIFICATION";
+
     public PayPalLog() {
         super();
     }
@@ -32,5 +33,21 @@ public class PayPalLog extends PayPalLog_Base {
 
     public static PayPalLog createPaymentRequestLog(PaymentRequest paymentRequest, String code, LocalizedString localizedName) {
         return new PayPalLog(paymentRequest, code, localizedName);
+    }
+
+    public static PayPalLog createLogForWebhookNotification() {
+        PayPalLog log = new PayPalLog(WEBHOOK_NOTIFICATION, "", "");
+        log.setResponsibleUsername(WEBHOOK_NOTIFICATION);
+        return log;
+    }
+
+    public void logRequestReceiveDateAndData(String transactionId, String string, String event_type, BigDecimal amount,
+            String resource_type, boolean operationSuccess) {
+        setRequestReceiveDate(new DateTime());
+        setMeoWalletId(transactionId);
+        setPaymentMethod(event_type);
+        setAmount(amount);
+        setStatusCode(resource_type);
+        setOperationSuccess(operationSuccess);
     }
 }

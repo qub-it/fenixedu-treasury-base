@@ -1,5 +1,6 @@
 package org.fenixedu.treasury.domain.paypal;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
+import org.fenixedu.treasury.services.payments.paypal.PayPalWebhookBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
@@ -57,6 +59,9 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public class PayPal extends PayPal_Base implements IForwardPaymentPlatformService {
+
+    public static final String STATUS_PAID = "COMPLETED";
+    public static final String STATUS_FAIL = "VOIDED";
 
     public PayPal() {
         super();
@@ -139,13 +144,11 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                             .value(Currency.getValueWithScale(d.getOpenAmount()).toString()))
                     .quantity("1")));
 
-
-
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.checkoutPaymentIntent("CAPTURE");
 
-            ApplicationContext applicationContext = new ApplicationContext().brandName("FenixEdu")
-                    .landingPage("LOGIN").cancelUrl(forwardPayment.getForwardPaymentInsuccessUrl())
+            ApplicationContext applicationContext = new ApplicationContext().brandName("FenixEdu").landingPage("LOGIN")
+                    .cancelUrl(forwardPayment.getForwardPaymentInsuccessUrl())
                     .returnUrl(forwardPayment.getForwardPaymentSuccessUrl()).userAction("PAY_NOW")
                     .shippingPreference("NO_SHIPPING");
             orderRequest.applicationContext(applicationContext);
@@ -179,8 +182,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                 forwardPayment.setRedirectUrl(links);
             });
             DateTime requestReceiveDate = new DateTime();
-            String requestLog = "";
-//             new JSONObject(new Json().serialize(request)).toString(4);
+            String requestLog = new JSONObject(new Json().serialize(orderRequest)).toString(4);
             String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
 
             final ForwardPaymentStateType stateType = translateForwardPaymentStateType(order.status());
@@ -189,8 +191,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
             FenixFramework.atomic(() -> {
                 if (!result.isInvocationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
-                    PayPalLog log = (PayPalLog) log(forwardPayment, "prepareCheckout", order.status(),
-                            requestLog, responseLog);
+                    PayPalLog log = (PayPalLog) log(forwardPayment, "prepareCheckout", order.status(), requestLog, responseLog);
                     forwardPayment.reject();
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
@@ -262,9 +263,9 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayForwardImplementation.unknown.payment.state");
         }
 
-        if (status.equals("COMPLETED")) {
+        if (status.equals(STATUS_PAID)) {
             return ForwardPaymentStateType.PAYED;
-        } else if (status.equals("VOIDED")) {
+        } else if (status.equals(STATUS_FAIL)) {
             return ForwardPaymentStateType.REJECTED;
         }
 
@@ -288,19 +289,17 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             HttpResponse<Order> response = getClient().execute(request);
             Order order = response.result();
 
-            final ForwardPaymentStateType stateType =
-                    translateForwardPaymentStateType(order.status());
-            String requestLog = "";
-//            String requestLog = new JSONObject(new Json().serialize(request)).toString(4);
+            final ForwardPaymentStateType stateType = translateForwardPaymentStateType(order.status());
+            String requestLog = paymentRequest.getCheckoutId();
             String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
 
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType,
-                    order.status(), order.status(), requestLog, responseLog);
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, order.status(), order.status(), requestLog, responseLog);
 
             result.editTransactionDetails(order.id(),
                     DateTime.parse(order.updateTime() == null ? order.createTime() : order.updateTime()),
-                    order.purchaseUnits().stream()
-                    .map(unit -> new BigDecimal(unit.amountWithBreakdown().value())).reduce(BigDecimal.ZERO, BigDecimal::add));
+                    order.purchaseUnits().stream().map(unit -> new BigDecimal(unit.amountWithBreakdown().value()))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add));
 
             return result;
         } catch (final Exception e) {
@@ -352,29 +351,23 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             OrdersGetRequest request = new OrdersGetRequest(forwardPayment.getCheckoutId());
             HttpResponse<Order> response = getClient().execute(request);
             Order order = response.result();
+            String requestLog = forwardPayment.getCheckoutId();
+            String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
 
-            Order resultOrder = null;
+            Order resultOrder = order;
             if ("APPROVED".equals(order.status())) {
-                OrdersCaptureRequest captureRequest = new OrdersCaptureRequest(order.id());
-                captureRequest.requestBody(new OrderRequest());
-                HttpResponse<Order> captureResponse = getClient().execute(captureRequest);
-                resultOrder = captureResponse.result();
+                resultOrder = captureOrder(order);
             }
             DateTime requestReceiveDate = new DateTime();
 
             final ForwardPaymentStateType stateType = translateForwardPaymentStateType(resultOrder.status());
-            String requestLog = "";
-//            String requestLog = new JSONObject(new Json().serialize(request)).toString(4);
-            String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
 
-            final ForwardPaymentStatusBean result =
-                    new ForwardPaymentStatusBean(true, stateType, resultOrder.status(), resultOrder.status(), requestLog,
-                            responseLog);
+            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType, resultOrder.status(),
+                    resultOrder.status(), requestLog, responseLog);
 
             result.editTransactionDetails(resultOrder.id(),
                     DateTime.parse(order.updateTime() == null ? order.createTime() : order.updateTime()),
-                    resultOrder.purchaseUnits().stream()
-                    .map(unit -> new BigDecimal(unit.amountWithBreakdown().value())).reduce(BigDecimal.ZERO, BigDecimal::add));
+                    getOrderAmount(resultOrder));
 
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
                     .contains(result.getStateType())) {
@@ -426,6 +419,17 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
         }
     }
 
+    private BigDecimal getOrderAmount(Order order) {
+        if ("COMPLETED".equals(order.status())) {
+            return order.purchaseUnits().stream().flatMap(unit -> unit.payments().captures().stream())
+                    .map(capture -> new BigDecimal(capture.amount().value())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        return order.purchaseUnits().stream().map(unit -> new BigDecimal(unit.amountWithBreakdown().value()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    }
+
     @Atomic
     private void processPaymentStatus(PayPalLog log, ForwardPaymentRequest forwardPayment,
             PostProcessPaymentStatusBean returnBean) {
@@ -467,30 +471,10 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             log.setMeoWalletId(result.getTransactionId());
         }
     }
+
     @Override
     public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
-//        final MeoWalletLog log = MeoWalletLog.createForTransationReport(merchantTransationId);
-//        try {
-//            List<MeoWalletPaymentBean> resultCheckoutBean = new ArrayList<>();
-//            FenixFramework.atomic(() -> log.setRequestSendDate(DateTime.now()));
-//            resultCheckoutBean = getMeoWalletService().getPaymentTransactionReportByMerchantTransactionId(merchantTransationId);
-//
-//            String request = resultCheckoutBean.isEmpty() ? "" : resultCheckoutBean.get(0).getRequestLog();
-//            String response = resultCheckoutBean.isEmpty() ? "" : resultCheckoutBean.get(0).getResponseLog();
-//            String operationId = resultCheckoutBean.isEmpty() ? "" : resultCheckoutBean.get(0).getId();
-//            FenixFramework.atomic(() -> {
-//                log.setRequestReceiveDate(DateTime.now());
-//                log.saveRequest(request);
-//                log.saveResponse(response);
-//                log.setMeoWalletId(operationId);
-//            });
-//
-//            return resultCheckoutBean;
-//        } catch (Exception e) {
-//            FenixFramework.atomic(() -> log.logException(e));
-//            throw new RuntimeException(e);
-//        }
-        return null;
+        throw new RuntimeException("Not supported");
     }
 
     @Override
@@ -502,53 +486,77 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
     public PostProcessPaymentStatusBean processForwardPaymentFromWebhook(PaymentRequestLog paymentRequestLog,
             DigitalPlatformResultBean digitalPlatformResultBean) {
 
-//        ForwardPaymentRequest forwardPayment = (ForwardPaymentRequest) paymentRequestLog.getPaymentRequest();
-//        PayPalLog log = (PayPalLog) paymentRequestLog;
-//        MeoWalletCallbackBean bean = (MeoWalletCallbackBean) digitalPlatformResultBean;
-//        try {
-//
-//            final ForwardPaymentStateType stateType = translateForwardPaymentStateType(bean.getOperation_status());
-//
-//            final ForwardPaymentStatusBean result =
-//                    new ForwardPaymentStatusBean(true, stateType, bean.getOperation_status(), bean.getOperation_status(), "", "");
-//
-//            result.editTransactionDetails(bean.getOperation_id(), bean.getModified_date(), bean.getAmount());
-//            if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
-//                    .contains(result.getStateType())) {
-//                // Do nothing
-//                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
-//            }
-//
-//            PostProcessPaymentStatusBean returnBean =
-//                    new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
-//            returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands(bean.getMethod());
-//
-//            processPaymentStatus(log, forwardPayment, returnBean);
-//
-//            return returnBean;
-//        } catch (final Exception e) {
-//            FenixFramework.atomic(() -> {
-//                String requestBody = null;
-//                String responseBody = null;
-//
-//                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
-//                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
-//                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
-//                }
-//
-//                PaymentRequestLog log2 = forwardPayment.logException(e);
-//                if (!StringUtils.isEmpty(requestBody)) {
-//                    log.saveRequest(requestBody);
-//                }
-//
-//                if (!StringUtils.isEmpty(responseBody)) {
-//                    log.saveResponse(responseBody);
-//                }
-//            });
-//
-//            throw new TreasuryDomainException(e,
-//                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
-//        }
-        return null;
+        ForwardPaymentRequest forwardPayment = (ForwardPaymentRequest) paymentRequestLog.getPaymentRequest();
+        PayPalLog log = (PayPalLog) paymentRequestLog;
+        PayPalWebhookBean bean = (PayPalWebhookBean) digitalPlatformResultBean;
+        try {
+
+            Order order = bean.getOrder();
+            Order resultOrder = bean.getOrder();
+            if ("APPROVED".equals(order.status())) {
+                resultOrder = captureOrder(order);
+            }
+            final ForwardPaymentStateType stateType = translateForwardPaymentStateType(resultOrder.status());
+
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, resultOrder.status(), resultOrder.status(), "", "");
+
+            result.editTransactionDetails(resultOrder.id(), bean.getPaymentDate(), bean.getAmount());
+            if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
+                    .contains(result.getStateType())) {
+                // Do nothing
+                return new PostProcessPaymentStatusBean(result, forwardPayment.getState(), false);
+            }
+
+            PostProcessPaymentStatusBean returnBean =
+                    new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
+            returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands(bean.getEvent_type());
+
+            processPaymentStatus(log, forwardPayment, returnBean);
+
+            return returnBean;
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                PaymentRequestLog log2 = forwardPayment.logException(e);
+                if (!StringUtils.isEmpty(requestBody)) {
+                    log.saveRequest(requestBody);
+                }
+
+                if (!StringUtils.isEmpty(responseBody)) {
+                    log.saveResponse(responseBody);
+                }
+            });
+
+            throw new TreasuryDomainException(e,
+                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
+        }
+    }
+
+    @Atomic
+    private Order captureOrder(Order order) throws IOException {
+        try {
+            Order resultOrder;
+            OrdersCaptureRequest captureRequest = new OrdersCaptureRequest(order.id());
+            captureRequest.requestBody(new OrderRequest());
+            HttpResponse<Order> captureResponse = getClient().execute(captureRequest);
+            resultOrder = captureResponse.result();
+            return resultOrder;
+        } catch (Exception e) {
+            if (e.getMessage().contains("\"issue\":\"ORDER_ALREADY_CAPTURED\"")) {
+                //Already Captured on other thread
+                OrdersGetRequest request = new OrdersGetRequest(order.id());
+                HttpResponse<Order> response = getClient().execute(request);
+                return response.result();
+            }
+            throw e;
+        }
     }
 }
