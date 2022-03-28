@@ -3375,3 +3375,39 @@ class paymentpenalty.PaymentPenaltyTaxTreasuryEvent extends event.TreasuryEvent 
 			multiplicity *;
 		}
 	}
+
+	
+class paypal.PayPal extends payments.integration.DigitalPaymentPlatform {
+	//String name;
+	//boolean active;
+	//String migrationCode;
+	
+	//Boolean overrideFinantialInstitutionInfoHeader;
+	// Save data in rich text
+	//LocalizedStringT finantialInstitutionInfoHeader;
+	
+	String accountId;
+	String secret;
+	String mode;
+	
+	String endpointUrl;
+}
+
+class paypal.PayPalLog extends payments.PaymentRequestLog {
+	String extCustomerId;
+	String extInvoiceId;
+	String meoWalletId;
+	
+	String paymentType;
+	String paymentMethod;
+	String paymentStatus;
+	
+	DateTime requestSendDate;
+	DateTime requestReceiveDate;
+	DateTime paymentDate;
+	
+	BigDecimalT amount;	
+	
+	boolean transactionDuplicated;
+}	
+	
