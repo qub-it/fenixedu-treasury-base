@@ -13,10 +13,9 @@ public class PayPalLog extends PayPalLog_Base {
         super();
     }
 
-    public PayPalLog(String operationCode, String InvoiceId, String payerId) {
+    public PayPalLog(String operationCode, String payPalId) {
         setOperationCode(operationCode);
-        setExtInvoiceId(InvoiceId);
-        setExtCustomerId(payerId);
+        setPayPalId(payPalId);
     }
 
     public PayPalLog(PaymentRequest paymentRequest, String statusCode, LocalizedString stateDescription) {
@@ -36,7 +35,7 @@ public class PayPalLog extends PayPalLog_Base {
     }
 
     public static PayPalLog createLogForWebhookNotification() {
-        PayPalLog log = new PayPalLog(WEBHOOK_NOTIFICATION, "", "");
+        PayPalLog log = new PayPalLog(WEBHOOK_NOTIFICATION, "");
         log.setResponsibleUsername(WEBHOOK_NOTIFICATION);
         return log;
     }
@@ -44,7 +43,7 @@ public class PayPalLog extends PayPalLog_Base {
     public void logRequestReceiveDateAndData(String transactionId, String string, String event_type, BigDecimal amount,
             String resource_type, boolean operationSuccess) {
         setRequestReceiveDate(new DateTime());
-        setMeoWalletId(transactionId);
+        setPayPalId(transactionId);
         setPaymentMethod(event_type);
         setAmount(amount);
         setStatusCode(resource_type);

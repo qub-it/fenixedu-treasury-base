@@ -67,13 +67,11 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
         super();
     }
 
-    private PayPal(FinantialInstitution finantialInstitution, String name, boolean active, String endpointUrl, String accountId,
+    private PayPal(FinantialInstitution finantialInstitution, String name, boolean active, String accountId,
             String secret, String mode) {
 
         this();
         this.init(finantialInstitution, name, active);
-
-        setEndpointUrl(endpointUrl);
         setAccountId(accountId);
         setSecret(secret);
         setMode(mode);
@@ -86,9 +84,9 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
     private void checkRules() {
     }
 
-    public static PayPal create(FinantialInstitution finantialInstitution, String name, boolean active, String endpointUrl,
+    public static PayPal create(FinantialInstitution finantialInstitution, String name, boolean active,
             String accountId, String secret, String mode) {
-        return new PayPal(finantialInstitution, name, active, endpointUrl, accountId, secret, mode);
+        return new PayPal(finantialInstitution, name, active, accountId, secret, mode);
     }
 
     public static String getPresentationName() {
@@ -241,8 +239,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
         final PayPalLog log = PayPalLog.createPaymentRequestLog(paymentRequest, paymentRequest.getCurrentState().getCode(),
                 paymentRequest.getCurrentState().getLocalizedName());
 
-        log.setExtInvoiceId(paymentRequest.getMerchantTransactionId());
-        log.setMeoWalletId(paymentRequest.getTransactionId());
+        log.setPayPalId(paymentRequest.getTransactionId());
 
         log.setStatusCode(statusCode);
         log.setStatusMessage(statusMessage);
@@ -333,7 +330,12 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
     }
 
     private HttpClient getClient() {
-        PayPalEnvironment environment = new PayPalEnvironment.Sandbox(getAccountId(), getSecret());
+        PayPalEnvironment environment = null;
+        if ("LIVE".equals(getMode())) {
+            environment = new PayPalEnvironment.Live(getAccountId(), getSecret());
+        } else {
+            environment = new PayPalEnvironment.Sandbox(getAccountId(), getSecret());
+        }
         return new PayPalHttpClient(environment);
     }
 
@@ -376,15 +378,13 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             }
 
             // First of all save sibsTransactionId
-
             PostProcessPaymentStatusBean returnBean =
                     new PostProcessPaymentStatusBean(result, forwardPayment.getState(), result.isInPayedState());
 
             returnBean.getForwardPaymentStatusBean().defineSibsOnlinePaymentBrands("TODO");
             String orderId = resultOrder.id();
-            String payerId = resultOrder.payer() != null ? resultOrder.payer().payerId() : "";
             PayPalLog log = FenixFramework.atomic(() -> {
-                PayPalLog log2 = new PayPalLog("processPaymentStatus", orderId, payerId);
+                PayPalLog log2 = new PayPalLog("processPaymentStatus", orderId);
                 log2.setRequestSendDate(requestSendDate);
                 log2.setRequestReceiveDate(requestReceiveDate);
                 log2.setPaymentRequest(forwardPayment);
@@ -458,7 +458,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             log.saveRequest(result.getRequestBody());
             log.saveResponse(result.getResponseBody());
 
-            log.setMeoWalletId(result.getTransactionId());
+            log.setPayPalId(result.getTransactionId());
             log.savePaymentInfo(result.getPayedAmount(), result.getTransactionDate());
             log.setPaymentMethod(result.getSibsOnlinePaymentBrands());
 
@@ -468,7 +468,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             log.setOperationCode("postProcessPayment");
             log.setOperationSuccess(false);
             log.setTransactionWithPayment(false);
-            log.setMeoWalletId(result.getTransactionId());
+            log.setPayPalId(result.getTransactionId());
         }
     }
 

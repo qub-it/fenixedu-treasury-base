@@ -3389,14 +3389,10 @@ class paypal.PayPal extends payments.integration.DigitalPaymentPlatform {
 	String accountId;
 	String secret;
 	String mode;
-	
-	String endpointUrl;
 }
 
 class paypal.PayPalLog extends payments.PaymentRequestLog {
-	String extCustomerId;
-	String extInvoiceId;
-	String meoWalletId;
+	String payPalId;
 	
 	String paymentType;
 	String paymentMethod;
