@@ -301,4 +301,8 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     public void updateCertifiedDocument(FinantialDocument finantialDocument) {
     }
     
+    @Override
+    public void annulCertifiedDocument(FinantialDocument finantialDocument) {
+    }
+    
 }

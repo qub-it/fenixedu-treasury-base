@@ -609,6 +609,8 @@ public class SettlementNote extends SettlementNote_Base {
             }
 
             checkRules();
+            
+            TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
         } else {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
         }

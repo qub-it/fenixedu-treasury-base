@@ -194,4 +194,7 @@ public interface ITreasuryPlatformDependentServices {
     public void certifyDocument(FinantialDocument finantialDocument);
 
     public void updateCertifiedDocument(FinantialDocument finantialDocument);
+    
+    public void annulCertifiedDocument(FinantialDocument finantialDocument);
+    
 }

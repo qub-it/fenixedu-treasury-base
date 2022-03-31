@@ -338,6 +338,7 @@ public class CreditNote extends CreditNote_Base {
                 setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
             }
 
+            TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
         } else {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
         }
