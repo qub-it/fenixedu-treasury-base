@@ -1,3 +1,4 @@
+9.1.1 (11-04-2022)
 - Bug Fix: Do not edit product name if it is already certified
 - Refactor: Service to check if product is certified
 - Refactor: Service to check is platform is in development or quality mode
