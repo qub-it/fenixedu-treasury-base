@@ -12,6 +12,7 @@ import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
@@ -304,5 +305,17 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     @Override
     public void annulCertifiedDocument(FinantialDocument finantialDocument) {
     }
+
+    @Override
+    public boolean isProductCertified(Product product) {
+        return false;
+    }
     
+    /* Development or quality mode */
+    
+    @Override
+    public boolean isQualityOrDevelopmentMode() {
+        return true;
+    }
+
 }

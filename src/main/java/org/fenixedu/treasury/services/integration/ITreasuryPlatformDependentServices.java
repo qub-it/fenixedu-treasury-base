@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.services.integration;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -63,6 +62,7 @@ import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
@@ -176,25 +176,30 @@ public interface ITreasuryPlatformDependentServices {
 
     /* Web Docs */
     
-    public InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
+    InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
             LocalDate documentDateTo);
     
-    public String exportDocumentFileExtension();
+    String exportDocumentFileExtension();
 
-    public InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
+    InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
 
-    public ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration);
+    ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration);
 
     /* Holidays */
 
-    public Set<Partial> getHolidays();
+    Set<Partial> getHolidays();
 
     /* Tax Authority Certification */
 
-    public void certifyDocument(FinantialDocument finantialDocument);
+    void certifyDocument(FinantialDocument finantialDocument);
 
-    public void updateCertifiedDocument(FinantialDocument finantialDocument);
+    void updateCertifiedDocument(FinantialDocument finantialDocument);
     
-    public void annulCertifiedDocument(FinantialDocument finantialDocument);
+    void annulCertifiedDocument(FinantialDocument finantialDocument);
     
+    boolean isProductCertified(Product product);
+
+    /* Development or quality mode */
+    
+    boolean isQualityOrDevelopmentMode();
 }

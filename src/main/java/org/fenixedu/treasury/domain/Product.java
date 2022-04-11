@@ -67,6 +67,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
 import org.fenixedu.treasury.domain.tariff.Tariff;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.DateTime;
@@ -151,12 +152,14 @@ public class Product extends Product_Base {
     }
 
     @Atomic
-    public void edit(final String code, final LocalizedString name, final LocalizedString unitOfMeasure, boolean active,
-            final boolean legacy, final int tuitionInstallmentOrder, VatType vatType, final ProductGroup productGroup,
-            final List<FinantialInstitution> finantialInstitutions, VatExemptionReason vatExemptionReason) {
-        // TODO: Code should not be editable
-//        setCode(code);
-        setName(name);
+    public void edit(LocalizedString name, LocalizedString unitOfMeasure, boolean active, boolean legacy,
+            int tuitionInstallmentOrder, VatType vatType, ProductGroup productGroup,
+            List<FinantialInstitution> finantialInstitutions, VatExemptionReason vatExemptionReason) {
+
+        if (!TreasuryPlataformDependentServicesFactory.implementation().isProductCertified(this)) {
+            setName(name);
+        }
+
         setUnitOfMeasure(unitOfMeasure);
         setActive(active);
         setLegacy(legacy);
@@ -164,21 +167,17 @@ public class Product extends Product_Base {
         setVatType(vatType);
         setProductGroup(productGroup);
         setVatExemptionReason(vatExemptionReason);
+
         updateFinantialInstitutions(finantialInstitutions);
 
         checkRules();
     }
 
     public boolean isDeletable() {
-//        for (FinantialInstitution finantialInstitution : getFinantialInstitutionsSet()) {
-//            if (!canRemoveFinantialInstitution(finantialInstitution)) {
-//                return false;
-//            }
-//        }
         return getInvoiceEntriesSet().isEmpty() && getTreasuryExemptionSet().isEmpty() && getTreasuryEventsSet().isEmpty()
                 && getAdvancePaymentTreasurySettings() == null && getTreasurySettings() == null;
     }
-    
+
     public boolean isTransferBalanceProduct() {
         return this == TreasurySettings.getInstance().getTransferBalanceProduct();
     }
@@ -231,17 +230,18 @@ public class Product extends Product_Base {
     public static LocalizedString defaultUnitOfMeasure() {
         return treasuryBundleI18N("label.unitOfMeasure.default");
     }
-    
+
     public static Stream<Product> findAllLegacy() {
         return findAll().filter(p -> p.isLegacy());
     }
 
     @Atomic
     public static Product create(final ProductGroup productGroup, final String code, final LocalizedString name,
-            final LocalizedString unitOfMeasure, final boolean active, final boolean legacy, final int tuitionInstallmentOrder,final VatType vatType,
-            final List<FinantialInstitution> finantialInstitutions, final VatExemptionReason vatExemptionReason) {
-        return new Product(productGroup, code, name, unitOfMeasure, active, legacy, tuitionInstallmentOrder, vatType, finantialInstitutions,
-                vatExemptionReason);
+            final LocalizedString unitOfMeasure, final boolean active, final boolean legacy, final int tuitionInstallmentOrder,
+            final VatType vatType, final List<FinantialInstitution> finantialInstitutions,
+            final VatExemptionReason vatExemptionReason) {
+        return new Product(productGroup, code, name, unitOfMeasure, active, legacy, tuitionInstallmentOrder, vatType,
+                finantialInstitutions, vatExemptionReason);
     }
 
     public Stream<Tariff> getTariffs(FinantialInstitution finantialInstitution) {

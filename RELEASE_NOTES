@@ -1,3 +1,7 @@
+- Bug Fix: Do not edit product name if it is already certified
+- Refactor: Service to check if product is certified
+- Refactor: Service to check is platform is in development or quality mode
+
 9.1.0 (31-03-2022)
 - New Feature: PayPal integration
 - Bug Fix: Service to annul certified documents
