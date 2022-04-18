@@ -52,6 +52,7 @@
  */
 package org.fenixedu.treasury.services.integration.erp;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -61,11 +62,11 @@ import org.fenixedu.treasury.domain.document.FinantialDocument;
 
 public interface ISaftExporterConfiguration {
 
-    byte[] generateSaftForFinantialDocuments(List<FinantialDocument> finantialDocuments, boolean formatted);
+    void generateSaftForFinantialDocuments(List<FinantialDocument> finantialDocuments, boolean formatted, OutputStream outputStream);
 
-    byte[] generateSaftForCustomers(Set<Customer> customers, boolean formatted);
+    void generateSaftForCustomers(Set<Customer> customers, boolean formatted, OutputStream outputStream);
 
-    byte[] generateSaftForProducts(Set<Product> products, boolean formatted);
+    void generateSaftForProducts(Set<Product> products, boolean formatted, OutputStream outputStream);
 
     String getEncoding();
 

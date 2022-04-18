@@ -54,6 +54,7 @@ package org.fenixedu.treasury.services.integration.erp;
 
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -159,10 +160,10 @@ public class ERPExporterManager {
                     .forEach(document -> validateDocumentWithERPConfiguration(document, erpIntegrationConfiguration));
 
             try {
-                byte[] contents = saftExporterConfiguration
-                        .generateSaftForFinantialDocuments(documentsToExport, true);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration.generateSaftForFinantialDocuments(documentsToExport, true, baos);
 
-                return new String(contents, saftExporterConfiguration.getEncoding());
+                return new String(baos.toByteArray(), saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -346,11 +347,12 @@ public class ERPExporterManager {
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.starting.finantialdocuments.integration"));
 
-                byte[] contents = null;
-                contents = saftExporterConfiguration.generateSaftForFinantialDocuments(documentsToExport, false);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration.generateSaftForFinantialDocuments(documentsToExport, false, baos);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
+                byte[] contents = baos.toByteArray();
                 saveSaftContentToOperationFile(contents, operation);
 
                 boolean success = sendDocumentsInformationToIntegration(finantialInstitution, contents, logBean);
@@ -641,10 +643,10 @@ public class ERPExporterManager {
                     .getSaftExporterConfiguration(erpIntegrationConfiguration);
 
             try {
-
-                byte[] contents = saftExporterConfiguration
-                        .generateSaftForCustomers(Customer.find(finantialInstitution).collect(Collectors.toSet()), true);
-                return new String(contents, saftExporterConfiguration.getEncoding());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration
+                        .generateSaftForCustomers(Customer.find(finantialInstitution).collect(Collectors.toSet()), true, baos);
+                return new String(baos.toByteArray(), saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -665,10 +667,9 @@ public class ERPExporterManager {
             ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                     .getSaftExporterConfiguration(erpIntegrationConfiguration);
             try {
-
-                byte[] contents =
-                        saftExporterConfiguration.generateSaftForProducts(finantialInstitution.getAvailableProductsSet(), true);
-                return new String(contents, saftExporterConfiguration.getEncoding());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration.generateSaftForProducts(finantialInstitution.getAvailableProductsSet(), true, baos);
+                return new String(baos.toByteArray(), saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -691,8 +692,9 @@ public class ERPExporterManager {
                 final List<FinantialDocument> sortedDocuments = erpExporter
                         .filterDocumentsToExport(finantialInstitution.getFinantialDocumentsPendingForExportationSet().stream());
 
-                byte[] contents = saftExporterConfiguration.generateSaftForFinantialDocuments(sortedDocuments, true);
-                return new String(contents, saftExporterConfiguration.getEncoding());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration.generateSaftForFinantialDocuments(sortedDocuments, true, baos);
+                return new String(baos.toByteArray(), saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -717,11 +719,13 @@ public class ERPExporterManager {
                 ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                         .getSaftExporterConfiguration(erpIntegrationConfiguration);
 
-                byte[] contents = saftExporterConfiguration
-                        .generateSaftForCustomers(Customer.find(institution).collect(Collectors.toSet()), false);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration
+                        .generateSaftForCustomers(Customer.find(institution).collect(Collectors.toSet()), false, baos);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
+                byte[] contents = baos.toByteArray();
                 saveSaftContentToOperationFile(contents, operation);
 
                 boolean success = sendDocumentsInformationToIntegration(institution, contents, logBean);
@@ -757,10 +761,12 @@ public class ERPExporterManager {
                 ISaftExporterConfiguration saftExporterConfiguration = TreasuryPlataformDependentServicesFactory.implementation()
                         .getSaftExporterConfiguration(erpIntegrationConfiguration);
 
-                byte[] contents = saftExporterConfiguration.generateSaftForProducts(institution.getAvailableProductsSet(), false);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                saftExporterConfiguration.generateSaftForProducts(institution.getAvailableProductsSet(), false, baos);
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.erp.xml.content.generated"));
 
+                byte[] contents = baos.toByteArray();
                 saveSaftContentToOperationFile(contents, operation);
 
                 boolean success = sendDocumentsInformationToIntegration(institution, contents, logBean);
