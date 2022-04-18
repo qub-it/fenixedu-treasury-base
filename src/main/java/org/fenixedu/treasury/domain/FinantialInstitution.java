@@ -297,6 +297,14 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         return getInvoiceRegistrationMode() == InvoiceRegistrationMode.TREASURY_CERTIFICATION;
     }
 
+    public void activateTreasuryCertification() {
+        setTreasuryCertificationActive(true);
+    }
+    
+    public void deactivateTreasuryCertification() {
+        setTreasuryCertificationActive(false);
+    }
+    
     // ********
     // SERVICES
     // ********

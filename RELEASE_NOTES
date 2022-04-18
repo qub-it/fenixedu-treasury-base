@@ -1,4 +1,6 @@
 - Refactor: Export SAFT to OutputStream instead of byte array
+- Improvement: Service to ativate or deactivate treasury certification mode (DR 28/2019 Art 11 2a)
+- Refactor: Methods to find payment plans
 
 9.1.1 (11-04-2022)
 - Bug Fix: Do not edit product name if it is already certified

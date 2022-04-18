@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.Product;
@@ -369,6 +370,20 @@ public class PaymentPlan extends PaymentPlan_Base {
             close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff") + " ["
                     + new LocalDate().toString("yyyy-MM-dd") + "]");
         }
+    }
+    
+    /* Services */
+    
+    public static Stream<PaymentPlan> findAll() {
+        return FenixFramework.getDomainRoot().getPaymentPlansSet().stream();
+    }
+    
+    public static Stream<PaymentPlan> findByPaymentPlanId(String paymentPlanId) {
+        return findAll().filter(p -> paymentPlanId.equals(p.getPaymentPlanId()));
+    }
+    
+    public static Optional<PaymentPlan> findUniqueByPaymentPlanId(String paymentPlanId) {
+        return findByPaymentPlanId(paymentPlanId).findFirst();
     }
 
     public static void validatePaymentPlanInNonCompliance() {
