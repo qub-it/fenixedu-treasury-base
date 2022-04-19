@@ -151,17 +151,23 @@ class FinantialInstitution {
 	String companyId;
 	String name (REQUIRED);
 	String companyName;
+
 	String address;
 	Country country;
 	District district;
 	Municipality municipality;
+	String locality;
+	String zipCode;	
+
 	String email;
 	String telephoneContact;
 	String webAddress; 
-	String locality;
-	String zipCode;	
+	
 	InvoiceRegistrationMode invoiceRegistrationMode;
 	Boolean treasuryCertificationActive;
+	
+	// Codigo CAE
+	String eacCode;
 }
 
 class FinantialEntity {

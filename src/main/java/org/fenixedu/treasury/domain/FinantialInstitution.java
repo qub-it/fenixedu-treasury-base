@@ -96,6 +96,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
             final Country country, final District district, final Municipality municipality, final String locality,
             final String zipCode) {
         this();
+        
         setFiscalCountryRegion(fiscalCountryRegion);
         setCode(code);
         setFiscalNumber(fiscalNumber);
@@ -113,6 +114,9 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         ERPConfiguration.createEmpty(this);
         TreasuryBootstrapper.bootstrapFinantialInstitution(this);
 
+        setTreasuryCertificationActive(false);
+        setEacCode(null);
+        
         checkRules();
     }
 
