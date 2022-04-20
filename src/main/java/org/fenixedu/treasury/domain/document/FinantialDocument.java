@@ -319,8 +319,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
                 this.markDocumentToExport();
             }
         } else {
-            throw new TreasuryDomainException(
-                    TreasuryConstants.treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
+            throw new TreasuryDomainException("error.FinantialDocumentState.invalid.state.change.request");
 
         }
 

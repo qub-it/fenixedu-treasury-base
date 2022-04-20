@@ -175,23 +175,6 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
                         debitEntry.getDescription());
             }
         }
-
-        // CHANGE_ME In order to validate UNIQUE restrictions
-        // if (findByFinantialDocument(getFinantialDocument().count()>1)
-        // {
-        // throw new
-        // TreasuryDomainException("error.FinantialDocumentPaymentCode.finantialDocument.duplicated");
-        // }
-        // if (findByPaymentReferenceCode(getPaymentReferenceCode().count()>1)
-        // {
-        // throw new
-        // TreasuryDomainException("error.FinantialDocumentPaymentCode.paymentReferenceCode.duplicated");
-        // }
-        // if (findByValid(getValid().count()>1)
-        // {
-        // throw new
-        // TreasuryDomainException("error.FinantialDocumentPaymentCode.valid.duplicated");
-        // }
     }
 
     @Atomic
@@ -206,13 +189,6 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     @Override
     protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
-
-        // add more logical tests for checking deletion rules
-        // if (getXPTORelation() != null)
-        // {
-        // blockers.add(BundleUtil.getString(Bundle.APPLICATION,
-        // "error.FinantialDocumentPaymentCode.cannot.be.deleted"));
-        // }
     }
 
     @Atomic
@@ -233,10 +209,7 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
     @Atomic
     public static FinantialDocumentPaymentCode create(final FinantialDocument finantialDocument,
             final PaymentReferenceCode paymentReferenceCode, final java.lang.Boolean valid) {
-        FinantialDocumentPaymentCode finantialDocumentPaymentCode = new FinantialDocumentPaymentCode();
-        finantialDocumentPaymentCode.init(finantialDocument, paymentReferenceCode, valid);
-        paymentReferenceCode.setState(PaymentReferenceCodeStateType.USED);
-        return finantialDocumentPaymentCode;
+        throw new RuntimeException("not supported");
     }
 
     // @formatter: off
@@ -287,7 +260,6 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
         return findAll(finantialInstitution).filter(i -> valid.equals(i.getValid()));
     }
 
-    @Override
     public DocumentNumberSeries getDocumentSeriesForPayments() {
         return this.getPaymentReferenceCode().getPaymentCodePool().getDocumentSeriesForPayments();
     }
@@ -303,7 +275,6 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
         return getFinantialDocument().getDocumentDueDate();
     }
 
-    @Override
     public Set<InvoiceEntry> getInvoiceEntriesSet() {
         final Set<InvoiceEntry> result = Sets.newHashSet();
 
@@ -324,7 +295,6 @@ public class FinantialDocumentPaymentCode extends FinantialDocumentPaymentCode_B
                 .map(d -> d.getProduct()).collect(Collectors.toSet());
     }
 
-    @Override
     public Set<Installment> getInstallmentsSet() {
         return Collections.emptySet();
     }

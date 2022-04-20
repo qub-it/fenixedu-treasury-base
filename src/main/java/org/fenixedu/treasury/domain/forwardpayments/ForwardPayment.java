@@ -56,6 +56,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -70,7 +71,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.IPaymentProcessorForInvoiceEntries;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -106,7 +106,7 @@ import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
 @Deprecated
-public class ForwardPayment extends ForwardPayment_Base implements IPaymentProcessorForInvoiceEntries {
+public class ForwardPayment extends ForwardPayment_Base {
 
     private static final Comparator<ForwardPayment> ORDER_COMPARATOR =
             (o1, o2) -> ((Long) o1.getOrderNumber()).compareTo(o2.getOrderNumber());
@@ -213,41 +213,9 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
     public void advanceToPayedState(final String statusCode, final String statusMessage, final BigDecimal payedAmount,
             final DateTime transactionDate, final String transactionId, final String authorizationNumber,
             final String requestBody, final String responseBody, String justification) {
-
-        if (!isActive()) {
-            throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
-        }
-
-        if (isInPayedState()) {
-            throw new ForwardPaymentAlreadyPayedException("error.ForwardPayment.already.payed");
-        }
-
-        if (getSettlementNote() != null) {
-            throw new TreasuryDomainException("error.ForwardPayment.with.settlement.note.already.associated");
-        }
-
-        setTransactionId(transactionId);
-        setAuthorizationId(authorizationNumber);
-        setTransactionDate(transactionDate);
-        setPayedAmount(payedAmount);
-        setCurrentState(ForwardPaymentStateType.PAYED);
-
-        final Map<String, String> propertiesMap = fillPaymentEntryPropertiesMap(statusCode);
-
-        log(statusCode, statusMessage, requestBody, responseBody);
-
-        Set<SettlementNote> internalProcessPayment =
-                IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(requestBody,
-                        payedAmount, transactionDate, String.valueOf(getOrderNumber()), justification, getInvoiceEntriesSet(),
-                        getInstallmentsSet(), c -> propertiesMap);
-        this.setSettlementNote(internalProcessPayment.iterator().next());
-
-        setJustification(justification);
-
-        checkRules();
+        // Deleted body of this method
     }
 
-    @Override
     public boolean payAllDebitEntriesInterests() {
         return true;
     }
@@ -314,22 +282,9 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         }
     }
 
-    @Override
     public Set<Customer> getReferencedCustomers() {
-//        final Set<Customer> result = Sets.newHashSet();
-//
-//        for (final DebitEntry debitEntry : getDebitEntriesSet()) {
-//            if (debitEntry.getFinantialDocument() != null
-//                    && ((Invoice) debitEntry.getFinantialDocument()).isForPayorDebtAccount()) {
-//                result.add(((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
-//                continue;
-//            }
-//
-//            result.add(debitEntry.getDebtAccount().getCustomer());
-//        }
-//
-//        return result;
-        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet(), getInstallmentsSet());
+        // Deleted body of this method
+        return Collections.emptySet();
     }
 
     public ForwardPaymentLog log(final String statusCode, final String statusMessage, final String requestBody,
@@ -684,48 +639,39 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
 
     /* IPaymentProcessorForInvoiceEntries */
 
-    @Override
     public DocumentNumberSeries getDocumentSeriesForPayments() {
         return DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
                 getForwardPaymentConfiguration().getSeries());
     }
 
-    @Override
     public DocumentNumberSeries getDocumentSeriesInterestDebits() {
         return DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), getForwardPaymentConfiguration().getSeries());
     }
 
-    @Override
     public PaymentMethod getPaymentMethod() {
         return getForwardPaymentConfiguration().getPaymentMethod();
     }
 
-    @Override
     public String fillPaymentEntryMethodId() {
         return null;
     }
 
-    @Override
     public BigDecimal getPayableAmount() {
         return getAmount();
     }
 
-    @Override
     public DateTime getPaymentRequestDate() {
         return getWhenOccured();
     }
 
-    @Override
     public String getPaymentRequestStateDescription() {
         return getCurrentState().getLocalizedName().getContent();
     }
 
-    @Override
     public String getPaymentTypeDescription() {
         return PAYMENT_TYPE_DESCRIPTION();
     }
 
-    @Override
     public Set<InvoiceEntry> getInvoiceEntriesSet() {
         Set<InvoiceEntry> result = new HashSet<>();
         result.addAll(getDebitEntriesSet());
@@ -733,22 +679,18 @@ public class ForwardPayment extends ForwardPayment_Base implements IPaymentProce
         return result;
     }
 
-    @Override
     public boolean isForwardPayment() {
         return true;
     }
 
-    @Override
     public SibsOnlinePaymentsGateway getSibsOnlinePaymentsGateway() {
         return getForwardPaymentConfiguration().getSibsOnlinePaymentsGateway();
     }
 
-    @Override
     public String getSibsOppwaMerchantTransactionId() {
         return getSibsMerchantTransactionId();
     }
 
-    @Override
     public String getSibsOppwaTransactionId() {
         return getSibsTransactionId();
     }

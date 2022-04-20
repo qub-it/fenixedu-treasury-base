@@ -64,11 +64,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.onlinepaymentsgateway.api.MbWayCheckoutResultBean;
 import org.fenixedu.onlinepaymentsgateway.api.PaymentStateBean;
-import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.IPaymentProcessorForInvoiceEntries;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -79,7 +76,6 @@ import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -89,7 +85,7 @@ import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
 @Deprecated
-public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPaymentProcessorForInvoiceEntries {
+public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
 
     public MbwayPaymentRequest() {
         super();
@@ -157,52 +153,28 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         checkParametersAreValid(getDebtAccount(), getInvoiceEntriesSet());
     }
 
-    @Override
     public Set<SettlementNote> internalProcessPaymentInNormalPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
             Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
-            Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
-
-        Set<SettlementNote> result =
-                IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay,
-                        fillPaymentEntryPropertiesMapFunction);
-
-        this.setState(PaymentReferenceCodeStateType.PROCESSED);
-
-        return result;
+            Function<Object, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
+        // Deleted body of this method
+        return Collections.emptySet();
     }
 
-    @Override
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
             final Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
-            Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
-
-        Set<SettlementNote> result =
-                IPaymentProcessorForInvoiceEntries.super.internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username,
-                        amount, paymentDate, sibsTransactionId, comments, invoiceEntriesToPay, installmentsToPay,
-                        fillPaymentEntryPropertiesMapFunction);
-
-        this.setState(PaymentReferenceCodeStateType.PROCESSED);
-
-        return result;
+            Function<Object, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
+        // Deleted body of this method
+        return Collections.emptySet();
 
     }
 
     @Atomic
     private Set<SettlementNote> processPayment(final String username, final BigDecimal amount, final DateTime paymentDate,
             final String sibsTransactionId, final String comments) {
-        Function<IPaymentProcessorForInvoiceEntries, Map<String, String>> additionalPropertiesMapFunction =
-                (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);
-
-        if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
-            return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet(), getInstallmentsSet(), additionalPropertiesMapFunction);
-        } else {
-            return internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(username, amount, paymentDate, sibsTransactionId,
-                    comments, getInvoiceEntriesSet(), getInstallmentsSet(), additionalPropertiesMapFunction);
-        }
+        // Deleted body of this method
+        return Collections.emptySet();
     }
 
     @Atomic(mode = TxMode.READ)
@@ -253,12 +225,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         }
     }
 
-    @Override
     public DocumentNumberSeries getDocumentSeriesForPayments() {
         return getSibsOnlinePaymentsGateway().getMbwayDocumentSeries();
     }
 
-    @Override
     public DocumentNumberSeries getDocumentSeriesInterestDebits() {
         return DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), getDocumentSeriesForPayments().getSeries());
     }
@@ -271,37 +241,31 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         return result;
     }
 
-    @Override
     public Set<Customer> getReferencedCustomers() {
-        return IPaymentProcessorForInvoiceEntries.getReferencedCustomers(getInvoiceEntriesSet(), getInstallmentsSet());
+        // Deleted body of this method
+        return Collections.emptySet();
     }
 
-    @Override
     public DateTime getPaymentRequestDate() {
         return getCreationDate();
     }
 
-    @Override
     public PaymentMethod getPaymentMethod() {
         return getSibsOnlinePaymentsGateway().getMbwayPaymentMethod();
     }
 
-    @Override
     public String getPaymentRequestStateDescription() {
         return getState().getDescriptionI18N().getContent();
     }
 
-    @Override
     public String getPaymentTypeDescription() {
         return PAYMENT_TYPE_DESCRIPTION();
     }
 
-    @Override
     public String fillPaymentEntryMethodId() {
         return "";
     }
 
-    @Override
     public boolean isMbwayRequest() {
         return true;
     }
@@ -335,9 +299,9 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
             }
         }
 
-        if (IPaymentProcessorForInvoiceEntries.getReferencedCustomers(invoiceEntries, Collections.emptySet()).size() > 1) {
-            throw new TreasuryDomainException("error.MbwayPaymentRequest.referencedCustomers.only.one.allowed");
-        }
+//        if (getReferencedCustomers(invoiceEntries, Collections.emptySet()).size() > 1) {
+//            throw new TreasuryDomainException("error.MbwayPaymentRequest.referencedCustomers.only.one.allowed");
+//        }
 
         SettlementNote.checkMixingOfInvoiceEntriesExportedInLegacyERP(invoiceEntries);
     }
@@ -380,12 +344,10 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base implements IPa
         return findBySibsMerchantTransactionId(sibsMerchantTransactionId).findFirst();
     }
 
-    @Override
     public String getSibsOppwaMerchantTransactionId() {
         return getSibsMerchantTransactionId();
     }
 
-    @Override
     public String getSibsOppwaTransactionId() {
         return getSibsReferenceId();
     }

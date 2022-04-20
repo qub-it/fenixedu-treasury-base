@@ -169,7 +169,6 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
         return note;
     }
 
-    @Atomic
     public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(DocumentNumberSeries documentNumberSeries,
             DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description, String originDocumentNumber,
             final DebtAccount payorDebtAccount) {

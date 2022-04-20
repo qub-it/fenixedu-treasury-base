@@ -2127,14 +2127,24 @@ relation SettlementEntryInvoiceEntry {
 	}
 }
 
-relation SettlementNoteAdvancedPaymentCreditNote{
-    document.AdvancedPaymentCreditNote playsRole advancedPaymentCreditNote
-    {
+relation SettlementNoteAdvancedPaymentCreditNote {
+
+    document.AdvancedPaymentCreditNote playsRole advancedPaymentCreditNote {
         multiplicity 0..1;
     }
     
-    document.SettlementNote playsRole advancedPaymentSettlementNote
-    {
+    document.SettlementNote playsRole advancedPaymentSettlementNote {
+        multiplicity 0..1;
+    }
+}
+
+relation SettlementNoteExcessPaymentDebitNote {
+
+	document.DebitNote playsRole excessPaymentDebitNote {
+		multiplicity 0..1;
+	}
+	
+    document.SettlementNote playsRole excessPaymentSettlementNote {
         multiplicity 0..1;
     }
 }

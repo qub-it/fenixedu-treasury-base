@@ -192,6 +192,18 @@ public class DebitNote extends DebitNote_Base {
     public void closeDocument(boolean markDocumentToExport) {
         setDocumentDueDate(maxDebitEntryDueDate());
 
+        if(getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+            // Recalculate the vat rates for all debit entries
+            // This is done to avoid the case where a debit note
+            // is closed after some time of being created
+            // and in the meantime the VAT rate changes
+            getDebitEntriesSet().forEach(de -> {
+                de.setVat(Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime()).get());
+                de.setVatRate(null);
+                de.recalculateAmountValues();
+            });
+        }
+        
         super.closeDocument(markDocumentToExport);
 
         TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
