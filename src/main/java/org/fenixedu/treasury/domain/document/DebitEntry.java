@@ -52,11 +52,9 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -385,7 +383,7 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         FinantialInstitution finantialInstitution = this.getDebtAccount().getFinantialInstitution();
-        Vat vat = Vat.findActiveUnique(product.getVatType(), finantialInstitution, when).orElse(null);
+        Vat vat = Vat.findActiveUnique(product.getVatType(), finantialInstitution, new DateTime()).orElse(null);
 
         // entry description for Interest Entry
         String entryDescription = interest.getDescription();

@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.domain.document;
 
 import static org.fenixedu.treasury.services.integration.erp.sap.SAPExporter.ERP_INTEGRATION_START_DATE;
-import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
@@ -73,6 +72,9 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
+import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.bennu.signals.BennuSignalsServices;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
@@ -356,7 +358,7 @@ public class SettlementNote extends SettlementNote_Base {
     public void processSettlementNoteCreation(SettlementNoteBean bean) {
         processDebtEntries(bean);
         processCreditEntries(bean);
-        
+
         if (bean.isReimbursementNote()) {
             processReimbursementEntries(bean);
         } else {
@@ -397,13 +399,13 @@ public class SettlementNote extends SettlementNote_Base {
             // Instead of creating an advanced payment credit note, 
             // create a debit note with the excess payment and settle it
             final String comments = String.format("%s [%s]",
-                    treasuryBundleI18N("label.SettlementNote.advancepayment").getContent(services.defaultLocale()),
+                    treasuryBundleI18N("label.SettlementNote.excessPayment").getContent(services.defaultLocale()),
                     getPaymentDate().toString(TreasuryConstants.DATE_FORMAT));
 
             createExcessPaymentDebitNote(bean, availableAmount, comments, getUiDocumentNumber());
         } else {
             final String comments = String.format("%s [%s]",
-                    treasuryBundleI18N("label.SettlementNote.advancePayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
+                    treasuryBundleI18N("label.SettlementNote.advancedpayment").getContent(TreasuryConstants.DEFAULT_LANGUAGE),
                     getPaymentDate().toString(TreasuryConstants.DATE_FORMAT));
 
             createAdvancedPaymentCreditNote(availableAmount, comments, getExternalId());
@@ -600,6 +602,11 @@ public class SettlementNote extends SettlementNote_Base {
                 throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.advanced.payment.settled");
             }
 
+            if (getExcessPaymentDebitNote() != null
+                    && getExcessPaymentDebitNote().getCreditNoteSet().iterator().next().hasValidSettlementEntries()) {
+                throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.advanced.payment.settled");
+            }
+
             if (isUsedInBalanceTransfer()) {
                 throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.balance.transfer");
             }
@@ -621,6 +628,23 @@ public class SettlementNote extends SettlementNote_Base {
 
             if (this.getAdvancedPaymentCreditNote() != null) {
                 this.getAdvancedPaymentCreditNote().anullDocument(anulledReason);
+            }
+
+            if (this.getExcessPaymentDebitNote() != null) {
+                // Settle excess debit and credit
+                DateTime now = new DateTime();
+
+                SettlementNote excessCloseSettlementNote =
+                        create(getDebtAccount(), getDocumentNumberSeries(), now, now, getUiDocumentNumber(), null);
+                DebitEntry excessDebitEntry = this.getExcessPaymentDebitNote().getDebitEntriesSet().iterator().next();
+                CreditEntry excessCreditEntry = this.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next()
+                        .getCreditEntriesSet().iterator().next();
+
+                SettlementEntry.create(excessDebitEntry, excessDebitEntry.getTotalAmount(), excessCloseSettlementNote, now);
+                SettlementEntry.create(excessCreditEntry, excessCreditEntry.getTotalAmount(), excessCreditEntry.getDescription(),
+                        excessCloseSettlementNote, now);
+
+                excessCloseSettlementNote.closeDocument();
             }
 
             checkRules();
@@ -780,6 +804,8 @@ public class SettlementNote extends SettlementNote_Base {
     private void createExcessPaymentDebitNote(SettlementNoteBean bean, BigDecimal availableAmount, String comments,
             String originDocumentNumber) {
         ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
+
         if (getReferencedCustomers().size() > 1) {
             throw new TreasuryDomainException("error.SettlementNote.referencedCustomers.only.one.allowed");
         }
@@ -796,26 +822,31 @@ public class SettlementNote extends SettlementNote_Base {
             }
         }
 
+        // TODO: Resolve the issue of converting the VAT
         // Find the highest vat amount settled
-        InvoiceEntry invoiceEntry = getSettlemetEntries().map(se -> se.getInvoiceEntry())
-                .sorted((v1, v2) -> -1 * v1.getVat().getTaxRate().compareTo(v2.getVat().getTaxRate())).findFirst().get();
-
-        BigDecimal amount = Currency
-                .getValueWithScale(TreasuryConstants.divide(availableAmount, BigDecimal.ONE.add(rationalVatRate(invoiceEntry))));
+//        InvoiceEntry invoiceEntry = getSettlemetEntries().map(se -> se.getInvoiceEntry())
+//                .sorted((v1, v2) -> -1 * v1.getVat().getTaxRate().compareTo(v2.getVat().getTaxRate())).findFirst().get();
+//
+//        BigDecimal amount = Currency
+//                .getValueWithScale(TreasuryConstants.divide(availableAmount, BigDecimal.ONE.add(rationalVatRate(invoiceEntry))));
+        BigDecimal amount = availableAmount;
 
         DocumentNumberSeries documentNumberSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), this.getDocumentNumberSeries().getSeries());
-        DebitNote debitNote = DebitNote.create(getDebtAccount(), payorDebtAccount, documentNumberSeries, new DateTime(),
-                new LocalDate(), originDocumentNumber);
+        DateTime now = new DateTime();
+        DebitNote debitNote = DebitNote.create(getDebtAccount(), payorDebtAccount, documentNumberSeries, now, now.toLocalDate(),
+                originDocumentNumber);
 
-        DebitEntry debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, invoiceEntry.getVat(), amount,
-                new LocalDate(), new HashMap<>(), TreasurySettings.getInstance().getAdvancePaymentProduct(), comments,
-                BigDecimal.ONE, null, new DateTime());
+        Product advancePaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
+        Vat vat = Vat.findActiveUnique(advancePaymentProduct.getVatType(), finantialInstitution, now).get();
+        DebitEntry debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, amount, now.toLocalDate(),
+                new HashMap<>(), advancePaymentProduct, comments, BigDecimal.ONE, null, now);
 
-        if(!TreasuryConstants.isEqual(debitEntry.getTotalAmount(), availableAmount)) {
-            throw new RuntimeException("error.SettlementNote.createExcessPaymentDebitNote.debitEntry.totalAmount.not.equal.to.availableAmount");
+        if (!TreasuryConstants.isEqual(debitEntry.getTotalAmount(), availableAmount)) {
+            throw new RuntimeException(
+                    "error.SettlementNote.createExcessPaymentDebitNote.debitEntry.totalAmount.not.equal.to.availableAmount");
         }
-        
+
         debitNote.closeDocument();
         setExcessPaymentDebitNote(debitNote);
 
@@ -940,10 +971,10 @@ public class SettlementNote extends SettlementNote_Base {
             String comments = treasuryBundleI18N("label.SettlementNote.advancePayment")
                     .getContent(TreasuryPlataformDependentServicesFactory.implementation().defaultLocale());
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
-            
+
             settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next().closeDocument();
         }
-        
+
         return settlementNote;
     }
 

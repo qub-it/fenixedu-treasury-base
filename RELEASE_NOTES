@@ -5,6 +5,7 @@
 - Refactor: Remove deprecated code of old payments domain model
 - Improvement: With Treasury Certification create an excess payment debit note, instead of advanced payment credit note
 - Improvement: With Treasury Certification, recalculate the vat rate and vat amounts when closing a debit note
+- Bug Fix: Use VAT find with current dateTime, instead of the debt date
 
 9.1.1 (11-04-2022)
 - Bug Fix: Do not edit product name if it is already certified

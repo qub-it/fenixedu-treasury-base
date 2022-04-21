@@ -461,7 +461,6 @@ public class DebitNote extends DebitNote_Base {
                 setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
             }
 
-            TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
         } else if (isPreparing()) {
             if (!getCreditNoteSet().isEmpty()) {
                 throw new TreasuryDomainException("error.DebitNote.creditNote.not.empty");
