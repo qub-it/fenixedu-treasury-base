@@ -120,16 +120,14 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
             Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<Object, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
     }
 
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
             final Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<Object, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
 
     }
 
@@ -137,8 +135,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
     protected Set<SettlementNote> internalProcessPayment(final String username, final BigDecimal amount,
             final DateTime whenRegistered, final String sibsTransactionId, final String comments,
             Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
     }
 
     public String fillPaymentEntryMethodId() {

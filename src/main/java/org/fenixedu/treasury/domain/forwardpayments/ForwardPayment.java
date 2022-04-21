@@ -213,7 +213,7 @@ public class ForwardPayment extends ForwardPayment_Base {
     public void advanceToPayedState(final String statusCode, final String statusMessage, final BigDecimal payedAmount,
             final DateTime transactionDate, final String transactionId, final String authorizationNumber,
             final String requestBody, final String responseBody, String justification) {
-        // Deleted body of this method
+        throw new RuntimeException("not supported");
     }
 
     public boolean payAllDebitEntriesInterests() {
@@ -283,7 +283,6 @@ public class ForwardPayment extends ForwardPayment_Base {
     }
 
     public Set<Customer> getReferencedCustomers() {
-        // Deleted body of this method
         return Collections.emptySet();
     }
 

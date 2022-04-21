@@ -204,8 +204,7 @@ public class MultipleEntriesPaymentCode extends MultipleEntriesPaymentCode_Base 
     @Override
     public Set<SettlementNote> processPayment(final String username, final BigDecimal amountToPay, final DateTime whenRegistered,
             final String sibsTransactionId, final String comments) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
     }
 
     @Override

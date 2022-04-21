@@ -157,24 +157,21 @@ public class MbwayPaymentRequest extends MbwayPaymentRequest_Base {
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
             Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<Object, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
     }
 
     public Set<SettlementNote> internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(final String username,
             final BigDecimal amount, final DateTime paymentDate, final String sibsTransactionId, final String comments,
             final Set<InvoiceEntry> invoiceEntriesToPay, Set<Installment> installmentsToPay,
             Function<Object, Map<String, String>> fillPaymentEntryPropertiesMapFunction) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
 
     }
 
     @Atomic
     private Set<SettlementNote> processPayment(final String username, final BigDecimal amount, final DateTime paymentDate,
             final String sibsTransactionId, final String comments) {
-        // Deleted body of this method
-        return Collections.emptySet();
+        throw new RuntimeException("not supported");
     }
 
     @Atomic(mode = TxMode.READ)
