@@ -77,6 +77,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
+import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -100,6 +101,7 @@ import org.slf4j.Logger;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -283,7 +285,28 @@ public class ForwardPayment extends ForwardPayment_Base {
     }
 
     public Set<Customer> getReferencedCustomers() {
-        return Collections.emptySet();
+        final Set<InvoiceEntry> invoiceEntrySet = getInvoiceEntriesSet();
+        final Set<Installment> installments = getInstallmentsSet();
+        
+        final Set<Customer> result = Sets.newHashSet();
+        for (final InvoiceEntry entry : invoiceEntrySet) {
+            if (entry.getFinantialDocument() != null && ((Invoice) entry.getFinantialDocument()).isForPayorDebtAccount()) {
+                result.add(((Invoice) entry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
+                continue;
+            }
+
+            result.add(entry.getDebtAccount().getCustomer());
+        }
+
+        for (final Installment entry : installments) {
+            result.addAll(entry.getInstallmentEntriesSet().stream().map(e -> e.getDebitEntry())
+                    .map(deb -> (deb.getFinantialDocument() != null && ((Invoice) deb.getFinantialDocument())
+                            .isForPayorDebtAccount()) ? ((Invoice) deb.getFinantialDocument()).getPayorDebtAccount()
+                                    .getCustomer() : deb.getDebtAccount().getCustomer())
+                    .collect(Collectors.toSet()));
+        }
+
+        return result;
     }
 
     public ForwardPaymentLog log(final String statusCode, final String statusMessage, final String requestBody,

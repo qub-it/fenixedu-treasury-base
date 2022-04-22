@@ -59,11 +59,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
+import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
@@ -76,6 +78,7 @@ import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -168,10 +171,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
 
     public abstract Set<Product> getReferencedProducts();
 
-    public Set<Customer> getReferencedCustomers() {
-        // Deleted body of this method
-        return Collections.emptySet();
-    }
+    public abstract Set<Customer> getReferencedCustomers();
 
     public PaymentMethod getPaymentMethod() {
         return getPaymentReferenceCode().getPaymentCodePool().getPaymentMethod();
