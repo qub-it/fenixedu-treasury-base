@@ -949,7 +949,7 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     public static SettlementNote createSettlementNote(SettlementNoteBean bean) {
         DateTime documentDate = new DateTime();
-        SettlementNoteBean copy = new SettlementNoteBean(bean);
+        SettlementNoteBean copy = SettlementNoteBean.copyForSettlementNoteCreation(bean);
 
         SettlementNote settlementNote = SettlementNote.create(copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
                 copy.getDate(), copy.getOriginDocumentNumber(),

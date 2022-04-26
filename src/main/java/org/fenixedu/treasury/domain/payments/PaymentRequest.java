@@ -218,7 +218,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             DateTime paymentDate, String originDocumentNumber, String comments,
             Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction) {
 
-        SettlementNoteBean bean = new SettlementNoteBean(this, paymentDate, paidAmount, originDocumentNumber);
+        SettlementNoteBean bean = SettlementNoteBean.createForPaymentRequestProcessPayment(this, paymentDate, paidAmount, originDocumentNumber);
         
         SettlementNote settlementNote = SettlementNote.createSettlementNote(bean);
 
