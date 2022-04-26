@@ -185,52 +185,6 @@ public class DebtAccount extends DebtAccount_Base {
         new BalanceTransferService(this, destinyDebtAccount).transferBalance();
     }
 
-    // @formatter:off
-    /* ********
-     * SERVICES
-     * ********
-     */
-    // @formatter:on
-
-    public static Stream<DebtAccount> findAll() {
-        return FenixFramework.getDomainRoot().getDebtAccountsSet().stream();
-    }
-
-    public static Stream<DebtAccount> find(final FinantialInstitution finantialInstitution) {
-        return finantialInstitution.getDebtAccountsSet().stream();
-    }
-
-    public static Stream<DebtAccount> findActiveAdhoc(final FinantialInstitution finantialInstitution) {
-        return find(finantialInstitution).filter(x -> x.getCustomer().isAdhocCustomer()).filter(x -> x.getCustomer().isActive());
-    }
-
-    public static Stream<DebtAccount> find(final Customer customer) {
-        return customer.getDebtAccountsSet().stream();
-    }
-
-    public static Optional<DebtAccount> findUnique(final FinantialInstitution finantialInstitution, final Customer customer) {
-        return Optional.ofNullable(customer.getDebtAccountFor(finantialInstitution));
-    }
-
-    public static SortedSet<DebtAccount> findActiveAdhocDebtAccountsSortedByCustomerName(
-            final FinantialInstitution finantialInstitution) {
-        final SortedSet<DebtAccount> result = Sets.newTreeSet(COMPARATOR_BY_CUSTOMER_NAME_IGNORE_CASE);
-        result.addAll(DebtAccount.findActiveAdhoc(finantialInstitution).collect(Collectors.toSet()));
-
-        return result;
-    }
-
-    @Atomic
-    public static DebtAccount create(final FinantialInstitution finantialInstitution, final Customer customer) {
-        //Find if already exists
-        DebtAccount existing = DebtAccount.findUnique(finantialInstitution, customer).orElse(null);
-        if (existing != null) {
-            existing.setClosed(false);
-            return existing;
-        }
-        return new DebtAccount(finantialInstitution, customer);
-    }
-
     public Stream<? extends InvoiceEntry> pendingInvoiceEntries() {
         return this.getInvoiceEntrySet().stream().filter(x -> x.isPendingForPayment());
     }
@@ -350,6 +304,52 @@ public class DebtAccount extends DebtAccount_Base {
 
     public Set<PaymentPlan> getPaymentPlansNotCompliantSet() {
         return getPaymentPlansNotCompliantSet(LocalDate.now());
+    }
+
+    // @formatter:off
+    /* ********
+     * SERVICES
+     * ********
+     */
+    // @formatter:on
+
+    public static Stream<DebtAccount> findAll() {
+        return FenixFramework.getDomainRoot().getDebtAccountsSet().stream();
+    }
+
+    public static Stream<DebtAccount> find(final FinantialInstitution finantialInstitution) {
+        return finantialInstitution.getDebtAccountsSet().stream();
+    }
+
+    public static Stream<DebtAccount> findActiveAdhoc(final FinantialInstitution finantialInstitution) {
+        return find(finantialInstitution).filter(x -> x.getCustomer().isAdhocCustomer()).filter(x -> x.getCustomer().isActive());
+    }
+
+    public static Stream<DebtAccount> find(final Customer customer) {
+        return customer.getDebtAccountsSet().stream();
+    }
+
+    public static Optional<DebtAccount> findUnique(final FinantialInstitution finantialInstitution, final Customer customer) {
+        return Optional.ofNullable(customer.getDebtAccountFor(finantialInstitution));
+    }
+
+    public static SortedSet<DebtAccount> findActiveAdhocDebtAccountsSortedByCustomerName(
+            final FinantialInstitution finantialInstitution) {
+        final SortedSet<DebtAccount> result = Sets.newTreeSet(COMPARATOR_BY_CUSTOMER_NAME_IGNORE_CASE);
+        result.addAll(DebtAccount.findActiveAdhoc(finantialInstitution).collect(Collectors.toSet()));
+
+        return result;
+    }
+
+    @Atomic
+    public static DebtAccount create(final FinantialInstitution finantialInstitution, final Customer customer) {
+        //Find if already exists
+        DebtAccount existing = DebtAccount.findUnique(finantialInstitution, customer).orElse(null);
+        if (existing != null) {
+            existing.setClosed(false);
+            return existing;
+        }
+        return new DebtAccount(finantialInstitution, customer);
     }
 
 }
