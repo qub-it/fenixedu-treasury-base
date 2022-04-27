@@ -452,6 +452,9 @@ public class DebitEntry extends DebitEntry_Base {
 
             closeCreditEntryIfPossible(reason, now, creditEntryFromExemption);
 
+            creditEntryFromExemption.getFinantialDocument().setDocumentObservations(String.format("[%s] - %s",
+                    treasuryExemption.getTreasuryExemptionType().getName().getContent(), treasuryExemption.getReason()));
+
         } else {
             BigDecimal netExemptedAmount = treasuryExemption.getNetExemptedAmount();
             setNetExemptedAmount(getNetExemptedAmount().add(netExemptedAmount));

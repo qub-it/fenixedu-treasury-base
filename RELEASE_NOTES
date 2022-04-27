@@ -1,3 +1,5 @@
+- Bug Fix: Fill credit and exemption reason in documentObservations of Credit Note
+
 9.2.0 (22-04-2022)
 - Refactor: Export SAFT to OutputStream instead of byte array
 - Improvement: Service to ativate or deactivate treasury certification mode (DR 28/2019 Art 11 2a)
