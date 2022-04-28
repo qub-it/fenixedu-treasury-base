@@ -1,4 +1,8 @@
 - Bug Fix: Fill credit and exemption reason in documentObservations of Credit Note
+- Improvement: Generic access control configuration, to activate access control implementations
+- Refactor: Fix compilation warnings due to missing generic type
+- Bug Fix: Unregister access control extension by class, instead of implementation object
+- Bug Fix: Only register one access control extension of a given class
 
 9.2.0 (22-04-2022)
 - Refactor: Export SAFT to OutputStream instead of byte array

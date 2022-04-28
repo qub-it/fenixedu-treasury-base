@@ -69,7 +69,7 @@ public class TreasuryAccessControl {
 
     private static TreasuryAccessControl _instance = null;
 
-    private List<ITreasuryAccessControlExtension> extensions = Collections.synchronizedList(Lists.newArrayList());
+    private List<ITreasuryAccessControlExtension<?>> extensions = Collections.synchronizedList(Lists.newArrayList());
 
     private TreasuryAccessControl() {
     }
@@ -105,8 +105,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isFrontOfficeMember(final String username) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isFrontOfficeMember(username)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isFrontOfficeMember(username)) {
                 return true;
             }
         }
@@ -115,8 +115,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isFrontOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isFrontOfficeMember(username, finantialInstitution)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isFrontOfficeMember(username, finantialInstitution)) {
                 return true;
             }
         }
@@ -125,12 +125,12 @@ public class TreasuryAccessControl {
     }
 
     public <T> boolean isFrontOfficeMemberWithinContext(final String username, final T context) {
-        for (ITreasuryAccessControlExtension<T> ext : extensions) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
             if(!ext.isContextObjectApplied(context)) {
                 continue;
             }
             
-            if (ext.isFrontOfficeMemberWithinContext(username, context)) {
+            if (((ITreasuryAccessControlExtension<T>) ext).isFrontOfficeMemberWithinContext(username, context)) {
                 return true;
             }
         }
@@ -139,8 +139,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isBackOfficeMember(final String username) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isBackOfficeMember(username)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isBackOfficeMember(username)) {
                 return true;
             }
         }
@@ -149,8 +149,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isBackOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isBackOfficeMember(username, finantialInstitution)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isBackOfficeMember(username, finantialInstitution)) {
                 return true;
             }
         }
@@ -159,8 +159,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isBackOfficeMember(final String username, final FinantialEntity finantialEntity) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isBackOfficeMember(username, finantialEntity)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isBackOfficeMember(username, finantialEntity)) {
                 return true;
             }
         }
@@ -169,12 +169,12 @@ public class TreasuryAccessControl {
     }
     
     public <T> boolean isBackOfficeMemberWithinContext(final String username, final T context) {
-        for (ITreasuryAccessControlExtension<T> iTreasuryAccessControlExtension : extensions) {
-            if(!iTreasuryAccessControlExtension.isContextObjectApplied(context)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if(!ext.isContextObjectApplied(context)) {
                 continue;
             }
             
-            if (iTreasuryAccessControlExtension.isBackOfficeMemberWithinContext(username, context)) {
+            if (((ITreasuryAccessControlExtension<T>) ext).isBackOfficeMemberWithinContext(username, context)) {
                 return true;
             }
         }
@@ -183,26 +183,34 @@ public class TreasuryAccessControl {
     }
 
     public boolean isManager(final String username) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isManager(username)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isManager(username)) {
                 return true;
             }
         }
 
         return false;
     }
+    
+    public boolean isRegistered(Class<? extends ITreasuryAccessControlExtension<?>> clazz) {
+        return extensions.stream().anyMatch(e -> clazz.equals(e.getClass()));
+    }
 
-    public void registerExtension(final ITreasuryAccessControlExtension extension) {
+    public void registerExtension(ITreasuryAccessControlExtension<?> extension) {
         extensions.add(extension);
     }
 
-    public void unregisterExtension(final ITreasuryAccessControlExtension extension) {
-        extensions.add(extension);
+    public void unregisterExtension(Class<? extends ITreasuryAccessControlExtension<?>> extensionClazz) {
+        extensions.removeIf(e -> extensionClazz.equals(e.getClass()));
+    }
+    
+    public List<ITreasuryAccessControlExtension<?>> getRegisteredExtensions() {
+        return this.extensions;
     }
 
     public boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isAllowToModifyInvoices(username, finantialInstitution)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isAllowToModifyInvoices(username, finantialInstitution)) {
                 return true;
             }
         }
@@ -211,8 +219,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isAllowToModifySettlements(final String username, final FinantialInstitution finantialInstitution) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isAllowToModifySettlements(username, finantialInstitution)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isAllowToModifySettlements(username, finantialInstitution)) {
                 return true;
             }
         }
@@ -221,8 +229,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isAllowToConditionallyAnnulSettlementNote(final String username, final SettlementNote settlementNote) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isAllowToConditionallyAnnulSettlementNote(username, settlementNote)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isAllowToConditionallyAnnulSettlementNote(username, settlementNote)) {
                 return true;
             }
         }
@@ -231,8 +239,8 @@ public class TreasuryAccessControl {
     }
 
     public boolean isAllowToAnnulSettlementNoteWithoutAnyRestriction(final String username, final SettlementNote settlementNote) {
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            if (iTreasuryAccessControlExtension.isAllowToAnnulSettlementNoteWithoutAnyRestriction(username, settlementNote)) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isAllowToAnnulSettlementNoteWithoutAnyRestriction(username, settlementNote)) {
                 return true;
             }
         }
@@ -243,8 +251,8 @@ public class TreasuryAccessControl {
     public java.util.Set<String> getFrontOfficeMemberUsernames() {
         final java.util.Set<String> result = Sets.newHashSet();
 
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            result.addAll(iTreasuryAccessControlExtension.getFrontOfficeMemberUsernames());
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            result.addAll(ext.getFrontOfficeMemberUsernames());
         }
         
         return result;
@@ -253,8 +261,8 @@ public class TreasuryAccessControl {
     public java.util.Set<String> getBackOfficeMemberUsernames() {
         final java.util.Set<String> result = Sets.newHashSet();
 
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            result.addAll(iTreasuryAccessControlExtension.getBackOfficeMemberUsernames());
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            result.addAll(ext.getBackOfficeMemberUsernames());
         }
         
         return result;
@@ -263,8 +271,8 @@ public class TreasuryAccessControl {
     public java.util.Set<String> getTreasuryManagerMemberUsernames() {
         final java.util.Set<String> result = Sets.newHashSet();
 
-        for (ITreasuryAccessControlExtension iTreasuryAccessControlExtension : extensions) {
-            result.addAll(iTreasuryAccessControlExtension.getTreasuryManagerMemberUsernames());
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            result.addAll(ext.getTreasuryManagerMemberUsernames());
         }
         
         return result;

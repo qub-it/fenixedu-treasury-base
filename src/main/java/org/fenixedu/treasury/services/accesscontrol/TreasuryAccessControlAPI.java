@@ -60,12 +60,16 @@ import org.fenixedu.treasury.services.accesscontrol.spi.ITreasuryAccessControlEx
 
 public class TreasuryAccessControlAPI {
 
-    public static void registerExtension(final ITreasuryAccessControlExtension extension) {
+    public static void registerExtension(ITreasuryAccessControlExtension<?> extension) {
+        if(TreasuryAccessControl.getInstance().isRegistered((Class<? extends ITreasuryAccessControlExtension<?>>) extension.getClass())) {
+            return;
+        }
+        
         TreasuryAccessControl.getInstance().registerExtension(extension);
     }
 
-    public static void unregisterExtension(final ITreasuryAccessControlExtension extension) {
-        TreasuryAccessControl.getInstance().unregisterExtension(extension);
+    public static void unregisterExtension(Class<? extends ITreasuryAccessControlExtension<?>> extensionClazz) {
+        TreasuryAccessControl.getInstance().unregisterExtension(extensionClazz);
     }
 
     @Deprecated

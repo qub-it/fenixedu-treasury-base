@@ -1517,6 +1517,23 @@ class settings.TreasurySettings {
 			multiplicity 0..1;
 		}
 	}
+
+class accesscontrol.TreasuryAccessControlConfiguration {
+	Boolean accessControlByAcademicAuthorizations;
+	Boolean accessControlByStandardPermissions;
+	Boolean accessControlByBennuDynamicGroups;
+	Boolean accessControlByUnitBasedPermissions;
+}
+
+	relation TreasuryAccessControlConfigurationDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		accesscontrol.TreasuryAccessControlConfiguration playsRole treasuryAccessControlConfiguration {
+			multiplicity *;
+		}
+	}
 	
 /*************
  * RELATIONS *
