@@ -1,3 +1,4 @@
+9.2.1 (02-05-2022)
 - Bug Fix: Fill credit and exemption reason in documentObservations of Credit Note
 - Improvement: Generic access control configuration, to activate access control implementations
 - Refactor: Fix compilation warnings due to missing generic type
