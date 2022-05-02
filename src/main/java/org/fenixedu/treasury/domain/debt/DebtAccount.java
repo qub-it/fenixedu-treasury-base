@@ -177,8 +177,11 @@ public class DebtAccount extends DebtAccount_Base {
         transferBalance(activeDebtAccount.get());
     }
 
-    @Atomic
-    public void transferBalance(final DebtAccount destinyDebtAccount) {
+    private void transferBalance(final DebtAccount destinyDebtAccount) {
+        if(getFinantialInstitution() != destinyDebtAccount.getFinantialInstitution()) {
+            throw new RuntimeException("error.DebtAccount.transferBalance.must.be.applied.for.debtAccounts.of.same.finantialInstitution");
+        }
+        
         new BalanceTransferService(this, destinyDebtAccount).transferBalance();
     }
 

@@ -119,8 +119,6 @@ public class PaymentPlan extends PaymentPlan_Base {
 
         createInstallments(paymentPlanBean, createdEntries);
 
-
-
         annulPaymentReferenceCodeFromDebitEntries(
                 paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(bean -> bean.isForDebitEntry())
                         .map(bean -> ((SettlementDebitEntryBean) bean).getDebitEntry()).collect(Collectors.toList()));
@@ -128,7 +126,7 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public static PaymentPlan createPaymentPlan(PaymentPlanBean paymentPlanBean) {
-        
+
         PaymentPlan paymentPlan;
         try {
             paymentPlan = FenixFramework.atomic(() -> new PaymentPlan(paymentPlanBean));
@@ -175,22 +173,28 @@ public class PaymentPlan extends PaymentPlan_Base {
         if (getReason() == null) {
             throw new TreasuryDomainException("error.paymentPlan.reason.required");
         }
+
         if (getCreationDate() == null) {
             throw new TreasuryDomainException("error.paymentPlan.creationDate.required");
         }
+
         if (getState() == null) {
             throw new TreasuryDomainException("error.paymentPlan.creationDate.required");
         }
+
         if (getDebtAccount() == null) {
             throw new TreasuryDomainException("error.paymentPlan.creationDate.required");
         }
+
         if (getInstallmentsSet() == null || getInstallmentsSet().isEmpty()) {
             throw new TreasuryDomainException("error.paymentPlan.installments.required");
         }
+
         if (getDebtAccount().getActivePaymentPlansSet().size() > TreasurySettings.getInstance()
                 .getNumberOfPaymentPlansActivesPerStudent()) {
             throw new TreasuryDomainException("error.paymentPlan.max.active.plans.reached");
         }
+
         if (getCustomers().size() > 1) {
             throw new TreasuryDomainException("error.paymentPlan.multiple.customers");
         }
@@ -198,6 +202,14 @@ public class PaymentPlan extends PaymentPlan_Base {
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && hasDebitEntriesExportedInLegacyERP()) {
             throw new TreasuryDomainException(
                     "error.PaymentPlan.debitEntries.exported.in.legacyERP.not.supported.in.restrictedPaymentMode");
+        }
+
+        // Check that all referenced debit entries are from the same
+        // debt account
+
+        if (getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream())
+                .anyMatch(e -> e.getDebitEntry().getDebtAccount() != getDebtAccount())) {
+            throw new TreasuryDomainException("error.PaymentPlan.some.debitEntries.not.from.debtAccount");
         }
     }
 
@@ -371,17 +383,17 @@ public class PaymentPlan extends PaymentPlan_Base {
                     + new LocalDate().toString("yyyy-MM-dd") + "]");
         }
     }
-    
+
     /* Services */
-    
+
     public static Stream<PaymentPlan> findAll() {
         return FenixFramework.getDomainRoot().getPaymentPlansSet().stream();
     }
-    
+
     public static Stream<PaymentPlan> findByPaymentPlanId(String paymentPlanId) {
         return findAll().filter(p -> paymentPlanId.equals(p.getPaymentPlanId()));
     }
-    
+
     public static Optional<PaymentPlan> findUniqueByPaymentPlanId(String paymentPlanId) {
         return findByPaymentPlanId(paymentPlanId).findFirst();
     }
