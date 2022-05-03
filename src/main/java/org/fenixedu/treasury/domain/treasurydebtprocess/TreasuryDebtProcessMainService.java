@@ -1,7 +1,9 @@
 package org.fenixedu.treasury.domain.treasurydebtprocess;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -28,8 +30,12 @@ public class TreasuryDebtProcessMainService {
         }
     }
 
-    static Set<ITreasuryDebtProcess> getDebtProcesses(InvoiceEntry invoiceEntry) {
-        return Collections.emptySet();
+    public static Set<? extends ITreasuryDebtProcess> getDebtProcesses(InvoiceEntry invoiceEntry) {
+        Set<ITreasuryDebtProcess> result = new HashSet<>();
+
+        services.stream().forEach(service -> result.addAll(service.getDebtProcesses(invoiceEntry)));
+
+        return result;
     }
 
     static boolean isBlockingPaymentInFrontend(InvoiceEntry invoiceEntry) {
