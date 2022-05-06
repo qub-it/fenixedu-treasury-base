@@ -162,8 +162,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     //
     // But it is possible to check for payment blockin in the backoffice, which might be
     // more relaxed than frontend payment
-    private InvoiceEntryBlockingPaymentContext invoiceEntriesPaymentBlockingContext =
-            InvoiceEntryBlockingPaymentContext.FRONTEND;
+    private InvoiceEntryBlockingPaymentContext invoiceEntriesPaymentBlockingContext = InvoiceEntryBlockingPaymentContext.FRONTEND;
 
     public SettlementNoteBean() {
         init();
@@ -223,21 +222,20 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         if (!paymentRequest.getInstallmentsSet().stream().anyMatch(
                 i -> TreasuryDebtProcessMainService.isBlockingPayment(i, InvoiceEntryBlockingPaymentContext.FRONTEND))) {
             final TreeSet<Installment> sortedInstallments = Sets.newTreeSet(Installment.COMPARE_BY_DUEDATE);
-            
+
             /*
              * Include only open installment, because the installment settlement entries are created
              * for installment entries of open debit entries.
              */
-            sortedInstallments.addAll(paymentRequest.getInstallmentsSet().stream().filter(i -> i.getPaymentPlan().getState().isOpen())
-                    .collect(Collectors.toSet()));
-            
+            sortedInstallments.addAll(paymentRequest.getInstallmentsSet().stream()
+                    .filter(i -> i.getPaymentPlan().getState().isOpen()).collect(Collectors.toSet()));
+
             for (Installment installment : sortedInstallments) {
                 InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
                 installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
                 debitEntries.add(installmentBean);
             }
         }
-        
 
         if (getReferencedCustomers().size() > 1) {
             // Register advance payment only
@@ -362,17 +360,23 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
+        init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount, true);
+    }
+
+    private void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount,
+            boolean excludeTreasuryDebtProcessBlockingPayment) {
         init();
 
         this.debtAccount = debtAccount;
         this.reimbursementNote = reimbursementNote;
 
         List<InvoiceEntry> pendingInvoiceEntriesList = debtAccount.getPendingInvoiceEntriesSet().stream() //
-                .filter(ie -> !TreasuryDebtProcessMainService.isBlockingPayment(ie, this.invoiceEntriesPaymentBlockingContext))
+                .filter(ie -> !excludeTreasuryDebtProcessBlockingPayment
+                        || !TreasuryDebtProcessMainService.isBlockingPayment(ie, this.invoiceEntriesPaymentBlockingContext))
                 .filter(ie -> !ie.hasPreparingSettlementEntries()) //
                 .sorted(InvoiceEntry.COMPARE_BY_DUE_DATE) //
                 .collect(Collectors.<InvoiceEntry> toList());
-        
+
         for (InvoiceEntry invoiceEntry : pendingInvoiceEntriesList) {
             if (invoiceEntry instanceof DebitEntry) {
                 final DebitEntry debitEntry = (DebitEntry) invoiceEntry;
@@ -397,7 +401,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         Set<Installment> installments = debtAccount.getActivePaymentPlansSet().stream()
                 .flatMap(plan -> plan.getSortedOpenInstallments().stream())
-                .filter(i -> !TreasuryDebtProcessMainService.isBlockingPayment(i, this.invoiceEntriesPaymentBlockingContext))
+                .filter(i -> !excludeTreasuryDebtProcessBlockingPayment
+                        || !TreasuryDebtProcessMainService.isBlockingPayment(i, this.invoiceEntriesPaymentBlockingContext))
                 .collect(Collectors.toSet());
 
         for (Installment installment : installments) {
@@ -1074,4 +1079,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             BigDecimal paidAmount, String originDocumentNumber) {
         return new SettlementNoteBean(paymentRequest, paymentDate, paidAmount, originDocumentNumber);
     }
+
+    // Used by treasury debt processes
+    // Invoice entries blocked are not excluded
+    public static SettlementNoteBean createForTreasuryDebtProcesses(DebtAccount debtAccount) {
+        SettlementNoteBean result = new SettlementNoteBean();
+        result.init(debtAccount, false, false, false);
+
+        return result;
+    }
+
 }
