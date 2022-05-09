@@ -71,7 +71,7 @@ public class TreasuryDebtProcessMainService {
                 .anyMatch(d -> isBlockingPayment(d, context));
     }
 
-    static List<LocalizedString> getBlockingPaymentReasonsForFrontend(InvoiceEntry invoiceEntry) {
+    public static List<LocalizedString> getBlockingPaymentReasonsForFrontend(InvoiceEntry invoiceEntry) {
         List<LocalizedString> result = new ArrayList<>();
 
         for (ITreasuryDebtProcessService service : services) {
@@ -83,7 +83,7 @@ public class TreasuryDebtProcessMainService {
         return result;
     }
 
-    static List<LocalizedString> getBlockingPaymentReasonsForBackoffice(InvoiceEntry invoiceEntry) {
+    public static List<LocalizedString> getBlockingPaymentReasonsForBackoffice(InvoiceEntry invoiceEntry) {
         List<LocalizedString> result = new ArrayList<>();
 
         for (ITreasuryDebtProcessService service : services) {
@@ -95,4 +95,14 @@ public class TreasuryDebtProcessMainService {
         return result;
     }
 
+    public static boolean isInterestCreationWhenTotalSettledPrevented(InvoiceEntry invoiceEntry) {
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.isInterestCreationWhenTotalSettledPrevented(invoiceEntry)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
 }

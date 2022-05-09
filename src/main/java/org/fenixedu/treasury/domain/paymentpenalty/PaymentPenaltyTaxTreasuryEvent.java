@@ -78,6 +78,7 @@ import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.tariff.Tariff;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -369,12 +370,16 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             if (isDebitEntrySettledWithOwnCredit(s, settlementNote)) {
                 continue;
             }
+            
+            if(TreasuryDebtProcessMainService.isInterestCreationWhenTotalSettledPrevented(invoiceEntry)) {
+                continue;
+            }
 
             DebitEntry penaltyDebitEntry = checkAndCreatePaymentPenaltyTax(d, lastPaymentDate.toLocalDate(), now);
             if (penaltyDebitEntry == null) {
                 result.add(penaltyDebitEntry);
             }
-
+            
         }
 
         return result;

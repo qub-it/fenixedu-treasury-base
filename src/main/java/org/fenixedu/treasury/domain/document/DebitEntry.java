@@ -297,7 +297,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         InterestRateBean calculateInterest = getInterestRate().calculateInterests(whenToCalculate, false);
 
-        calculateInterest.setDescription(treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+        calculateInterest.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                 "label.InterestRateBean.interest.designation", getDescription()));
 
         return calculateInterest;

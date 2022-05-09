@@ -18,4 +18,7 @@ public interface ITreasuryDebtProcessService {
     LocalizedString getBlockingPaymentReasonForBackoffice(InvoiceEntry invoiceEntry);
     
     Set<? extends ITreasuryDebtProcess> getDebtProcesses(InvoiceEntry invoiceEntry);
+    
+    boolean isInterestCreationWhenTotalSettledPrevented(InvoiceEntry invoiceEntry);
+    
 }
