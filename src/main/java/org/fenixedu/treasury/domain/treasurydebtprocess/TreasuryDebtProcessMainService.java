@@ -38,7 +38,7 @@ public class TreasuryDebtProcessMainService {
         return result;
     }
 
-    static boolean isBlockingPaymentInFrontend(InvoiceEntry invoiceEntry) {
+    public static boolean isBlockingPaymentInFrontend(InvoiceEntry invoiceEntry) {
         for (ITreasuryDebtProcessService service : services) {
             if (service.isBlockingPaymentInFrontend(invoiceEntry)) {
                 return true;
@@ -48,7 +48,7 @@ public class TreasuryDebtProcessMainService {
         return false;
     }
 
-    static boolean isBlockingPaymentInBackoffice(InvoiceEntry invoiceEntry) {
+    public static boolean isBlockingPaymentInBackoffice(InvoiceEntry invoiceEntry) {
         for (ITreasuryDebtProcessService service : services) {
             if (service.isBlockingPaymentInBackoffice(invoiceEntry)) {
                 return true;
