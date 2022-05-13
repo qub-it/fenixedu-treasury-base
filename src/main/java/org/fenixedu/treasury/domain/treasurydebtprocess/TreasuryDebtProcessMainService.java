@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 
 public class TreasuryDebtProcessMainService {
@@ -104,5 +105,23 @@ public class TreasuryDebtProcessMainService {
 
         return false;
     }
+
+    public static boolean isSettlementAnnullmentActionBlocked(SettlementNote settlementNote) {
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.isSettlementAnnullmentActionBlocked(settlementNote)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
     
+    public static Set<? extends ITreasuryDebtProcess> getDebtProcesses(SettlementNote settlementNote) {
+        Set<ITreasuryDebtProcess> result = new HashSet<>();
+
+        services.stream().forEach(service -> result.addAll(service.getDebtProcesses(settlementNote)));
+
+        return result;
+    }
+
 }

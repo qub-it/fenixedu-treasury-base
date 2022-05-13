@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.domain.document.SettlementNote;
 
 public interface ITreasuryDebtProcessService {
 
@@ -21,4 +22,7 @@ public interface ITreasuryDebtProcessService {
     
     boolean isInterestCreationWhenTotalSettledPrevented(InvoiceEntry invoiceEntry);
     
+    boolean isSettlementAnnullmentActionBlocked(SettlementNote settlementNote);
+    
+    Set<? extends ITreasuryDebtProcess> getDebtProcesses(SettlementNote settlementNote);
 }
