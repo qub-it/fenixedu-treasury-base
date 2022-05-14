@@ -66,6 +66,7 @@ import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -318,6 +319,11 @@ public class CreditNote extends CreditNote_Base {
             throw new TreasuryDomainException("error.CreditNote.anullDocument.reason.required");
         }
 
+        if(TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException(
+                    "error.CreditNote.cannot.annull.or.credit.due.to.existing.active.debt.process");
+        }
+        
         if (this.isPreparing()) {
 
             if (getCreditEntries().anyMatch(ce -> ce.isFromExemption())) {

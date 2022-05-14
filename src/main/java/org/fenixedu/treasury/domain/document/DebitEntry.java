@@ -85,6 +85,7 @@ import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -282,6 +283,18 @@ public class DebitEntry extends DebitEntry_Base {
         return this.getInterestRate().calculateInterests(whenToCalculate, true);
     }
 
+    public InterestRateBean calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
+        if (this.getInterestRate() == null) {
+            return new InterestRateBean();
+        }
+
+        if (!toCalculateInterests(lockDate)) {
+            return new InterestRateBean();
+        }
+
+        return this.getInterestRate().calculateAllInterestsByLockingAtDate(lockDate);
+    }
+    
     public InterestRateBean calculateUndebitedInterestValue(final LocalDate whenToCalculate) {
         if (!this.isApplyInterests()) {
             return new InterestRateBean();
@@ -435,6 +448,10 @@ public class DebitEntry extends DebitEntry_Base {
             throw new RuntimeException("error.DebitEntry.is.event.annuled.cannot.be.exempted");
         }
 
+        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
+        
         if (TreasuryConstants.isGreaterThan(treasuryExemption.getNetExemptedAmount(), getAvailableNetAmountForCredit())) {
             throw new TreasuryDomainException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
         }
@@ -1073,6 +1090,10 @@ public class DebitEntry extends DebitEntry_Base {
         if (Strings.isNullOrEmpty(reason)) {
             throw new TreasuryDomainException("error.DebitEntry.annul.debit.entry.requires.reason");
         }
+        
+        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
 
         final DebitNote debitNote = DebitNote.create(getDebtAccount(), DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForDebitNote(), getDebtAccount().getFinantialInstitution()).get(),
@@ -1096,6 +1117,10 @@ public class DebitEntry extends DebitEntry_Base {
 
         if (Strings.isNullOrEmpty(reason)) {
             throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.requires.reason");
+        }
+
+        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 
         if (!TreasuryConstants.isPositive(netAmountForCredit)) {

@@ -3,6 +3,9 @@ package org.fenixedu.treasury.domain.treasurydebtprocess;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 
@@ -22,7 +25,12 @@ public interface ITreasuryDebtProcessService {
     
     boolean isInterestCreationWhenTotalSettledPrevented(InvoiceEntry invoiceEntry);
     
-    boolean isSettlementAnnullmentActionBlocked(SettlementNote settlementNote);
+    boolean isFinantialDocumentAnnullmentActionBlocked(FinantialDocument finantialDocument);
+
+    boolean isFinantialDocumentEntryAnnullmentActionBlocked(FinantialDocumentEntry finantialDocumentEntry);
     
     Set<? extends ITreasuryDebtProcess> getDebtProcesses(SettlementNote settlementNote);
+    
+    boolean isDebitEntryInterestCreationInAdvanceBlocked(DebitEntry debitEntry);
+    
 }

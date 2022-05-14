@@ -90,6 +90,7 @@ import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
@@ -137,6 +138,10 @@ public class BalanceTransferService {
         final Set<DebitNote> pendingDebitNotes = Sets.newHashSet();
         for (final InvoiceEntry invoiceEntry : objectDebtAccount.getPendingInvoiceEntriesSet()) {
 
+            if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(invoiceEntry)) {
+                throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+            }
+            
             if (invoiceEntry.isDebitNoteEntry()) {
                 final DebitEntry debitEntry = (DebitEntry) invoiceEntry;
                 if (debitEntry.getFinantialDocument() == null) {

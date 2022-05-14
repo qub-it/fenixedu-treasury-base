@@ -75,6 +75,7 @@ import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
@@ -400,6 +401,11 @@ public class DebitNote extends DebitNote_Base {
                     "error.DebitNote.anullDebitNoteWithCreditNote.cannot.anull.debt.with.open.paymentPlan");
         }
 
+        if(TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException(
+                    "error.DebitNote.cannot.annull.or.credit.due.to.existing.active.debt.process");
+        }
+        
         if (this.getFinantialDocumentEntriesSet().size() > 0 && this.isClosed()) {
 
             final DateTime now = new DateTime();
@@ -654,6 +660,11 @@ public class DebitNote extends DebitNote_Base {
 
         DebitNote interestDebitNote = DebitNote.create(debitNote.getDebtAccount(), documentNumberSeries, documentDate);
         for (DebitEntry entry : debitNote.getDebitEntriesSet()) {
+            
+            if(TreasuryDebtProcessMainService.isDebitEntryInterestCreationInAdvanceBlocked(entry)) {
+                throw new TreasuryDomainException("error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");
+            }
+            
             InterestRateBean calculateUndebitedInterestValue = entry.calculateUndebitedInterestValue(paymentDate);
             if (TreasuryConstants.isGreaterThan(calculateUndebitedInterestValue.getInterestAmount(), BigDecimal.ZERO)) {
                 entry.createInterestRateDebitEntry(calculateUndebitedInterestValue, documentDate,

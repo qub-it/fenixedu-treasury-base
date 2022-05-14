@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
@@ -106,9 +109,19 @@ public class TreasuryDebtProcessMainService {
         return false;
     }
 
-    public static boolean isSettlementAnnullmentActionBlocked(SettlementNote settlementNote) {
+    public static boolean isFinantialDocumentAnnullmentActionBlocked(FinantialDocument finantialDocument) {
         for (ITreasuryDebtProcessService service : services) {
-            if (service.isSettlementAnnullmentActionBlocked(settlementNote)) {
+            if (service.isFinantialDocumentAnnullmentActionBlocked(finantialDocument)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    public static boolean isFinantialDocumentEntryAnnullmentActionBlocked(FinantialDocumentEntry finantialDocumentEntry) {
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.isFinantialDocumentEntryAnnullmentActionBlocked(finantialDocumentEntry)) {
                 return true;
             }
         }
@@ -123,5 +136,14 @@ public class TreasuryDebtProcessMainService {
 
         return result;
     }
+    
+    public static boolean isDebitEntryInterestCreationInAdvanceBlocked(DebitEntry debitEntry) {
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.isDebitEntryInterestCreationInAdvanceBlocked(debitEntry)) {
+                return true;
+            }
+        }
 
+        return false;
+    }
 }
