@@ -765,16 +765,30 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         return gatewayService().getPaymentTransactionReportByTransactionId(transactionId);
     }
 
-    public void edit(String name, String sibsEndpointUrl, String bearerToken, String aesKey,
-            int numberOfMonthsToExpirePaymentReferenceCode, boolean sendBillingDataInOnlinePayment) {
+    public void edit(String name, 
+            String sibsEndpointUrl,
+            String sibsEntityId,
+            String entityReferenceCode,
+            String bearerToken, 
+            String aesKey,
+            int numberOfMonthsToExpirePaymentReferenceCode, 
+            boolean sendBillingDataInOnlinePayment) {
 
         setName(name);
         setSibsEndpointUrl(sibsEndpointUrl);
+        setSibsEntityId(sibsEntityId);
+        setEntityReferenceCode(entityReferenceCode);
         setBearerToken(bearerToken);
         setAesKey(aesKey);
         setNumberOfMonthsToExpirePaymentReferenceCode(numberOfMonthsToExpirePaymentReferenceCode);
         setSendBillingDataInOnlinePayment(sendBillingDataInOnlinePayment);
 
+        checkRules();
+    }
+    
+    public void changeEnvironmentMode(SibsOnlinePaymentsGatewayEnviromentMode environmentMode) {
+        setEnviromentMode(environmentMode);
+        
         checkRules();
     }
 
