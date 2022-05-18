@@ -64,9 +64,13 @@ import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
+import org.fenixedu.treasury.domain.document.FinantialDocument;
+import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
+import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
@@ -306,35 +310,48 @@ public abstract class Customer extends Customer_Base {
     }
 
     public boolean isWithFinantialDocumentsIntegratedInERP() {
-        boolean checkedInAllFinantialInstitutions = true;
-        
-        for (DebtAccount debtAccount : getDebtAccountsSet()) {
-            final FinantialInstitution institution = debtAccount.getFinantialInstitution();
+        return isCustomerWithFinantialDocumentsIntegratedInERP(this);
+    }
 
-            if (institution.getErpIntegrationConfiguration() == null) {
-                checkedInAllFinantialInstitutions = false;
-                break;
+    private boolean isCustomerWithFinantialDocumentsIntegratedInERP(final Customer customer) {
+        for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
+
+            for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
+
+                for (final ERPExportOperation erpExportOperation : finantialDocument.getErpExportOperationsSet()) {
+                    if (!erpExportOperation.getSuccess()) {
+                        continue;
+                    }
+
+                    if (!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
+                        return true;
+                    }
+                }
+
+                if (!Strings.isNullOrEmpty(finantialDocument.getErpCertificateDocumentReference())) {
+                    return true;
+                }
             }
 
-            if (Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
-                checkedInAllFinantialInstitutions = false;
-                break;
-            }
+            for (Invoice invoice : debtAccount.getInvoiceSet()) {
 
-            final IERPExternalService erpService =
-                    institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
+                for (final ERPExportOperation erpExportOperation : invoice.getErpExportOperationsSet()) {
+                    if (!erpExportOperation.getSuccess()) {
+                        continue;
+                    }
 
-            if (erpService == null) {
-                checkedInAllFinantialInstitutions = false;
-                break;
-            }
+                    if (!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
+                        return true;
+                    }
+                }
 
-            if (erpService.getERPExporter().isCustomerWithFinantialDocumentsIntegratedInERP(this)) {
-                return true;
+                if (!Strings.isNullOrEmpty(invoice.getErpCertificateDocumentReference())) {
+                    return true;
+                }
             }
         }
 
-        return !checkedInAllFinantialInstitutions;
+        return false;
     }
 
     public boolean isCustomerInformationMaybeIntegratedWithSuccess() {

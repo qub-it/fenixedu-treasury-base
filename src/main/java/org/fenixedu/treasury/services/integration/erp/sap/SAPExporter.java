@@ -1993,21 +1993,25 @@ public class SAPExporter implements IERPExporter {
     @Override
     public boolean isCustomerMaybeIntegratedWithSuccess(final Customer customer) {
         for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
-
-            for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
-                for (final ERPExportOperation exportOperation : finantialDocument.getErpExportOperationsSet()) {
-                    if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
-                        return true;
+            try {
+                for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
+                    for (final ERPExportOperation exportOperation : finantialDocument.getErpExportOperationsSet()) {
+                        if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
+                            return true;
+                        }
                     }
                 }
-            }
-
-            for (final Invoice invoice : debtAccount.getInvoiceSet()) {
-                for (final ERPExportOperation exportOperation : invoice.getErpExportOperationsSet()) {
-                    if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
-                        return true;
+                
+                for (final Invoice invoice : debtAccount.getInvoiceSet()) {
+                    for (final ERPExportOperation exportOperation : invoice.getErpExportOperationsSet()) {
+                        if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
+                            return true;
+                        }
                     }
                 }
+            } catch(Exception e) {
+                // May give error due to missing integration log files
+                // might happen in quality environments
             }
         }
 
