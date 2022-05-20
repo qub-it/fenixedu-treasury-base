@@ -1,4 +1,5 @@
 - Improvement: Check if customer is with finantial documents integrated in ERP without using ERP integration implementation class
+- Bug Fix: Throw error when reading SIBS Payment Gateway by merchant transaction id, instead of returning empty collection
 
 9.2.1 (02-05-2022)
 - Bug Fix: Fill credit and exemption reason in documentObservations of Credit Note

@@ -754,7 +754,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         try {
             return gatewayService().getPaymentTransactionsReportListByMerchantId(merchantTransactionId);
         } catch (OnlinePaymentsGatewayCommunicationException e) {
-            return Collections.emptyList();
+            throw new TreasuryDomainException(e,
+                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
         }
     }
 
