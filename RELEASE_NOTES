@@ -1,3 +1,4 @@
+9.2.2 (22-05-2022)
 - Improvement: Check if customer is with finantial documents integrated in ERP without using ERP integration implementation class
 - Bug Fix: Throw error when reading SIBS Payment Gateway by merchant transaction id, instead of returning empty collection
 
