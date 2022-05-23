@@ -65,7 +65,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
@@ -88,6 +87,8 @@ import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.treasurydebtprocess.InvoiceEntryBlockingPaymentContext;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -152,10 +153,17 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     // Fields used by SibsPaymentRequest generation
     private boolean limitSibsPaymentRequestToCustomDueDate;
     private LocalDate customSibsPaymentRequestDueDate;
-    
+
     // This date is used only in Angular settlement note creation (treasury-ui)
     private LocalDate uiAngularPaymentDate;
-    
+
+    // By default the invoice entries are checked for payment blocking for the frontend 
+    // payment or payment request generation
+    //
+    // But it is possible to check for payment blockin in the backoffice, which might be
+    // more relaxed than frontend payment
+    private InvoiceEntryBlockingPaymentContext invoiceEntriesPaymentBlockingContext = InvoiceEntryBlockingPaymentContext.FRONTEND;
+
     public SettlementNoteBean() {
         init();
     }
@@ -165,17 +173,17 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         init(debtAccount, isReimbursementNote, excludeDebtsForPayorAccount);
     }
 
-    public SettlementNoteBean(PaymentRequest paymentRequest, DateTime paymentDate, BigDecimal paidAmount,
+    private SettlementNoteBean(PaymentRequest paymentRequest, DateTime paymentDate, BigDecimal paidAmount,
             String originDocumentNumber) {
-        if(!TreasuryConstants.isPositive(paidAmount)) {
+        if (!TreasuryConstants.isPositive(paidAmount)) {
             throw new IllegalArgumentException("Paid amount is not positive");
         }
-        
+
         init();
         setDate(paymentDate);
         setOriginDocumentNumber(originDocumentNumber);
         setAdvancePayment(true);
-        
+
         this.debtAccount = paymentRequest.getDebtAccount();
         this.reimbursementNote = false;
 
@@ -198,47 +206,54 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
             return o1.getExternalId().compareTo(o2.getExternalId());
         };
-        
-        final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(COMPARE_BY_DUE_DATE_AND_AMOUNT);
-        sortedDebitEntriesToPay.addAll(paymentRequest.getDebitEntriesSet());
 
-        for (DebitEntry debitEntry : sortedDebitEntriesToPay) {
-            SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean(debitEntry);
-            debitEntryBean.setIncluded(TreasuryConstants.isPositive(debitEntry.getOpenAmount()));
-            debitEntries.add(debitEntryBean);
+        if (!paymentRequest.getDebitEntriesSet().stream().filter(d -> d.isInDebt()).anyMatch(
+                d -> TreasuryDebtProcessMainService.isBlockingPayment(d, InvoiceEntryBlockingPaymentContext.FRONTEND))) {
+            final TreeSet<DebitEntry> sortedDebitEntriesToPay = Sets.newTreeSet(COMPARE_BY_DUE_DATE_AND_AMOUNT);
+            sortedDebitEntriesToPay.addAll(paymentRequest.getDebitEntriesSet().stream().collect(Collectors.toSet()));
+
+            for (DebitEntry debitEntry : sortedDebitEntriesToPay) {
+                SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean(debitEntry);
+                debitEntryBean.setIncluded(TreasuryConstants.isPositive(debitEntry.getOpenAmount()));
+                debitEntries.add(debitEntryBean);
+            }
         }
 
-        final TreeSet<Installment> sortedInstallments = Sets.newTreeSet(Installment.COMPARE_BY_DUEDATE);
-        
-        /*
-         * Include only open installment, because the installment settlement entries are created
-         * for installment entries of open debit entries.
-         */
-        sortedInstallments.addAll(paymentRequest.getInstallmentsSet().stream()
-                .filter(i -> i.getPaymentPlan().getState().isOpen())
-                .collect(Collectors.toSet()));
+        if (!paymentRequest.getInstallmentsSet().stream().anyMatch(
+                i -> TreasuryDebtProcessMainService.isBlockingPayment(i, InvoiceEntryBlockingPaymentContext.FRONTEND))) {
+            final TreeSet<Installment> sortedInstallments = Sets.newTreeSet(Installment.COMPARE_BY_DUEDATE);
 
-        for (Installment installment : sortedInstallments) {
-            InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
-            installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
-            debitEntries.add(installmentBean);
+            /*
+             * Include only open installment, because the installment settlement entries are created
+             * for installment entries of open debit entries.
+             */
+            sortedInstallments.addAll(paymentRequest.getInstallmentsSet().stream()
+                    .filter(i -> i.getPaymentPlan().getState().isOpen()).collect(Collectors.toSet()));
+
+            for (Installment installment : sortedInstallments) {
+                InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
+                installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
+                debitEntries.add(installmentBean);
+            }
         }
-        
-        if(getReferencedCustomers().size() > 1) {
+
+        if (getReferencedCustomers().size() > 1) {
             // Register advance payment only
             debitEntries.clear();
         }
 
         BigDecimal amountToDistribute = paidAmount;
-        
+
         for (ISettlementInvoiceEntryBean entryBean : debitEntries) {
-            if(!entryBean.isIncluded()) {
+            if (!entryBean.isIncluded()) {
                 continue;
             }
-            
-            if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute, entryBean.getSettledAmount())) {
+
+            if (TreasuryConstants.isPositive(amountToDistribute)
+                    && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute, entryBean.getSettledAmount())) {
                 amountToDistribute = amountToDistribute.subtract(entryBean.getSettledAmount());
-            } else if(TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterThan(entryBean.getSettledAmount(), amountToDistribute)) {
+            } else if (TreasuryConstants.isPositive(amountToDistribute)
+                    && TreasuryConstants.isGreaterThan(entryBean.getSettledAmount(), amountToDistribute)) {
                 entryBean.setSettledAmount(amountToDistribute);
                 amountToDistribute = BigDecimal.ZERO;
             } else {
@@ -246,17 +261,17 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 entryBean.setIncluded(false);
             }
         }
-        
+
         calculateVirtualDebitEntries();
 
-        PaymentEntryBean paymentEntryBean = new PaymentEntryBean(paidAmount,
-                paymentRequest.getPaymentMethod(), paymentRequest.fillPaymentEntryMethodId());
+        PaymentEntryBean paymentEntryBean =
+                new PaymentEntryBean(paidAmount, paymentRequest.getPaymentMethod(), paymentRequest.fillPaymentEntryMethodId());
 
         paymentEntries.add(paymentEntryBean);
 
     }
 
-    public SettlementNoteBean(SettlementNoteBean settlementNoteBean) {
+    private SettlementNoteBean(SettlementNoteBean settlementNoteBean) {
         init();
         this.debtAccount = settlementNoteBean.getDebtAccount();
         this.reimbursementNote = settlementNoteBean.isReimbursementNote();
@@ -280,7 +295,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
         this.previousStates = (Stack<Integer>) settlementNoteBean.getPreviousStates().clone();
         this.settlementNoteStateUrls = new ArrayList(settlementNoteBean.getSettlementNoteStateUrls());
-        
+
         this.documentNumberSeries = new ArrayList<>();
         settlementNoteBean.getDocumentNumberSeries()
                 .forEach(bean -> this.documentNumberSeries.add(new TreasuryTupleDataSourceBean(bean.getId(), bean.getText())));
@@ -302,13 +317,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         });
 
         settlementNoteBean.debitEntries.stream().filter(bean -> bean.isForInstallment()).forEach(bean -> {
-            InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(((InstallmentPaymenPlanBean) bean).getInstallment());
+            InstallmentPaymenPlanBean installmentBean =
+                    new InstallmentPaymenPlanBean(((InstallmentPaymenPlanBean) bean).getInstallment());
             installmentBean.setIncluded(bean.isIncluded());
             installmentBean.setNotValid(bean.isNotValid());
             installmentBean.setSettledAmount(bean.getSettledAmount());
             this.debitEntries.add(installmentBean);
         });
-        
+
         settlementNoteBean.paymentEntries.forEach(bean -> {
             this.paymentEntries.add(new PaymentEntryBean(bean.paymentAmount, bean.paymentMethod, bean.paymentMethodId));
         });
@@ -333,25 +349,35 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
 
         this.documentNumberSeries = new ArrayList<>();
-        
+
         // Fields used by SibsPaymentRequest generation
         this.limitSibsPaymentRequestToCustomDueDate = false;
         this.customSibsPaymentRequestDueDate = null;
-        
+
         // This date is used only in settlement note creation in angular ui (treasury-ui)
         // This should not be used elsewhere
         this.uiAngularPaymentDate = new LocalDate();
     }
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
+        init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount, true);
+    }
+
+    private void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount,
+            boolean excludeTreasuryDebtProcessBlockingPayment) {
         init();
 
         this.debtAccount = debtAccount;
         this.reimbursementNote = reimbursementNote;
 
-        for (InvoiceEntry invoiceEntry : debtAccount.getPendingInvoiceEntriesSet().stream()
-                .filter(ie -> ie.hasPreparingSettlementEntries() == false)
-                .sorted((x, y) -> x.getDueDate().compareTo(y.getDueDate())).collect(Collectors.<InvoiceEntry> toList())) {
+        List<InvoiceEntry> pendingInvoiceEntriesList = debtAccount.getPendingInvoiceEntriesSet().stream() //
+                .filter(ie -> !excludeTreasuryDebtProcessBlockingPayment
+                        || !TreasuryDebtProcessMainService.isBlockingPayment(ie, this.invoiceEntriesPaymentBlockingContext))
+                .filter(ie -> !ie.hasPreparingSettlementEntries()) //
+                .sorted(InvoiceEntry.COMPARE_BY_DUE_DATE) //
+                .collect(Collectors.<InvoiceEntry> toList());
+
+        for (InvoiceEntry invoiceEntry : pendingInvoiceEntriesList) {
             if (invoiceEntry instanceof DebitEntry) {
                 final DebitEntry debitEntry = (DebitEntry) invoiceEntry;
 
@@ -374,7 +400,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
 
         Set<Installment> installments = debtAccount.getActivePaymentPlansSet().stream()
-                .flatMap(plan -> plan.getSortedOpenInstallments().stream()).collect(Collectors.toSet());
+                .flatMap(plan -> plan.getSortedOpenInstallments().stream())
+                .filter(i -> !excludeTreasuryDebtProcessBlockingPayment
+                        || !TreasuryDebtProcessMainService.isBlockingPayment(i, this.invoiceEntriesPaymentBlockingContext))
+                .collect(Collectors.toSet());
 
         for (Installment installment : installments) {
             debitEntries.add(new InstallmentPaymenPlanBean(installment));
@@ -464,6 +493,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
     }
 
+    @Deprecated
+    /**
+     * Replaced by calculateVirtualDebitEntries
+     */
     public void calculateInterestDebitEntries() {
         setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
         for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
@@ -471,7 +504,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
+                InterestRateBean debitInterest =
+                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
                 if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
                     SettlementInterestEntryBean interestEntryBean =
                             new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
@@ -571,7 +605,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest = debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
+                InterestRateBean debitInterest =
+                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
                 if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
                     SettlementInterestEntryBean interestEntryBean =
                             new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
@@ -599,6 +634,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
 
+    }
+
+    public void markCheckingInvoiceEntriesPaymentBlockingForBackoffice() {
+        this.invoiceEntriesPaymentBlockingContext = InvoiceEntryBlockingPaymentContext.BACKOFFICE;
     }
 
     // @formatter:off
@@ -891,21 +930,21 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public void setCustomSibsPaymentRequestDueDate(LocalDate customSibsPaymentRequestDueDate) {
         this.customSibsPaymentRequestDueDate = customSibsPaymentRequestDueDate;
     }
-    
+
     @Deprecated
     // This date is used only in settlement note creation in angular ui (treasury-ui)
     // This should not be used elsewhere
     public LocalDate getUiAngularPaymentDate() {
         return uiAngularPaymentDate;
     }
-    
+
     @Deprecated
     // This date is used only in settlement note creation in angular ui (treasury-ui)
     // This should not be used elsewhere
     public void setUiAngularPaymentDate(LocalDate uiAngularPaymentDate) {
         this.uiAngularPaymentDate = uiAngularPaymentDate;
     }
-    
+
     // @formatter:off
     /* ************
      * HELPER BEANS
@@ -1029,4 +1068,25 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             this.amountWithVat = amountWithVat.subtract(partialAmountWithVat);
         }
     }
+
+    /* Services */
+
+    public static SettlementNoteBean copyForSettlementNoteCreation(SettlementNoteBean bean) {
+        return new SettlementNoteBean(bean);
+    }
+
+    public static SettlementNoteBean createForPaymentRequestProcessPayment(PaymentRequest paymentRequest, DateTime paymentDate,
+            BigDecimal paidAmount, String originDocumentNumber) {
+        return new SettlementNoteBean(paymentRequest, paymentDate, paidAmount, originDocumentNumber);
+    }
+
+    // Used by treasury debt processes
+    // Invoice entries blocked are not excluded
+    public static SettlementNoteBean createForTreasuryDebtProcesses(DebtAccount debtAccount) {
+        SettlementNoteBean result = new SettlementNoteBean();
+        result.init(debtAccount, false, false, false);
+
+        return result;
+    }
+
 }

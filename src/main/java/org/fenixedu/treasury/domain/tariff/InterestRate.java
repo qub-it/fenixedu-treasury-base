@@ -66,6 +66,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -113,8 +114,8 @@ public class InterestRate extends InterestRate_Base {
         if (getInterestType() == null) {
             throw new TreasuryDomainException("error.InterestRate.interestType.required");
         }
-        
-        if(getInterestType() != InterestType.GLOBAL_RATE && getInterestType() != InterestType.FIXED_AMOUNT) {
+
+        if (getInterestType() != InterestType.GLOBAL_RATE && getInterestType() != InterestType.FIXED_AMOUNT) {
             throw new RuntimeException("error.InterestRate.interestType.not.supported");
         }
 
@@ -158,6 +159,19 @@ public class InterestRate extends InterestRate_Base {
         return calculateInterestAmount(withAllInterestValues, calculateEvents(paymentDate));
     }
 
+    /*
+     * Calculate the interest rate at certain date and disregard any payments made after that date.
+     * This interest calculation is necessary in processes where the interest rate is calculated
+     * in advance and fixed by agreement, and cannot change due to payments made after that.
+     */
+    public InterestRateBean calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
+        if (getInterestType().isFixedAmount()) {
+            return calculateForFixedAmount(true);
+        }
+
+        return calculateInterestAmount(true, calculateEvents(lockDate, lockDate.toDateTimeAtStartOfDay()));
+    }
+    
     private InterestRateBean calculateInterestAmount(boolean withAllInterestValues,
             NavigableMap<LocalDate, InterestCalculationEvent> orderedEvents) {
         InterestRateBean result = new InterestRateBean();
@@ -191,8 +205,8 @@ public class InterestRate extends InterestRate_Base {
                 totalInterestAmount = totalInterestAmount.subtract(entry.getValue());
             }
         }
-        
-        if(TreasuryConstants.isNegative(totalInterestAmount)) {
+
+        if (TreasuryConstants.isNegative(totalInterestAmount)) {
             totalInterestAmount = BigDecimal.ZERO;
         }
 
@@ -209,21 +223,31 @@ public class InterestRate extends InterestRate_Base {
             if (interestDebitEntry.isAnnulled()) {
                 continue;
             }
-            
-            if(!TreasuryConstants.isPositive(interestDebitEntry.getAvailableAmountForCredit())) {
+
+            if (!TreasuryConstants.isPositive(interestDebitEntry.getAvailableAmountForCredit())) {
                 continue;
             }
-            
+
             LocalDate interestEntryDateTime = interestDebitEntry.getEntryDateTime().toLocalDate();
             result.putIfAbsent(interestEntryDateTime, BigDecimal.ZERO);
-            result.put(interestEntryDateTime, result.get(interestEntryDateTime).add(interestDebitEntry.getAvailableAmountForCredit()));
+            result.put(interestEntryDateTime,
+                    result.get(interestEntryDateTime).add(interestDebitEntry.getAvailableAmountForCredit()));
         }
 
         return result;
     }
 
     private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(LocalDate paymentDate) {
-        NavigableMap<LocalDate, BigDecimal> paymentsMap = createPaymentsMap(paymentDate);
+        return calculateEvents(paymentDate, null);
+    }
+    
+    /*
+     * The ignorePaymentsAfterDate is not required. If set it will ignore all payments made after that
+     * date. It is a way to lock the interest calculation at certain date, which is necessary
+     * for processes which lock the interest to be paid
+     */
+    private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(LocalDate paymentDate, DateTime ignorePaymentsAfterDate) {
+        NavigableMap<LocalDate, BigDecimal> paymentsMap = createPaymentsMap(paymentDate, ignorePaymentsAfterDate);
         LocalDate lastPayment = paymentsMap.lastKey();
 
         final LocalDate firstDayToChargeInterests = calculateFirstDayToChargeInterests(lastPayment);
@@ -243,8 +267,8 @@ public class InterestRate extends InterestRate_Base {
             if (eventDate.isBefore(firstDayToChargeInterests)) {
                 return;
             }
-            
-            if(eventDate.isAfter(nextDayOfInterestsCharge)) {
+
+            if (eventDate.isAfter(nextDayOfInterestsCharge)) {
                 return;
             }
 
@@ -301,13 +325,29 @@ public class InterestRate extends InterestRate_Base {
     }
 
     private NavigableMap<LocalDate, BigDecimal> createPaymentsMap(LocalDate paymentDate) {
+        return createPaymentsMap(paymentDate, null);
+    }
+    
+    /*
+     * The ignorePaymentsAfterDate is not required. If set it will ignore all payments made after that
+     * date. It is a way to lock the interest calculation at certain date, which is necessary
+     * for processes which lock the interest to be paid
+     */
+    private NavigableMap<LocalDate, BigDecimal> createPaymentsMap(LocalDate paymentDate, DateTime ignorePaymentsAfterDate) {
         NavigableMap<LocalDate, BigDecimal> result = new TreeMap<>();
 
-        getDebitEntry().getSettlementEntriesSet().stream().filter(s -> !s.isAnnulled()).forEach(s -> {
-            LocalDate settlementPaymentDate = s.getSettlementNote().getPaymentDate().toLocalDate();
-            result.putIfAbsent(settlementPaymentDate, BigDecimal.ZERO);
-            result.put(settlementPaymentDate, result.get(settlementPaymentDate).add(s.getAmount()));
-        });
+        getDebitEntry().getSettlementEntriesSet().stream() //
+                .filter(s -> !s.isAnnulled()) //
+                .forEach(s -> {
+                    if (ignorePaymentsAfterDate != null
+                            && s.getSettlementNote().getPaymentDate().isAfter(ignorePaymentsAfterDate)) {
+                        return;
+                    }
+
+                    LocalDate settlementPaymentDate = s.getSettlementNote().getPaymentDate().toLocalDate();
+                    result.putIfAbsent(settlementPaymentDate, BigDecimal.ZERO);
+                    result.put(settlementPaymentDate, result.get(settlementPaymentDate).add(s.getAmount()));
+                });
 
         result.putIfAbsent(paymentDate, BigDecimal.ZERO);
         result.put(paymentDate, result.get(paymentDate).add(getDebitEntry().getOpenAmount()));
@@ -369,11 +409,11 @@ public class InterestRate extends InterestRate_Base {
                 totalInterestAmount = totalInterestAmount.subtract(entry.getValue());
             }
         }
-        
-        if(TreasuryConstants.isNegative(totalInterestAmount)) {
+
+        if (TreasuryConstants.isNegative(totalInterestAmount)) {
             totalInterestAmount = BigDecimal.ZERO;
         }
-        
+
         result.setInterestAmount(getRelatedCurrency().getValueWithScale(totalInterestAmount));
         return result;
     }
@@ -470,9 +510,8 @@ public class InterestRate extends InterestRate_Base {
     }
 
     @Atomic
-    public static InterestRate createForDebitEntry(DebitEntry debitEntry, InterestType interestType,
-            int numberOfDaysAfterDueDate, boolean applyInFirstWorkday, int maximumDaysToApplyPenalty,
-            BigDecimal interestFixedAmount, BigDecimal rate) {
+    public static InterestRate createForDebitEntry(DebitEntry debitEntry, InterestType interestType, int numberOfDaysAfterDueDate,
+            boolean applyInFirstWorkday, int maximumDaysToApplyPenalty, BigDecimal interestFixedAmount, BigDecimal rate) {
         return new InterestRate(null, debitEntry, interestType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                 maximumDaysToApplyPenalty, interestFixedAmount, rate);
     }

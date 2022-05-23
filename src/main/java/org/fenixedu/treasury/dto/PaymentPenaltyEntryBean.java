@@ -114,6 +114,7 @@ public class PaymentPenaltyEntryBean implements ISettlementInvoiceEntryBean, ITr
         this.amount = amount;
     }
 
+    // TODO This method is misleading. Rename to getOriginDebitEntry
     public DebitEntry getDebitEntry() {
         return originDebitEntry;
     }

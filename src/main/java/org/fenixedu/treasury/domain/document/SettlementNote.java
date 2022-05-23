@@ -82,6 +82,8 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.treasurydebtprocess.ITreasuryDebtProcess;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementCreditEntryBean;
@@ -589,8 +591,7 @@ public class SettlementNote extends SettlementNote_Base {
 
     }
 
-    @Atomic
-    public void anullDocument(final String anulledReason, final boolean markDocumentToExport) {
+    private void _anullDocument(String anulledReason, boolean markDocumentToExport) {
         if (this.isPreparing()) {
             this.delete(true);
         } else if (this.isClosed()) {
@@ -652,8 +653,24 @@ public class SettlementNote extends SettlementNote_Base {
             TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
         } else {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
+        }        
+    }
+    
+    @Atomic
+    /*
+     * This method check if there is some debt process blocking the annullment
+     */
+    public void anullDocument(String anulledReason, boolean markDocumentToExport) {
+        if(TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.SettlementNote.cannot.annull.due.to.existing.active.debt.process");
         }
-
+        
+        _anullDocument(anulledReason, markDocumentToExport);
+    }
+    
+    /* Does not verify if the settlement note is blocking due to some debt process */
+    public void anullDocumentFromDebtProcess(String anulledReason, boolean markDocumentToExport, ITreasuryDebtProcess debtProcess) {
+        _anullDocument(anulledReason, markDocumentToExport);
     }
 
     public BigDecimal getTotalDebitAmount() {
@@ -949,7 +966,7 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     public static SettlementNote createSettlementNote(SettlementNoteBean bean) {
         DateTime documentDate = new DateTime();
-        SettlementNoteBean copy = new SettlementNoteBean(bean);
+        SettlementNoteBean copy = SettlementNoteBean.copyForSettlementNoteCreation(bean);
 
         SettlementNote settlementNote = SettlementNote.create(copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
                 copy.getDate(), copy.getOriginDocumentNumber(),

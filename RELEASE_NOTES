@@ -1,3 +1,6 @@
+- New Feature: Treasury debt processes service, to check if invoice entry is blocked in some operations like payment or annulment
+- Improvement: Lock interests at certain date
+
 9.2.2 (22-05-2022)
 - Improvement: Check if customer is with finantial documents integrated in ERP without using ERP integration implementation class
 - Bug Fix: Throw error when reading SIBS Payment Gateway by merchant transaction id, instead of returning empty collection

@@ -64,6 +64,7 @@ import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoo
 import org.fenixedu.treasury.domain.paymentcodes.pool.PaymentCodePool;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.ITreasuryBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
@@ -139,13 +140,24 @@ public class PaymentReferenceCodeBean implements ITreasuryBean {
     }
 
     public List<DebitEntry> getOpenDebitEntries() {
-        return DebitEntry.find(debtAccount).filter(x -> !x.isAnnulled() && TreasuryConstants.isPositive(x.getOpenAmount()))
-                .sorted(DebitEntry.COMPARE_BY_EXTERNAL_ID).collect(Collectors.<DebitEntry> toList());
+        return DebitEntry.find(debtAccount) //
+                .filter(x -> !x.isAnnulled() && TreasuryConstants.isPositive(x.getOpenAmount())) //
+                .filter(x -> !TreasuryDebtProcessMainService.isBlockingPaymentInFrontend(x)) //
+                .sorted(DebitEntry.COMPARE_BY_EXTERNAL_ID) //
+                .collect(Collectors.<DebitEntry> toList());
     }
 
     public List<Installment> getOpenInstallments() {
-        return debtAccount.getActivePaymentPlansSet().stream().flatMap(i -> i.getSortedOpenInstallments().stream())
-                .sorted(Installment.COMPARE_BY_DUEDATE).collect(Collectors.<Installment> toList());
+        return debtAccount.getActivePaymentPlansSet().stream() //
+                .flatMap(i -> i.getSortedOpenInstallments().stream()) //
+                .filter(i -> !someEntriesIsBlockedInFrontendPayment(i)) //
+                .sorted(Installment.COMPARE_BY_DUEDATE) //
+                .collect(Collectors.<Installment> toList());
+    }
+
+    private boolean someEntriesIsBlockedInFrontendPayment(Installment installment) {
+        return installment.getInstallmentEntriesSet().stream()
+                .anyMatch(e -> TreasuryDebtProcessMainService.isBlockingPaymentInFrontend(e.getDebitEntry()));
     }
 
     public DigitalPaymentPlatform getPaymentCodePool() {

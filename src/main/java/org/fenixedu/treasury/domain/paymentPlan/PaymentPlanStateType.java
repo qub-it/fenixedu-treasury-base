@@ -52,12 +52,11 @@
  */
 package org.fenixedu.treasury.domain.paymentPlan;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 public enum PaymentPlanStateType {
     CLOSED, ANNULED, OPEN, TRANSFERRED, NON_COMPLIANCE;
@@ -83,7 +82,7 @@ public enum PaymentPlanStateType {
     }
 
     public LocalizedString getDescriptionI18N() {
-        return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
+        return TreasuryConstants.treasuryBundleI18N(getClass().getSimpleName() + "." + name());
     }
 
     public static List<PaymentPlanStateType> findAll() {

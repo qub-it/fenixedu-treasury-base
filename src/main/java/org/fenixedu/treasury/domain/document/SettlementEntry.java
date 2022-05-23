@@ -65,6 +65,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -187,7 +188,14 @@ public class SettlementEntry extends SettlementEntry_Base {
     @Atomic
     public static SettlementEntry create(final DebitEntry debitEntry, final BigDecimal debtAmount,
             final SettlementNote settlementNote, DateTime entryDate) {
-        return new SettlementEntry(debitEntry, settlementNote, debtAmount, debitEntry.getDescription(), entryDate, true);
+        boolean createInterestIfNeeded = true;
+        
+        // Check if any treasury debt process is preventing from interests being created
+        if(TreasuryDebtProcessMainService.isInterestCreationWhenTotalSettledPrevented(debitEntry)) {
+            createInterestIfNeeded = false;
+        }
+
+        return new SettlementEntry(debitEntry, settlementNote, debtAmount, debitEntry.getDescription(), entryDate, createInterestIfNeeded);
     }
 
     @Atomic

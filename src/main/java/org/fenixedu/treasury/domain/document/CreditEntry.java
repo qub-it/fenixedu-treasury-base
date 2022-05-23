@@ -65,6 +65,7 @@ import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -195,6 +196,10 @@ public class CreditEntry extends CreditEntry_Base {
 
     public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
             BigDecimal unitAmount, final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
+        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
+        
         CreditEntry cr =
                 new CreditEntry(finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime, debitEntry,
                         null);
@@ -204,7 +209,10 @@ public class CreditEntry extends CreditEntry_Base {
     static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
             final FinantialDocument finantialDocument, final String description, final BigDecimal unitAmount,
             final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
-
+        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
+        
         if (treasuryExemption == null) {
             throw new TreasuryDomainException("error.CreditEntry.createFromExemption.requires.treasuryExemption");
         }
