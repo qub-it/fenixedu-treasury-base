@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
@@ -75,6 +76,18 @@ public class TreasuryDebtProcessMainService {
                 .anyMatch(d -> isBlockingPayment(d, context));
     }
 
+    public static List<LocalizedString> getBlockingPaymentReasonsForFrontend(DebtAccount debtAccount) {
+        List<LocalizedString> result = new ArrayList<>();
+
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.getBlockingPaymentReasonForFrontend(debtAccount) != null) {
+                result.add(service.getBlockingPaymentReasonForFrontend(debtAccount));
+            }
+        }
+
+        return result;
+    }
+    
     public static List<LocalizedString> getBlockingPaymentReasonsForFrontend(InvoiceEntry invoiceEntry) {
         List<LocalizedString> result = new ArrayList<>();
 

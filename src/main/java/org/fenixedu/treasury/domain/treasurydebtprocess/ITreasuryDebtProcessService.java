@@ -3,6 +3,7 @@ package org.fenixedu.treasury.domain.treasurydebtprocess;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
@@ -17,6 +18,8 @@ public interface ITreasuryDebtProcessService {
     
     boolean isBlockingPaymentInBackoffice(InvoiceEntry invoiceEntry);
 
+    LocalizedString getBlockingPaymentReasonForFrontend(DebtAccount debtAccount);
+    
     LocalizedString getBlockingPaymentReasonForFrontend(InvoiceEntry invoiceEntry);
     
     LocalizedString getBlockingPaymentReasonForBackoffice(InvoiceEntry invoiceEntry);
