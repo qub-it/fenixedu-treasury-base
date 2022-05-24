@@ -1,3 +1,4 @@
+9.3.0 (24-05-2022)
 - New Feature: Treasury debt processes service, to check if invoice entry is blocked in some operations like payment or annulment
 - Improvement: Lock interests at certain date
 
