@@ -115,10 +115,6 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         if (getMaxAmount() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.maxAmount.required");
         }
-        
-        if(getValidFrom().isAfter(getValidTo())) {
-            throw new TreasuryDomainException("error.SibsReferenceCode.validFrom.validTo.invalid");
-        }
 
         if(TreasuryConstants.isGreaterThan(getMinAmount(), getMaxAmount())) {
             throw new TreasuryDomainException("error.SibsReferenceCode.minAmount.maxAmount.invalid");
