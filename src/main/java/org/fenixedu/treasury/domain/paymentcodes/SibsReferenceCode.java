@@ -61,6 +61,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.LocalDate;
@@ -114,7 +115,15 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         if (getMaxAmount() == null) {
             throw new TreasuryDomainException("error.SibsReferenceCode.maxAmount.required");
         }
+        
+        if(getValidFrom().isAfter(getValidTo())) {
+            throw new TreasuryDomainException("error.SibsReferenceCode.validFrom.validTo.invalid");
+        }
 
+        if(TreasuryConstants.isGreaterThan(getMinAmount(), getMaxAmount())) {
+            throw new TreasuryDomainException("error.SibsReferenceCode.minAmount.maxAmount.invalid");
+        }
+        
         if (findByReferenceCode(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
             throw new TreasuryDomainException("error.SibsReferenceCode.referenceCode.duplicate");
         }
@@ -185,6 +194,13 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         super.deleteDomainObject();
     }
 
+    public void changeDates(LocalDate validFrom, LocalDate validTo) {
+        setValidFrom(validFrom);
+        setValidTo(validTo);
+        
+        checkRules();
+    }
+    
     // @formatter:off
     /*
      * ********

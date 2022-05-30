@@ -985,7 +985,7 @@ public class SettlementNote extends SettlementNote_Base {
 
         if (settlementNote.getExcessPaymentDebitNote() != null) {
             settlementNote.getExcessPaymentDebitNote().setOriginDocumentNumber(settlementNote.getUiDocumentNumber());
-            String comments = treasuryBundleI18N("label.SettlementNote.advancePayment")
+            String comments = treasuryBundleI18N("label.SettlementNote.excessPayment")
                     .getContent(TreasuryPlataformDependentServicesFactory.implementation().defaultLocale());
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
 

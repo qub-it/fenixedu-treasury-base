@@ -79,6 +79,7 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
+        setCreator(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
     }
 
     private String createPaymentFile(Set<SibsPaymentCodePool> paymentCodePoolsToInclude, DateTime lastSuccessfulSentDateTime,
