@@ -1,3 +1,6 @@
+- Bug Fix: Validate if document is already exported in ERP before sending to ERP, instead of validating even if generating to XML
+- Bug Fix: Add custom fiscal validation for Germany VAT numbers (9 digits)
+
 9.3.1 (30-05-2022)
 - Refactor: Add validation checks to SibsReferenceCode
 - Bug Fix: Set creator in SibsOutputFile

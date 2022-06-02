@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.util;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.fenixedu.treasury.domain.Customer;
 
@@ -86,12 +87,49 @@ public class FiscalCodeValidation {
         }
         
         if(VALIDATED_COUNTRIES.contains(countryCode.toUpperCase())) {
+            if(customValidation(countryCode, fiscalNumber)) {
+                return true;
+            }
+            
+            
             int checkTIN = TINValid.checkTIN(translateCountry(countryCode.toUpperCase()), fiscalNumber);
             
             return checkTIN == 0 || checkTIN == 2;
         }
 
         return true;
+    }
+
+    private static boolean customValidation(String countryCode, String fiscalNumber) {
+        /*
+         * ANIL 2022-06-02
+         * 
+         * This custom validation is to give response to some cases where
+         * it is not being possible to validate but the fiscalNumber is valid
+         * for that country
+         * 
+         * One example is the distinction in EU between "TIN" vs "VAT"
+         * - TIN fiscal number - applied to individuals
+         * - VAT fiscal number - applied to enterprises or companies
+         * 
+         * Seems to me that the TIN library validates fiscal numbers for individuals.
+         * While the VIES online service validates fiscal numbers for companies
+         * 
+         * For example in Germany the TIN fiscal number has 11 digits, while
+         * VAT fiscal number has 9 digits
+         */
+        
+        // TODO: Evaluate usage of VIES webservice
+        // For now apply custom validation for well known cases
+        
+        if("DE".equals(countryCode.toUpperCase())) {
+            // Return true if the fiscalNumber has 9 digits
+            if(Pattern.matches("\\d{9}", fiscalNumber)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private static String translateCountry(String countryCode) {

@@ -343,7 +343,13 @@ public class ERPExporterManager {
             try {
                 documentsToExport = erpExporter.processCreditNoteSettlementsInclusion(documentsToExport);
                 documentsToExport.stream()
-                        .forEach(document -> validateDocumentWithERPConfiguration(document, erpIntegrationConfiguration));
+                        .forEach(document -> {
+                            if (!erpIntegrationConfiguration.isIntegratedDocumentsExportationEnabled() && !document.isDocumentToExport()) {
+                                throw new TreasuryDomainException("error.ERPExporter.document.already.exported", document.getUiDocumentNumber());
+                            }
+                            
+                            validateDocumentWithERPConfiguration(document, erpIntegrationConfiguration);
+                        });
 
                 logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.starting.finantialdocuments.integration"));
 
@@ -376,9 +382,6 @@ public class ERPExporterManager {
     private static boolean validateDocumentWithERPConfiguration(FinantialDocument document,
             ERPConfiguration erpIntegrationConfiguration) {
 
-        if (!erpIntegrationConfiguration.isIntegratedDocumentsExportationEnabled() && !document.isDocumentToExport()) {
-            throw new TreasuryDomainException("error.ERPExporter.document.already.exported", document.getUiDocumentNumber());
-        }
         if (!erpIntegrationConfiguration.isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled() && document.isCreditNote()) {
             CreditNote creditNote = (CreditNote) document;
             if (!creditNote.isAdvancePayment() && !creditNote.isExportedInLegacyERP() && creditNote.getDebitNote() != null
