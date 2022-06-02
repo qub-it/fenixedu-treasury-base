@@ -1,3 +1,4 @@
+9.3.2 (02-06-2022)
 - Bug Fix: Validate if document is already exported in ERP before sending to ERP, instead of validating even if generating to XML
 - Bug Fix: Add custom fiscal validation for Germany VAT numbers (9 digits)
 
