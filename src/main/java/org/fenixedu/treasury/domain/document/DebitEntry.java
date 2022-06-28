@@ -427,8 +427,31 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
+    // TRUE - Do not block academical acts when dueDate is expired
+    // FALSE - Block academical acts when dueDate is expired
     public boolean isAcademicalActBlockingSuspension() {
         return getAcademicalActBlockingSuspension();
+    }
+    
+    // This is the opposite of academicalActBlockingSuspension()
+    // TRUE - Block academical acts when dueDate is expired
+    // FALSE - Do not block academical acts when dueDate is expired
+    public boolean getAcademicalActBlockingAfterDueDate() {
+        return !isAcademicalActBlockingSuspension();
+    }
+    
+    // This is the opposite of academicalActBlockingSuspension()
+    // TRUE - Block academical acts when dueDate is expired
+    // FALSE - Do not block academical acts when dueDate is expired
+    public boolean isAcademicalActBlockingAfterDueDate() {
+        return getAcademicalActBlockingAfterDueDate();
+    }
+
+    // This is the opposite of academicalActBlockingSuspension()
+    // TRUE - Block academical acts when dueDate is expired
+    // FALSE - Do not block academical acts when dueDate is expired
+    public void setAcademicalActBlockingAfterDueDate(boolean value) {
+        setAcademicalActBlockingSuspension(!value);
     }
 
     public boolean isBlockAcademicActsOnDebt() {

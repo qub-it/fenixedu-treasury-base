@@ -1913,6 +1913,7 @@ relation TreasuryEventProduct {
 	}
 }
 
+// TODO: Evaluate if this relation is necessary. If not then remove 
 relation TreasuryEventDebtAccount {
 	
 	debt.DebtAccount playsRole debtAccount {

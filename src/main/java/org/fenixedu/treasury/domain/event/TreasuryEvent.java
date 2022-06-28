@@ -131,7 +131,11 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
             return DebitEntry.findActive(this, product).count() > 0;
         }
 
-        return DebitEntry.findActive(this).filter(d -> !d.isEventAnnuled()).count() > 0;
+        return DebitEntry.findActive(this) //
+             // TODO: This filter is superfluous, is already done by DebitEntry::findActive
+                // TODO: Remove the following statement and test the result is equal
+                .filter(d -> !d.isEventAnnuled()) 
+                .count() > 0;
     }
 
     // TODO: getTotalAmount()
