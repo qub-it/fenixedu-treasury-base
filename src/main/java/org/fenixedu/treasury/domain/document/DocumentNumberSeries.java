@@ -120,6 +120,10 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     @Atomic
+    // TODO: The method name is misleading for two reasons:
+    // 1) The method starting with getX is misleading because it has side effects. Getters should not have side effects
+    // 2) The sequence number returned is after the counter is incremented
+    // 3) The method should be called incrementAndGetSequenceNumber()
     public int getSequenceNumberAndIncrement() {
         if (this.getSeries().getActive() == false) {
             throw new TreasuryDomainException("error.DocumentNumberSeries.document.is.in.closed.series");
