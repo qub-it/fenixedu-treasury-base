@@ -75,7 +75,7 @@ public class TreasuryAccessControlAPI {
     @Deprecated
     // Replace with isFrontOfficeMember
     public static boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution) {
-        return TreasuryAccessControl.getInstance().isAllowToModifyInvoices(username, finantialInstitution);
+        return TreasuryAccessControl.getInstance().isFrontOfficeMember(username, finantialInstitution);
     }
 
     public static boolean isAllowToModifySettlements(final String username, final FinantialInstitution finantialInstitution) {

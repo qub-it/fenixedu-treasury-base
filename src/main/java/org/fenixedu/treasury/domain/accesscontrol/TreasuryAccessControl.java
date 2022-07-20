@@ -208,6 +208,7 @@ public class TreasuryAccessControl {
         return this.extensions;
     }
 
+    @Deprecated
     public boolean isAllowToModifyInvoices(final String username, final FinantialInstitution finantialInstitution) {
         for (ITreasuryAccessControlExtension<?> ext : extensions) {
             if (ext.isAllowToModifyInvoices(username, finantialInstitution)) {
