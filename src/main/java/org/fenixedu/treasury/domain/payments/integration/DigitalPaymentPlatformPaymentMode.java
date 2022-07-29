@@ -70,6 +70,7 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     public DigitalPaymentPlatformPaymentMode() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
+        setActiveForFrontend(false);
     }
 
     public DigitalPaymentPlatformPaymentMode(DigitalPaymentPlatform platform, PaymentMethod paymentMethod) {
@@ -98,7 +99,11 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     }
 
     public boolean isDigitalPaymentPlatformAndPaymentModeActive() {
-        return getDigitalPaymentPlatform().isActive() && isActive();
+        return isDigitalPaymentPlatformAndPaymentModeActive(false);
+    }
+
+    private boolean isDigitalPaymentPlatformAndPaymentModeActive(boolean isForFrontend) {
+        return getDigitalPaymentPlatform().isActive() && isActive() && (!isForFrontend || Boolean.TRUE.equals(getActiveForFrontend()));
     }
 
     public boolean isActive() {
@@ -146,8 +151,18 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
                 .filter(pm -> pm.isDigitalPaymentPlatformAndPaymentModeActive());
     }
 
+    public static Stream<DigitalPaymentPlatformPaymentMode> findDigitalPaymentPlatformAndPaymentModeActive(
+            FinantialInstitution finantialInstitution, boolean isForFrontend) {
+        return findAll().filter(pm -> pm.getDigitalPaymentPlatform().getFinantialInstitution() == finantialInstitution)
+                .filter(pm -> pm.isDigitalPaymentPlatformAndPaymentModeActive(isForFrontend));
+    }
+
     public static Stream<DigitalPaymentPlatformPaymentMode> findDigitalPaymentPlatformAndPaymentModeActive() {
         return findAll().filter(pm -> pm.isDigitalPaymentPlatformAndPaymentModeActive());
+    }
+
+    public static Stream<DigitalPaymentPlatformPaymentMode> findDigitalPaymentPlatformAndPaymentModeActive(boolean isForFrontend) {
+        return findAll().filter(pm -> pm.isDigitalPaymentPlatformAndPaymentModeActive(isForFrontend));
     }
 
     public static Stream<DigitalPaymentPlatformPaymentMode> find(DigitalPaymentPlatform platform, PaymentMethod paymentMethod) {

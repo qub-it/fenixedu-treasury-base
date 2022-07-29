@@ -1,3 +1,5 @@
+- Improvement: Restrict payment mode selection in online payment, if it is frontend or not
+
 9.3.3 (28-06-2022)
 - Refactor: Add method to DebitEntry to check of it is academical act blocking after due date
 
