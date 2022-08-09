@@ -1,3 +1,5 @@
+- New Fixture: FEAP fields in finantial document
+
 9.3.4 (29-07-2022)
 - Improvement: Restrict payment mode selection in online payment, if it is frontend or not
 

@@ -332,6 +332,16 @@ class document.FinantialDocument {
 	LocalDate erpCertificationDate;
 	String erpCertificateDocumentReference;
 	String propertiesJsonMap;
+	
+	// fields for integration with FEAP 
+	String projectNumber; // Num projeto
+	String contractNumber; // Num contrato
+	String purchaseOrderNumber; // Nota de encomenda
+	String contractAgreementNumber; // Num acordo quadro
+	String accountingCostNumber; // Num compromisso
+	String contactName;
+	String contactEmail;
+	String contactPhoneNumber;
 }
 
 	class document.Invoice extends document.FinantialDocument {
