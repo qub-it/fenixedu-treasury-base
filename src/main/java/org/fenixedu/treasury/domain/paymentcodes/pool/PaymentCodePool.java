@@ -71,6 +71,7 @@ import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
+import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.services.payments.paymentscodegenerator.IPaymentCodeGenerator;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.LocalDate;
@@ -455,7 +456,7 @@ public class PaymentCodePool extends PaymentCodePool_Base {
     }
 
     public static boolean isReferenceCodesActiveForStudentPortal(FinantialInstitution finantialInstitution) {
-        return PaymentCodePool.findByActive(true, finantialInstitution).findFirst().isPresent()
-                && ("502488603".equals(finantialInstitution.getCode()) || "502286326".equals(finantialInstitution.getCode()));
+        return SibsPaymentCodePool.findForSibsPaymentCodeServiceByActive(finantialInstitution, true).findFirst().isPresent()
+                && ("502488603".equals(finantialInstitution.getCode()) || "FMV".equals(finantialInstitution.getCode()));
     }
 }

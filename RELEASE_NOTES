@@ -1,3 +1,5 @@
+- Bug Fix: Fix payment reference code creation link for student portal
+
 9.3.5 (12-08-2022)
 - New Fixture: FEAP fields in finantial document
 - Refactor: Make available payment reference code creation for specific institution
