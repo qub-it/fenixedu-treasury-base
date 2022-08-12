@@ -1,4 +1,5 @@
 - New Fixture: FEAP fields in finantial document
+- Refactor: Make available payment reference code creation for specific institution
 
 9.3.4 (29-07-2022)
 - Improvement: Restrict payment mode selection in online payment, if it is frontend or not
