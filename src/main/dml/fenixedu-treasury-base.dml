@@ -114,6 +114,7 @@ class PaymentMethod {
 	LocalizedStringT name;
 	boolean availableForPaymentInApplication;
 	Boolean requirePaymentMethodReference;
+	String saftCode;
 }
 
 	relation PaymentMethodBennu {

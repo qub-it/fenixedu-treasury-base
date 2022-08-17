@@ -111,7 +111,7 @@ public class PaymentMethod extends PaymentMethod_Base {
 
         checkRules();
     }
-
+    
     public boolean isDeletable() {
         return getPaymentCodePoolPaymentMethodSet().isEmpty() && getPaymentEntriesSet().isEmpty()
                 && getReimbursementEntriesSet().isEmpty();
