@@ -11,6 +11,7 @@ enum org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGa
 enum org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType 									as PaymentPlanStateType;
 enum org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum								as AddictionsCalculeType;
 enum org.fenixedu.treasury.domain.InvoiceRegistrationMode                                           as InvoiceRegistrationMode;
+enum org.fenixedu.treasury.domain.document.InvoiceSourceBillingType                                 as InvoiceSourceBillingType;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -346,6 +347,19 @@ class document.FinantialDocument {
 }
 
 	class document.Invoice extends document.FinantialDocument {
+		// Migration of certified documents from other systems
+		Boolean certificationCopyFromCertifiedDocument;
+		InvoiceSourceBillingType certificationOriginalDocumentInvoiceSourceBillingType;
+		LocalDate certificationOriginalDocumentDate;
+		String certificationOriginalDocumentHash;
+		String certificationOriginalDocumentType;
+		String certificationOriginalDocumentSeries;
+		Integer certificationOriginalDocumentNumber;
+		Boolean certificationOriginalDocumentCertified;
+		Boolean certificationOriginalDocumentManual;
+		String certificationOriginalDocumentCertificateNumber;
+		String certificationOriginalDocumentPrivateKeyVersion;
+		DateTime certificationOriginalDocumentSystemEntryDate;
 	}
 
 		class document.DebitNote extends document.Invoice {
@@ -3453,4 +3467,3 @@ class paypal.PayPalLog extends payments.PaymentRequestLog {
 	
 	boolean transactionDuplicated;
 }	
-	
