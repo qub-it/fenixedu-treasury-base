@@ -294,7 +294,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         return this.getInterestRate().calculateAllInterestsByLockingAtDate(lockDate);
     }
-    
+
     public InterestRateBean calculateUndebitedInterestValue(final LocalDate whenToCalculate) {
         if (!this.isApplyInterests()) {
             return new InterestRateBean();
@@ -432,14 +432,14 @@ public class DebitEntry extends DebitEntry_Base {
     public boolean isAcademicalActBlockingSuspension() {
         return getAcademicalActBlockingSuspension();
     }
-    
+
     // This is the opposite of academicalActBlockingSuspension()
     // TRUE - Block academical acts when dueDate is expired
     // FALSE - Do not block academical acts when dueDate is expired
     public boolean getAcademicalActBlockingAfterDueDate() {
         return !isAcademicalActBlockingSuspension();
     }
-    
+
     // This is the opposite of academicalActBlockingSuspension()
     // TRUE - Block academical acts when dueDate is expired
     // FALSE - Do not block academical acts when dueDate is expired
@@ -471,10 +471,10 @@ public class DebitEntry extends DebitEntry_Base {
             throw new RuntimeException("error.DebitEntry.is.event.annuled.cannot.be.exempted");
         }
 
-        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
-        
+
         if (TreasuryConstants.isGreaterThan(treasuryExemption.getNetExemptedAmount(), getAvailableNetAmountForCredit())) {
             throw new TreasuryDomainException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
         }
@@ -537,6 +537,10 @@ public class DebitEntry extends DebitEntry_Base {
     public CreditEntry createCreditEntry(DateTime documentDate, String description, String documentObservations,
             String documentTermsAndConditions, BigDecimal netAmountForCredit, TreasuryExemption treasuryExemption,
             CreditNote creditNote) {
+        boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
+        boolean isInvoiceRegistrationByTreasuryCertification =
+                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
         final DebitNote finantialDocument = (DebitNote) this.getFinantialDocument();
 
         if (finantialDocument == null) {
@@ -576,24 +580,27 @@ public class DebitEntry extends DebitEntry_Base {
                     this, BigDecimal.ONE);
         }
 
-        if (getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
+        if (!isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
             creditNote.closeDocument();
         }
 
         return creditEntry;
-
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
         final DocumentNumberSeries documentNumberSeriesSettlementNote = DocumentNumberSeries.find(
                 FinantialDocumentType.findForSettlementNote(), this.getFinantialDocument().getDocumentNumberSeries().getSeries());
 
+        boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
+        boolean isInvoiceRegistrationByTreasuryCertification =
+                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
         if (creditEntry.getFinantialDocument().isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.is.annulled");
         }
 
-        if (!creditEntry.getFinantialDocument().isPreparing()
-                && !getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated()) {
+        if (!isInvoiceRegistrationByTreasuryCertification && !creditEntry.getFinantialDocument().isPreparing()
+                && !isToCloseCreditNoteWhenCreated) {
             return;
         }
 
@@ -607,7 +614,8 @@ public class DebitEntry extends DebitEntry_Base {
             return;
         }
 
-        if (TreasuryConstants.isLessThan(minimumOpenAmount, creditEntry.getOpenAmount())
+        if (!isInvoiceRegistrationByTreasuryCertification
+                && TreasuryConstants.isLessThan(minimumOpenAmount, creditEntry.getOpenAmount())
                 && creditEntry.getFinantialDocument().isPreparing()) {
             // split credit entry
             creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(minimumOpenAmount));
@@ -1001,7 +1009,7 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     @Deprecated
-    // TODO: Replace by getTotalCreditedAmountWithVat
+    // TODO: Replace by getAvailableAmountWithVatForCredit
     public BigDecimal getAvailableAmountForCredit() {
         return this.getCurrency().getValueWithScale(this.getTotalAmount().subtract(getTotalCreditedAmount()));
     }
@@ -1113,8 +1121,8 @@ public class DebitEntry extends DebitEntry_Base {
         if (Strings.isNullOrEmpty(reason)) {
             throw new TreasuryDomainException("error.DebitEntry.annul.debit.entry.requires.reason");
         }
-        
-        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+
+        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 
@@ -1142,7 +1150,7 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.requires.reason");
         }
 
-        if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 

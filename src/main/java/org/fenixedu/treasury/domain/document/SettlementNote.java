@@ -429,6 +429,9 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     private void processCreditEntries(SettlementNoteBean bean) {
+        boolean isInvoiceRegistrationByTreasuryCertification =
+                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
         for (SettlementCreditEntryBean creditEntryBean : bean.getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 CreditEntry creditEntry = creditEntryBean.getCreditEntry();
@@ -443,7 +446,8 @@ public class SettlementNote extends SettlementNote_Base {
                 }
 
                 if (!creditEntry.getFinantialDocument().isClosed()) {
-                    if (TreasuryConstants.isLessThan(creditAmountWithVat, creditEntry.getOpenAmount())) {
+                    if (!isInvoiceRegistrationByTreasuryCertification
+                            && TreasuryConstants.isLessThan(creditAmountWithVat, creditEntry.getOpenAmount())) {
                         creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(creditAmountWithVat));
                     }
 
@@ -653,23 +657,24 @@ public class SettlementNote extends SettlementNote_Base {
             TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
         } else {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
-        }        
+        }
     }
-    
+
     @Atomic
     /*
      * This method check if there is some debt process blocking the annullment
      */
     public void anullDocument(String anulledReason, boolean markDocumentToExport) {
-        if(TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
+        if (TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
             throw new TreasuryDomainException("error.SettlementNote.cannot.annull.due.to.existing.active.debt.process");
         }
-        
+
         _anullDocument(anulledReason, markDocumentToExport);
     }
-    
+
     /* Does not verify if the settlement note is blocking due to some debt process */
-    public void anullDocumentFromDebtProcess(String anulledReason, boolean markDocumentToExport, ITreasuryDebtProcess debtProcess) {
+    public void anullDocumentFromDebtProcess(String anulledReason, boolean markDocumentToExport,
+            ITreasuryDebtProcess debtProcess) {
         _anullDocument(anulledReason, markDocumentToExport);
     }
 

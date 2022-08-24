@@ -503,22 +503,39 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void createEquivalentCreditNote(final DateTime documentDate, final String documentObservations,
             final String documentTermsAndConditions, final boolean createForInterestRateEntries) {
+        
+        boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
+        boolean isInvoiceRegistrationByTreasuryCertification = getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+        CreditNote creditNote = null;
+        
+        if(isInvoiceRegistrationByTreasuryCertification) {
+            final DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
+                    getDocumentNumberSeries().getSeries());
+            
+            creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this,
+                    getUiDocumentNumber());
+        }
+        
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             //Get the amount for credit without tax, and considering the credit quantity FOR ONE
-            final BigDecimal amountForCreditWithoutVat = entry.getCurrency().getValueWithScale(
-                    TreasuryConstants.divide(entry.getAvailableAmountForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
+            final BigDecimal amountForCreditWithoutVat = Currency.getValueWithScale(
+                    TreasuryConstants.divide(entry.getAvailableAmountWithVatForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
 
             if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
                 continue;
             }
 
             final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(), documentObservations,
-                    documentTermsAndConditions, amountForCreditWithoutVat, null, null);
+                    documentTermsAndConditions, amountForCreditWithoutVat, null, creditNote);
 
             if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && isExportedInLegacyERP()) {
                 creditEntry.getFinantialDocument().setExportedInLegacyERP(true);
                 creditEntry.getFinantialDocument().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
             }
+        }
+        
+        if(isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
+            creditNote.closeDocument();
         }
 
         if (!createForInterestRateEntries) {

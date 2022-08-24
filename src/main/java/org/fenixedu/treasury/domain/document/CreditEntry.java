@@ -246,8 +246,6 @@ public class CreditEntry extends CreditEntry_Base {
         BigDecimal oldNetAmount = getNetAmount();
         BigDecimal oldAmountWithVat = getAmountWithVat();
 
-        Currency currency = getDebtAccount().getFinantialInstitution().getCurrency();
-
         CreditNote newCreditNote = CreditNote.create(this.getDebtAccount(),
                 getFinantialDocument().getDocumentNumberSeries(), getFinantialDocument().getDocumentDate(),
                 ((CreditNote) getFinantialDocument()).getDebitNote(), getFinantialDocument().getOriginDocumentNumber());
@@ -255,7 +253,7 @@ public class CreditEntry extends CreditEntry_Base {
         newCreditNote.setDocumentTermsAndConditions(getFinantialDocument().getDocumentTermsAndConditions());
 
         // TODO: Check if precision is lost in cents
-        BigDecimal remainingAmountWithoutVatDividedByQuantity = currency
+        BigDecimal remainingAmountWithoutVatDividedByQuantity = Currency
                 .getValueWithScale(TreasuryConstants.divide(
                         TreasuryConstants.divide(remainingAmountWithVat,
                                 BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
