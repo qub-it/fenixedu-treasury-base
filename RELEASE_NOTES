@@ -1,5 +1,6 @@
 - Improvement: In certification mode and in closed debit note annulment, maintain all credit entries in same credit note
 - Improvement: In certification mode, do not split credit entries
+- Bug Fix: Close excess payment credit if it is preparing
 
 9.5.0 (22-08-2022)
 - New Fixture: Domain model for certified documents integration and recovery

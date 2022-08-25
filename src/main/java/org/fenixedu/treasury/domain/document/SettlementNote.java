@@ -994,7 +994,11 @@ public class SettlementNote extends SettlementNote_Base {
                     .getContent(TreasuryPlataformDependentServicesFactory.implementation().defaultLocale());
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
 
-            settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next().closeDocument();
+            CreditNote excessCreditNote = settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next();
+            
+            if(excessCreditNote.isPreparing()) {
+                excessCreditNote.closeDocument();
+            }
         }
 
         return settlementNote;
