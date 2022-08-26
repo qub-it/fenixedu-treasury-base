@@ -1,3 +1,5 @@
+- Improvement: Include open interests in penalty tax payment code
+
 9.5.1 (26-08-2022)
 - Improvement: In certification mode and in closed debit note annulment, maintain all credit entries in same credit note
 - Improvement: In certification mode, do not split credit entries

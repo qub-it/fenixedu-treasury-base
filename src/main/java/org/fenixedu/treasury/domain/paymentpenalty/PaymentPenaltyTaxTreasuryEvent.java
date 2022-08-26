@@ -292,8 +292,16 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         }
 
         if (Boolean.TRUE.equals(settings.getCreatePaymentCode())) {
+            Set<DebitEntry> debitEntriesSet = new HashSet<>();
+            debitEntriesSet.add(penaltyDebitEntry);
+
+            if (Boolean.TRUE.equals(settings.getIncludePendingInterestsToPaymentCode())) {
+                debitEntriesSet.addAll(originDebitEntry.getInterestDebitEntriesSet().stream().filter(d -> d.isInDebt())
+                        .collect(Collectors.toSet()));
+            }
+
             finantialInstitution.getDefaultDigitalPaymentPlatform().castToSibsPaymentCodePoolService()
-                    .createSibsPaymentRequest(debtAccount, Collections.singleton(penaltyDebitEntry), Collections.emptySet());
+                    .createSibsPaymentRequest(debtAccount, debitEntriesSet, Collections.emptySet());
         }
 
         return penaltyDebitEntry;
@@ -370,8 +378,8 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             if (isDebitEntrySettledWithOwnCredit(s, settlementNote)) {
                 continue;
             }
-            
-            if(TreasuryDebtProcessMainService.isInterestCreationWhenTotalSettledPrevented(invoiceEntry)) {
+
+            if (TreasuryDebtProcessMainService.isInterestCreationWhenTotalSettledPrevented(invoiceEntry)) {
                 continue;
             }
 
@@ -379,7 +387,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             if (penaltyDebitEntry == null) {
                 result.add(penaltyDebitEntry);
             }
-            
+
         }
 
         return result;

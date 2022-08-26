@@ -3382,6 +3382,7 @@ class paymentpenalty.PaymentPenaltyTaxSettings {
 	LocalizedStringT emolumentDescription;
 	Boolean createPaymentCode;
 	Boolean applyPenaltyOnDebitsWithoutInterest;
+	Boolean includePendingInterestsToPaymentCode;
 }
 
 	relation PaymentPenaltyTaxSettingsDomainRoot {

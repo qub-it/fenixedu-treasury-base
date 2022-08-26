@@ -324,7 +324,7 @@ public class TreasuryExemptionTest {
             settings.addTargetProducts(Product.findUniqueByCode(PaymentPlanTestsUtilities.DEBT_PRODUCT).get());
             settings.edit(true, settings.getPenaltyProduct(),
                     PaymentPlanTestsUtilities.ls("[Actos Administrativos] Pagamento em atraso - ${debitEntryDescription}"), false,
-                    true);
+                    true, false);
         });
 
         GlobalInterestRate.findAll().forEach(i -> i.delete());

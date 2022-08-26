@@ -93,7 +93,7 @@ public class PaymentPlansWithPenaltyTaxTest {
             settings.addTargetProducts(Product.findUniqueByCode(PaymentPlanTestsUtilities.DEBT_PRODUCT).get());
             settings.edit(true, settings.getPenaltyProduct(),
                     PaymentPlanTestsUtilities.ls("[Actos Administrativos] Pagamento em atraso - ${debitEntryDescription}"), false,
-                    false);
+                    false, false);
         });
 
         GlobalInterestRate.findAll().forEach(i -> i.delete());

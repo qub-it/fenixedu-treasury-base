@@ -143,13 +143,14 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
     }
 
     public void edit(boolean active, Product penaltyProduct, LocalizedString emolumentDescription, boolean createPaymentCode,
-            boolean applyPenaltyOnDebitsWithoutInterest) {
+            boolean applyPenaltyOnDebitsWithoutInterest, boolean includePendingInterestsToPaymentCode) {
         super.setActive(active);
 
         super.setPenaltyProduct(penaltyProduct);
         super.setEmolumentDescription(emolumentDescription);
         super.setCreatePaymentCode(createPaymentCode);
         super.setApplyPenaltyOnDebitsWithoutInterest(applyPenaltyOnDebitsWithoutInterest);
+        super.setIncludePendingInterestsToPaymentCode(includePendingInterestsToPaymentCode);
 
         checkRules();
     }
