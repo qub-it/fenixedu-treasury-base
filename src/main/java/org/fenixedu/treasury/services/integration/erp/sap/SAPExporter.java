@@ -2133,7 +2133,13 @@ public class SAPExporter implements IERPExporter {
         }
 
         // Requested by UL
-        if (reimbursementStatus.isRejectedStatus()) {
+        // Requested in 20-05-2022
+        // Allow FMH quality environments to update the reimbursement status
+        boolean isQua = TreasuryPlataformDependentServicesFactory.implementation().isQualityOrDevelopmentMode();
+        boolean isFMH = "501621288".equals(reimbursementNote.getDebtAccount().getFinantialInstitution().getCode());
+        boolean isQuaAndFMH = isFMH && isQua;
+
+        if (!isQuaAndFMH && reimbursementStatus.isRejectedStatus()) {
             throw new TreasuryDomainException(
                     "error.ERPExporterManager.reimbursementStatus.rejected.please.check.rejection.and.contact.support.if.needed");
         }

@@ -1,4 +1,5 @@
 - Refactor: The method TreasuryAccessControlAPI::isAllowToModifyInvoices return the evaluation of permission isFrontOfficeMember
+- Refactor: Allow update of reimbursement rejected state in specific instance and quality environment
 
 9.5.2 (26-08-2022)
 - Improvement: Include open interests in penalty tax payment code
