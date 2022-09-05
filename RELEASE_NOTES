@@ -1,3 +1,4 @@
+9.5.4 (05-09-2022)
 - Refactor: Add property to limit reimbursement to one credit only, which is declared as dynamic property but necessary to group with other similar properties
 
 9.5.3 (31-08-2022)
