@@ -346,6 +346,24 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         return result.stream();
     }
 
+    public static Stream<SibsPaymentRequest> findWithDebitEntriesAndInstallments(Set<DebitEntry> debitEntries, Set<Installment> installments) {
+        final Set<SibsPaymentRequest> paymentCodes = debitEntries.stream().flatMap(d -> find(d)).collect(Collectors.toSet());
+
+        final Set<SibsPaymentRequest> result = Sets.newHashSet();
+        for (SibsPaymentRequest code : paymentCodes) {
+            boolean symmetricDifferencesInDebitEntries = !Sets.symmetricDifference(code.getDebitEntriesSet(), debitEntries).isEmpty();
+            boolean symmetricDifferencesInInstallments = !Sets.symmetricDifference(code.getInstallmentsSet(), installments).isEmpty();
+            
+            if (symmetricDifferencesInDebitEntries && symmetricDifferencesInInstallments) {
+                continue;
+            }
+
+            result.add(code);
+        }
+
+        return result.stream();
+    }
+
     public static Stream<SibsPaymentRequest> findCreatedByDebitEntry(final DebitEntry debitEntry) {
         return find(debitEntry).filter(p -> p.isInCreatedState());
     }
@@ -369,7 +387,15 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     public static Stream<SibsPaymentRequest> findRequestedByDebitEntriesSet(final Set<DebitEntry> debitEntries) {
         return findWithDebitEntries(debitEntries).filter(p -> p.isInRequestedState());
     }
+    
+    public static Stream<SibsPaymentRequest> findCreatedByDebitEntriesSet(Set<DebitEntry> debitEntries, Set<Installment> installments) {
+        return findWithDebitEntriesAndInstallments(debitEntries, installments).filter(p -> p.isInCreatedState());
+    }
 
+    public static Stream<SibsPaymentRequest> findRequestedByDebitEntriesSet(Set<DebitEntry> debitEntries, Set<Installment> installments) {
+        return findWithDebitEntriesAndInstallments(debitEntries, installments).filter(p -> p.isInRequestedState());
+    }
+    
     public static SibsPaymentRequest create(SibsReferenceCode sibsReferenceCode, DebtAccount debtAccount,
             Set<DebitEntry> debitEntries, Set<Installment> installments, BigDecimal payableAmount) {
         return new SibsPaymentRequest(sibsReferenceCode, debtAccount, debitEntries, installments, payableAmount);
