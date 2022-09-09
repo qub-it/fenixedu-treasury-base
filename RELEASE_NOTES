@@ -1,3 +1,5 @@
+- Improvement: Verify if SibsPaymentRequest is unique only if SibsPaymentCodePool is check-digit. Do not verify for SIBS DPG and SIBS protocol client file
+
 9.5.4 (05-09-2022)
 - Refactor: Add property to limit reimbursement to one credit only, which is declared as dynamic property but necessary to group with other similar properties
 

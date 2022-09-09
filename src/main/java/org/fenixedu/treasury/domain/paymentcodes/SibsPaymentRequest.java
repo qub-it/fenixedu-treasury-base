@@ -69,6 +69,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
@@ -152,7 +153,10 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         
         // For now ensure only one sibsPaymentRequest for the same entityCode and referenceCode exists
         // Later we may remove this restriction
-        if(find(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
+        ISibsPaymentCodePoolService poolService = getDigitalPaymentPlatform().castToSibsPaymentCodePoolService();
+        boolean isCheckDigitPaymentCodePool = (poolService instanceof SibsPaymentCodePool) && ((SibsPaymentCodePool) poolService).isUseCheckDigit();
+        
+        if(isCheckDigitPaymentCodePool && find(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.request.already.exists.for.entityCode.and.referenceCode");
         }
     }
