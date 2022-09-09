@@ -1,3 +1,4 @@
+9.5.5 (09-09-2022)
 - Improvement: Verify if SibsPaymentRequest is unique only if SibsPaymentCodePool is check-digit. Do not verify for SIBS DPG and SIBS protocol client file
 
 9.5.4 (05-09-2022)
