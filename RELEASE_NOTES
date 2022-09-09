@@ -1,3 +1,4 @@
+9.5.6 (09-09-2022)
 - Bug Fix: In generating payment code locally, verify if reference code exists for the same set of debit entries
 
 9.5.5 (09-09-2022)
