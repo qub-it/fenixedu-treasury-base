@@ -292,6 +292,7 @@ class document.Series {
 	boolean legacy;
 	boolean defaultSeries;
 	boolean selectable;
+	Boolean cashVatSchemeIndicator;
 }
 
 	relation FinantialInstitutionRegulationSeries {

@@ -493,6 +493,24 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
     }
 
+    public void resetCreditEntriesSelection() {
+        this.creditEntries.forEach(c -> c.setIncluded(false));
+    };
+
+    public void resetDebitEntriesSelection() {
+        this.debitEntries.forEach(d -> d.setIncluded(false));
+    }
+
+    public void resetVirtualDebitEntriesSelection() {
+        this.virtualDebitEntries.forEach(d -> d.setIncluded(false));
+    }
+    
+    public void resetAllEntriesSelection() {
+        resetCreditEntriesSelection();
+        resetDebitEntriesSelection();
+        resetVirtualDebitEntriesSelection();
+    }
+    
     @Deprecated
     /**
      * Replaced by calculateVirtualDebitEntries

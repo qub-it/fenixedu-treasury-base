@@ -150,8 +150,16 @@ public class Series extends Series_Base {
     @Atomic
     public void edit(final String code, final LocalizedString name, final boolean externSeries, final boolean certificated,
             final boolean legacy, final boolean active, final boolean selectable) {
+        
+        boolean hasDocuments = getDocumentNumberSeriesSet().stream().anyMatch(dn -> !dn.getFinantialDocumentsSet().isEmpty());
+        
+        if(hasDocuments) {
+            throw new IllegalStateException("error.Series.cannot.change.series.due.to.created.documents");
+        }
+        
         setName(name);
         setActive(active);
+        
         if (!code.equalsIgnoreCase(getCode())) {
             if (this.isSeriesUsedForAnyDocument()) {
                 throw new TreasuryDomainException("error.Series.invalid.series.type.in.used.series");

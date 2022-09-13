@@ -232,6 +232,27 @@ public class SettlementNote extends SettlementNote_Base {
                         "error.SettlementNote.settlementNote.not.reimbursement.but.has.only.credits.settled");
             }
         }
+
+        // if the series is cashVatSchemeIndicator only allow debit entries
+        // which the series is also cashVatSchemeIndicator
+        if (Boolean.TRUE.equals(getDocumentNumberSeries().getSeries().getCashVatSchemeIndicator())) {
+            if (!getSettlemetEntriesSet().stream().allMatch(se -> isDebitEntryAndSeriesIsCashVatSchemeIndicator(se))) {
+                throw new TreasuryDomainException("error.SettlementNote.cashVatSchemeIndicator.only.allow.debit.entries");
+            }
+        }
+    }
+
+    private boolean isDebitEntryAndSeriesIsCashVatSchemeIndicator(SettlementEntry se) {
+        if (!se.getInvoiceEntry().isDebitNoteEntry()) {
+            return false;
+        }
+
+        if (se.getInvoiceEntry().getFinantialDocument() == null) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(
+                se.getInvoiceEntry().getFinantialDocument().getDocumentNumberSeries().getSeries().getCashVatSchemeIndicator());
     }
 
     public void markAsUsedInBalanceTransfer() {
@@ -995,8 +1016,8 @@ public class SettlementNote extends SettlementNote_Base {
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
 
             CreditNote excessCreditNote = settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next();
-            
-            if(excessCreditNote.isPreparing()) {
+
+            if (excessCreditNote.isPreparing()) {
                 excessCreditNote.closeDocument();
             }
         }
