@@ -1,3 +1,6 @@
+- Bug Fix: Allow annulement of certified invoice without credit note
+- Bug Fix: Remove restriction of exemption for debit entries in which quantity is different than one
+
 9.5.6 (09-09-2022)
 - Bug Fix: In generating payment code locally, verify if reference code exists for the same set of debit entries
 

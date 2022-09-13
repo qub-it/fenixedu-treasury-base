@@ -193,18 +193,20 @@ public class DebitNote extends DebitNote_Base {
     public void closeDocument(boolean markDocumentToExport) {
         setDocumentDueDate(maxDebitEntryDueDate());
 
-        if(getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+        if (getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
             // Recalculate the vat rates for all debit entries
             // This is done to avoid the case where a debit note
             // is closed after some time of being created
             // and in the meantime the VAT rate changes
             getDebitEntriesSet().forEach(de -> {
-                de.setVat(Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime()).get());
+                de.setVat(
+                        Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime())
+                                .get());
                 de.setVatRate(null);
                 de.recalculateAmountValues();
             });
         }
-        
+
         super.closeDocument(markDocumentToExport);
 
         TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
@@ -401,15 +403,14 @@ public class DebitNote extends DebitNote_Base {
                     "error.DebitNote.anullDebitNoteWithCreditNote.cannot.anull.debt.with.open.paymentPlan");
         }
 
-        if(TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
-            throw new TreasuryDomainException(
-                    "error.DebitNote.cannot.annull.or.credit.due.to.existing.active.debt.process");
+        if (TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.DebitNote.cannot.annull.or.credit.due.to.existing.active.debt.process");
         }
-        
+
         if (this.getFinantialDocumentEntriesSet().size() > 0 && this.isClosed()) {
 
             final DateTime now = new DateTime();
-            
+
             if (anullGeneratedInterests) {
                 //Annul open interest debit entry
                 getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream()).filter(
@@ -503,23 +504,24 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public void createEquivalentCreditNote(final DateTime documentDate, final String documentObservations,
             final String documentTermsAndConditions, final boolean createForInterestRateEntries) {
-        
+
         boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
-        boolean isInvoiceRegistrationByTreasuryCertification = getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+        boolean isInvoiceRegistrationByTreasuryCertification =
+                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
         CreditNote creditNote = null;
-        
-        if(isInvoiceRegistrationByTreasuryCertification) {
-            final DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                    getDocumentNumberSeries().getSeries());
-            
-            creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this,
-                    getUiDocumentNumber());
+
+        if (isInvoiceRegistrationByTreasuryCertification) {
+            final DocumentNumberSeries documentNumberSeries =
+                    DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
+
+            creditNote =
+                    CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this, getUiDocumentNumber());
         }
-        
+
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             //Get the amount for credit without tax, and considering the credit quantity FOR ONE
-            final BigDecimal amountForCreditWithoutVat = Currency.getValueWithScale(
-                    TreasuryConstants.divide(entry.getAvailableAmountWithVatForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
+            final BigDecimal amountForCreditWithoutVat = Currency.getValueWithScale(TreasuryConstants
+                    .divide(entry.getAvailableAmountWithVatForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
 
             if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
                 continue;
@@ -533,8 +535,8 @@ public class DebitNote extends DebitNote_Base {
                 creditEntry.getFinantialDocument().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
             }
         }
-        
-        if(isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
+
+        if (isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
             creditNote.closeDocument();
         }
 
@@ -544,10 +546,10 @@ public class DebitNote extends DebitNote_Base {
 
         for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
             for (DebitEntry interestEntry : debitEntry.getInterestDebitEntriesSet()) {
-                if(!interestEntry.getFinantialDocument().isClosed()) {
+                if (!interestEntry.getFinantialDocument().isClosed()) {
                     continue;
                 }
-                
+
                 final BigDecimal amountForCreditWithoutVat = interestEntry.getCurrency().getValueWithScale(TreasuryConstants
                         .divide(interestEntry.getAvailableAmountForCredit(), BigDecimal.ONE.add(rationalVatRate(interestEntry))));
 
@@ -567,6 +569,49 @@ public class DebitNote extends DebitNote_Base {
                 }
             }
         }
+    }
+
+    public void annulCertifiedDebitNote(String reason) {
+        if (!isCertifiedDebitNoteAnnulable()) {
+            throw new TreasuryDomainException(
+                    "error.DebitNote.annulCertifiedDebitNote.not.possible.due.existing.active.credits.or.settlements");
+        }
+
+        for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
+
+            // Also remove from treasury event
+            if (debitEntry.getTreasuryEvent() != null) {
+                debitEntry.annulOnEvent();
+            }
+
+            for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                    paymentCode.anull();
+                }
+            }
+        }
+
+        this.setState(FinantialDocumentStateType.ANNULED);
+
+        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+
+        if (!Strings.isNullOrEmpty(loggedUsername)) {
+            setAnnulledReason(reason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+        } else {
+            setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
+        }
+
+        TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
+    }
+
+    public boolean isCertifiedDebitNoteAnnulable() {
+        boolean withAllCreditNotesAnnuled = getCreditNoteSet().stream().allMatch(c -> c.isAnnulled());
+        boolean withAllSettlementNotesAnnuled = getDebitEntriesSet().stream()
+                .allMatch(de -> de.getSettlementEntriesSet().stream().allMatch(se -> se.getFinantialDocument().isAnnulled()));
+        boolean withAllInterestsAnnuled = getDebitEntriesSet().stream()
+                .allMatch(de -> de.getInterestDebitEntriesSet().stream().allMatch(i -> i.isAnnulled()));
+
+        return isClosed() && withAllCreditNotesAnnuled && withAllSettlementNotesAnnuled && withAllInterestsAnnuled;
     }
 
     public Set<CreditEntry> getRelatedCreditEntriesSet() {
@@ -677,11 +722,12 @@ public class DebitNote extends DebitNote_Base {
 
         DebitNote interestDebitNote = DebitNote.create(debitNote.getDebtAccount(), documentNumberSeries, documentDate);
         for (DebitEntry entry : debitNote.getDebitEntriesSet()) {
-            
-            if(TreasuryDebtProcessMainService.isDebitEntryInterestCreationInAdvanceBlocked(entry)) {
-                throw new TreasuryDomainException("error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");
+
+            if (TreasuryDebtProcessMainService.isDebitEntryInterestCreationInAdvanceBlocked(entry)) {
+                throw new TreasuryDomainException(
+                        "error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");
             }
-            
+
             InterestRateBean calculateUndebitedInterestValue = entry.calculateUndebitedInterestValue(paymentDate);
             if (TreasuryConstants.isGreaterThan(calculateUndebitedInterestValue.getInterestAmount(), BigDecimal.ZERO)) {
                 entry.createInterestRateDebitEntry(calculateUndebitedInterestValue, documentDate,
