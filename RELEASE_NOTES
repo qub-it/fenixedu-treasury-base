@@ -1,3 +1,4 @@
+9.5.7 (14-09-2022)
 - Bug Fix: Allow annulement of certified invoice without credit note
 - Bug Fix: Remove restriction of exemption for debit entries in which quantity is different than one
 
