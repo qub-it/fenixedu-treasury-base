@@ -593,13 +593,7 @@ public class DebitNote extends DebitNote_Base {
 
         this.setState(FinantialDocumentStateType.ANNULED);
 
-        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-
-        if (!Strings.isNullOrEmpty(loggedUsername)) {
-            setAnnulledReason(reason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-        } else {
-            setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-        }
+        setAnnulledReason(reason);
 
         TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
     }
