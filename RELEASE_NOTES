@@ -1,3 +1,5 @@
+- Improvement: Save responsible and annullment date in proper fields of FinantialDocument, instead of appending to annulment reason
+
 9.5.8 (15-09-2022)
 - Bug Fix: Do not save responsible user and datetime of an certified debit note annulement (without credit note)
 - Bug Fix: In certification mode do not save responsible user and datetime in SettlementNote annulment

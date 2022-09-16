@@ -617,18 +617,11 @@ public class SettlementNote extends SettlementNote_Base {
             }
 
             setState(FinantialDocumentStateType.ANNULED);
+            setAnnulledReason(anulledReason);
+            setAnnullmentDate(new DateTime());
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-
-            if(getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
-                setAnnulledReason(anulledReason);
-            } else {
-                if (!Strings.isNullOrEmpty(loggedUsername)) {
-                    setAnnulledReason(anulledReason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-                } else {
-                    setAnnulledReason(anulledReason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-                }
-            }
+            setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
             
             // Settlement note can never free entries
             if (markDocumentToExport) {

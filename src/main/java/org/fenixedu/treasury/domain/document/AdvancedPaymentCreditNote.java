@@ -125,14 +125,11 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
             }
 
             setState(FinantialDocumentStateType.ANNULED);
-
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            setAnnulledReason(reason);
+            setAnnullmentDate(new DateTime());
             
-            if (!Strings.isNullOrEmpty(loggedUsername)) {
-                setAnnulledReason(reason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            } else {
-                setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            }
+            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
         }

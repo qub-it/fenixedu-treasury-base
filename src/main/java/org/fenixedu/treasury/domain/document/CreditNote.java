@@ -335,14 +335,11 @@ public class CreditNote extends CreditNote_Base {
             }
 
             setState(FinantialDocumentStateType.ANNULED);
+            setAnnulledReason(reason);
+            setAnnullmentDate(new DateTime());
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-            
-            if (!Strings.isNullOrEmpty(loggedUsername)) {
-                setAnnulledReason(reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            } else {
-                setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            }
+            setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
             TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
         } else {
@@ -372,6 +369,10 @@ public class CreditNote extends CreditNote_Base {
 
         setState(FinantialDocumentStateType.ANNULED);
         setAnnulledReason(annuledReason);
+        setAnnullmentDate(new DateTime());
+
+        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
         final CreditNote creditNote =
                 create(getDebtAccount(), getDocumentNumberSeries(), new DateTime(), getDebitNote(), getOriginDocumentNumber());

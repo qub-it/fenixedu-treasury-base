@@ -324,6 +324,8 @@ class document.FinantialDocument {
 	FinantialDocumentStateType state;
 	String address;
 	String annulledReason;
+	String annullmentResponsible;
+	DateTime annullmentDate;
 	String documentObservations;
 	String documentTermsAndConditions;
 	String clearDocumentToExportReason;

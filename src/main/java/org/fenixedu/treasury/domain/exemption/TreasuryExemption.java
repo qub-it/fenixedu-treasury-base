@@ -209,13 +209,11 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
 
             String reason = "Exemption deleted";
-            if (!Strings.isNullOrEmpty(loggedUsername)) {
-                getCreditEntry().getCreditNote().setAnnulledReason(
-                        reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            } else {
-                getCreditEntry().getCreditNote()
-                        .setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            }
+            getCreditEntry().getCreditNote().setAnnulledReason(reason);
+            getCreditEntry().getCreditNote().setAnnullmentDate(new DateTime());
+
+            getCreditEntry().getCreditNote()
+                    .setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else if (!getDebitEntry().isAnnulled()) {
             if (getDebitEntry().isProcessedInClosedDebitNote()) {
                 throw new TreasuryDomainException(

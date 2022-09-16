@@ -460,14 +460,12 @@ public class DebitNote extends DebitNote_Base {
                 });
             }
 
+            setAnnulledReason(reason);
+            setAnnullmentDate(new DateTime());
+            
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-
-            if (!Strings.isNullOrEmpty(loggedUsername)) {
-                setAnnulledReason(reason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            } else {
-                setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            }
-
+            setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
+            
         } else if (isPreparing()) {
             if (!getCreditNoteSet().isEmpty()) {
                 throw new TreasuryDomainException("error.DebitNote.creditNote.not.empty");
@@ -488,14 +486,11 @@ public class DebitNote extends DebitNote_Base {
             }
 
             this.setState(FinantialDocumentStateType.ANNULED);
-
+            setAnnulledReason(reason);
+            setAnnullmentDate(new DateTime());
+            
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-
-            if (!Strings.isNullOrEmpty(loggedUsername)) {
-                setAnnulledReason(reason + " - [" + loggedUsername + "]" + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            } else {
-                setAnnulledReason(reason + " - " + new DateTime().toString("YYYY-MM-dd HH:mm:ss"));
-            }
+            setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else {
             throw new TreasuryDomainException("error.DebitNote.cannot.anull.is.empty");
         }
@@ -594,6 +589,10 @@ public class DebitNote extends DebitNote_Base {
         this.setState(FinantialDocumentStateType.ANNULED);
 
         setAnnulledReason(reason);
+        setAnnullmentDate(new DateTime());
+        
+        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
         TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
     }
