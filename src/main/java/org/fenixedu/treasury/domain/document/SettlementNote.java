@@ -58,6 +58,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -622,7 +623,7 @@ public class SettlementNote extends SettlementNote_Base {
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
-            
+
             // Settlement note can never free entries
             if (markDocumentToExport) {
                 this.markDocumentToExport();
@@ -936,12 +937,17 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Override
-    public SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
-        final SortedSet<SettlementEntry> result =
-                Sets.newTreeSet(SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+    public Comparator<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderComparator() {
+        return SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION;
+    }
+    
+    @Override
+    public List<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
+        final List<SettlementEntry> result = new ArrayList<>();
 
-        result.addAll(getFinantialDocumentEntriesSet().stream().map(SettlementEntry.class::cast).collect(Collectors.toSet()));
-
+        getFinantialDocumentEntriesSet().stream().map(SettlementEntry.class::cast).collect(Collectors.toCollection(() -> result));
+        Collections.sort(result, SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+        
         if (result.size() != getFinantialDocumentEntriesSet().size()) {
             throw new RuntimeException("error");
         }
@@ -992,8 +998,8 @@ public class SettlementNote extends SettlementNote_Base {
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
 
             CreditNote excessCreditNote = settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next();
-            
-            if(excessCreditNote.isPreparing()) {
+
+            if (excessCreditNote.isPreparing()) {
                 excessCreditNote.closeDocument();
             }
         }

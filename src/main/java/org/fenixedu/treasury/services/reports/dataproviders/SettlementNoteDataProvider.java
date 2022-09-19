@@ -93,10 +93,8 @@ public class SettlementNoteDataProvider extends AbstractDataProvider implements 
 
     private static Object handleLines(IReportDataProvider provider) {
         SettlementNoteDataProvider invoiceProvider = (SettlementNoteDataProvider) provider;
-        TreeSet<SettlementEntry> settlementNoteEntriesSet = new TreeSet<>(SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
-        settlementNoteEntriesSet.addAll(invoiceProvider.note.getSettlemetEntriesSet());
         
-        return settlementNoteEntriesSet;
+        return invoiceProvider.note.getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
     }
 
     private static Object handlePaymentLines(IReportDataProvider provider) {

@@ -121,9 +121,26 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
         return c2 != 0 ? c2 : o1.getExternalId().compareTo(o2.getExternalId());
     };
+    
+    public static final Comparator<InvoiceEntry> COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION = (o1, o2) -> {
+        if(o1.getEntryOrder() != null && o2.getEntryOrder() != null) {
+            int c = o1.getEntryOrder().compareTo(o2.getEntryOrder());
+            
+            if(c != 0) {
+                return c;
+            }
+        } else if(o1.getEntryOrder() != null && o2.getEntryOrder() == null) {
+            return -1;
+        } else if(o1.getEntryOrder() == null && o2.getEntryOrder() != null) { 
+            return 1;
+        }
 
-    @Override
-    protected void checkForDeletionBlockers(Collection<String> blockers) {
+        return COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION.compare(o1, o2);
+    };
+
+    @Override protected void checkForDeletionBlockers(
+    Collection<String> blockers)
+    {
         super.checkForDeletionBlockers(blockers);
 
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
@@ -165,8 +182,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
     @Override
     protected void init(DebtAccount debtAccount, FinantialDocument finantialDocument, FinantialEntryType finantialEntryType,
-            BigDecimal amount,
-            String description, DateTime entryDateTime) {
+            BigDecimal amount, String description, DateTime entryDateTime) {
         throw new RuntimeException("error.InvoiceEntry.use.init.with.product");
     }
 

@@ -221,7 +221,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     public static Stream<FinantialDocumentEntry> findByCode(DebtAccount debtAccount, String code) {
-        Set<FinantialDocumentEntry> invoiceEntrySet = new HashSet();
+        Set<FinantialDocumentEntry> invoiceEntrySet = new HashSet<>();
         Set<FinantialDocumentEntry> entriesOfFinantialDocuments = debtAccount.getFinantialDocumentsSet().stream()
                 .flatMap(document -> document.getFinantialDocumentEntriesSet().stream()).collect(Collectors.toSet());
 

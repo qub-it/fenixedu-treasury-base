@@ -1,4 +1,9 @@
 - Improvement: Save responsible and annullment date in proper fields of FinantialDocument, instead of appending to annulment reason
+- Refactor: Change return type of method FinantialDocument::getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription to List instead of Set, to ensure elements are not lost in comparision
+- Refactor: Change return type of method PaymentRequest::getOrderedDebitEntries to List instead of Set, to ensure elements are not lost in comparision
+- Improvement: In sorting invoice entries of invoice, sort first by entry order and then by product's tuition order and description. This is to support explicit ordering in DebitNote
+- Bug Fix: When removing debit entry from DebitNote, set the entryOrder field to null
+- Refactor: Replace explicit ordering by FinantialDocument::getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription whenever possible
 
 9.5.8 (15-09-2022)
 - Bug Fix: Do not save responsible user and datetime of an certified debit note annulement (without credit note)

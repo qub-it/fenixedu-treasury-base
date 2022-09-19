@@ -1204,6 +1204,7 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         setFinantialDocument(null);
+        setEntryOrder(null);
     }
 
     public boolean isInOpenPaymentPlan() {

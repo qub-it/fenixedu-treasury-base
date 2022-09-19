@@ -53,9 +53,12 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,8 +66,6 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
-
-import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -205,12 +206,18 @@ public abstract class Invoice extends Invoice_Base {
     public boolean isForPayorDebtAccount() {
         return getPayorDebtAccount() != null && getPayorDebtAccount() != getDebtAccount();
     }
+
+    @Override
+    public Comparator<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderComparator() {
+        return InvoiceEntry.COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION;
+    }
     
     @Override
-    public SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
-        final SortedSet<InvoiceEntry> result = Sets.newTreeSet(InvoiceEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+    public List<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
+        final List<InvoiceEntry> result = new ArrayList<>();
         
-        result.addAll(getFinantialDocumentEntriesSet().stream().map(InvoiceEntry.class::cast).collect(Collectors.toSet()));
+        getFinantialDocumentEntriesSet().stream().map(InvoiceEntry.class::cast).collect(Collectors.toCollection(() -> result));
+        Collections.sort(result, InvoiceEntry.COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
         
         if(result.size() != getFinantialDocumentEntriesSet().size()) {
             throw new RuntimeException("error");

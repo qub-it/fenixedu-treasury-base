@@ -298,21 +298,17 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         closeDocument(true);
     }
     
-    public abstract SortedSet<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
+    public abstract Comparator<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderComparator();
+    
+    public abstract List<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
 
     @Atomic
     public void closeDocument(boolean markDocumentToExport) {
         if (this.isPreparing()) {
             this.setDocumentNumber("" + this.getDocumentNumberSeries().getSequenceNumberAndIncrement());
+            
+            orderInvoiceEntries();
             setState(FinantialDocumentStateType.CLOSED);
-            
-            final SortedSet<? extends FinantialDocumentEntry> orderedEntries = getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
-            
-            int order = 1;
-            for (final FinantialDocumentEntry entry : orderedEntries) {
-                entry.setEntryOrder(Integer.valueOf(order));
-                order = order + 1;
-            }
             
             this.setAddress(this.getDebtAccount().getCustomer().getAddress() + this.getDebtAccount().getCustomer().getZipCode());
             if (markDocumentToExport) {
@@ -334,6 +330,20 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         }
 
         checkRules();
+    }
+
+    public void orderInvoiceEntries() {
+        if(!this.isPreparing()) {
+            throw new TreasuryDomainException("error.FinantialDocument.orderInvoiceEntries.document.not.preparing");
+        }
+        
+        final List<? extends FinantialDocumentEntry> orderedEntries = getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
+        
+        int order = 1;
+        for (final FinantialDocumentEntry entry : orderedEntries) {
+            entry.setEntryOrder(Integer.valueOf(order));
+            order = order + 1;
+        }
     }
 
     @Atomic

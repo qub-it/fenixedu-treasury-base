@@ -53,6 +53,8 @@
 package org.fenixedu.treasury.domain.payments;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -170,10 +172,10 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     public LocalDate getDueDate() {
-        if(super.getPaymentDueDate() != null) {
+        if (super.getPaymentDueDate() != null) {
             return super.getPaymentDueDate();
         }
-        
+
         Set<LocalDate> map = getDebitEntriesSet().stream().filter(d -> !d.isAnnulled()).map(InvoiceEntry::getDueDate)
                 .collect(Collectors.toSet());
         map.addAll(getInstallmentsSet().stream().filter(i -> i.getPaymentPlan().getState().isOpen()).map(Installment::getDueDate)
@@ -218,16 +220,17 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             DateTime paymentDate, String originDocumentNumber, String comments,
             Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction) {
 
-        SettlementNoteBean bean = SettlementNoteBean.createForPaymentRequestProcessPayment(this, paymentDate, paidAmount, originDocumentNumber);
-        
+        SettlementNoteBean bean =
+                SettlementNoteBean.createForPaymentRequestProcessPayment(this, paymentDate, paidAmount, originDocumentNumber);
+
         SettlementNote settlementNote = SettlementNote.createSettlementNote(bean);
 
         settlementNote.setDocumentObservations(comments);
 
-        if(settlementNote.getAdvancedPaymentCreditNote() != null) {
+        if (settlementNote.getAdvancedPaymentCreditNote() != null) {
             settlementNote.getAdvancedPaymentCreditNote().setDocumentObservations(comments);
         }
-        
+
         final Map<String, String> paymentEntryPropertiesMap = additionalPropertiesMapFunction.apply(this);
 
         PaymentEntry paymentEntry = settlementNote.getPaymentEntriesSet().iterator().next();
@@ -409,18 +412,24 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         return result;
     }
 
-    public Set<DebitEntry> getOrderedDebitEntries() {
-        final TreeSet<DebitEntry> result =
-                new TreeSet<DebitEntry>(InvoiceEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+    public List<DebitEntry> getOrderedDebitEntries() {
+        final List<DebitEntry> result = new ArrayList<DebitEntry>();
         getDebitEntriesSet().stream().collect(Collectors.toCollection(() -> result));
+        Collections.sort(result, InvoiceEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
+        
+        if (result.size() != getDebitEntriesSet().size()) {
+            throw new RuntimeException(
+                    "error.PaymentEntry.getOrderedDebitEntries.ordered.result.not.equal.to.getDebitEntriesSet");
+        }
 
         return result;
     }
 
-    public Set<Installment> getOrderedInstallments() {
-        final TreeSet<Installment> result = new TreeSet<Installment>(Installment.COMPARE_BY_DUEDATE);
+    public List<Installment> getOrderedInstallments() {
+        final List<Installment> result = new ArrayList<Installment>();
         getInstallmentsSet().stream().collect(Collectors.toCollection(() -> result));
-
+        Collections.sort(result, Installment.COMPARE_BY_DUEDATE);
+        
         return result;
     }
 
