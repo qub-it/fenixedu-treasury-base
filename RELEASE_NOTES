@@ -1,3 +1,4 @@
+9.6.0 (20-09-2022)
 - Improvement: Save responsible and annullment date in proper fields of FinantialDocument, instead of appending to annulment reason
 - Refactor: Change return type of method FinantialDocument::getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription to List instead of Set, to ensure elements are not lost in comparision
 - Refactor: Change return type of method PaymentRequest::getOrderedDebitEntries to List instead of Set, to ensure elements are not lost in comparision
