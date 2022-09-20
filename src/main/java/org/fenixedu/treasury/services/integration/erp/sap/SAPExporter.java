@@ -2132,18 +2132,6 @@ public class SAPExporter implements IERPExporter {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementStatus");
         }
 
-        // Requested by UL
-        // Requested in 20-05-2022
-        // Allow FMH quality environments to update the reimbursement status
-        boolean isQua = TreasuryPlataformDependentServicesFactory.implementation().isQualityOrDevelopmentMode();
-        boolean isFMH = "501621288".equals(reimbursementNote.getDebtAccount().getFinantialInstitution().getCode());
-        boolean isQuaAndFMH = isFMH && isQua;
-
-        if (!isQuaAndFMH && reimbursementStatus.isRejectedStatus()) {
-            throw new TreasuryDomainException(
-                    "error.ERPExporterManager.reimbursementStatus.rejected.please.check.rejection.and.contact.support.if.needed");
-        }
-        
         if (!reimbursementNote.isReimbursement()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.settlementNote");
         }
@@ -2184,8 +2172,6 @@ public class SAPExporter implements IERPExporter {
 
             reimbursementNote.anullDocument(
                     treasuryBundle("label.ReimbursementProcessStatusType.annuled.reimbursement.by.annuled.process"), false);
-
-            reimbursementNote.markDocumentToExport();
         }
     }
 
