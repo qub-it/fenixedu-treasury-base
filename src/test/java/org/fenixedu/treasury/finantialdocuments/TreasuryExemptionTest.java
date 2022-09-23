@@ -61,8 +61,7 @@ public class TreasuryExemptionTest {
 
             DebtAccount.create(getFinatialInstitution(), customer);
 
-            TreasuryExemptionType.create("TreasuryExemptionType",
-                    BasicTreasuryUtils.ls("TreasuryExemptionType"), null, true);
+            TreasuryExemptionType.create("TreasuryExemptionType", BasicTreasuryUtils.ls("TreasuryExemptionType"), null, true);
 
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
@@ -100,8 +99,8 @@ public class TreasuryExemptionTest {
         debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, new BigDecimal(1000), dueDate, null,
                 Product.findUniqueByCode(DEBT_PRODUCT).get(), "debt description", BigDecimal.ONE, null, date);
 
-        treasuryEvent = PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(debitEntry, dueDate.plusDays(15))
-                .getTreasuryEvent();
+        treasuryEvent = PaymentPenaltyTaxTreasuryEvent
+                .checkAndCreatePaymentPenaltyTax(debitEntry, dueDate.plusDays(15), Optional.empty()).getTreasuryEvent();
         debitEntry.setTreasuryEvent(treasuryEvent);
 
     }
@@ -124,7 +123,8 @@ public class TreasuryExemptionTest {
                         treasuryEvent, "reason", new BigDecimal(1000), debitEntry);
 
         assertEquals("Exemption Exempted amount not equals", new BigDecimal(1000), exemption.getNetExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(1000), debitEntry.getNetExemptedAmount().setScale(0));
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(1000),
+                debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 
@@ -170,14 +170,16 @@ public class TreasuryExemptionTest {
                         treasuryEvent, "reason", new BigDecimal(100), debitEntry);
 
         assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption1.getNetExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(100), debitEntry.getNetExemptedAmount().setScale(0));
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(100),
+                debitEntry.getNetExemptedAmount().setScale(0));
 
         TreasuryExemption exemption2 =
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
                         treasuryEvent, "reason", new BigDecimal(50), debitEntry);
 
         assertEquals("Exemption Exempted amount not equals", new BigDecimal(50), exemption2.getNetExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(150), debitEntry.getNetExemptedAmount().setScale(0));
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(150),
+                debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 

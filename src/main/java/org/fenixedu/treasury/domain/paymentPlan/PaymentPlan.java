@@ -291,8 +291,9 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .forEach(bean -> {
                     PaymentPenaltyEntryBean penaltyBean = (PaymentPenaltyEntryBean) bean;
 
-                    DebitEntry debitEntry = PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(
-                            penaltyBean.getDebitEntry(), penaltyBean.getDueDate(), paymentPlanBean.getCreationDate());
+                    DebitEntry debitEntry =
+                            PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(penaltyBean.getDebitEntry(),
+                                    penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), Optional.empty());
                     result.put(bean, debitEntry);
                 });
 

@@ -56,8 +56,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
@@ -70,7 +72,7 @@ import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler {
     @Override
@@ -122,15 +124,22 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
 
         PaymentPenaltyEntryBean paymentPenaltyEntryBean = (PaymentPenaltyEntryBean) invoiceEntryBean;
 
-        DebitEntry paymentPenaltyEntry = PaymentPenaltyTaxTreasuryEvent
-                .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), settlementNoteBean.getDate().toLocalDate());
+        DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
+        FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+        LocalDate whenDebtCreationDate = settlementNoteBean.getDate().toLocalDate();
+        DebitNote debitNote = DebitNote.create(debtAccount, documentNumberSeries, whenDebtCreationDate.toDateTimeAtStartOfDay());
         
         if (settlementNoteBean.getReferencedCustomers().size() == 1 && settlementNoteBean.getReferencedCustomers().iterator()
-                .next() != settlementNoteBean.getDebtAccount().getCustomer()) {
+                .next() != debtAccount.getCustomer()) {
             Customer payorCustomer = settlementNoteBean.getReferencedCustomers().iterator().next();
-            DebtAccount payorDebtAccount = payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
-            paymentPenaltyEntry.getDebitNote().setPayorDebtAccount(payorDebtAccount);
+            DebtAccount payorDebtAccount = payorCustomer.getDebtAccountFor(debtAccount.getFinantialInstitution());
+            debitNote.setPayorDebtAccount(payorDebtAccount);
         }
+        
+        DebitEntry paymentPenaltyEntry = PaymentPenaltyTaxTreasuryEvent
+                .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), whenDebtCreationDate, Optional.of(debitNote));
         
         SettlementDebitEntryBean settlementDebitEntryBean = new SettlementDebitEntryBean(paymentPenaltyEntry);
         settlementDebitEntryBean.setIncluded(true);

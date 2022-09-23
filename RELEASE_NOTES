@@ -1,3 +1,5 @@
+- Bug Fix: Fix bug in creating payment penalty tax for a debit entry associated with an payor debt account (#UL-ISEG-4290)
+
 9.6.1 (23-09-2022)
 - Refactor: Declare TreasuryEvent::getEventTargetCurrentState to retrieve to current state of the process associated with treasury event
 
