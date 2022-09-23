@@ -1,3 +1,4 @@
+9.6.2 (23-09-2022)
 - Bug Fix: Fix bug in creating payment penalty tax for a debit entry associated with an payor debt account (#UL-ISEG-4290)
 
 9.6.1 (23-09-2022)
