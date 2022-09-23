@@ -1,3 +1,4 @@
+9.6.1 (23-09-2022)
 - Refactor: Declare TreasuryEvent::getEventTargetCurrentState to retrieve to current state of the process associated with treasury event
 
 9.6.0 (20-09-2022)
