@@ -385,6 +385,15 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public void editPropertiesMap(final Map<String, String> propertiesMap) {
         super.setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
+    
+    /*
+     * Returns a description of the business object connected to 
+     * this treasury event. For example academic registration, candidacy
+     * or requisition current state
+     */
+    public LocalizedString getEventTargetCurrentState() {
+        return new LocalizedString();
+    }
 
     // @formatter: off
     /************
