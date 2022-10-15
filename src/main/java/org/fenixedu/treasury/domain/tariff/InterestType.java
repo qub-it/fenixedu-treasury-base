@@ -61,12 +61,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 
 public enum InterestType {
 
-    @Deprecated
-    DAILY, GLOBAL_RATE, FIXED_AMOUNT;
-
-    public boolean isDaily() {
-        return this == DAILY;
-    }
+    GLOBAL_RATE, FIXED_AMOUNT;
 
     public boolean isGlobalRate() {
         return this == GLOBAL_RATE;

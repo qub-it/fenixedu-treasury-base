@@ -135,18 +135,6 @@ public abstract class Tariff extends Tariff_Base {
                 throw new TreasuryDomainException("error.Tariff.interestRate.required");
             }
 
-            if (getInterestRate().getInterestType().isDaily()) {
-                if (getInterestRate().getRate() == null || !isPositive(getInterestRate().getRate())) {
-                    throw new TreasuryDomainException("error.Tariff.interestRate.invalid");
-                }
-                if (getInterestRate().getNumberOfDaysAfterDueDate() <= 0) {
-                    throw new TreasuryDomainException("error.Tariff.interestRate.numberofdaysafterduedate.invalid");
-                }
-                if (getInterestRate().getMaximumDaysToApplyPenalty() < 0) {
-                    throw new TreasuryDomainException("error.Tariff.interestRate.maximumdaystoapplypenalty.invalid");
-                }
-            }
-
             if (getInterestRate().getInterestType() == InterestType.FIXED_AMOUNT) {
                 if (BigDecimal.ZERO.compareTo(getInterestRate().getInterestFixedAmount()) >= 0) {
                     throw new TreasuryDomainException("error.Tariff.interestRate.interestfixedamount.invalid");

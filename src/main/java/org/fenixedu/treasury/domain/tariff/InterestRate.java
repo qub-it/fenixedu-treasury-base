@@ -119,10 +119,6 @@ public class InterestRate extends InterestRate_Base {
             throw new RuntimeException("error.InterestRate.interestType.not.supported");
         }
 
-        if (getInterestType().isDaily() && getRate() == null) {
-            throw new TreasuryDomainException("error.InterestRate.rate.required");
-        }
-
         if (getInterestType().isFixedAmount() && getInterestFixedAmount() == null) {
             throw new TreasuryDomainException("error.InterestRate.interestFixedAmount.required");
         }
@@ -485,10 +481,6 @@ public class InterestRate extends InterestRate_Base {
     public String getUiFullDescription() {
         //HACK: This should be moved to the Presentation Layer, but here is easier
         switch (this.getInterestType()) {
-        case DAILY:
-            return this.getInterestType().getDescriptionI18N().getContent() + "-" + this.getRate() + "% (Max. Dias="
-                    + this.getMaximumDaysToApplyPenalty() + ", Aplica 1º Dia Útil=" + this.getApplyInFirstWorkday()
-                    + ", Dias após Vencimento=" + this.getNumberOfDaysAfterDueDate() + ")";
         case FIXED_AMOUNT:
             return this.getInterestType().getDescriptionI18N().getContent() + "-"
                     + getRelatedCurrency().getValueFor(this.getInterestFixedAmount());
