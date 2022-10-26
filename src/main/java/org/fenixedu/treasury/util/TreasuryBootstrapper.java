@@ -95,7 +95,6 @@ public class TreasuryBootstrapper {
 
     private static final Object COUNTRY_PT = "PT";
 
-
     public static void bootstrap(String institutionName, String institutionInitials, String countryCode) {
         initializeFiscalRegion(countryCode);
         initializeCustomerType();
@@ -130,20 +129,19 @@ public class TreasuryBootstrapper {
         LocalizedString numberGeneratorName =
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DEFAULT_GENERATOR");
         PaymentPlanNumberGenerator numberGenerator = PaymentPlanNumberGenerator.create(numberGeneratorName, "PP", 1);
-        
+
         LocalizedString paymentPlanConfiguratorName =
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.CONFIGURATOR");
         LocalizedString installmentDescriptionFormat =
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DESCRIPTION");
 
-        PaymentPlanConfigurator configurator =
-                new PaymentPlanConfigurator(paymentPlanConfiguratorName, installmentDescriptionFormat, Boolean.FALSE,
-                        AddictionsCalculeTypeEnum.AFTER_DEBIT_ENTRY, null, Product.findUniqueByCode("PAYMENT_PLAN_EMOL").get(),
-                        numberGenerator, true);
+        PaymentPlanConfigurator configurator = new PaymentPlanConfigurator(paymentPlanConfiguratorName,
+                installmentDescriptionFormat, Boolean.FALSE, AddictionsCalculeTypeEnum.AFTER_DEBIT_ENTRY, null,
+                Product.findUniqueByCode("PAYMENT_PLAN_EMOL").get(), numberGenerator, true);
         configurator.setApplyDebitEntryInterest(Boolean.TRUE);
         configurator.setCanIncreaseInterestAmount(Boolean.FALSE);
         configurator.setActive(Boolean.TRUE);
-        
+
     }
 
     public static void bootstrapFinantialInstitution(FinantialInstitution finantialInstitution) {
@@ -180,49 +178,90 @@ public class TreasuryBootstrapper {
 
     private static void initializeVatExemption(String countryCode) {
         if (COUNTRY_PT.equals(countryCode)) {
-            String[] codes = new String[] { "M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10", "M11", "M12",
-                    "M13", "M14", "M15", "M16", "M99" };
+            String[] codes = new String[] { "M01", "M02", "M04", "M05", "M06", "M07", "M09", "M10", "M11", "M12", "M13",
+                    "M14", "M15", "M16", "M19", "M20", "M21", "M25", "M30", "M31", "M32", "M33", "M40", "M41", "M42", "M43", "M99" };
 
             for (String code : codes) {
-                if (code.equals("M07")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Isento Artigo 9.º do CIVA (Ou similar)"));
-                } else if (code.equals("M01")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Artigo 16.º n.º 6 alínea c) do CIVA (Ou similar)"));
+                if (code.equals("M01")) {
+                    VatExemptionReason.create(code, defaultLs("Artigo 16.º, n.º 6 do CIVA"),
+                            "Artigo 16.º, n.º 6, alíneas a) a d) do CIVA", true);
                 } else if (code.equals("M02")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Artigo 6.º do Decreto‐Lei n.º 198/90, de 19 de Junho"));
-                } else if (code.equals("M03")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), "Exigibilidade de caixa"));
+                    VatExemptionReason.create(code, defaultLs("Artigo 6.º do Decreto-Lei n.º 198/90, de 19 de junho"),
+                            "Artigo 6.º do Decreto‐Lei n.º 198/90, de 19 de junho", true);
                 } else if (code.equals("M04")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Isento Artigo 13.º do CIVA (Ou similar)"));
+                    VatExemptionReason.create(code, defaultLs("Isento artigo 13.º do CIVA"), "Isento artigo 13.º do CIVA", true);
                 } else if (code.equals("M05")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Isento Artigo 14.º do CIVA (Ou similar)"));
+                    VatExemptionReason.create(code, defaultLs("Isento artigo 14.º do CIVA"), "Artigo 14.º do CIVA", true);
                 } else if (code.equals("M06")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Isento Artigo 15.º do CIVA (Ou similar)"));
-                } else if (code.equals("M08")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), "IVA - Autoliquidação"));
+                    VatExemptionReason.create(code, defaultLs("Isento artigo 15.º do CIVA"), "Artigo 15.º do CIVA", true);
+                } else if (code.equals("M07")) {
+                    VatExemptionReason.create(code, defaultLs("Isento artigo 9.º do CIVA"), "Artigo 9.º do CIVA", true);
                 } else if (code.equals("M09")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "IVA ‐ Não confere direito a dedução"));
+                    VatExemptionReason.create(code, defaultLs("IVA - não confere direito a dedução"),
+                            "Artigo 62.º alínea b) do CIVA", true);
                 } else if (code.equals("M10")) {
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), "IVA - Regime de isenção"));
+                    VatExemptionReason.create(code, defaultLs("IVA – regime de isenção"), "Artigo 57.º do CIVA", true);
+                } else if (code.equals("M11")) {
+                    VatExemptionReason.create(code, defaultLs("Regime particular do tabaco"),
+                            "Decreto-Lei n.º 346/85, de 23 de agosto", true);
+                } else if (code.equals("M12")) {
+                    VatExemptionReason.create(code, defaultLs("Regime da margem de lucro – Agências de viagens"),
+                            "Decreto-Lei n.º 221/85, de 3 de julho", true);
+                } else if (code.equals("M13")) {
+                    VatExemptionReason.create(code, defaultLs("Regime da margem de lucro – Bens em segunda mão"),
+                            "Decreto-Lei n.º 199/96, de 18 de outubro", true);
+                } else if (code.equals("M14")) {
+                    VatExemptionReason.create(code, defaultLs("Regime da margem de lucro – Objetos de arte"),
+                            "Decreto-Lei n.º 199/96, de 18 de outubro", true);
+                } else if (code.equals("M15")) {
+                    VatExemptionReason.create(code, defaultLs("Regime da margem de lucro – Objetos de coleção e antiguidades"),
+                            "Decreto-Lei n.º 199/96, de 18 de outubro", true);
                 } else if (code.equals("M16")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Isento Artigo 14.º do RITI (Ou similar)"));
+                    VatExemptionReason.create(code, defaultLs("Isento artigo 14.º do RITI"), "Artigo 14.º do RITI", true);
+                } else if (code.equals("M19")) {
+                    VatExemptionReason.create(code, defaultLs("Outras isenções"),
+                            "Isenções temporárias determinadas em diploma próprio", true);
+                } else if (code.equals("M20")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - regime forfetário"), "Artigo 59.º-D n.º2 do CIVA", true);
+                } else if (code.equals("M21")) {
+                    VatExemptionReason.create(code, defaultLs("IVA – não confere direito à dedução (ou expressão similar)"),
+                            "Artigo 72.º n.º 4 do CIVA", true);
+                } else if (code.equals("M25")) {
+                    VatExemptionReason.create(code, defaultLs("Mercadorias à consignação"), "Artigo 38.º n.º 1 alínea a)", true);
+                } else if (code.equals("M30")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"), "Artigo 2.º n.º 1 alínea i) do CIVA",
+                            true);
+                } else if (code.equals("M31")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"), "Artigo 2.º n.º 1 alínea j) do CIVA",
+                            true);
+                } else if (code.equals("M32")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"), "Artigo 2.º n.º 1 alínea l) do CIVA",
+                            true);
+                } else if (code.equals("M33")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"), "Artigo 2.º n.º 1 alínea m) do CIVA",
+                            true);
+                } else if (code.equals("M40")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"),
+                            "Artigo 6.º n.º 6 alínea a) do CIVA, a contrário", true);
+                } else if (code.equals("M41")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"), "Artigo 8.º n.º 3 do RITI", true);
+                } else if (code.equals("M42")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"),
+                            "Decreto-Lei n.º 21/2007, de 29 de janeiro", true);
+                } else if (code.equals("M43")) {
+                    VatExemptionReason.create(code, defaultLs("IVA - autoliquidação"),
+                            "Decreto-Lei n.º 362/99, de 16 de setembro", true);
                 } else if (code.equals("M99")) {
-                    VatExemptionReason.create(code,
-                            new LocalizedString(Locale.getDefault(), "Não sujeito; não tributado (Ou similar)"));
-                } else {
-
-                    VatExemptionReason.create(code, new LocalizedString(Locale.getDefault(), code));
+                    VatExemptionReason.create(code, defaultLs("Não sujeito ou não tributado"),
+                            "Outras situações de não liquidação do imposto (Exemplos: artigo 2.º, n.º 2 ; artigo 3.º, n.ºs 4, 6 e 7; artigo 4.º, n.º 5, todos do CIVA)",
+                            true);
                 }
             }
         }
+    }
+
+    private static LocalizedString defaultLs(String value) {
+        return new LocalizedString(Locale.getDefault(), value);
     }
 
     private static void initializePaymentMethod() {
@@ -245,8 +284,7 @@ public class TreasuryBootstrapper {
         FinantialDocumentType.createForDebitNote("ND",
                 TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.DebitNote"), "ND", true);
         FinantialDocumentType.createForSettlementNote("NP",
-                TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.SettlementNote"),
-                "NP", true);
+                TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.SettlementNote"), "NP", true);
         FinantialDocumentType.createForReimbursementNote("NR",
                 TreasuryConstants.treasuryBundleI18N("label.FinantialDocumentType.ReimbursementNote"), "NR", true);
     }

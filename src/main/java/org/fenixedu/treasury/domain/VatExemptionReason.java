@@ -52,6 +52,7 @@
  */
 package org.fenixedu.treasury.domain;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,15 +65,23 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class VatExemptionReason extends VatExemptionReason_Base {
 
+    public static final Comparator<VatExemptionReason> COMPARE_BY_CODE = (o1, o2) -> {
+        int c = o1.getCode().compareTo(o2.getCode());
+        
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
+    
     protected VatExemptionReason() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected VatExemptionReason(final String code, final LocalizedString name) {
+    protected VatExemptionReason(String code, LocalizedString name, String legalArticle, boolean active) {
         this();
         setCode(code);
         setName(name);
+        setLegalArticle(legalArticle);
+        setActive(active);
 
         checkRules();
     }
@@ -85,15 +94,20 @@ public class VatExemptionReason extends VatExemptionReason_Base {
         if (LocalizedStringUtil.isTrimmedEmpty(getName())) {
             throw new TreasuryDomainException("error.VatExemptionReason.name.required");
         }
+        
+        if(getActive() == null) {
+            throw new TreasuryDomainException("error.VatExemptionReason.active.required");
+        }
 
         findByCode(getCode());
-        getName().getLocales().stream().forEach(l -> findByName(getName().getContent(l)));
     }
 
     @Atomic
-    public void edit(final String code, final LocalizedString name) {
+    public void edit(String code, LocalizedString name, String legalArticle, boolean active) {
         setCode(code);
         setName(name);
+        setLegalArticle(legalArticle);
+        setActive(active);
 
         checkRules();
     }
@@ -144,19 +158,14 @@ public class VatExemptionReason extends VatExemptionReason_Base {
                 continue;
             }
 
-            if (result != null) {
-                throw new TreasuryDomainException("error.VatExemptionReason.duplicated.name");
-            }
-
             result = it;
         }
 
         return result;
     }
 
-    @Atomic
-    public static VatExemptionReason create(final String code, final LocalizedString name) {
-        return new VatExemptionReason(code, name);
+    public static VatExemptionReason create(String code, LocalizedString name, String legalArticle, boolean active) {
+        return new VatExemptionReason(code, name, legalArticle, active);
     }
 
 }

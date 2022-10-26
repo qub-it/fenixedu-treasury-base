@@ -87,6 +87,8 @@ class VatExemptionReason
 {
 	String code;
 	LocalizedStringT name;
+	String legalArticle;
+	Boolean active;
 }
 
 class ProductGroup {
