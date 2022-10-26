@@ -1,4 +1,5 @@
 - Improvement: Allow set active in vat exemption reasons. Also add field for the legal article describing the exemption
+- Refactor: Comparator for Product entity
 
 9.6.3 (20-10-2022)
 - Refactor: Remove deprecated InterestType.DAILY

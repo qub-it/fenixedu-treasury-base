@@ -68,7 +68,6 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
 import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.DateTime;
 
@@ -78,15 +77,16 @@ import pt.ist.fenixframework.FenixFramework;
 public class Product extends Product_Base {
 
     public static final int MAX_CODE_LENGTH = 20;
-    public static final Comparator<Product> COMPARE_BY_NAME = new Comparator<Product>() {
+    public static final Comparator<Product> COMPARE_BY_NAME = (o1, o2) -> {
+        int c = o1.getName().getContent().compareTo(o2.getName().getContent());
 
-        @Override
-        public int compare(Product o1, Product o2) {
-            int c = o1.getName().getContent().compareTo(o2.getName().getContent());
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
 
-            return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-        }
+    public static final Comparator<Product> COMPARE_BY_INSTALLMENT_NUMBER_AND_NAME = (o1, o2) -> {
+        int c = Integer.compare(o1.getTuitionInstallmentOrder(), o2.getTuitionInstallmentOrder());
 
+        return c != 0 ? c : COMPARE_BY_NAME.compare(o1, o2);
     };
 
     protected Product() {
