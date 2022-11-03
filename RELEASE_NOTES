@@ -1,3 +1,4 @@
+9.6.4 (03-11-2022)
 - Improvement: Allow set active in vat exemption reasons. Also add field for the legal article describing the exemption
 - Refactor: Comparator for Product entity
 - Refactor: Transform SpreadsheetRow interface as funcional interface
