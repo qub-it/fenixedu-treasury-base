@@ -462,10 +462,10 @@ public class DebitNote extends DebitNote_Base {
 
             setAnnulledReason(reason);
             setAnnullmentDate(new DateTime());
-            
+
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
-            
+
         } else if (isPreparing()) {
             if (!getCreditNoteSet().isEmpty()) {
                 throw new TreasuryDomainException("error.DebitNote.creditNote.not.empty");
@@ -488,7 +488,7 @@ public class DebitNote extends DebitNote_Base {
             this.setState(FinantialDocumentStateType.ANNULED);
             setAnnulledReason(reason);
             setAnnullmentDate(new DateTime());
-            
+
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else {
@@ -506,9 +506,7 @@ public class DebitNote extends DebitNote_Base {
         CreditNote creditNote = null;
 
         if (isInvoiceRegistrationByTreasuryCertification) {
-            final DocumentNumberSeries documentNumberSeries =
-                    DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
-
+            DocumentNumberSeries documentNumberSeries = inferCreditNoteDocumentNumberSeries();
             creditNote =
                     CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this, getUiDocumentNumber());
         }
@@ -566,6 +564,30 @@ public class DebitNote extends DebitNote_Base {
         }
     }
 
+    /**
+     * Use this method to get the credit note document number series, to be used in annulments, credits and so on
+     * 
+     * This method was created in the treasury certification scope, due to importation of other certified documents
+     * 
+     * @return
+     */
+    public DocumentNumberSeries inferCreditNoteDocumentNumberSeries() {
+        boolean isInvoiceRegistrationByTreasuryCertification =
+                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
+        if (isInvoiceRegistrationByTreasuryCertification && getDocumentNumberSeries().getSeries().isLegacy()) {
+            // This is relevant for treasury certification
+            //
+            // Avoid using the same document number series for documents from other
+            // software applications, documents issued manually or recovered documents
+
+            return DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
+                    Series.findUniqueDefault(getDebtAccount().getFinantialInstitution()).get());
+        } else {
+            return DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
+        }
+    }
+
     public void annulCertifiedDebitNote(String reason) {
         if (!isCertifiedDebitNoteAnnulable()) {
             throw new TreasuryDomainException(
@@ -590,7 +612,7 @@ public class DebitNote extends DebitNote_Base {
 
         setAnnulledReason(reason);
         setAnnullmentDate(new DateTime());
-        
+
         final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
         setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
@@ -693,6 +715,65 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
+    public void updateAllDueDates(LocalDate newDueDate) {
+
+        this.setDocumentDueDate(newDueDate);
+
+        this.getDebitEntries().forEach(entry -> {
+            entry.updateDueDate(newDueDate);
+        });
+        checkRules();
+    }
+
+    /**
+     * This method is an helper to create open credit note, for recovery or integration purposes.
+     * Created in the scope of treasury certification
+     */
+    public void createOpenCreditNoteForIntegrationOrRecovery() {
+        if (isAnnulled()) {
+            throw new IllegalStateException("error.DebitNote.createOpenCreditNoteForIntegrationOrRecovery.document.is.annuled");
+        }
+
+        if (!TreasuryConstants.isPositive(getAvailableNetAmountForCredit())) {
+            throw new IllegalStateException(
+                    "error.DebitNote.createOpenCreditNoteForIntegrationOrRecovery.available.amount.for.credit.is.not.positive");
+        }
+
+        if (!getDocumentNumberSeries().getSeries().isLegacy()) {
+            throw new IllegalStateException("error.DebitNote.createOpenCreditNoteForIntegrationOrRecovery.series.is.not.legacy");
+        }
+
+        if (!getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+            throw new IllegalStateException(
+                    "error.DebitNote.createOpenCreditNoteForIntegrationOrRecovery.invoice.registration.not.treasury.certification");
+        }
+
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
+
+        DateTime documentDate = new DateTime();
+        CreditNote creditNote =
+                CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this, getUiDocumentNumber());
+
+        for (DebitEntry entry : this.getDebitEntriesSet()) {
+            // Get the amount for credit without tax, and considering the credit quantity FOR ONE
+            final BigDecimal amountForCreditWithoutVat = entry.getAvailableNetAmountForCredit();
+
+            if (!TreasuryConstants.isPositive(amountForCreditWithoutVat)) {
+                continue;
+            }
+
+            entry.createCreditEntry(documentDate, entry.getDescription(), null, null, amountForCreditWithoutVat, null,
+                    creditNote);
+        }
+    }
+
+    public BigDecimal getAvailableNetAmountForCredit() {
+        return getDebitEntriesSet().stream().map(de -> de.getAvailableNetAmountForCredit()).reduce(BigDecimal.ZERO,
+                BigDecimal::add);
+    }
+
+    @Atomic
     public static DebitNote createInterestDebitNoteForDebitNote(final DebitNote debitNote,
             final DocumentNumberSeries documentNumberSeries, final LocalDate paymentDate, final String documentObservations,
             final String documentTermsAndConditions) {
@@ -756,17 +837,6 @@ public class DebitNote extends DebitNote_Base {
 
         return DebitEntry.create(Optional.of(debitNote), debtAccount, null, transferVat, amountWithoutVat, dueDate,
                 Maps.newHashMap(), product, entryDescription, BigDecimal.ONE, interestRate, entryDate);
-    }
-
-    @Atomic
-    public void updateAllDueDates(LocalDate newDueDate) {
-
-        this.setDocumentDueDate(newDueDate);
-
-        this.getDebitEntries().forEach(entry -> {
-            entry.updateDueDate(newDueDate);
-        });
-        checkRules();
     }
 
 }

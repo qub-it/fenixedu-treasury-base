@@ -73,11 +73,13 @@ import com.google.common.collect.Maps;
 public class ReimbursementUtils {
 
     public static boolean isInReimbursementCreditsRestrictionModeOfSAP(CreditNote creditNote) {
-        return !creditNote.getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
+        FinantialInstitution finantialInstitution = creditNote.getDebtAccount().getFinantialInstitution();
+        return !finantialInstitution.isToCloseCreditNoteWhenCreated();
     }
 
     public static boolean isInReimbursementCreditsRestrictionModeOfSAP(CreditEntry creditEntry) {
-        return !creditEntry.getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
+        FinantialInstitution finantialInstitution = creditEntry.getDebtAccount().getFinantialInstitution();
+        return !finantialInstitution.isToCloseCreditNoteWhenCreated();
     }
 
     public static boolean isCreditNoteSettledWithPayment(final CreditNote creditNote) {
@@ -86,6 +88,10 @@ public class ReimbursementUtils {
     }
 
     public static boolean isCreditNoteForReimbursementMustBeClosedWithDebitNoteAndCreatedNew(final CreditEntry creditEntry) {
+        if(creditEntry.getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+            return false;
+        }
+        
         if (!isInReimbursementCreditsRestrictionModeOfSAP(creditEntry)) {
             return false;
         }

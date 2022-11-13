@@ -541,9 +541,9 @@ public class DebitEntry extends DebitEntry_Base {
         boolean isInvoiceRegistrationByTreasuryCertification =
                 getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
 
-        final DebitNote finantialDocument = (DebitNote) this.getFinantialDocument();
+        final DebitNote debitNote = (DebitNote) this.getFinantialDocument();
 
-        if (finantialDocument == null) {
+        if (debitNote == null) {
             throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.requires.finantial.document");
         }
 
@@ -551,12 +551,11 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.creditNote.is.not.preparing");
         }
 
-        final DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                finantialDocument.getDocumentNumberSeries().getSeries());
-
         if (creditNote == null) {
-            creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, finantialDocument,
-                    finantialDocument.getUiDocumentNumber());
+            DocumentNumberSeries documentNumberSeries = debitNote.inferCreditNoteDocumentNumberSeries();
+
+            creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, debitNote,
+                    debitNote.getUiDocumentNumber());
         }
 
         if (!Strings.isNullOrEmpty(documentObservations)) {
@@ -588,12 +587,18 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
-        final DocumentNumberSeries documentNumberSeriesSettlementNote = DocumentNumberSeries.find(
+        DocumentNumberSeries documentNumberSeriesSettlementNote = DocumentNumberSeries.find(
                 FinantialDocumentType.findForSettlementNote(), this.getFinantialDocument().getDocumentNumberSeries().getSeries());
 
         boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
         boolean isInvoiceRegistrationByTreasuryCertification =
                 getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
+        if (isInvoiceRegistrationByTreasuryCertification
+                && this.getFinantialDocument().getDocumentNumberSeries().getSeries().isLegacy()) {
+            documentNumberSeriesSettlementNote = DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
+                    Series.findUniqueDefault(this.getDebtAccount().getFinantialInstitution()).get());
+        }
 
         if (creditEntry.getFinantialDocument().isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.is.annulled");
