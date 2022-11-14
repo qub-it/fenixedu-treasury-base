@@ -1,3 +1,4 @@
+9.6.5 (14-11-2022)
 - Bug Fix: In invoice certification mode, in annulment of debit note of legacy series, use the default series to create the credit note, instead of the same legacy series
 - Improvement: Method in debit note to create open credit note, to fill the original invoice details
 - Bug Fix: Do not apply reimbursement compensation (due to SAP) in invoice certification mode
