@@ -36,6 +36,7 @@ import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.paymentplans.PaymentPlanTestsUtilities;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -61,7 +62,7 @@ public class TreasuryExemptionTest {
 
             DebtAccount.create(getFinatialInstitution(), customer);
 
-            TreasuryExemptionType.create("TreasuryExemptionType", BasicTreasuryUtils.ls("TreasuryExemptionType"), null, true);
+            TreasuryExemptionType.create("TreasuryExemptionType", BasicTreasuryUtils.ls("TreasuryExemptionType"), TreasuryConstants.HUNDRED_PERCENT, true);
 
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));

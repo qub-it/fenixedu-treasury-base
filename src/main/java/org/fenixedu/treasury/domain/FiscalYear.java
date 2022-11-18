@@ -84,6 +84,10 @@ public class FiscalYear extends FiscalYear_Base {
         setFinantialInstitution(finantialInstitution);
         setYear(year);
         setSettlementAnnulmentLimitDate(settlementAnnulmentLimitDate);
+
+        for(int i = 1; i <= 12; i++) {
+            FiscalMonth.create(this, i);
+        }
         
         checkRules();
     }
@@ -104,7 +108,6 @@ public class FiscalYear extends FiscalYear_Base {
         if(FiscalYear.find(getFinantialInstitution(), getYear()).count() > 1) {
             throw new TreasuryDomainException("error.FiscalYear.already.defined.for.finantial.institution.and.year");
         }
-        
     }
 
     @Atomic

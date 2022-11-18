@@ -63,6 +63,8 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class ProductGroup extends ProductGroup_Base {
 
+    public static final int MAX_PRODUCT_CODE_LENGHT = 50;
+    
     protected ProductGroup() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -83,6 +85,10 @@ public class ProductGroup extends ProductGroup_Base {
 
         if (LocalizedStringUtil.isTrimmedEmpty(getName())) {
             throw new TreasuryDomainException("error.ProductGroup.name.required");
+        }
+        
+        if(getCode().length() > MAX_PRODUCT_CODE_LENGHT) {
+            throw new TreasuryDomainException("error.ProductGroup.code.max.length");
         }
 
         findByCode(getCode());

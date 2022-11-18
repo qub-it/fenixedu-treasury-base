@@ -86,6 +86,8 @@ public abstract class Customer extends Customer_Base {
 
     public static final String DEFAULT_FISCAL_NUMBER = "999999990";
     public static final int MAX_CODE_LENGHT = 20;
+    
+    public static final int MAX_NAME_LENGTH = 100;
 
     public static final Comparator<Customer> COMPARE_BY_NAME_IGNORE_CASE = (o1, o2) -> {
         int c = o1.getName().compareToIgnoreCase(o2.getName());
@@ -169,6 +171,10 @@ public abstract class Customer extends Customer_Base {
 
         if (this.getCode().length() > Customer.MAX_CODE_LENGHT) {
             throw new TreasuryDomainException("error.Customer.code.maxlenght");
+        }
+        
+        if(getName().length() > Customer.MAX_NAME_LENGTH) {
+            throw new TreasuryDomainException("error.Customer.name.maxlenght");
         }
 
         if (Strings.isNullOrEmpty(getFiscalNumber().trim())) {

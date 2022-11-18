@@ -66,6 +66,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -193,19 +194,22 @@ public class DebitNote extends DebitNote_Base {
     public void closeDocument(boolean markDocumentToExport) {
         setDocumentDueDate(maxDebitEntryDueDate());
 
-        if (getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
-            // Recalculate the vat rates for all debit entries
-            // This is done to avoid the case where a debit note
-            // is closed after some time of being created
-            // and in the meantime the VAT rate changes
-            getDebitEntriesSet().forEach(de -> {
-                de.setVat(
-                        Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime())
-                                .get());
-                de.setVatRate(null);
-                de.recalculateAmountValues();
-            });
-        }
+        // VAT RECALCULATION
+        //
+        // TODO ANIL 2022-11-18: For now comment the following code, until we have a decision about this
+//        if (getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+//            // Recalculate the vat rates for all debit entries
+//            // This is done to avoid the case where a debit note
+//            // is closed after some time of being created
+//            // and in the meantime the VAT rate changes
+//            getDebitEntriesSet().forEach(de -> {
+//                de.setVat(
+//                        Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime())
+//                                .get());
+//                de.setVatRate(null);
+//                de.recalculateAmountValues();
+//            });
+//        }
 
         super.closeDocument(markDocumentToExport);
 
@@ -263,6 +267,10 @@ public class DebitNote extends DebitNote_Base {
     public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate,
             String originDocumentNumber, String documentObservations, String documentTermsAndConditionss) {
+        if(debitEntry.getFinantialDocument() != null) {
+            throw new IllegalStateException("error.DebitNote.createDebitNoteForDebitEntry.debitEntry.already.is.attached.to.finantialDocument");
+        }
+        
         final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
                 documentDate, documentDueDate, originDocumentNumber);
         debitNote.setDocumentObservations(documentObservations);
@@ -620,13 +628,17 @@ public class DebitNote extends DebitNote_Base {
     }
 
     public boolean isCertifiedDebitNoteAnnulable() {
+        if(!isClosed()) {
+            return false;
+        }
+        
         boolean withAllCreditNotesAnnuled = getCreditNoteSet().stream().allMatch(c -> c.isAnnulled());
         boolean withAllSettlementNotesAnnuled = getDebitEntriesSet().stream()
                 .allMatch(de -> de.getSettlementEntriesSet().stream().allMatch(se -> se.getFinantialDocument().isAnnulled()));
         boolean withAllInterestsAnnuled = getDebitEntriesSet().stream()
                 .allMatch(de -> de.getInterestDebitEntriesSet().stream().allMatch(i -> i.isAnnulled()));
 
-        return isClosed() && withAllCreditNotesAnnuled && withAllSettlementNotesAnnuled && withAllInterestsAnnuled;
+        return withAllCreditNotesAnnuled && withAllSettlementNotesAnnuled && withAllInterestsAnnuled;
     }
 
     public Set<CreditEntry> getRelatedCreditEntriesSet() {

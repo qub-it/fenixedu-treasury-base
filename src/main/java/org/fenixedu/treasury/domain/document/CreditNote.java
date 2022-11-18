@@ -62,6 +62,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -70,6 +71,7 @@ import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainS
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
 
@@ -125,7 +127,7 @@ public class CreditNote extends CreditNote_Base {
         if (getDebitNote() != null && getDocumentNumberSeries().getSeries().isRegulationSeries()) {
             throw new TreasuryDomainException("error.CreditNote.debit.note.cannot.be.from.regulation.series");
         }
-        
+
         super.checkRules();
     }
 
@@ -312,6 +314,11 @@ public class CreditNote extends CreditNote_Base {
         return documentsBaseList;
     }
 
+    /**
+     * This method will annul a credit note if the state is preparing
+     * 
+     * @param reason
+     */
     @Atomic
     public void anullDocument(final String reason) {
 
@@ -319,11 +326,10 @@ public class CreditNote extends CreditNote_Base {
             throw new TreasuryDomainException("error.CreditNote.anullDocument.reason.required");
         }
 
-        if(TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
-            throw new TreasuryDomainException(
-                    "error.CreditNote.cannot.annull.or.credit.due.to.existing.active.debt.process");
+        if (TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.CreditNote.cannot.annull.or.credit.due.to.existing.active.debt.process");
         }
-        
+
         if (this.isPreparing()) {
 
             if (getCreditEntries().anyMatch(ce -> ce.isFromExemption())) {
@@ -385,6 +391,42 @@ public class CreditNote extends CreditNote_Base {
         return creditNote;
     }
 
+    public void annulCertifiedCreditNote(String reason) {
+        if (!isCertifiedCreditNoteAnnulable()) {
+            throw new TreasuryDomainException(
+                    "error.CreditNote.annulCertifiedCreditNote.not.possible.due.existing.active.settlements");
+        }
+
+        // Activate the debit entries in treasury event
+        getCreditEntriesSet().stream() //
+                .filter(ce -> ce.getDebitEntry() != null) //
+                .filter(ce -> !ce.getDebitEntry().isAnnulled()) //
+                .map(ce -> ce.getDebitEntry()) //
+                .filter(de -> de.getTreasuryEvent() != null && !de.isIncludedInEvent()) //
+                .forEach(de -> de.revertEventAnnuled());
+
+        this.setState(FinantialDocumentStateType.ANNULED);
+
+        setAnnulledReason(reason);
+        setAnnullmentDate(new DateTime());
+
+        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
+
+        TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);
+    }
+
+    public boolean isCertifiedCreditNoteAnnulable() {
+        if (!isClosed()) {
+            return false;
+        }
+
+        boolean withAllSettlementNotesAnnuled = getCreditEntriesSet().stream()
+                .allMatch(de -> de.getSettlementEntriesSet().stream().allMatch(se -> se.getFinantialDocument().isAnnulled()));
+
+        return withAllSettlementNotesAnnuled;
+    }
+
     // @formatter:off
     /* ********
      * SERVICES
@@ -433,10 +475,10 @@ public class CreditNote extends CreditNote_Base {
 
         creditNote.editPayorDebtAccount(payorDebtAccount);
 
-        if(finantialInstitution.isToCloseCreditNoteWhenCreated()) {
+        if (finantialInstitution.isToCloseCreditNoteWhenCreated()) {
             creditNote.closeDocument();
         }
-        
+
         return entry;
     }
 

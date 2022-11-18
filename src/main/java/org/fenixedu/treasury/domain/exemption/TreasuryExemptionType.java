@@ -60,6 +60,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
@@ -99,8 +100,17 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
             throw new TreasuryDomainException("error.Currency.name.required");
         }
 
+        if (getDefaultExemptionPercentage() == null) {
+            throw new TreasuryDomainException("error.TreasuryExemptionType.defaultExemptionPercentage.required");
+        }
+
         if (findByCode(getCode()).count() > 1) {
             throw new TreasuryDomainException("error.TreasuryExemptionType.code.duplicated");
+        }
+
+        if (!TreasuryConstants.isPositive(getDefaultExemptionPercentage())
+                || TreasuryConstants.isGreaterThan(getDefaultExemptionPercentage(), TreasuryConstants.HUNDRED_PERCENT)) {
+            throw new TreasuryDomainException("error.TreasuryExemptionType.defaultExemptionPercentage.invalid");
         }
     }
 

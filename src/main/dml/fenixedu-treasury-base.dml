@@ -2677,7 +2677,35 @@ class FiscalYear {
 			multiplicity *;
 		}
 	}
+
+class FiscalMonth {
+	int month;
+	Boolean fiscalOperationsClosed;
 	
+	// just for auditing
+	DateTime fiscalOperationsClosedSetDate;
+	String fiscalOperationsClosedResponsible;
+}	
+
+	relation FiscalMonthDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		FiscalMonth playsRole fiscalMonths {
+			multiplicity *;
+		}
+	}
+	
+	relation FiscalYearFiscalMonth {
+		FiscalYear playsRole fiscalYear {
+			multiplicity 1..1;
+		}
+		
+		FiscalMonth playsRole fiscalMonths {
+			multiplicity *;
+		}
+	}
 
 /* 
  * *************************

@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -76,7 +77,11 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class Product extends Product_Base {
 
+    private static final int MIN_DESCRIPTION_LENGTH = 2;
+    private static final int MAX_DESCRIPTION_LENGTH = 200;
+    
     public static final int MAX_CODE_LENGTH = 20;
+    
     public static final Comparator<Product> COMPARE_BY_NAME = (o1, o2) -> {
         int c = o1.getName().getContent().compareTo(o2.getName().getContent());
 
@@ -141,6 +146,16 @@ public class Product extends Product_Base {
             throw new TreasuryDomainException("error.Product.code.size.exceded");
         }
 
+        getName().getLocales().stream().forEach(lc -> {
+            if(StringUtils.isNotEmpty(getName().getContent(lc)) && getName().getContent(lc).length() < MIN_DESCRIPTION_LENGTH) {
+                throw new TreasuryDomainException("error.Product.description.length.minimum");
+            }
+            
+            if(StringUtils.isNotEmpty(getName().getContent(lc)) && getName().getContent(lc).length() > MAX_DESCRIPTION_LENGTH) {
+                throw new TreasuryDomainException("error.Product.description.length.maximum");
+            }
+        });
+        
     }
 
     public boolean isActive() {
