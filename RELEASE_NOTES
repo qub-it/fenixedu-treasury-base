@@ -6,6 +6,7 @@
 - Bug Fix: Check if Customer name if greater than 100 characters (imposed by SAFT)
 - Bug Fix: Check Product name length is not less than 2 characters and not greater than 200 characters (imposed by SAFT)
 - Bug Fix: Check if ProductGroup code length is not above 50 characters (imposed by SAFT)
+- Refactor: Add service to split local date period between years
 
 9.6.5 (14-11-2022)
 - Bug Fix: In invoice certification mode, in annulment of debit note of legacy series, use the default series to create the credit note, instead of the same legacy series

@@ -138,6 +138,8 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION.compare(o1, o2);
     };
 
+    public static final int MAX_DESCRIPTION_LENGTH = 200;
+    
     @Override protected void checkForDeletionBlockers(
     Collection<String> blockers)
     {
@@ -303,6 +305,11 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         }
     }
 
+    /**
+     * This method is overriden in DebitEntry, that take into account the netExemptedAmount
+     * 
+     * @return
+     */
     protected BigDecimal calculateNetAmount() {
         BigDecimal netAmount = Currency.getValueWithScale(getQuantity().multiply(getAmount()));
         return netAmount;

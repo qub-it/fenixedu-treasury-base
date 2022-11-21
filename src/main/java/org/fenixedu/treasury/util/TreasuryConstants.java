@@ -56,12 +56,13 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.IntBinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
@@ -278,6 +279,55 @@ public class TreasuryConstants {
                 .map(d -> isWeekend.test(startDate.plusDays(d)) ? 0 : 1).reduce(0, (a, b) -> a + b);
     }
 
+    public static class LocalDateInterval {
+        private LocalDate beginDate;
+        private LocalDate endDate;
+        
+        public LocalDateInterval(LocalDate beginDate, LocalDate endDate) {
+            this.beginDate = beginDate;
+            this.endDate = endDate;
+        }
+        
+        public LocalDate getBeginDate() {
+            return beginDate;
+        }
+        
+        public LocalDate getEndDate() {
+            return endDate;
+        }
+    }
+    
+    public static List<LocalDateInterval> splitByYearIntervals(LocalDate beginDate, LocalDate endDate) {
+        if(beginDate.isAfter(endDate)) {
+            throw new RuntimeException("error");
+        }
+        
+        if(beginDate.getYear() == endDate.getYear()) {
+            return Collections.singletonList(new LocalDateInterval(beginDate, endDate));
+        }
+        
+        List<LocalDate> dates = new ArrayList<>();
+        dates.add(beginDate);
+        dates.add(endDate);
+        
+        
+        for(int i = beginDate.getYear(); i < endDate.getYear(); i++) {
+            dates.add(new LocalDate(i, 12, 31));
+            dates.add(new LocalDate(i + 1, 1, 1));
+        }
+
+        Collections.sort(dates);
+
+        LocalDate[] datesArray = dates.toArray(new LocalDate[] {});
+        
+        List<LocalDateInterval> result = new ArrayList<>();
+        for(int i = 0; i < dates.size() - 1; i += 2) {
+            result.add(new LocalDateInterval(datesArray[i], datesArray[i+1]));
+        }
+        
+        return result;
+    }
+    
     // @formatter:off
     /****************
      * STRING UTILS *

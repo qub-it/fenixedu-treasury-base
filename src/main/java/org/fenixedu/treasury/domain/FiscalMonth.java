@@ -65,7 +65,7 @@ public class FiscalMonth extends FiscalMonth_Base {
     }
 
     public void closeOperations() {
-        setFiscalOperationsClosed(true);
+        super.setFiscalOperationsClosed(true);
 
         String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
         super.setFiscalOperationsClosedResponsible(loggedUsername);
