@@ -1,3 +1,4 @@
+10.0.0 (22-11-2022)
 - New Feature: Support fiscal months to close operations in the respective month. When creating FiscalYear, also create fiscal months
 - Improvement: Support to annul certified credit note
 - Refactor: Comment the VAT recalculation in each debit entry, when closing a debit note
