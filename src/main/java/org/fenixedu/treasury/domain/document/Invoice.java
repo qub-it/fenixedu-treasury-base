@@ -211,19 +211,23 @@ public abstract class Invoice extends Invoice_Base {
     public Comparator<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderComparator() {
         return InvoiceEntry.COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION;
     }
-    
+
     @Override
     public List<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
         final List<InvoiceEntry> result = new ArrayList<>();
-        
+
         getFinantialDocumentEntriesSet().stream().map(InvoiceEntry.class::cast).collect(Collectors.toCollection(() -> result));
         Collections.sort(result, InvoiceEntry.COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
-        
-        if(result.size() != getFinantialDocumentEntriesSet().size()) {
+
+        if (result.size() != getFinantialDocumentEntriesSet().size()) {
             throw new RuntimeException("error");
         }
 
         return result;
     }
 
+    public boolean isWithInvoiceEntriesWithCalculatedAmountsOverriden() {
+        return getFinantialDocumentEntriesSet().stream().map(InvoiceEntry.class::cast)
+                .anyMatch(ei -> Boolean.TRUE.equals(ei.getCalculatedAmountsOverriden()));
+    }
 }

@@ -82,6 +82,10 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
         this();
 
+        if(Boolean.TRUE.equals(debitEntry.getCalculatedAmountsOverriden())) {
+            throw new TreasuryDomainException("error.DebitEntry.exempt.not.possible.due.to.overriden.calculated.amounts");
+        }
+        
         for (final CreditEntry creditEntry : debitEntry.getCreditEntriesSet()) {
             if (!creditEntry.getFinantialDocument().isAnnulled() && !creditEntry.isFromExemption()) {
                 throw new TreasuryDomainException("error.TreasuryExemption.debitEntry.with.credit.not.from.exemption");

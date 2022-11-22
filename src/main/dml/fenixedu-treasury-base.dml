@@ -399,6 +399,15 @@ class document.FinantialDocumentEntry {
 		BigDecimalT vatRate;
 		BigDecimalT netAmount;
 		BigDecimalT amountWithVat;
+		
+		// With this property set to true, the netAmount, vatAmount, vatRate and
+		// amountWithVat can be overriden
+		//
+		// This is an imposition from the Tax Authority (AT)
+		//
+		// If the calculated amounts are overriden, then the exemptions
+		// and partial credits are not possible
+		Boolean calculatedAmountsOverriden;
 	}
 
 	class document.DebitEntry extends document.InvoiceEntry {

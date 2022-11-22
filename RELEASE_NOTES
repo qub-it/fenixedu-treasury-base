@@ -1,4 +1,4 @@
-- New Fixture: Support fiscal months to close operations in the respective month. When creating FiscalYear, also create fiscal months
+- New Feature: Support fiscal months to close operations in the respective month. When creating FiscalYear, also create fiscal months
 - Improvement: Support to annul certified credit note
 - Refactor: Comment the VAT recalculation in each debit entry, when closing a debit note
 - Bug Fix: Protect method DebitNote::createDebitNoteForDebitEntry, check if the debit entry argument has already a debit note. Throw error if yes.
@@ -7,6 +7,7 @@
 - Bug Fix: Check Product name length is not less than 2 characters and not greater than 200 characters (imposed by SAFT)
 - Bug Fix: Check if ProductGroup code length is not above 50 characters (imposed by SAFT)
 - Refactor: Add service to split local date period between years
+- New Feature: Allow override InvoiceEntry fields: netAmount, vatRate, vatAmount and amountWithVat. These debit entries can only be credited by full amount, not even exempted
 
 9.6.5 (14-11-2022)
 - Bug Fix: In invoice certification mode, in annulment of debit note of legacy series, use the default series to create the credit note, instead of the same legacy series

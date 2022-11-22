@@ -479,6 +479,10 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.exemptedAmount.cannot.be.greater.than.availableAmount");
         }
 
+        if (Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+            throw new TreasuryDomainException("error.DebitEntry.exempt.not.possible.due.to.overriden.calculated.amounts");
+        }
+
         if (isProcessedInClosedDebitNote()) {
             BigDecimal netExemptedAmount = treasuryExemption.getNetExemptedAmount();
 
@@ -557,6 +561,14 @@ public class DebitEntry extends DebitEntry_Base {
             creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, debitNote,
                     debitNote.getUiDocumentNumber());
         }
+        
+        if (treasuryExemption != null && Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+            throw new TreasuryDomainException("error.DebitEntry.exempt.not.possible.due.to.overriden.calculated.amounts");
+        }
+        
+        if(Boolean.TRUE.equals(getCalculatedAmountsOverriden()) && TreasuryConstants.isLessThan(netAmountForCredit, getNetAmount())) {
+            throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.for.overriden.calculated.amounts.only.possible.to.credit.by.full.amount");
+        }
 
         if (!Strings.isNullOrEmpty(documentObservations)) {
             creditNote.setDocumentObservations(documentObservations);
@@ -577,8 +589,13 @@ public class DebitEntry extends DebitEntry_Base {
         } else {
             creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), netAmountForCredit, documentDate,
                     this, BigDecimal.ONE);
+            
+            if(Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+                // Create a credit entry with the exact amounts as this debit entry
+                creditEntry.overrideCalculatedAmounts(getNetAmount(), getVatRate(), getVatAmount(), getAmountWithVat());
+            }
         }
-
+        
         if (!isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
             creditNote.closeDocument();
         }
@@ -1206,6 +1223,10 @@ public class DebitEntry extends DebitEntry_Base {
     public void removeFromDocument() {
         if (getFinantialDocument() == null || !getFinantialDocument().isPreparing()) {
             throw new TreasuryDomainException("error.DebitEntry.removeFromDocument.invalid.state");
+        }
+        
+        if(Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.remove.from.document.due.to.calculated.amounts.overriden");
         }
 
         setFinantialDocument(null);

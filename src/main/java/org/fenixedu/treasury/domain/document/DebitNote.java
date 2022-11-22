@@ -194,6 +194,15 @@ public class DebitNote extends DebitNote_Base {
     public void closeDocument(boolean markDocumentToExport) {
         setDocumentDueDate(maxDebitEntryDueDate());
 
+        // if this document is not a manually issued document, then
+        // recalculate all debit entries that the calculated amounts
+        // were overriden. This is to not allow normal invoices with
+        // overriden amounts
+        if (!isManuallyIssuedDocument()) {
+            getDebitEntriesSet().stream().filter(de -> Boolean.TRUE.equals(de.getCalculatedAmountsOverriden()))
+                    .forEach(de -> de.disableOverrideCalculatedAmounts());
+        }
+
         // VAT RECALCULATION
         //
         // TODO ANIL 2022-11-18: For now comment the following code, until we have a decision about this
@@ -214,6 +223,12 @@ public class DebitNote extends DebitNote_Base {
         super.closeDocument(markDocumentToExport);
 
         TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
+    }
+
+    public boolean isManuallyIssuedDocument() {
+        return Boolean.TRUE.equals(getCertificationCopyFromCertifiedDocument())
+                && getCertificationOriginalDocumentInvoiceSourceBillingType() == InvoiceSourceBillingType.M
+                && Boolean.TRUE.equals(getCertificationOriginalDocumentManual());
     }
 
     private LocalDate maxDebitEntryDueDate() {
@@ -267,10 +282,11 @@ public class DebitNote extends DebitNote_Base {
     public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate,
             String originDocumentNumber, String documentObservations, String documentTermsAndConditionss) {
-        if(debitEntry.getFinantialDocument() != null) {
-            throw new IllegalStateException("error.DebitNote.createDebitNoteForDebitEntry.debitEntry.already.is.attached.to.finantialDocument");
+        if (debitEntry.getFinantialDocument() != null) {
+            throw new IllegalStateException(
+                    "error.DebitNote.createDebitNoteForDebitEntry.debitEntry.already.is.attached.to.finantialDocument");
         }
-        
+
         final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
                 documentDate, documentDueDate, originDocumentNumber);
         debitNote.setDocumentObservations(documentObservations);
@@ -521,11 +537,15 @@ public class DebitNote extends DebitNote_Base {
 
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             //Get the amount for credit without tax, and considering the credit quantity FOR ONE
-            final BigDecimal amountForCreditWithoutVat = Currency.getValueWithScale(TreasuryConstants
+            BigDecimal amountForCreditWithoutVat = Currency.getValueWithScale(TreasuryConstants
                     .divide(entry.getAvailableAmountWithVatForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
 
             if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
                 continue;
+            }
+            
+            if(Boolean.TRUE.equals(entry.getCalculatedAmountsOverriden())) {
+                amountForCreditWithoutVat = entry.getAvailableNetAmountForCredit();
             }
 
             final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(), documentObservations,
@@ -628,10 +648,10 @@ public class DebitNote extends DebitNote_Base {
     }
 
     public boolean isCertifiedDebitNoteAnnulable() {
-        if(!isClosed()) {
+        if (!isClosed()) {
             return false;
         }
-        
+
         boolean withAllCreditNotesAnnuled = getCreditNoteSet().stream().allMatch(c -> c.isAnnulled());
         boolean withAllSettlementNotesAnnuled = getDebitEntriesSet().stream()
                 .allMatch(de -> de.getSettlementEntriesSet().stream().allMatch(se -> se.getFinantialDocument().isAnnulled()));

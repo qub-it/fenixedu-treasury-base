@@ -197,6 +197,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
             throw new TreasuryDomainException("error.InvoiceEntry.debtAccount.closed");
         }
 
+        this.setCalculatedAmountsOverriden(false);
         this.setQuantity(quantity);
         this.setCurrency(debtAccount.getFinantialInstitution().getCurrency());
         this.setDebtAccount(debtAccount);
@@ -355,6 +356,55 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return getCurrency().getValueWithScale(isPositive(openAmount) ? openAmount : BigDecimal.ZERO);
     }
 
+    public void overrideCalculatedAmounts(BigDecimal netAmount, BigDecimal vatRate, BigDecimal vatAmount,
+            BigDecimal amountWithVat) {
+        setCalculatedAmountsOverriden(true);
+
+        if (!TreasuryConstants.isPositive(netAmount)) {
+            throw new TreasuryDomainException("error.DebitEntry.overrideCalculatedAmounts.invalid.netAmount");
+        }
+
+        if (TreasuryConstants.isLessThan(vatRate, BigDecimal.ZERO)
+                || TreasuryConstants.isGreaterThan(vatRate, TreasuryConstants.HUNDRED_PERCENT)) {
+            throw new TreasuryDomainException("error.DebitEntry.overrideCalculatedAmounts.invalid.vatRate");
+        }
+
+        if (TreasuryConstants.isNegative(vatAmount)) {
+            throw new TreasuryDomainException("error.DebitEntry.overrideCalculatedAmounts.invalid.vatAmount");
+        }
+
+        if (!TreasuryConstants.isPositive(amountWithVat)) {
+            throw new TreasuryDomainException("error.DebitEntry.overrideCalculatedAmounts.invalid.amountWithVat");
+        }
+        
+        setNetAmount(netAmount);
+        setVatRate(vatRate);
+        setVatAmount(vatAmount);
+        setAmountWithVat(amountWithVat);
+
+        // Ensure the netAmount, vatAmount and amountWithVat have at most the decimal places for cents
+        // defined in the currency
+        //
+        // TODO: First ensure in all instances that the following verifications are checked
+        // then move to InvoiceEntry::checkRules
+        if (getNetAmount().scale() > getDebtAccount().getFinantialInstitution().getCurrency().getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The netAmount has scale above the currency decimal places for cents");
+        }
+
+        if (getVatAmount().scale() > getDebtAccount().getFinantialInstitution().getCurrency().getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The vatAmount has scale above the currency decimal places for cents");
+        }
+
+        if (getAmountWithVat().scale() > getDebtAccount().getFinantialInstitution().getCurrency().getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The amountWithVat has scale above the currency decimal places for cents");
+        }
+    }
+
+    public void disableOverrideCalculatedAmounts() {
+        setCalculatedAmountsOverriden(false);
+        recalculateAmountValues();
+    }
+    
     public abstract BigDecimal getOpenAmountWithInterests();
 
     public abstract LocalDate getDueDate();
