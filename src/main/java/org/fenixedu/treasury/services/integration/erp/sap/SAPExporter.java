@@ -982,13 +982,6 @@ public class SAPExporter implements IERPExporter {
         line.setProductDescription(currentProduct.getProductDescription());
 
         // Quantity
-        if (!TreasuryConstants.isEqual(entry.getQuantity(), BigDecimal.ONE)) {
-            // With the change of how netAmount is calculated
-            // Integration with SAP is not supported, if the quantity is different than one
-            // The unit price 
-            throw new RuntimeException("error.SAPExporter.quantity.different.than.one.not.supported");
-        }
-
         line.setQuantity(entry.getQuantity());
 
         // SettlementAmount
