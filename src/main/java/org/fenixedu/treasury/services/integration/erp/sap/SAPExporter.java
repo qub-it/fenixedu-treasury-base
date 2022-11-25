@@ -1017,15 +1017,14 @@ public class SAPExporter implements IERPExporter {
 
         // UnitPrice
         //
-        // With the change of how netAmount is calculated
-        // Integration with SAP is not supported, if the quantity is different than one
-        // The unit price is equal to netAmount
-        line.setUnitPrice(entry.getNetAmount().setScale(2, RoundingMode.HALF_EVEN));
+        // 2022-11-25: The unit price keeps the unit amount before discount. The SAFT specifies that the unit amount
+        // is after the discount. It is safer to calculate the unit amount, as the net amount divided by the quantity.
+        // The entry.getNetAmount() already takes into account the discount (which is kept in entry.getNetExemptedAmount())
+        line.setUnitPrice(TreasuryConstants.divide(entry.getNetAmount(), entry.getQuantity()).setScale(4, RoundingMode.HALF_UP));
 
         if (entry.getFinantialDocument().isExportedInLegacyERP()) {
             line.setUnitPrice(
-                    SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE)
-                    .setScale(2, RoundingMode.HALF_EVEN));
+                    SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE).setScale(2, RoundingMode.HALF_EVEN));
         }
 
         return line;
@@ -1994,7 +1993,7 @@ public class SAPExporter implements IERPExporter {
                         }
                     }
                 }
-                
+
                 for (final Invoice invoice : debtAccount.getInvoiceSet()) {
                     for (final ERPExportOperation exportOperation : invoice.getErpExportOperationsSet()) {
                         if (exportOperation.getIntegrationLog().matches(SAP_CUSTOMER_ID_IN_LOG_PAT)) {
@@ -2002,7 +2001,7 @@ public class SAPExporter implements IERPExporter {
                         }
                     }
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 // May give error due to missing integration log files
                 // might happen in quality environments
             }
@@ -2082,41 +2081,37 @@ public class SAPExporter implements IERPExporter {
     }
 
     @Override
-    public List<FinantialDocument> filterDocumentsToExport(
-            final Stream<? extends FinantialDocument> finantialDocumentsStream) {
-        
-        List<? extends FinantialDocument> tempList = finantialDocumentsStream
-                .filter(d -> d.isDocumentToExport())
-                .filter(d -> !d.isCreditNote())
-                .filter(d -> d.isAnnulled() || d.isClosed())
-                .filter(d -> d.isDocumentSeriesNumberSet())
-                .filter(x -> x.getCloseDate() != null)
-                .filter(x -> x.isDebitNote() || (x.isSettlementNote() && !x.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)))
+    public List<FinantialDocument> filterDocumentsToExport(final Stream<? extends FinantialDocument> finantialDocumentsStream) {
+
+        List<? extends FinantialDocument> tempList = finantialDocumentsStream.filter(d -> d.isDocumentToExport())
+                .filter(d -> !d.isCreditNote()).filter(d -> d.isAnnulled() || d.isClosed())
+                .filter(d -> d.isDocumentSeriesNumberSet()).filter(x -> x.getCloseDate() != null)
+                .filter(x -> x.isDebitNote()
+                        || (x.isSettlementNote() && !x.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)))
                 // TODO Anil Review comparator COMPARE_BY_DOCUMENT_TYPE which is buggy, for now do not sort
                 // .sorted(COMPARE_BY_DOCUMENT_TYPE)
                 .collect(Collectors.<FinantialDocument> toList());
 
-        if(TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             // If there is restriction on mixing payments exported in legacy ERP, then filter documents exported in legacy ERP
-            tempList = tempList.stream()
-                    .filter(d -> !d.isExportedInLegacyERP())
+            tempList = tempList.stream().filter(d -> !d.isExportedInLegacyERP())
                     .filter(d -> !d.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE))
                     .collect(Collectors.<FinantialDocument> toList());
         }
-        
+
         final List<FinantialDocument> result = Lists.newArrayList();
 
         // TODO: Put first debit notes and then settlement notes
         result.addAll(tempList.stream().filter(d -> d.isDebitNote()).collect(Collectors.<FinantialDocument> toList()));
         result.addAll(tempList.stream().filter(d -> d.isSettlementNote()).collect(Collectors.<FinantialDocument> toList()));
-        
-        if(tempList.size() != result.size()) {
+
+        if (tempList.size() != result.size()) {
             throw new RuntimeException("error");
         }
-        
+
         return result;
     }
-    
+
     @Atomic
     public void processReimbursementStateChange(SettlementNote reimbursementNote,
             ReimbursementProcessStatusType reimbursementStatus, String exerciseYear, DateTime reimbursementStatusDate) {
@@ -2146,7 +2141,7 @@ public class SAPExporter implements IERPExporter {
                 && reimbursementNote.getCurrentReimbursementProcessStatus().isFinalStatus()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.current.status.is.final");
         }
-        
+
         reimbursementNote.setCurrentReimbursementProcessStatus(reimbursementStatus);
 
         if (reimbursementNote.getCurrentReimbursementProcessStatus() == null) {
@@ -2178,7 +2173,7 @@ public class SAPExporter implements IERPExporter {
         DateTime fromDate = new DateTime();
         DateTime toDate = new DateTime();
         FinantialInstitution institution = debtAccount.getFinantialInstitution();
-        
+
         // Build SAFT-AuditFile
         AuditFile auditFile = new AuditFile();
         // ThreadInformation information = 
@@ -2266,7 +2261,7 @@ public class SAPExporter implements IERPExporter {
         if (preProcessFunctionBeforeSerialize != null) {
             auditFile = preProcessFunctionBeforeSerialize.apply(auditFile);
         }
-        
+
         String xml = exportAuditFileToXML(auditFile);
 
         logger.debug("SAFT File export concluded with success.");
