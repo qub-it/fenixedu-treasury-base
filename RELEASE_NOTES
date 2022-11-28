@@ -1,3 +1,5 @@
+- Refactor: Revert the issue of sending debit notes with quantity different than one
+
 10.0.2 (25-11-2022)
 - Bug Fix: Fix SAP integration, specifically WorkDocument » Line » UnitPrice, which is the netAmount divided by quantity scaled by 4 decimal places
 
