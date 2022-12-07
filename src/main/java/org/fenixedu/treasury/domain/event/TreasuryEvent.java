@@ -72,6 +72,7 @@ import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
+import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -261,6 +262,14 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     
     public boolean isEventDiscountInTuitionFee() {
         return false;
+    }
+    
+    public boolean isEventDiscountInTuitionFeeWithTreasuryExemption() {
+        return false;
+    }
+    
+    public TreasuryExemptionType getTreasuryExemptionToApplyInEventDiscountInTuitionFee() {
+        return null;
     }
 
     public abstract LocalDate getTreasuryEventDate();

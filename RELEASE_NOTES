@@ -1,3 +1,7 @@
+- Refactor: Change visibility of some methods of SAPExporter, in order to extend this class for some tests
+- Bug Fix: Remove restriction of sending invoice entries with quantity above one to ERP. This changes are in subclass of SAPExporter for previous tests
+- Refactor: Declare methods in TreasuryEvent, if the event discount tuition with TreasuryExemption
+
 10.0.3 (28-11-2022)
 - Refactor: Revert the issue of sending debit notes with quantity different than one
 

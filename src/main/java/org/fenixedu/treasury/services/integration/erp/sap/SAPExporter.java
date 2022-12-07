@@ -178,7 +178,7 @@ public class SAPExporter implements IERPExporter {
 
     private static Logger logger = LoggerFactory.getLogger(SAPExporter.class);
 
-    private String generateERPFile(final FinantialInstitution institution, final DateTime fromDate, final DateTime toDate,
+    protected String generateERPFile(final FinantialInstitution institution, final DateTime fromDate, final DateTime toDate,
             final List<? extends FinantialDocument> allDocuments, final boolean generateAllCustomers,
             final Boolean generateAllProducts,
             final java.util.function.UnaryOperator<AuditFile> preProcessFunctionBeforeSerialize) {
@@ -873,7 +873,7 @@ public class SAPExporter implements IERPExporter {
         return workDocument;
     }
 
-    private org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.Line convertToSAFTWorkDocumentLine(
+    protected org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.Line convertToSAFTWorkDocumentLine(
             InvoiceEntry entry, Map<String, org.fenixedu.treasury.generated.sources.saft.sap.Product> baseProducts) {
         final FinantialInstitution institution = entry.getDebtAccount().getFinantialInstitution();
 
@@ -1042,7 +1042,7 @@ public class SAPExporter implements IERPExporter {
         return line;
     }
 
-    private Tax getSAFTWorkingDocumentsTax(Product product, final InvoiceEntry entry) {
+    protected Tax getSAFTWorkingDocumentsTax(Product product, final InvoiceEntry entry) {
         Vat vat = entry.getVat();
 
         Tax tax = new Tax();
@@ -1650,7 +1650,7 @@ public class SAPExporter implements IERPExporter {
         return exportFinantialDocumentToXML(finantialInstitution, documents, auditFilePreProcess);
     }
 
-    private String exportFinantialDocumentToXML(final FinantialInstitution finantialInstitution,
+    protected String exportFinantialDocumentToXML(final FinantialInstitution finantialInstitution,
             List<FinantialDocument> documents, final UnaryOperator<AuditFile> preProcessFunctionBeforeSerialize) {
 
         if (documents.isEmpty()) {
@@ -1712,7 +1712,7 @@ public class SAPExporter implements IERPExporter {
         return result;
     }
 
-    private static void checkForUnsetDocumentSeriesNumberInDocumentsToExport(List<? extends FinantialDocument> documents) {
+    protected static void checkForUnsetDocumentSeriesNumberInDocumentsToExport(List<? extends FinantialDocument> documents) {
         for (final FinantialDocument finantialDocument : documents) {
             if (!finantialDocument.isDocumentSeriesNumberSet()) {
                 throw new TreasuryDomainException("error.ERPExporter.document.without.number.series");
