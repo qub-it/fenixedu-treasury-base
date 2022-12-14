@@ -59,6 +59,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.isDefaultCountry;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -69,6 +70,7 @@ import org.fenixedu.treasury.dto.AdhocCustomerBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
@@ -131,6 +133,23 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         if(getName().length() > SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH) {
             throw new TreasuryDomainException("error.AdhocCustomer.name.exceeds.max.length", String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
         }
+        
+        if (!TreasuryConstants.isDefaultCountry(getFiscalCountry()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
+            final Set<Customer> customers = findByFiscalInformation(getFiscalCountry(), getFiscalNumber()) //
+                    .filter(c -> c.isAdhocCustomer()) //
+                    .filter(c -> c.isActive()) //
+                    .collect(Collectors.<Customer> toSet());
+
+            if (customers.size() > 1) {
+                final Customer self = this;
+                final Set<String> otherCustomers =
+                        customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
+
+                throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists",
+                        Joiner.on(", ").join(otherCustomers));
+            }
+        }
+        
     }
 
     @Override
