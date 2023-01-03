@@ -189,6 +189,20 @@ public abstract class Customer extends Customer_Base {
             throw new TreasuryDomainException("error.Customer.customerType.required");
         }
 
+        if (!TreasuryConstants.isDefaultCountry(getFiscalCountry()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
+            final Set<Customer> customers = findByFiscalInformation(getFiscalCountry(), getFiscalNumber())
+                    .filter(c -> c.isActive()).collect(Collectors.<Customer> toSet());
+
+            if (customers.size() > 1) {
+                final Customer self = this;
+                final Set<String> otherCustomers =
+                        customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
+
+                throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists",
+                        Joiner.on(", ").join(otherCustomers));
+            }
+        }
+
     }
 
     public String getShortName() {
