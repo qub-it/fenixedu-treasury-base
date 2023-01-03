@@ -1,3 +1,4 @@
+10.0.6 (03-01-2023)
 - Refactor: Revert the removal of checking if customer exists, independent of customer subclass
 
 10.0.5 (15-12-2022)
