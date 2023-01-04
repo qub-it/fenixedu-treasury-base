@@ -526,7 +526,7 @@ public class DebitEntry extends DebitEntry_Base {
             }
 
             if (getTreasuryEvent() != null) {
-                getTreasuryEvent().invokeSettlementCallbacks();
+                getTreasuryEvent().invokeSettlementCallbacks(treasuryExemption);
             }
 
         }

@@ -70,6 +70,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
+import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
@@ -383,7 +384,10 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return DebitEntry.findActive(this).map(l -> l.isDeletable()).reduce((a, c) -> a && c).orElse(Boolean.TRUE);
     }
 
-    public void invokeSettlementCallbacks() {
+    public void invokeSettlementCallbacks(SettlementNote settlementNote) {
+    }
+    
+    public void invokeSettlementCallbacks(TreasuryExemption treasuryExemption) {
     }
     
     public Set<TreasuryExemption> getActiveTreasuryExemptions() {
