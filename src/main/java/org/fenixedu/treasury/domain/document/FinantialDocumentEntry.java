@@ -81,8 +81,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     protected void init(final DebtAccount debtAccount, final FinantialDocument finantialDocument,
-            final FinantialEntryType finantialEntryType,
-            final BigDecimal amount, String description, DateTime entryDateTime) {
+            final FinantialEntryType finantialEntryType, final BigDecimal amount, String description, DateTime entryDateTime) {
         setFinantialDocument(finantialDocument);
         setFinantialEntryType(finantialEntryType);
         setAmount(amount);
@@ -92,11 +91,24 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
                 debtAccount.getCustomer().nextFinantialDocumentEntryNumber()));
     }
 
-    @Override
-    public void setFinantialDocument(FinantialDocument finantialDocument) {
-        if (finantialDocument != null && finantialDocument.isPreparing() == false) {
-            throw new TreasuryDomainException("error.FinantialDocumentEntry.finantialDocument.is.not.preparing.");
+    // TODO ANIL 2023-01-30: Replace all references of setFinantialDocument(FinantialDocument) by
+    // this method
+    public void addToFinantialDocument(FinantialDocument finantialDocument) {
+        if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
+            throw new TreasuryDomainException(
+                    "error.FinantialDocumentEntry.addToFinantialDocument.already.has.closed.or.annulled.finantialDocument");
         }
+
+        setFinantialDocument(finantialDocument);
+    }
+
+    @Override
+    // TODO See the todo comment in addToFinantialDocument
+    public void setFinantialDocument(FinantialDocument finantialDocument) {
+        if (finantialDocument != null && finantialDocument.isClosed()) {
+            throw new TreasuryDomainException("error.FinantialDocumentEntry.finantialDocument.is.already.closed");
+        }
+
         super.setFinantialDocument(finantialDocument);
     }
 
@@ -117,7 +129,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
             throw new TreasuryDomainException("error.FinantialDocumentEntry.amount.less.than.zero");
         }
 
-	// TODO: Apply only when code is filled in all entries
+        // TODO: Apply only when code is filled in all entries
 //        if (FinantialDocumentEntry.findByCode(getDebtAccount(), getCode()).count() > 1) {
 //            throw new TreasuryDomainException("error.FinantialDocumentEntry.code.must.be.unique");
 //        }
@@ -191,18 +203,17 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
 
     public abstract BigDecimal getNetAmount();
 
-
     @Override
     public void setCode(String code) {
         super.setCode(code);
 
-	// TODO: Apply only when code is filled in all entries
+        // TODO: Apply only when code is filled in all entries
 //        if (FinantialDocument.findByCode(getDebtAccount(), code).count() > 1) {
 //            throw new TreasuryDomainException("error.FinantialDocumentEntry.code.must.be.unique");
 //        }
     }
 
-	// TODO: Add relation for finantial document entry with debt account
+    // TODO: Add relation for finantial document entry with debt account
     public DebtAccount getDebtAccount() {
         if (getFinantialDocument() != null) {
             return getFinantialDocument().getDebtAccount();
@@ -211,8 +222,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     public static Stream<FinantialDocumentEntry> findByCode(String code) {
-        return FenixFramework.getDomainRoot().getFinantialDocumentEntriesSet().stream()
-		.filter(entry -> entry.getCode() != null)
+        return FenixFramework.getDomainRoot().getFinantialDocumentEntriesSet().stream().filter(entry -> entry.getCode() != null)
                 .filter(entry -> entry.getCode().equals(code));
     }
 
@@ -228,9 +238,8 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         invoiceEntrySet.addAll(debtAccount.getInvoiceEntrySet());
         invoiceEntrySet.addAll(entriesOfFinantialDocuments);
 
-        return invoiceEntrySet.stream()
-	.filter(document -> document.getCode() != null)
-	.filter(document -> document.getCode().equals(code));
+        return invoiceEntrySet.stream().filter(document -> document.getCode() != null)
+                .filter(document -> document.getCode().equals(code));
 //        return Stream.empty();
     }
 

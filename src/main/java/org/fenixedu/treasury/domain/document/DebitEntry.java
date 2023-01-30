@@ -800,6 +800,10 @@ public class DebitEntry extends DebitEntry_Base {
     public void setNetExemptedAmount(BigDecimal exemptedAmount) {
         super.setExemptedAmount(exemptedAmount);
     }
+    
+    public boolean isTotallyExempted() {
+        return TreasuryConstants.isPositive(getNetExemptedAmount()) && !TreasuryConstants.isPositive(getNetAmount());
+    }
 
     /**
      * Differs from getLastSettlementDate in obtaining payment date only from

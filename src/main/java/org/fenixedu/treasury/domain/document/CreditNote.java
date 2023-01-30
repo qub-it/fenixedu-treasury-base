@@ -62,7 +62,6 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -71,7 +70,6 @@ import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainS
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
 
@@ -86,7 +84,7 @@ public class CreditNote extends CreditNote_Base {
     protected CreditNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
             final DateTime documentDate, DebitNote debitNote) {
         super();
-
+        
         init(debtAccount, documentNumberSeries, documentDate, debitNote);
         checkRules();
     }
@@ -110,10 +108,6 @@ public class CreditNote extends CreditNote_Base {
 
         if (getDebitNote() != null && !getDebitNote().getDebtAccount().equals(getDebtAccount())) {
             throw new TreasuryDomainException("error.CreditNote.invalid.debtaccount.with.debitnote");
-        }
-
-        if (getDebitNote() != null && !getDebitNote().isClosed()) {
-            throw new TreasuryDomainException("error.CreditNote.debitnote.not.closed");
         }
 
         if (getDebitNote() != null && getPayorDebtAccount() != getDebitNote().getPayorDebtAccount()) {
@@ -445,6 +439,18 @@ public class CreditNote extends CreditNote_Base {
     @Atomic
     public static CreditNote create(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
             final DateTime documentDate, DebitNote debitNote, String originNumber) {
+        if (debitNote != null && !debitNote.isClosed()) {
+            throw new TreasuryDomainException("error.CreditNote.debitnote.not.closed");
+        }
+
+        CreditNote note = new CreditNote(debtAccount, documentNumberSeries, documentDate, debitNote);
+        note.setOriginDocumentNumber(originNumber);
+        note.checkRules();
+        return note;
+    }
+
+    public static CreditNote createForImportation(DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate, DebitNote debitNote, String originNumber) {
         CreditNote note = new CreditNote(debtAccount, documentNumberSeries, documentDate, debitNote);
         note.setOriginDocumentNumber(originNumber);
         note.checkRules();
