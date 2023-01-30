@@ -1,3 +1,4 @@
+10.1.1 (30-01-2023)
 - Refactor: Change rules for creation for CreditNote. Allow the creation of credit note for a debit note which is annuled. This is necessary for migration of credit notes
 - Refactor: Method in debit entry to check if it is totally exempted
 - Refactor: Allow the creation of a finantial document entry for an annuled finantial document. This is necessary for migration of annuled credit entries
