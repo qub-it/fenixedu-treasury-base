@@ -212,7 +212,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
 
-            String reason = "Exemption deleted";
+            String reason = TreasuryConstants.treasuryBundle("label.TreasuryExemption.revertExemption.credit.note.annulment.message");
             getCreditEntry().getCreditNote().setAnnulledReason(reason);
             getCreditEntry().getCreditNote().setAnnullmentDate(new DateTime());
 

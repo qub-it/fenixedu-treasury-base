@@ -1,3 +1,5 @@
+- Bug Fix: Fix message of credit entry annulment, by the removal of treasury exemption
+
 10.1.1 (30-01-2023)
 - Refactor: Change rules for creation for CreditNote. Allow the creation of credit note for a debit note which is annuled. This is necessary for migration of credit notes
 - Refactor: Method in debit entry to check if it is totally exempted
