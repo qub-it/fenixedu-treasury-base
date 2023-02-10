@@ -1,3 +1,4 @@
+10.1.2 (10-02-2023)
 - Bug Fix: Fix message of credit entry annulment, by the removal of treasury exemption
 - Refactor: Remove method Customer::getFiscalCountry and other related methods of similar name. This method cause some confusion and is replaced by Customer::getAddressCountryCode
 - Improvement: Improve error messages related in ERP integration, related to address field's size limits
