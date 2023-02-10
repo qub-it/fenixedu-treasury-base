@@ -79,7 +79,7 @@ public class FiscalDataUpdateLog extends FiscalDataUpdateLog_Base {
         this.setOldFiscalCountry(oldFiscalCountry);
         this.setOldFiscalNumber(oldFiscalNumber);
 
-        this.setUpdatedFiscalCountry(customer.getFiscalCountry());
+        this.setUpdatedFiscalCountry(customer.getAddressCountryCode());
         this.setUpdatedFiscalNumber(customer.getFiscalNumber());
 
         this.setChangeFiscalNumberConfirmed(changeFiscalNumberConfirmed);

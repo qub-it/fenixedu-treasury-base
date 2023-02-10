@@ -112,8 +112,6 @@ public abstract class Customer extends Customer_Base {
 
     public abstract String getNationalityCountryCode();
 
-    public abstract String getFiscalCountry();
-
     public abstract String getPaymentReferenceBaseCode();
 
     public abstract String getBusinessIdentification();
@@ -189,8 +187,8 @@ public abstract class Customer extends Customer_Base {
             throw new TreasuryDomainException("error.Customer.customerType.required");
         }
 
-        if (!TreasuryConstants.isDefaultCountry(getFiscalCountry()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
-            final Set<Customer> customers = findByFiscalInformation(getFiscalCountry(), getFiscalNumber())
+        if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
+            final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber())
                     .filter(c -> c.isActive()).collect(Collectors.<Customer> toSet());
 
             if (customers.size() > 1) {
@@ -230,8 +228,8 @@ public abstract class Customer extends Customer_Base {
             throw new TreasuryDomainException("error.Customer.findByFiscalCountryAndNumber.fiscalNumber.required");
         }
 
-        return findAll().filter(c -> !Strings.isNullOrEmpty(c.getFiscalCountry())
-                && lowerCase(c.getFiscalCountry()).equals(lowerCase(fiscalCountryCode))
+        return findAll().filter(c -> !Strings.isNullOrEmpty(c.getAddressCountryCode())
+                && lowerCase(c.getAddressCountryCode()).equals(lowerCase(fiscalCountryCode))
                 && !Strings.isNullOrEmpty(c.getFiscalNumber()) && c.getFiscalNumber().equals(fiscalNumber));
     }
 
@@ -457,7 +455,7 @@ public abstract class Customer extends Customer_Base {
     public abstract String uiRedirectToActiveCustomer(final String url);
 
     public String getUiFiscalNumber() {
-        final String fiscalCountry = !Strings.isNullOrEmpty(getFiscalCountry()) ? getFiscalCountry() : "";
+        final String fiscalCountry = !Strings.isNullOrEmpty(getAddressCountryCode()) ? getAddressCountryCode() : "";
         final String fiscalNumber = !Strings.isNullOrEmpty(getFiscalNumber()) ? getFiscalNumber() : "";
 
         return (fiscalCountry + " " + fiscalNumber).trim();

@@ -332,7 +332,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
         final String debtAccountId = referenceDebtAccount.getExternalId();
         final String customerId = referenceDebtAccount.getCustomer().getExternalId();
         final String businessIdentification = referenceDebtAccount.getCustomer().getBusinessIdentification();
-        final String fiscalNumber = valueOrEmpty(referenceDebtAccount.getCustomer().getFiscalCountry()) + ":"
+        final String fiscalNumber = valueOrEmpty(referenceDebtAccount.getCustomer().getAddressCountryCode()) + ":"
                 + valueOrEmpty(referenceDebtAccount.getCustomer().getFiscalNumber());
         final String customerName = referenceDebtAccount.getCustomer().getName();
 

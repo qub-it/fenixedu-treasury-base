@@ -1356,7 +1356,7 @@ public class SAPExporter implements IERPExporter {
         // Telephone
         // c.setTelephone("");
 
-        c.setFiscalCountry(translateCountryCodeForExceptions(customer.getCustomerFiscalCountry()));
+        c.setFiscalCountry(translateCountryCodeForExceptions(customer.getCustomerAddressCountryCode()));
         c.setNationality(translateCountryCodeForExceptions(customer.getCustomerNationality()));
 
         return c;
@@ -1378,8 +1378,8 @@ public class SAPExporter implements IERPExporter {
     public static AddressStructure convertAddressToSAFTAddress(final ERPCustomerFieldsBean customer) {
         final AddressStructure address = new AddressStructure();
 
-        address.setCountry(!Strings.isNullOrEmpty(customer.getCustomerCountry()) ? translateCountryCodeForExceptions(
-                customer.getCustomerCountry()) : MORADA_DESCONHECIDO);
+        address.setCountry(!Strings.isNullOrEmpty(customer.getCustomerAddressCountryCode()) ? translateCountryCodeForExceptions(
+                customer.getCustomerAddressCountryCode()) : MORADA_DESCONHECIDO);
 
         address.setAddressDetail(!Strings.isNullOrEmpty(customer.getCustomerAddressDetail()) ? customer
                 .getCustomerAddressDetail() : MORADA_DESCONHECIDO);

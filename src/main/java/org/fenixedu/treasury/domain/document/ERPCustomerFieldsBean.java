@@ -94,7 +94,6 @@ public class ERPCustomerFieldsBean {
     private String customerId;
 
     private String customerBusinessId;
-    private String customerFiscalCountry;
     private String customerNationality;
     private String customerAccountId;
     private String customerFiscalNumber;
@@ -105,7 +104,7 @@ public class ERPCustomerFieldsBean {
     private String customerCity;
     private String customerZipCode;
     private String customerRegion;
-    private String customerCountry;
+    private String customerAddressCountryCode;
     
     private String customerTelephone;
     private String customerEmail;
@@ -140,11 +139,10 @@ public class ERPCustomerFieldsBean {
             bean.setCustomerAccountId("STUDENT");
         }
 
-        if (!validateFiscalNumber(customer.getFiscalCountry(), customer.getFiscalNumber())) {
+        if (!validateFiscalNumber(customer.getAddressCountryCode(), customer.getFiscalNumber())) {
             throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.fiscal.number");
         }
 
-        final String fiscalCountry = customer.getFiscalCountry();
         final String fiscalNumber = customer.getFiscalNumber();
         final String name = customer.getName();
         final List<String> errorMessages = Lists.newArrayList();
@@ -157,9 +155,10 @@ public class ERPCustomerFieldsBean {
         final String region = !isNullOrEmpty(customer.getSaftBillingAddressRegion()) ? customer
                 .getSaftBillingAddressRegion() : districtSubdivision;
 
-        if (!validateAddress(fiscalCountry, fiscalNumber, name, addressCountryCode, address, zipCode, districtSubdivision, region,
+        if (!validateAddress(fiscalNumber, name, addressCountryCode, address, zipCode, districtSubdivision, region,
                 errorMessages)) {
-            throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.address");
+            String concatErrorMessages = String.join("\n", errorMessages);
+            throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.address", concatErrorMessages);
         }
 
         convertAddress(bean, addressCountryCode, street, address, zipCode, districtSubdivision, region);
@@ -186,7 +185,6 @@ public class ERPCustomerFieldsBean {
 
         // CustomerTaxID
         bean.setCustomerFiscalNumber(customer.getFiscalNumber());
-        bean.setCustomerFiscalCountry(customer.getFiscalCountry());
         bean.setCustomerNationality(customer.getNationalityCountryCode());
 
         if(StringUtils.isNotEmpty(customer.getPhoneNumber())) {
@@ -213,7 +211,6 @@ public class ERPCustomerFieldsBean {
     public static ERPCustomerFieldsBean fillPayorFromDebitNote(final DebitNote debitNote) {
         final Customer payorCustomer = debitNote.getPayorDebtAccount().getCustomer();
 
-        final String fiscalCountry = payorCustomer.getFiscalCountry();
         final String fiscalNumber = payorCustomer.getFiscalNumber();
         final String name = payorCustomer.getName();
         final List<String> errorMessages = Lists.newArrayList();
@@ -221,9 +218,10 @@ public class ERPCustomerFieldsBean {
         final String region = !Strings.isNullOrEmpty(payorCustomer.getRegion()) ? payorCustomer.getRegion() : payorCustomer
                 .getDistrictSubdivision();
 
-        if (!validateAddress(fiscalCountry, fiscalNumber, name, payorCustomer.getAddressCountryCode(), payorCustomer.getAddress(),
+        if (!validateAddress(fiscalNumber, name, payorCustomer.getAddressCountryCode(), payorCustomer.getAddress(),
                 payorCustomer.getZipCode(), payorCustomer.getDistrictSubdivision(), region, errorMessages)) {
-            throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.address");
+            String concatErrorMessages = String.join("\n", errorMessages);
+            throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.address", concatErrorMessages);
         }
 
         return fillFromCustomer(payorCustomer);
@@ -236,7 +234,6 @@ public class ERPCustomerFieldsBean {
     public static ERPCustomerFieldsBean fillPayorFromCreditNote(final CreditNote creditNote) {
         final Customer payorCustomer = creditNote.getPayorDebtAccount().getCustomer();
 
-        final String fiscalCountry = payorCustomer.getFiscalCountry();
         final String fiscalNumber = payorCustomer.getFiscalNumber();
         final String name = payorCustomer.getName();
         final List<String> errorMessages = Lists.newArrayList();
@@ -244,15 +241,16 @@ public class ERPCustomerFieldsBean {
         final String region = !Strings.isNullOrEmpty(payorCustomer.getRegion()) ? payorCustomer.getRegion() : payorCustomer
                 .getDistrictSubdivision();
 
-        if (!validateAddress(fiscalCountry, fiscalNumber, name, payorCustomer.getAddressCountryCode(), payorCustomer.getAddress(),
+        if (!validateAddress(fiscalNumber, name, payorCustomer.getAddressCountryCode(), payorCustomer.getAddress(),
                 payorCustomer.getZipCode(), payorCustomer.getDistrictSubdivision(), region, errorMessages)) {
-            throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.address");
+            String concatErrorMessages = String.join("\n", errorMessages);
+            throw new TreasuryDomainException("error.ERPCustomerFieldsBean.invalid.address", concatErrorMessages);
         }
 
         return fillFromCustomer(payorCustomer);
     }
 
-    private static void convertAddress(final ERPCustomerFieldsBean bean, final String country, String street, String address,
+    private static void convertAddress(final ERPCustomerFieldsBean bean, final String addressCountryCode, String street, String address,
             String zipCode, String city, String region) {
         
         street = !isNullOrEmpty(street) ? street : MORADA_DESCONHECIDO;
@@ -261,11 +259,11 @@ public class ERPCustomerFieldsBean {
         city = !isNullOrEmpty(city) ? city : MORADA_DESCONHECIDO;
         region = !isNullOrEmpty(region) ? region : MORADA_DESCONHECIDO;
         
-        if(Strings.isNullOrEmpty(zipCode) && isSameCountryCode(DEFAULT_COUNTRY, country)) {
+        if(Strings.isNullOrEmpty(zipCode) && isSameCountryCode(DEFAULT_COUNTRY, addressCountryCode)) {
             zipCode = COD_POSTAL_OMISSAO;
         }
         
-        bean.setCustomerCountry(!Strings.isNullOrEmpty(country) ? country : MORADA_DESCONHECIDO);
+        bean.setCustomerAddressCountryCode(!Strings.isNullOrEmpty(addressCountryCode) ? addressCountryCode.toUpperCase() : MORADA_DESCONHECIDO);
         bean.setCustomerAddressDetail(address);
         bean.setCustomerCity(city);
         bean.setCustomerZipCode(zipCode);
@@ -293,43 +291,38 @@ public class ERPCustomerFieldsBean {
         final String region =
                 !isNullOrEmpty(customer.getSaftBillingAddressRegion()) ? customer.getSaftBillingAddressRegion() : districtSubdivision;
 
-        return validateAddress(customer.getFiscalCountry(), customer.getFiscalNumber(), customer.getName(),
+        return validateAddress(customer.getFiscalNumber(), customer.getName(),
                 addressCountryCode, address, zipCode, districtSubdivision,
                 region, errorMessages);
     }
 
-    private static boolean validateAddress(final String fiscalCountry, final String fiscalNumber, final String name,
+    private static boolean validateAddress(final String fiscalNumber, final String name,
             final String addressCountryCode, final String address, final String zipCode, final String districtSubdivision,
             final String region, final List<String> errorMessages) {
 
         if (isNullOrEmpty(addressCountryCode)) {
-            errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.address.countryCode.not.filled", fiscalCountry,
+            errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.address.countryCode.not.filled", addressCountryCode,
                     fiscalNumber, name));
-        }
-
-        if (!isNullOrEmpty(addressCountryCode) && !isSameCountryCode(addressCountryCode, fiscalCountry)) {
-            errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.fiscal.country.not.equals.to.address",
-                    addressCountryCode, fiscalCountry, fiscalCountry, fiscalNumber, name));
         }
 
         if (!isNullOrEmpty(address) && address.length() > MAX_ADDRESS_DETAIL) {
             errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.addressDetail.more.than.allowed",
-                    String.valueOf(MAX_ADDRESS_DETAIL), address, fiscalCountry, fiscalNumber, name));
+                    String.valueOf(MAX_ADDRESS_DETAIL), address, addressCountryCode, fiscalNumber, name));
         }
 
         if (!isNullOrEmpty(districtSubdivision) && districtSubdivision.length() > MAX_CITY) {
             errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.city.more.than.allowed", String.valueOf(MAX_CITY),
-                    districtSubdivision, fiscalCountry, fiscalNumber, name));
+                    districtSubdivision, addressCountryCode, fiscalNumber, name));
         }
 
         if (!isNullOrEmpty(zipCode) && zipCode.length() > MAX_ZIPCODE) {
             errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.zipCode.more.than.allowed", String.valueOf(MAX_ZIPCODE),
-                    zipCode, fiscalCountry, fiscalNumber, name));
+                    zipCode, addressCountryCode, fiscalNumber, name));
         }
 
         if (!isNullOrEmpty(region) && region.length() > MAX_REGION) {
             errorMessages.add(treasuryBundle("error.ERPCustomerFieldsBean.region.more.than.allowed", String.valueOf(MAX_REGION),
-                    region, fiscalCountry, fiscalNumber, name));
+                    region, addressCountryCode, fiscalNumber, name));
         }
 
         return errorMessages.isEmpty();
@@ -372,14 +365,6 @@ public class ERPCustomerFieldsBean {
 
     public void setCustomerBusinessId(String customerBusinessId) {
         this.customerBusinessId = customerBusinessId;
-    }
-
-    public String getCustomerFiscalCountry() {
-        return customerFiscalCountry;
-    }
-
-    public void setCustomerFiscalCountry(String customerFiscalCountry) {
-        this.customerFiscalCountry = customerFiscalCountry;
     }
 
     public String getCustomerNationality() {
@@ -470,12 +455,12 @@ public class ERPCustomerFieldsBean {
         this.customerRegion = customerRegion;
     }
 
-    public String getCustomerCountry() {
-        return customerCountry;
+    public String getCustomerAddressCountryCode() {
+        return customerAddressCountryCode;
     }
 
-    public void setCustomerCountry(String customerCountry) {
-        this.customerCountry = customerCountry;
+    public void setCustomerAddressCountryCode(String customerAddressCountryCode) {
+        this.customerAddressCountryCode = customerAddressCountryCode;
     }
     
     public String getCustomerTelephone() {

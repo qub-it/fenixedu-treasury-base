@@ -134,8 +134,8 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             throw new TreasuryDomainException("error.AdhocCustomer.name.exceeds.max.length", String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
         }
         
-        if (!TreasuryConstants.isDefaultCountry(getFiscalCountry()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
-            final Set<Customer> customers = findByFiscalInformation(getFiscalCountry(), getFiscalNumber()) //
+        if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
+            final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber()) //
                     .filter(c -> c.isAdhocCustomer()) //
                     .filter(c -> c.isActive()) //
                     .collect(Collectors.<Customer> toSet());
@@ -319,11 +319,6 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     @Override
     public String getNationalityCountryCode() {
         return null;
-    }
-
-    @Override
-    public String getFiscalCountry() {
-        return getAddressCountryCode();
     }
 
     @Override
