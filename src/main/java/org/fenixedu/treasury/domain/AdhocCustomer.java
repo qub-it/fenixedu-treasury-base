@@ -114,26 +114,28 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         setZipCode(zipCode);
 
         setAddressCountryCode(addressCountryCode.toUpperCase());
-        
+
         setIdentificationNumber(identificationNumber);
-        
-        if(TreasuryConstants.isDefaultCountry(getAddressCountryCode()) && !FiscalCodeValidation.isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber())) {
+
+        if (TreasuryConstants.isDefaultCountry(getAddressCountryCode())
+                && !FiscalCodeValidation.isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber())) {
             throw new TreasuryDomainException("error.Customer.fiscal.information.invalid");
         }
-        
+
         registerFinantialInstitutions(finantialInstitutions);
-        
+
         checkRules();
     }
 
     @Override
     public void checkRules() {
         super.checkRules();
-        
-        if(getName().length() > SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH) {
-            throw new TreasuryDomainException("error.AdhocCustomer.name.exceeds.max.length", String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
+
+        if (getName().length() > SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH) {
+            throw new TreasuryDomainException("error.AdhocCustomer.name.exceeds.max.length",
+                    String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
         }
-        
+
         if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
             final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber()) //
                     .filter(c -> c.isAdhocCustomer()) //
@@ -149,7 +151,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
                         Joiner.on(", ").join(otherCustomers));
             }
         }
-        
+
     }
 
     @Override
@@ -158,11 +160,11 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     }
 
     @Atomic
-    public void edit(final CustomerType customerType, final String name, final String address, 
-            final String districtSubdivision, final String region, final String zipCode, 
-            final String identificationNumber, final List<FinantialInstitution> newFinantialInstitutions) {
+    public void edit(final CustomerType customerType, final String name, final String address, final String districtSubdivision,
+            final String region, final String zipCode, final String identificationNumber,
+            final List<FinantialInstitution> newFinantialInstitutions) {
         registerFinantialInstitutions(newFinantialInstitutions);
-        
+
         setCustomerType(customerType);
         setName(name);
         setAddress(address);
@@ -175,55 +177,62 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     }
 
     @Atomic
-    public void changeFiscalNumber(final AdhocCustomerBean bean) {
-        if(!Strings.isNullOrEmpty(getErpCustomerId())) {
+    public void changeFiscalNumber(AdhocCustomerBean bean) {
+        if (!Strings.isNullOrEmpty(getErpCustomerId())) {
             throw new TreasuryDomainException("warning.Customer.changeFiscalNumber.maybe.integrated.in.erp");
         }
-        
+
         final String oldFiscalCountry = getAddressCountryCode();
         final String oldFiscalNumber = getFiscalNumber();
 
         final boolean changeFiscalNumberConfirmed = bean.isChangeFiscalNumberConfirmed();
         final boolean withFinantialDocumentsIntegratedInERP = isWithFinantialDocumentsIntegratedInERP();
-        final boolean customerInformationMaybeIntegratedWithSuccess = isCustomerInformationMaybeIntegratedWithSuccess();
-        final boolean customerWithFinantialDocumentsIntegratedInPreviousERP = isCustomerWithFinantialDocumentsIntegratedInPreviousERP();
-        
-        if(!bean.isChangeFiscalNumberConfirmed()) {
+
+        // 2023-02-12 ANIL: The platform no longer check if there are logs with ERP client
+        // This was removed because it hinders the tests in quality or development servers, due to
+        // lack of log files
+        //
+        // Checking if there is an operation with success should be enough
+        final boolean customerInformationMaybeIntegratedWithSuccess = false;
+        final boolean customerWithFinantialDocumentsIntegratedInPreviousERP =
+                isCustomerWithFinantialDocumentsIntegratedInPreviousERP();
+
+        if (!bean.isChangeFiscalNumberConfirmed()) {
             throw new TreasuryDomainException("message.Customer.changeFiscalNumber.confirmation");
         }
-        
+
         final String addressCountryCode = bean.getAddressCountryCode();
         final String fiscalNumber = bean.getFiscalNumber();
-        
-        if(Strings.isNullOrEmpty(addressCountryCode)) {
+
+        if (Strings.isNullOrEmpty(addressCountryCode)) {
             throw new TreasuryDomainException("error.Customer.countryCode.required");
         }
-        
-        if(Strings.isNullOrEmpty(fiscalNumber)) {
+
+        if (Strings.isNullOrEmpty(fiscalNumber)) {
             throw new TreasuryDomainException("error.Customer.fiscalNumber.required");
         }
-        
+
         // Check if fiscal information is different from current information
-        if(lowerCase(addressCountryCode).equals(lowerCase(getAddressCountryCode())) && fiscalNumber.equals(getFiscalNumber())) {
+        if (lowerCase(addressCountryCode).equals(lowerCase(getAddressCountryCode())) && fiscalNumber.equals(getFiscalNumber())) {
             throw new TreasuryDomainException("error.Customer.already.with.fiscal.information");
         }
 
-        if(isFiscalValidated() && isFiscalCodeValid()) {
+        if (isFiscalValidated() && isFiscalCodeValid()) {
             throw new TreasuryDomainException("error.Customer.changeFiscalNumber.already.valid");
         }
-        
-        if(customerInformationMaybeIntegratedWithSuccess) {
+
+        if (customerInformationMaybeIntegratedWithSuccess) {
             throw new TreasuryDomainException("warning.Customer.changeFiscalNumber.maybe.integrated.in.erp");
         }
-        
-        if(withFinantialDocumentsIntegratedInERP) {
+
+        if (withFinantialDocumentsIntegratedInERP) {
             throw new TreasuryDomainException("error.Customer.changeFiscalNumber.documents.integrated.erp");
         }
-        
-        if(!FiscalCodeValidation.isValidFiscalNumber(addressCountryCode, fiscalNumber)) {
+
+        if (!FiscalCodeValidation.isValidFiscalNumber(addressCountryCode, fiscalNumber)) {
             throw new TreasuryDomainException("error.Customer.fiscal.information.invalid");
         }
-        
+
         setAddressCountryCode(addressCountryCode);
         setFiscalNumber(fiscalNumber);
 
@@ -231,39 +240,25 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         setDistrictSubdivision(bean.getDistrictSubdivision());
         setRegion(bean.getRegion());
         setZipCode(bean.getZipCode());
-        setIdentificationNumber(bean.getIdentificationNumber());
-        
+
         checkRules();
 
-        FiscalDataUpdateLog.create(this, oldFiscalCountry, oldFiscalNumber, 
-                changeFiscalNumberConfirmed, withFinantialDocumentsIntegratedInERP, customerInformationMaybeIntegratedWithSuccess, customerWithFinantialDocumentsIntegratedInPreviousERP);
+        FiscalDataUpdateLog.create(this, oldFiscalCountry, oldFiscalNumber, changeFiscalNumberConfirmed,
+                withFinantialDocumentsIntegratedInERP, customerInformationMaybeIntegratedWithSuccess,
+                customerWithFinantialDocumentsIntegratedInPreviousERP);
     }
-    
+
     @Override
     public boolean isFiscalCodeValid() {
-        return !TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber());
+        return !TreasuryConstants.isDefaultCountry(getAddressCountryCode())
+                || isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber());
     }
 
     @Override
     public boolean isFiscalValidated() {
         return TreasuryConstants.isDefaultCountry(getAddressCountryCode());
     }
-    
-    @Override
-    public boolean isAbleToChangeFiscalNumber() {
-        boolean result = super.isAbleToChangeFiscalNumber();
-        
-        if(!result) {
-            return result;
-        }
-        
-        if(isValidationAppliedToFiscalCountry(getAddressCountryCode()) && isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber())) {
-            return false;
-        }
-        
-        return true;
-    }
-    
+
     @Override
     public Set<? extends TreasuryEvent> getTreasuryEventsSet() {
         return Sets.newHashSet();
@@ -340,7 +335,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
         return globalBalance;
     }
-    
+
     @Override
     public String getUsername() {
         return null;
@@ -355,36 +350,36 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     public LocalizedString getIdentificationTypeDesignation() {
         return null;
     }
-    
+
     @Override
     public String getIdentificationTypeCode() {
         return null;
     }
-    
+
     @Override
     public String getIban() {
         return null;
     }
-    
+
     public boolean isAddressValid() {
         boolean valid = true;
-        
+
         valid &= !Strings.isNullOrEmpty(this.getAddressCountryCode());
         valid &= !Strings.isNullOrEmpty(this.getAddress());
         valid &= !Strings.isNullOrEmpty(this.getDistrictSubdivision());
-        
-        if(isDefaultCountry(this.getAddressCountryCode())) {
+
+        if (isDefaultCountry(this.getAddressCountryCode())) {
             valid &= !Strings.isNullOrEmpty(this.getZipCode());
             valid &= !Strings.isNullOrEmpty(this.getRegion());
         }
-        
-        if(isDefaultCountry(this.getAddressCountryCode()) && !Strings.isNullOrEmpty(this.getZipCode())) {
+
+        if (isDefaultCountry(this.getAddressCountryCode()) && !Strings.isNullOrEmpty(this.getZipCode())) {
             valid &= this.getZipCode().matches("\\d{4}-\\d{3}");
         }
-        
+
         return valid;
     }
-    
+
     // @formatter:off
     /* ********
      * SERVICES
@@ -398,17 +393,18 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
     @Atomic
     public static AdhocCustomer create(final CustomerType customerType, final String fiscalNumber, final String name,
-            final String address, final String districtSubdivision, final String region, final String zipCode, final String addressCountryCode,
-            final String identificationNumber, final List<FinantialInstitution> finantialInstitutions) {
-        return new AdhocCustomer(customerType, fiscalNumber, name, address, districtSubdivision, region, zipCode, addressCountryCode,
-                identificationNumber, finantialInstitutions);
+            final String address, final String districtSubdivision, final String region, final String zipCode,
+            final String addressCountryCode, final String identificationNumber,
+            final List<FinantialInstitution> finantialInstitutions) {
+        return new AdhocCustomer(customerType, fiscalNumber, name, address, districtSubdivision, region, zipCode,
+                addressCountryCode, identificationNumber, finantialInstitutions);
     }
 
     public static Stream<AdhocCustomer> findAll() {
         return FenixFramework.getDomainRoot().getCustomersSet().stream().filter(x -> x instanceof AdhocCustomer)
                 .map(AdhocCustomer.class::cast);
     }
-    
+
     public static Stream<AdhocCustomer> findByFiscalNumber(final String fiscalNumber) {
         return findAll().filter(i -> fiscalNumber.equalsIgnoreCase(i.getFiscalNumber()));
     }
@@ -436,5 +432,5 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     public static Stream<AdhocCustomer> findByCode(final String code) {
         return findAll().filter(i -> code.equalsIgnoreCase(i.getCode()));
     }
-    
+
 }

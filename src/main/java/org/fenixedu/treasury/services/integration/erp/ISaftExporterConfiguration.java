@@ -61,8 +61,12 @@ import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 
 public interface ISaftExporterConfiguration {
-
-    void generateSaftForFinantialDocuments(List<FinantialDocument> finantialDocuments, boolean formatted, OutputStream outputStream);
+    
+    default void generateSaftForFinantialDocuments(List<FinantialDocument> finantialDocuments, boolean formatted, OutputStream outputStream) {
+        generateSaftForFinantialDocuments(finantialDocuments, formatted, outputStream, true);
+    }
+    
+    void generateSaftForFinantialDocuments(List<FinantialDocument> finantialDocuments, boolean formatted, OutputStream outputStream, boolean validateDocuments);
 
     void generateSaftForCustomers(Set<Customer> customers, boolean formatted, OutputStream outputStream);
 

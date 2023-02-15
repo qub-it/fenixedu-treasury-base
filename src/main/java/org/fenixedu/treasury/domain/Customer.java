@@ -69,6 +69,7 @@ import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
@@ -301,6 +302,10 @@ public abstract class Customer extends Customer_Base {
         if (!Strings.isNullOrEmpty(getErpCustomerId())) {
             return false;
         }
+        
+        if(isWithFinantialDocumentsCertified()) {
+            return false;
+        }
 
         if (isWithFinantialDocumentsIntegratedInERP()) {
             return false;
@@ -313,43 +318,18 @@ public abstract class Customer extends Customer_Base {
         return true;
     }
 
-    public boolean isWithFinantialDocumentsIntegratedInERP() {
-        return isCustomerWithFinantialDocumentsIntegratedInERP(this);
-    }
-
-    private boolean isCustomerWithFinantialDocumentsIntegratedInERP(final Customer customer) {
-        for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
+    protected boolean isWithFinantialDocumentsCertified() {
+        for (final DebtAccount debtAccount : getDebtAccountsSet()) {
 
             for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
-
-                for (final ERPExportOperation erpExportOperation : finantialDocument.getErpExportOperationsSet()) {
-                    if (!erpExportOperation.getSuccess()) {
-                        continue;
-                    }
-
-                    if (!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
-                        return true;
-                    }
-                }
-
-                if (!Strings.isNullOrEmpty(finantialDocument.getErpCertificateDocumentReference())) {
+                if(TreasuryPlataformDependentServicesFactory.implementation().hasCertifiedDocument(finantialDocument)) {
                     return true;
                 }
             }
 
+            /* Payor debt account associated invoices */
             for (Invoice invoice : debtAccount.getInvoiceSet()) {
-
-                for (final ERPExportOperation erpExportOperation : invoice.getErpExportOperationsSet()) {
-                    if (!erpExportOperation.getSuccess()) {
-                        continue;
-                    }
-
-                    if (!erpExportOperation.getExecutionDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
-                        return true;
-                    }
-                }
-
-                if (!Strings.isNullOrEmpty(invoice.getErpCertificateDocumentReference())) {
+                if(TreasuryPlataformDependentServicesFactory.implementation().hasCertifiedDocument(invoice)) {
                     return true;
                 }
             }
@@ -358,36 +338,43 @@ public abstract class Customer extends Customer_Base {
         return false;
     }
 
-    public boolean isCustomerInformationMaybeIntegratedWithSuccess() {
-        boolean checkedInAllFinantialInstitutions = true;
+    public boolean isWithFinantialDocumentsIntegratedInERP() {
+        return isCustomerWithFinantialDocumentsIntegratedInERP(this);
+    }
 
-        for (DebtAccount debtAccount : getDebtAccountsSet()) {
-            final FinantialInstitution institution = debtAccount.getFinantialInstitution();
+    private boolean isCustomerWithFinantialDocumentsIntegratedInERP(Customer customer) {
+        for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
 
-            if (institution.getErpIntegrationConfiguration() == null) {
-                checkedInAllFinantialInstitutions = false;
-                break;
+            for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
+
+                if (!Strings.isNullOrEmpty(finantialDocument.getErpCertificateDocumentReference())) {
+                    return true;
+                }
+
+                for (final ERPExportOperation erpExportOperation : finantialDocument.getErpExportOperationsSet()) {
+                    if (erpExportOperation.getSuccess()) {
+                        return true;
+                    }
+                }
             }
 
-            if (Strings.isNullOrEmpty(institution.getErpIntegrationConfiguration().getImplementationClassName())) {
-                checkedInAllFinantialInstitutions = false;
-                break;
-            }
+            /* Payor debt account associated invoices */
+            for (Invoice invoice : debtAccount.getInvoiceSet()) {
 
-            final IERPExternalService erpService =
-                    institution.getErpIntegrationConfiguration().getERPExternalServiceImplementation();
-
-            if (erpService == null) {
-                checkedInAllFinantialInstitutions = false;
-                break;
-            }
-
-            if (erpService.getERPExporter().isCustomerMaybeIntegratedWithSuccess(this)) {
-                return true;
+                if (!Strings.isNullOrEmpty(invoice.getErpCertificateDocumentReference())) {
+                    return true;
+                }
+                
+                
+                for (final ERPExportOperation erpExportOperation : invoice.getErpExportOperationsSet()) {
+                    if (erpExportOperation.getSuccess()) {
+                        return true;
+                    }
+                }
             }
         }
 
-        return !checkedInAllFinantialInstitutions;
+        return false;
     }
 
     public boolean isCustomerWithFinantialDocumentsIntegratedInPreviousERP() {

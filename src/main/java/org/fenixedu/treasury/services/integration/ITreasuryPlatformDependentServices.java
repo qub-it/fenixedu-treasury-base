@@ -197,6 +197,8 @@ public interface ITreasuryPlatformDependentServices {
     
     void annulCertifiedDocument(FinantialDocument finantialDocument);
     
+    boolean hasCertifiedDocument(FinantialDocument finantialDocument);
+    
     boolean isProductCertified(Product product);
 
     /* Development or quality mode */

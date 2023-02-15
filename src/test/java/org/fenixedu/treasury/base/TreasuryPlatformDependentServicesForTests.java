@@ -307,6 +307,11 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
     }
 
     @Override
+    public boolean hasCertifiedDocument(FinantialDocument finantialDocument) {
+        return false;
+    }
+
+    @Override
     public boolean isProductCertified(Product product) {
         return false;
     }

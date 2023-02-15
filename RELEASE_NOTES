@@ -1,3 +1,8 @@
+- Bug Fix: Fix SAFT error validation translation, regarding the invalid fiscal number
+- Improvement: Return the first line of last ERP error integration
+- Improvement: Do not check if a finantial document maybe be integrated with success
+- Refactor: Method in Treasury Platform Services, to check if document is certified 
+
 10.1.2 (10-02-2023)
 - Bug Fix: Fix message of credit entry annulment, by the removal of treasury exemption
 - Refactor: Remove method Customer::getFiscalCountry and other related methods of similar name. This method cause some confusion and is replaced by Customer::getAddressCountryCode

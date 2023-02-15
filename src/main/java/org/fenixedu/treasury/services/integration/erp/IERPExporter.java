@@ -97,8 +97,6 @@ public interface IERPExporter {
     
     public String saftEncoding();
     
-    public boolean isCustomerMaybeIntegratedWithSuccess(Customer customer);
-
     public boolean isCustomerWithFinantialDocumentsIntegratedInPreviousERP(Customer customer);
     
     public boolean isCustomerWithFinantialDocumentsIntegratedInERP(Customer customer);

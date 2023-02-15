@@ -166,7 +166,7 @@ public class ERPCustomerFieldsBean {
         // CompanyName
         if (customer.getName().length() > MAX_NAME) {
             throw new TreasuryDomainException("error.ERPCustomerFieldsBean.customerName.more.than.allowed",
-                    String.valueOf(MAX_NAME));
+                    String.valueOf(MAX_NAME), addressCountryCode, fiscalNumber, name);
         }
 
         bean.setCustomerName(customer.getName());
@@ -180,7 +180,7 @@ public class ERPCustomerFieldsBean {
 
         if (!Strings.isNullOrEmpty(customer.getFiscalNumber()) && customer.getFiscalNumber().length() > MAX_FISCAL_NUM) {
             throw new TreasuryDomainException("error.ERPCustomerFieldsBean.fiscalNumber.more.than.allowed",
-                    String.valueOf(MAX_FISCAL_NUM));
+                    String.valueOf(MAX_FISCAL_NUM), addressCountryCode, fiscalNumber, name);
         }
 
         // CustomerTaxID

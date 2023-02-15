@@ -523,12 +523,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             final String[] lines = lastERPExportOperation.get().getErrorLog()
                     .replaceAll("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z", "").split("\n");
 
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < Math.min(3, lines.length); i++) {
-                sb.append(lines[i]).append("<br />");
+            if(lines.length > 0) {
+                return lines[0].trim();
             }
-
-            return sb.toString();
+            
+            return "";
         } catch (Exception e) {
             return "";
         }

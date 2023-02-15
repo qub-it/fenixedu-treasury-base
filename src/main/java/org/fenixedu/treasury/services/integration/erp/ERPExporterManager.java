@@ -143,7 +143,12 @@ public class ERPExporterManager {
     }
 
     @Atomic
-    public static String exportFinantialDocumentToXML(final FinantialDocument finantialDocument) {
+    public static String exportFinantialDocumentToXML(FinantialDocument finantialDocument) {
+        return exportFinantialDocumentToXML(finantialDocument, true);
+    }
+    
+    @Atomic
+    public static String exportFinantialDocumentToXML(FinantialDocument finantialDocument, boolean validateDocument) {
         final FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
         ERPConfiguration erpIntegrationConfiguration =
                 finantialDocument.getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration();
@@ -161,7 +166,7 @@ public class ERPExporterManager {
 
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                saftExporterConfiguration.generateSaftForFinantialDocuments(documentsToExport, true, baos);
+                saftExporterConfiguration.generateSaftForFinantialDocuments(documentsToExport, true, baos, validateDocument);
 
                 return new String(baos.toByteArray(), saftExporterConfiguration.getEncoding());
             } catch (UnsupportedEncodingException e) {
@@ -170,7 +175,6 @@ public class ERPExporterManager {
         } else {
             return erpExporter.exportFinantialDocumentToXML(finantialInstitution, Lists.newArrayList(finantialDocument));
         }
-
     }
 
     public static List<ERPExportOperation> exportPendingDocumentsForFinantialInstitution(
