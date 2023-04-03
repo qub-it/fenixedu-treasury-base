@@ -765,14 +765,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         return gatewayService().getPaymentTransactionReportByTransactionId(transactionId);
     }
 
-    public void edit(String name, 
-            String sibsEndpointUrl,
-            String sibsEntityId,
-            String entityReferenceCode,
-            String bearerToken, 
-            String aesKey,
-            int numberOfMonthsToExpirePaymentReferenceCode, 
-            boolean sendBillingDataInOnlinePayment) {
+    public void edit(String name, String sibsEndpointUrl, String sibsEntityId, String entityReferenceCode, String bearerToken,
+            String aesKey, int numberOfMonthsToExpirePaymentReferenceCode, boolean sendBillingDataInOnlinePayment) {
 
         setName(name);
         setSibsEndpointUrl(sibsEndpointUrl);
@@ -785,10 +779,10 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
         checkRules();
     }
-    
+
     public void changeEnvironmentMode(SibsOnlinePaymentsGatewayEnviromentMode environmentMode) {
         setEnviromentMode(environmentMode);
-        
+
         checkRules();
     }
 
@@ -969,8 +963,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             });
 
             if (!checkoutResultBean.isOperationSuccess()) {
-                throw new TreasuryDomainException(
-                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
+                throw new TreasuryDomainException("error.MbwayPaymentRequest.request.in.gateway.failed");
             }
 
             FenixFramework.atomic(() -> {
@@ -1066,8 +1059,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             });
 
             if (!checkoutResultBean.isOperationSuccess()) {
-                throw new TreasuryDomainException(
-                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.request.not.successful");
+                throw new TreasuryDomainException("error.MbwayPaymentRequest.request.in.gateway.failed");
             }
 
             FenixFramework.atomic(() -> {
@@ -1267,9 +1259,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(bean.getOperationResultType(), bean.isPaid());
 
-            final ForwardPaymentStatusBean result =
-                    new ForwardPaymentStatusBean(true, stateType, bean.getPaymentGatewayResultCode(),
-                            bean.getPaymentGatewayResultDescription(), "", "");
+            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType,
+                    bean.getPaymentGatewayResultCode(), bean.getPaymentGatewayResultDescription(), "", "");
 
             result.editTransactionDetails(bean.getTransactionId(), bean.getPaymentDate(), bean.getAmount());
 
