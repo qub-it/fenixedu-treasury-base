@@ -955,6 +955,14 @@ public class SettlementNote extends SettlementNote_Base {
         return result;
     }
 
+    public void updateOverrideCertificationDateWithCloseDate(boolean overrideCertificationDateWithCloseDate, DateTime closeDate) {
+        super.updateOverrideCertificationDateWithCloseDate(overrideCertificationDateWithCloseDate, closeDate);
+        
+        for (SettlementEntry settlementEntry : getSettlemetEntriesSet()) {
+            settlementEntry.setCloseDate(closeDate);
+        }
+    }
+    
     // @formatter:off
     /* ********
      * SERVICES

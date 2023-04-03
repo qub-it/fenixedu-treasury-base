@@ -532,6 +532,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             return "";
         }
     }
+    
+    public void updateOverrideCertificationDateWithCloseDate(boolean overrideCertificationDateWithCloseDate, DateTime closeDate) {
+        super.setOverrideCertificationDateWithCloseDate(overrideCertificationDateWithCloseDate);
+        super.setCloseDate(closeDate);
+    }
 
     // @formatter:off
     /* ********

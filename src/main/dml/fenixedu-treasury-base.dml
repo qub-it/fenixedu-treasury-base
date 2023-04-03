@@ -348,6 +348,8 @@ class document.FinantialDocument {
 	String contactName;
 	String contactEmail;
 	String contactPhoneNumber;
+	
+	Boolean overrideCertificationDateWithCloseDate;
 }
 
 	class document.Invoice extends document.FinantialDocument {
