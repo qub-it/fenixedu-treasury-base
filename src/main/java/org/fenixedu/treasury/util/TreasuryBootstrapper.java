@@ -178,8 +178,8 @@ public class TreasuryBootstrapper {
 
     private static void initializeVatExemption(String countryCode) {
         if (COUNTRY_PT.equals(countryCode)) {
-            String[] codes = new String[] { "M01", "M02", "M04", "M05", "M06", "M07", "M09", "M10", "M11", "M12", "M13",
-                    "M14", "M15", "M16", "M19", "M20", "M21", "M25", "M30", "M31", "M32", "M33", "M40", "M41", "M42", "M43", "M99" };
+            String[] codes = new String[] { "M01", "M02", "M04", "M05", "M06", "M07", "M09", "M10", "M11", "M12", "M13", "M14",
+                    "M15", "M16", "M19", "M20", "M21", "M25", "M30", "M31", "M32", "M33", "M40", "M41", "M42", "M43", "M99" };
 
             for (String code : codes) {
                 if (code.equals("M01")) {
@@ -265,13 +265,47 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializePaymentMethod() {
-        PaymentMethod.create("NU", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MON"), true, false);
-        PaymentMethod.create("TB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.WTR"), true, false);
-        PaymentMethod.create("MB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MB"), true, false);
-        PaymentMethod.create("CD", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CCR"), true, false);
-        PaymentMethod.create("CH", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CH"), true, false);
-        PaymentMethod.create("MW", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MW"), true, false);
-        PaymentMethod.create("CC", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CC"), true, false);
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("NU", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MON"), true, false);
+            p.setSaftCode("NU");
+        }
+
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("TB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.WTR"), true, false);
+            p.setSaftCode("TB");
+        }
+
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("MB", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MB"), true, false);
+            p.setSaftCode("MB");
+        }
+
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("CD", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CCR"), true, false);
+            p.setSaftCode("CD");
+        }
+
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("CH", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CH"), true, false);
+            p.setSaftCode("CH");
+        }
+
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("MW", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.MW"), true, false);
+            p.setSaftCode("OU");
+        }
+
+        {
+            PaymentMethod p =
+                    PaymentMethod.create("CC", TreasuryConstants.treasuryBundleI18N("label.PaymentMethod.CC"), true, false);
+            p.setSaftCode("CC");
+        }
     }
 
     private static void initializeCurrency() {
