@@ -55,6 +55,7 @@ package org.fenixedu.treasury.domain.tariff;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 
 public enum DueDateCalculationType {
     @Deprecated NO_DUE_DATE, 
@@ -79,6 +80,6 @@ public enum DueDateCalculationType {
     }
 
     public LocalizedString getDescriptionI18N() {
-        return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
+        return TreasurySettings.GET_DUE_DATE_CALCULATION_TYPE_DAYS_AFTER_CREATION_LABEL(this);
     }
 }

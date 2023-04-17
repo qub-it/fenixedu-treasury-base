@@ -52,13 +52,18 @@
  */
 package org.fenixedu.treasury.domain.settings;
 
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
+
 import java.util.Optional;
 import java.util.Set;
 
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
+import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
@@ -144,4 +149,42 @@ public class TreasurySettings extends TreasurySettings_Base {
 
         super.setMbWayPaymentMethod(mbWayPaymentMethod);
     }
+
+    // TODO ANIL 2023-04-17: Temporary to accomodate the necessary
+    // tests requested by the institutions support teams
+    public static String GET_DAYS_AFTER_CREATION_BUNDLE_LABEL_FOR_FIX() {
+        String label = "label.TuitionInstallmentTariff.daysAfterCreation";
+
+        if (Boolean.TRUE.equals(TreasurySettings.getInstance().getFixDueDateCalculationTypeLabel())) {
+            label += ".fix";
+        }
+
+        return label;
+    }
+
+    // TODO ANIL 2023-04-17: Temporary to accomodate the necessary
+    // tests requested by the institutions support teams
+    public static String GET_BEST_OF_FIXED_DATE_OR_DAYS_AFTER_CREATION() {
+        String label = "label.TuitionInstallmentTariff.bestOfFixedDateAndDaysAfterCreation";
+
+        if (Boolean.TRUE.equals(TreasurySettings.getInstance().getFixDueDateCalculationTypeLabel())) {
+            label += ".fix";
+        }
+
+        return label;
+    }
+
+    // TODO ANIL 2023-04-17: Temporary to accomodate the necessary
+    // tests requested by the institutions support teams
+    public static LocalizedString GET_DUE_DATE_CALCULATION_TYPE_DAYS_AFTER_CREATION_LABEL(DueDateCalculationType enumValue) {
+        if (enumValue == DueDateCalculationType.DAYS_AFTER_CREATION
+                || enumValue == DueDateCalculationType.BEST_OF_FIXED_DATE_AND_DAYS_AFTER_CREATION) {
+            if (Boolean.TRUE.equals(TreasurySettings.getInstance().getFixDueDateCalculationTypeLabel())) {
+                return treasuryBundleI18N(enumValue.getClass().getSimpleName() + "." + enumValue.name() + ".fix");
+            }
+        }
+
+        return TreasuryConstants.treasuryBundleI18N(enumValue.getClass().getSimpleName() + "." + enumValue.name());
+    }
+    
 }
