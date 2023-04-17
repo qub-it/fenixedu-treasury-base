@@ -1,3 +1,4 @@
+10.1.6 (17-04-2023)
 - Bug Fix: Initialize payment methods with saft code
 - Bug Fix: Add temporary trigger to fix labels of due date calculation type #UL-REIT-3144
 
