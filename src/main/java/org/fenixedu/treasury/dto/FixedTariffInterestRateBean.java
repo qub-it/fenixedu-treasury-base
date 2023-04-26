@@ -52,42 +52,45 @@
  */
 package org.fenixedu.treasury.dto;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.dto.ITreasuryBean;
 import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.domain.tariff.InterestType;
 
 public class FixedTariffInterestRateBean implements ITreasuryBean {
 
-    private org.fenixedu.treasury.domain.tariff.InterestType interestType;
+    private InterestRateType interestRateType;
     private List<TreasuryTupleDataSourceBean> interestTypeDataSource;
     private int numberOfDaysAfterDueDate;
     private boolean applyInFirstWorkday;
     private int maximumDaysToApplyPenalty;
-    private java.math.BigDecimal interestFixedAmount;
-    private java.math.BigDecimal rate;
+    private BigDecimal interestFixedAmount;
+    private BigDecimal rate;
 
-    public org.fenixedu.treasury.domain.tariff.InterestType getInterestType() {
-        return interestType;
+    public InterestRateType getInterestRateType() {
+        return interestRateType;
     }
 
-    public void setInterestType(org.fenixedu.treasury.domain.tariff.InterestType value) {
-        interestType = value;
+    public void setInterestRateType(InterestRateType value) {
+        interestRateType = value;
     }
 
     public List<TreasuryTupleDataSourceBean> getInterestTypeDataSource() {
         return interestTypeDataSource;
     }
 
-    public void setInterestTypeDataSource(List<org.fenixedu.treasury.domain.tariff.InterestType> value) {
+    public void setInterestTypeDataSource(List<org.fenixedu.treasury.domain.tariff.InterestRateType> value) {
         this.interestTypeDataSource = value.stream().map(x -> {
             TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
             tuple.setId(x.toString());
-            tuple.setText(x.getDescriptionI18N().getContent());
+            tuple.setText(x.getDescription().getContent());
             return tuple;
         }).collect(Collectors.toList());
     }
@@ -134,17 +137,15 @@ public class FixedTariffInterestRateBean implements ITreasuryBean {
 
     public FixedTariffInterestRateBean() {
         this.interestTypeDataSource = new ArrayList<TreasuryTupleDataSourceBean>();
-        for (InterestType type : InterestType.findAll()) {
-            TreasuryTupleDataSourceBean typeBean = new TreasuryTupleDataSourceBean();
-            typeBean.setId(type.toString());
-            typeBean.setText(type.getDescriptionI18N().getContent());
-            this.interestTypeDataSource.add(typeBean);
-        }
+        TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream() //
+            .sorted(InterestRateType.COMPARE_BY_NAME) //
+            .map(type -> new TreasuryTupleDataSourceBean(type.getExternalId(), type.getDescription().getContent())) //
+            .collect(Collectors.toCollection(() -> this.interestTypeDataSource));
     }
 
     public FixedTariffInterestRateBean(InterestRate interestRate) {
         this();
-        this.setInterestType(interestRate.getInterestType());
+        this.setInterestRateType(interestRate.getInterestRateType());
         this.setNumberOfDaysAfterDueDate(interestRate.getNumberOfDaysAfterDueDate());
         this.setApplyInFirstWorkday(interestRate.getApplyInFirstWorkday());
         this.setMaximumDaysToApplyPenalty(interestRate.getMaximumDaysToApplyPenalty());

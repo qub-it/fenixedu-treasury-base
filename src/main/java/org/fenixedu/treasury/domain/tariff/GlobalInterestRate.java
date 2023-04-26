@@ -66,6 +66,7 @@ import org.joda.time.LocalDate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class GlobalInterestRate extends GlobalInterestRate_Base {
 
     public static final Comparator<? super GlobalInterestRate> FIRST_DATE_COMPARATOR = (o1, o2) -> {

@@ -19,8 +19,12 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
+import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.domain.tariff.InterestType;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -44,21 +48,33 @@ public class PaymentPlanTestsUtilities {
         BasicTreasuryUtils.startup(() -> {
             createDebtAccount();
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
-                    new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate( new BigDecimal("0"));
+                    new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
 
-            GlobalInterestRate globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2020, 1, 1)).get();
+            InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
+                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+
+            InterestRateEntry globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2020, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2021, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2021, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2022, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2022, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2023, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2023, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2024, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2024, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
 
@@ -174,9 +190,10 @@ public class PaymentPlanTestsUtilities {
         ISettlementInvoiceEntryBean interestEntryBean = new SettlementInterestEntryBean(debitEntry, interestRateBean);
         return interestEntryBean;
     }
-    
+
     public static ISettlementInvoiceEntryBean createPenaltyTaxEntryBean(DebitEntry debitEntry, BigDecimal amount) {
-        return new PaymentPenaltyEntryBean(debitEntry, "Penalty Tax For: " + debitEntry.getDescription(), new LocalDate(), amount);
+        return new PaymentPenaltyEntryBean(debitEntry, "Penalty Tax For: " + debitEntry.getDescription(), new LocalDate(),
+                amount);
     }
 
     public static DebitEntry createDebitEntry(BigDecimal debitAmount, LocalDate dueDate, boolean aplyInterest) {
@@ -192,8 +209,11 @@ public class PaymentPlanTestsUtilities {
             final int maximumDaysToApplyPenalty = 0;
             final BigDecimal rate = null;
 
-            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, InterestType.GLOBAL_RATE,
-                    numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
+            InterestRateType interestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
+                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+
+            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, interestRateType, numberOfDaysAfterDueDate,
+                    applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
         }
         return debitEntry;
@@ -232,8 +252,7 @@ public class PaymentPlanTestsUtilities {
 
     public static void createDebtAccount() {
         AdhocCustomer create = AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(),
-                Customer.DEFAULT_FISCAL_NUMBER, "Diogo", "morada", "", "", "",
-                "pt", "", List.of(getFinatialInstitution()));
+                Customer.DEFAULT_FISCAL_NUMBER, "Diogo", "morada", "", "", "", "pt", "", List.of(getFinatialInstitution()));
         DebtAccount.create(getFinatialInstitution(), create);
     }
 

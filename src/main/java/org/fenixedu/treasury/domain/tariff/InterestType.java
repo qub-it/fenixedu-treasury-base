@@ -59,6 +59,7 @@ import java.util.List;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 
+@Deprecated
 public enum InterestType {
 
     GLOBAL_RATE, FIXED_AMOUNT;
