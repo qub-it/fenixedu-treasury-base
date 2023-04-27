@@ -32,9 +32,13 @@ import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxSettings;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
+import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.paymentplans.PaymentPlanTestsUtilities;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -67,19 +71,31 @@ public class TreasuryExemptionTest {
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
 
-            GlobalInterestRate globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2020, 1, 1)).get();
+            InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
+                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+
+            InterestRateEntry globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2020, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2021, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2021, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2022, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2022, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2023, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2023, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2024, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2024, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
 

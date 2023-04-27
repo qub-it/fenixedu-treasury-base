@@ -2,10 +2,12 @@ package org.fenixedu.treasury.domain.tariff;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
@@ -14,33 +16,34 @@ import pt.ist.fenixframework.FenixFramework;
 
 public abstract class InterestRateType extends InterestRateType_Base {
 
-    public static Comparator<InterestRateType> COMPARE_BY_NAME = 
+    public static Comparator<InterestRateType> COMPARE_BY_NAME =
             (o1, o2) -> o1.getDescription().getContent().compareTo(o2.getDescription().getContent());
-    
+
     public InterestRateType() {
         super();
-        
+
+        setRequiresInterestFixedAmount(false);
         setDomainRoot(FenixFramework.getDomainRoot());
     }
-    
+
     public void init(LocalizedString description) {
         setDescription(description);
     }
-    
+
     protected void checkRules() {
-        if(getDomainRoot() == null) {
+        if (getDomainRoot() == null) {
             throw new RuntimeException("error.InterestRateType.domainRoot.required");
         }
-        
-        if(getDescription() == null) {
+
+        if (getDescription() == null) {
             throw new RuntimeException("error.InterestRateType.description.required");
         }
-        
+
     }
 
     public abstract InterestRateBean calculateInterests(DebitEntry debitEntry, LocalDate paymentDate,
             boolean withAllInterestValues);
-    
+
     public abstract InterestRateBean calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate);
 
     protected TreeMap<LocalDate, BigDecimal> createdInterestEntriesMap(DebitEntry debitEntry) {
@@ -62,6 +65,15 @@ public abstract class InterestRateType extends InterestRateType_Base {
         }
 
         return result;
+    }
+
+    //
+    // SERVICES
+    //
+
+    public Optional<GlobalInterestRateType> findAvailableGlobalInterestRateType() {
+        return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
+                .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast).findFirst();
     }
     
 }

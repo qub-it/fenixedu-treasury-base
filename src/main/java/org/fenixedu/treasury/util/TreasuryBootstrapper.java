@@ -330,7 +330,7 @@ public class TreasuryBootstrapper {
                 .create(TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
 
         FixedAmountInterestRateType fixedAmountInterestRateType = FixedAmountInterestRateType
-                .create(TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
+                .create(TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description"));
 
         // Check global InterestRate since 1995 till now
         for (int year = 1995; year <= new LocalDate().getYear(); year++) {
@@ -345,6 +345,7 @@ public class TreasuryBootstrapper {
         
         TreasurySettings.getInstance().getAvailableInterestRateTypesSet().add(globalInterestRateType);
         TreasurySettings.getInstance().getAvailableInterestRateTypesSet().add(fixedAmountInterestRateType);
+        TreasurySettings.getInstance().setDefaultInterestRateType(globalInterestRateType);
     }
 
     private static void initializeTreasurySettings() {
@@ -359,6 +360,7 @@ public class TreasuryBootstrapper {
 
     private static void initializeReimbursementProcessStatusType() {
         ReimbursementProcessStatusType.create("PENDING",
+                
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING")
                         .getContent(Locale.getDefault()),
                 1, true, false, false);

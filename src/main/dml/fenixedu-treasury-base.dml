@@ -3578,12 +3578,22 @@ class paypal.PayPalLog extends payments.PaymentRequestLog {
 
 /* Interest Rate Type availability */
 
-relation InterestRateTypeTreasurySettings {
+relation AvailableInterestRateTypeTreasurySettings {
 	settings.TreasurySettings playsRole treasurySettingsForInterestRateTypeAvailability {
 		multiplicity 0..1;
 	}
 
 	tariff.InterestRateType playsRole availableInterestRateTypes {
 		multiplicity *;
+	}
+}
+
+relation DefaultInterestRateTypeTreasurySettings {
+	settings.TreasurySettings playsRole treasurySettingsForDefaultInterestRateType {
+		multiplicity 0..1;
+	}
+
+	tariff.InterestRateType playsRole defaultInterestRateType {
+		multiplicity 0..1;
 	}
 }

@@ -131,11 +131,11 @@ public abstract class Tariff extends Tariff_Base {
         }
 
         if (isApplyInterests()) {
-            if (getInterestRate() == null || getInterestRate().getInterestType() == null) {
+            if (getInterestRate() == null || getInterestRate().getInterestRateType() == null) {
                 throw new TreasuryDomainException("error.Tariff.interestRate.required");
             }
 
-            if (getInterestRate().getInterestType() == InterestType.FIXED_AMOUNT) {
+            if (Boolean.TRUE.equals(getInterestRate().getInterestRateType().getRequiresInterestFixedAmount())) {
                 if (BigDecimal.ZERO.compareTo(getInterestRate().getInterestFixedAmount()) >= 0) {
                     throw new TreasuryDomainException("error.Tariff.interestRate.interestfixedamount.invalid");
                 }

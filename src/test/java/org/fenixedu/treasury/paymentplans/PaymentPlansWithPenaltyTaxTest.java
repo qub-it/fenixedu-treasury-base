@@ -15,9 +15,12 @@ import org.fenixedu.treasury.domain.VatExemptionReason;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxSettings;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
-import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
+import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.fenixedu.treasury.dto.PaymentPlans.InstallmentBean;
@@ -96,8 +99,12 @@ public class PaymentPlansWithPenaltyTaxTest {
                     false, false);
         });
 
-        GlobalInterestRate.findAll().forEach(i -> i.delete());
-        GlobalInterestRate.create(new LocalDate(1950, 1, 1), PaymentPlanTestsUtilities.ls("Juro oficial para o ano 2021"),
+        InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
+                .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+        
+        globalInterestRateType.getInterestRateEntriesSet().forEach(e -> e.delete());
+        
+        InterestRateEntry.create(globalInterestRateType, new LocalDate(1950, 1, 1), PaymentPlanTestsUtilities.ls("Juro oficial para o ano 2021"),
                 new BigDecimal("4.705"), true, false);
     }
 

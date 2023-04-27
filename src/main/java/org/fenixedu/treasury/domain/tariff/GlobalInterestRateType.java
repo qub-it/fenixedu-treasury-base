@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
@@ -18,36 +19,43 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
+import pt.ist.fenixframework.FenixFramework;
+
 public class GlobalInterestRateType extends GlobalInterestRateType_Base {
-    
+
     private static final int MAX_YEARS = 5;
-    
+
     public GlobalInterestRateType() {
         super();
     }
-    
+
     public GlobalInterestRateType(LocalizedString description) {
         this();
-        
+
         super.init(description);
-        
+
         checkRules();
     }
-    
+
     protected void checkRules() {
         super.checkRules();
+        
+        if(findAll().count() > 1) {
+            throw new TreasuryDomainException("error.GlobalInterestRateType.already.exists");
+        }
     }
 
     @Override
     public InterestRateBean calculateInterests(DebitEntry debitEntry, LocalDate paymentDate, boolean withAllInterestValues) {
         return calculateInterestAmount(debitEntry, withAllInterestValues, calculateEvents(debitEntry, paymentDate));
     }
-    
+
     @Override
     public InterestRateBean calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate) {
-        return calculateInterestAmount(debitEntry, true, calculateEvents(debitEntry, lockDate, lockDate.toDateTimeAtStartOfDay()));
+        return calculateInterestAmount(debitEntry, true,
+                calculateEvents(debitEntry, lockDate, lockDate.toDateTimeAtStartOfDay()));
     }
-    
+
     private InterestRateBean calculateInterestAmount(DebitEntry debitEntry, boolean withAllInterestValues,
             NavigableMap<LocalDate, InterestCalculationEvent> orderedEvents) {
         InterestRateBean result = new InterestRateBean();
@@ -91,17 +99,18 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
 
         return result;
     }
-    
+
     private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(DebitEntry debitEntry, LocalDate paymentDate) {
         return calculateEvents(debitEntry, paymentDate, null);
     }
-    
+
     /*
      * The ignorePaymentsAfterDate is not required. If set it will ignore all payments made after that
      * date. It is a way to lock the interest calculation at certain date, which is necessary
      * for processes which lock the interest to be paid
      */
-    private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(DebitEntry debitEntry, LocalDate paymentDate, DateTime ignorePaymentsAfterDate) {
+    private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(DebitEntry debitEntry, LocalDate paymentDate,
+            DateTime ignorePaymentsAfterDate) {
         NavigableMap<LocalDate, BigDecimal> paymentsMap = createPaymentsMap(debitEntry, paymentDate, ignorePaymentsAfterDate);
         LocalDate lastPayment = paymentsMap.lastKey();
 
@@ -127,30 +136,31 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
                 return;
             }
 
-            result.putIfAbsent(eventDate,
-                    new InterestCalculationEvent(amountInDebtAtDay(debitEntry, paymentsMap, eventDate), interestRateValue(eventDate)));
+            result.putIfAbsent(eventDate, new InterestCalculationEvent(amountInDebtAtDay(debitEntry, paymentsMap, eventDate),
+                    interestRateValue(eventDate)));
         });
 
         getInterestRateEntriesSet().stream().filter(r -> !r.getStartDate().isBefore(firstDayToChargeInterests))
                 .filter(r -> !r.getStartDate().isAfter(nextDayOfInterestsCharge)).forEach(r -> {
                     LocalDate eventDate = r.getStartDate();
-                    result.putIfAbsent(eventDate, new InterestCalculationEvent(amountInDebtAtDay(debitEntry, paymentsMap, eventDate),
-                            interestRateValue(eventDate)));
+                    result.putIfAbsent(eventDate, new InterestCalculationEvent(
+                            amountInDebtAtDay(debitEntry, paymentsMap, eventDate), interestRateValue(eventDate)));
                 });
 
         return result;
     }
-    
+
     private NavigableMap<LocalDate, BigDecimal> createPaymentsMap(DebitEntry debitEntry, LocalDate paymentDate) {
         return createPaymentsMap(debitEntry, paymentDate, null);
     }
-    
+
     /*
      * The ignorePaymentsAfterDate is not required. If set it will ignore all payments made after that
      * date. It is a way to lock the interest calculation at certain date, which is necessary
      * for processes which lock the interest to be paid
      */
-    private NavigableMap<LocalDate, BigDecimal> createPaymentsMap(DebitEntry debitEntry, LocalDate paymentDate, DateTime ignorePaymentsAfterDate) {
+    private NavigableMap<LocalDate, BigDecimal> createPaymentsMap(DebitEntry debitEntry, LocalDate paymentDate,
+            DateTime ignorePaymentsAfterDate) {
         NavigableMap<LocalDate, BigDecimal> result = new TreeMap<>();
 
         debitEntry.getSettlementEntriesSet().stream() //
@@ -172,7 +182,6 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         return result;
     }
 
-    
     private LocalDate calculateFirstDayToChargeInterests(DebitEntry debitEntry, LocalDate lastPayment) {
         LocalDate firstDayToChargeInterests =
                 applyOnFirstWorkdayIfNecessary(debitEntry, debitEntry.getDueDate().plusDays(numberOfDaysAfterDueDate()));
@@ -184,22 +193,24 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         return firstDayToChargeInterests;
     }
 
-    private LocalDate calculateLastDayToChargeInterests(DebitEntry debitEntry, LocalDate lastPayment, LocalDate firstDayToChargeInterests) {
+    private LocalDate calculateLastDayToChargeInterests(DebitEntry debitEntry, LocalDate lastPayment,
+            LocalDate firstDayToChargeInterests) {
         InterestRate interestRate = debitEntry.getInterestRate();
-        
+
         LocalDate nextDayOfPaymentDate = lastPayment;
         if (!isApplyPaymentMonth(lastPayment)) {
             nextDayOfPaymentDate = nextDayOfPaymentDate.withDayOfMonth(1).minusDays(1);
         }
 
-        if (interestRate.isMaximumDaysToApplyPenaltyApplied()
-                && Days.daysBetween(firstDayToChargeInterests, nextDayOfPaymentDate).getDays() > interestRate.getMaximumDaysToApplyPenalty()) {
+        if (interestRate.isMaximumDaysToApplyPenaltyApplied() && Days.daysBetween(firstDayToChargeInterests, nextDayOfPaymentDate)
+                .getDays() > interestRate.getMaximumDaysToApplyPenalty()) {
             nextDayOfPaymentDate = firstDayToChargeInterests.plusDays(interestRate.getMaximumDaysToApplyPenalty() - 1);
         }
         return nextDayOfPaymentDate;
     }
 
-    private BigDecimal amountInDebtAtDay(DebitEntry debitEntry, NavigableMap<LocalDate, BigDecimal> paymentsMap, LocalDate eventDate) {
+    private BigDecimal amountInDebtAtDay(DebitEntry debitEntry, NavigableMap<LocalDate, BigDecimal> paymentsMap,
+            LocalDate eventDate) {
         BigDecimal amountToPay = debitEntry.getAmountWithVat();
 
         for (Entry<LocalDate, BigDecimal> entry : paymentsMap.entrySet()) {
@@ -216,7 +227,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
     private int numberOfDaysAfterDueDate() {
         return 1;
     }
-    
+
     private LocalDate applyOnFirstWorkdayIfNecessary(DebitEntry debitEntry, final LocalDate date) {
         InterestRate interestRate = debitEntry.getInterestRate();
         boolean applyInFirstWorkday = interestRate.isApplyInFirstWorkday();
@@ -226,7 +237,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
             throw new TreasuryDomainException("error.InterestRate.rate.not.defined.for.date",
                     date.toString(TreasuryConstants.DATE_FORMAT_YYYY_MM_DD));
         }
-        
+
         applyInFirstWorkday = globalRate.get().getApplyInFirstWorkday();
 
         if (applyInFirstWorkday && isSaturday(date)) {
@@ -262,7 +273,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
             throw new TreasuryDomainException("error.InterestRate.rate.not.defined.for.date",
                     date.toString(TreasuryConstants.DATE_FORMAT_YYYY_MM_DD));
         }
-        
+
         return TreasuryConstants.divide(globalRate.get().getRate(), TreasuryConstants.HUNDRED_PERCENT);
     }
 
@@ -281,5 +292,14 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
     //
     public static GlobalInterestRateType create(LocalizedString description) {
         return new GlobalInterestRateType(description);
+    }
+
+    public static Stream<GlobalInterestRateType> findAll() {
+        return FenixFramework.getDomainRoot().getInterestRateTypesSet().stream()
+                .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast);
+    }
+    
+    public static Optional<GlobalInterestRateType> findUnique() {
+        return findAll().findFirst();
     }
 }

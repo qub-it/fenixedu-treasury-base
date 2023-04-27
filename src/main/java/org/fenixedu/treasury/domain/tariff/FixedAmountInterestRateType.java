@@ -2,18 +2,24 @@ package org.fenixedu.treasury.domain.tariff;
 
 import java.math.BigDecimal;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
+
+import pt.ist.fenixframework.FenixFramework;
 
 public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Base {
 
     public FixedAmountInterestRateType() {
         super();
+        super.setRequiresInterestFixedAmount(true);
     }
 
     public FixedAmountInterestRateType(LocalizedString description) {
@@ -24,6 +30,10 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
 
     protected void checkRules() {
         super.checkRules();
+
+        if (findAll().count() > 1) {
+            throw new TreasuryDomainException("error.FixedAmountInterestRateType.already.exists");
+        }
     }
 
     @Override
@@ -57,7 +67,20 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
         return result;
     }
 
+    //
+    // SERVICES
+    //
+
     public static FixedAmountInterestRateType create(LocalizedString description) {
         return new FixedAmountInterestRateType(description);
+    }
+
+    public static Stream<FixedAmountInterestRateType> findAll() {
+        return FenixFramework.getDomainRoot().getInterestRateTypesSet().stream()
+                .filter(type -> type instanceof FixedAmountInterestRateType).map(FixedAmountInterestRateType.class::cast);
+    }
+
+    public static Optional<FixedAmountInterestRateType> findUnique() {
+        return findAll().findFirst();
     }
 }
