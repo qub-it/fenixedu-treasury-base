@@ -115,7 +115,7 @@ public class InterestRate extends InterestRate_Base {
             throw new TreasuryDomainException("error.InterestRate.interestRateType.required");
         }
 
-        if (Boolean.TRUE.equals(getInterestRateType().getRequiresInterestFixedAmount())) {
+        if (Boolean.TRUE.equals(getInterestRateType().getRequiresInterestFixedAmount()) && getInterestFixedAmount() == null) {
             throw new TreasuryDomainException("error.InterestRate.interestFixedAmount.required");
         }
     }
@@ -165,7 +165,7 @@ public class InterestRate extends InterestRate_Base {
 //
 //        return calculateInterestAmount(true, calculateEvents(lockDate, lockDate.toDateTimeAtStartOfDay()));
     }
-    
+
 //    private InterestRateBean calculateInterestAmount(boolean withAllInterestValues,
 //            NavigableMap<LocalDate, InterestCalculationEvent> orderedEvents) {
 //        InterestRateBean result = new InterestRateBean();
@@ -234,7 +234,7 @@ public class InterestRate extends InterestRate_Base {
 //    private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(LocalDate paymentDate) {
 //        return calculateEvents(paymentDate, null);
 //    }
-    
+
     /*
      * The ignorePaymentsAfterDate is not required. If set it will ignore all payments made after that
      * date. It is a way to lock the interest calculation at certain date, which is necessary
@@ -321,7 +321,7 @@ public class InterestRate extends InterestRate_Base {
 //    private NavigableMap<LocalDate, BigDecimal> createPaymentsMap(LocalDate paymentDate) {
 //        return createPaymentsMap(paymentDate, null);
 //    }
-    
+
     /*
      * The ignorePaymentsAfterDate is not required. If set it will ignore all payments made after that
      * date. It is a way to lock the interest calculation at certain date, which is necessary
@@ -477,27 +477,28 @@ public class InterestRate extends InterestRate_Base {
     }
 
     public String getUiFullDescription() {
-        if(Boolean.TRUE.equals(getInterestRateType().getRequiresInterestFixedAmount())) {
+        if (Boolean.TRUE.equals(getInterestRateType().getRequiresInterestFixedAmount())) {
             return this.getInterestRateType().getDescription().getContent() + "-"
                     + getRelatedCurrency().getValueFor(this.getInterestFixedAmount());
         }
-        
+
         return this.getInterestRateType().getDescription().getContent();
     }
 
     @Atomic
     public static InterestRate createForDebitEntry(DebitEntry debitEntry, InterestRate interestRate) {
         if (interestRate != null) {
-            return new InterestRate(null, debitEntry, interestRate.getInterestRateType(), interestRate.getNumberOfDaysAfterDueDate(),
-                    interestRate.getApplyInFirstWorkday(), interestRate.getMaximumDaysToApplyPenalty(),
-                    interestRate.getInterestFixedAmount(), interestRate.getRate());
+            return new InterestRate(null, debitEntry, interestRate.getInterestRateType(),
+                    interestRate.getNumberOfDaysAfterDueDate(), interestRate.getApplyInFirstWorkday(),
+                    interestRate.getMaximumDaysToApplyPenalty(), interestRate.getInterestFixedAmount(), interestRate.getRate());
         }
         return null;
     }
 
     @Atomic
-    public static InterestRate createForDebitEntry(DebitEntry debitEntry, InterestRateType interestRateType, int numberOfDaysAfterDueDate,
-            boolean applyInFirstWorkday, int maximumDaysToApplyPenalty, BigDecimal interestFixedAmount, BigDecimal rate) {
+    public static InterestRate createForDebitEntry(DebitEntry debitEntry, InterestRateType interestRateType,
+            int numberOfDaysAfterDueDate, boolean applyInFirstWorkday, int maximumDaysToApplyPenalty,
+            BigDecimal interestFixedAmount, BigDecimal rate) {
         return new InterestRate(null, debitEntry, interestRateType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                 maximumDaysToApplyPenalty, interestFixedAmount, rate);
     }

@@ -94,6 +94,10 @@ public class InterestRateEntry extends InterestRateEntry_Base {
 
         deleteDomainObject();
     }
+    
+    public Integer getYear() {
+        return getStartDate().getYear();
+    }
 
     public static Stream<InterestRateEntry> findByStartDate(InterestRateType interestRateType, LocalDate date) {
         return interestRateType.getInterestRateEntriesSet().stream().filter(r -> r.getStartDate().equals(date));
