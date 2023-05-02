@@ -49,7 +49,7 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
     private InterestRateBean calculateForFixedAmount(DebitEntry debitEntry, boolean withAllInterestValues) {
         InterestRate interestRate = debitEntry.getInterestRate();
 
-        final InterestRateBean result = new InterestRateBean(interestRate.getInterestType());
+        final InterestRateBean result = new InterestRateBean(interestRate.getInterestRateType());
         BigDecimal totalInterestAmount = Currency.getValueWithScale(interestRate.getInterestFixedAmount());
 
         if (!withAllInterestValues) {

@@ -62,7 +62,6 @@ import org.fenixedu.treasury.dto.TreasuryTupleDataSourceBean;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.tariff.InterestRateType;
-import org.fenixedu.treasury.domain.tariff.InterestType;
 
 public class FixedTariffInterestRateBean implements ITreasuryBean {
 

@@ -4,7 +4,7 @@ enum org.fenixedu.treasury.domain.document.FinantialDocumentTypeEnum            
 enum org.fenixedu.treasury.domain.document.FinantialEntryType                                       as FinantialEntryType;
 enum org.fenixedu.treasury.domain.document.FinantialDocumentStateType                               as FinantialDocumentStateType;
 enum org.fenixedu.treasury.domain.tariff.DueDateCalculationType                                     as DueDateCalculationType;
-enum org.fenixedu.treasury.domain.tariff.InterestType                                               as InterestType; 
+//enum org.fenixedu.treasury.domain.tariff.InterestType                                               as InterestType; 
 enum org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType						as PaymentReferenceCodeStateType;
 enum org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType                           as ForwardPaymentStateType;
 enum org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayEnviromentMode	as SibsOnlinePaymentsGatewayEnviromentMode;
@@ -643,7 +643,7 @@ class tariff.InterestRateType {
 	}
 	
 class tariff.InterestRate {
-	InterestType interestType;
+	// InterestType interestType;
 	int numberOfDaysAfterDueDate;
 	boolean applyInFirstWorkday;
 	int maximumDaysToApplyPenalty;
@@ -661,6 +661,7 @@ class tariff.InterestRate {
 		}
 	}
 
+/*
 class tariff.GlobalInterestRate {
     int year;
     LocalDate firstDay;
@@ -669,6 +670,7 @@ class tariff.GlobalInterestRate {
     boolean applyPaymentMonth;
     boolean applyInFirstWorkday;
 }
+*/
 
 class tariff.InterestRateEntry {
     LocalDate startDate;
@@ -2392,6 +2394,7 @@ relation TariffFinantialEntity {
 	}
 }
 
+/*
 relation GlobalInterestRateBennu {
     .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
         multiplicity 1..1;
@@ -2401,7 +2404,7 @@ relation GlobalInterestRateBennu {
         multiplicity *;
     }
 }
-
+*/
 
 /* --- InterestRate --- */
 

@@ -98,6 +98,11 @@ public class InterestRateEntry extends InterestRateEntry_Base {
     public Integer getYear() {
         return getStartDate().getYear();
     }
+    
+    
+    public static Stream<InterestRateEntry> findByYear(InterestRateType interestRateType, int year) {
+        return interestRateType.getInterestRateEntriesSet().stream().filter(entry -> entry.getYear() == year);
+    }
 
     public static Stream<InterestRateEntry> findByStartDate(InterestRateType interestRateType, LocalDate date) {
         return interestRateType.getInterestRateEntriesSet().stream().filter(r -> r.getStartDate().equals(date));
