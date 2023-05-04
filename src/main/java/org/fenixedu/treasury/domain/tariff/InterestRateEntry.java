@@ -92,7 +92,7 @@ public class InterestRateEntry extends InterestRateEntry_Base {
         setDomainRoot(null);
         setInterestRateType(null);
 
-        deleteDomainObject();
+        super.deleteDomainObject();
     }
     
     public Integer getYear() {

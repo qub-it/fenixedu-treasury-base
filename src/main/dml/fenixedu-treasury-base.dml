@@ -622,6 +622,7 @@ class tariff.Tariff {
 	}
 
 class tariff.InterestRateType {
+	String code;
 	LocalizedStringT description;
 	Boolean requiresInterestFixedAmount;
 }
