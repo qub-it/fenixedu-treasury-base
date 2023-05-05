@@ -135,7 +135,7 @@ public abstract class Tariff extends Tariff_Base {
                 throw new TreasuryDomainException("error.Tariff.interestRate.required");
             }
 
-            if (Boolean.TRUE.equals(getInterestRate().getInterestRateType().getRequiresInterestFixedAmount())) {
+            if (getInterestRate().getInterestRateType().isInterestFixedAmountRequired()) {
                 if (BigDecimal.ZERO.compareTo(getInterestRate().getInterestFixedAmount()) >= 0) {
                     throw new TreasuryDomainException("error.Tariff.interestRate.interestfixedamount.invalid");
                 }

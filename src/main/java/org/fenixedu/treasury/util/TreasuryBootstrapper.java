@@ -343,9 +343,10 @@ public class TreasuryBootstrapper {
             }
         }
         
-        TreasurySettings.getInstance().getAvailableInterestRateTypesSet().add(globalInterestRateType);
-        TreasurySettings.getInstance().getAvailableInterestRateTypesSet().add(fixedAmountInterestRateType);
-        TreasurySettings.getInstance().setDefaultInterestRateType(globalInterestRateType);
+        globalInterestRateType.activate();
+        globalInterestRateType.makeDefault();
+        
+        fixedAmountInterestRateType.activate();
     }
 
     private static void initializeTreasurySettings() {
@@ -360,14 +361,15 @@ public class TreasuryBootstrapper {
 
     private static void initializeReimbursementProcessStatusType() {
         ReimbursementProcessStatusType.create("PENDING",
-                
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING")
                         .getContent(Locale.getDefault()),
                 1, true, false, false);
+        
         ReimbursementProcessStatusType.create("ANNULED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED")
                         .getContent(Locale.getDefault()),
                 2, false, true, true);
+        
         ReimbursementProcessStatusType.create("CONCLUDED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
                         .getContent(Locale.getDefault()),

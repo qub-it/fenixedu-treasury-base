@@ -48,8 +48,7 @@ public class PaymentPlanTestsUtilities {
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
 
-            InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
-                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
             InterestRateEntry globalInterestRate =
                     InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2020, 1, 1)).get();
@@ -207,10 +206,9 @@ public class PaymentPlanTestsUtilities {
             final int maximumDaysToApplyPenalty = 0;
             final BigDecimal rate = null;
 
-            InterestRateType interestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
-                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
-            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, interestRateType, numberOfDaysAfterDueDate,
+            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType, numberOfDaysAfterDueDate,
                     applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
         }

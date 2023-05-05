@@ -37,8 +37,7 @@ public class InterestRateTestsUtilities {
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
 
-            InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
-                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
             // Taxas de juro oficiais desde 2020 incluindo as medidas sobre COVID-19
             InterestRateEntry globalInterestRate =
@@ -89,8 +88,7 @@ public class InterestRateTestsUtilities {
             final int maximumDaysToApplyPenalty = 0;
             final BigDecimal rate = null;
 
-            InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
-                    .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
             
             InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType,
                     numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);

@@ -4,8 +4,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -29,8 +32,8 @@ public abstract class InterestRateType extends InterestRateType_Base {
         setRequiresInterestFixedAmount(false);
     }
 
-    public void init(String code, LocalizedString description) {
-        setCode(code);
+    public void init(LocalizedString description) {
+        setCode(UUID.randomUUID().toString());
         setDescription(description);
     }
 
@@ -54,23 +57,35 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
     public abstract InterestRateBean calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate);
 
-    public boolean isInterestRateTypeAvailable() {
-        return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().contains(this);
+    public boolean isInterestRateTypeActive() {
+        return getAvailableInterestRateTypesSortedByName().contains(this);
     }
     
-    public void makeAvailable() {
+    public boolean isInterestFixedAmountRequired() {
+        return Boolean.TRUE.equals(getRequiresInterestFixedAmount());
+    }
+
+    public LocalizedString getInterestRateTypePresentationName() {
+        return getPresentationName(getClass());
+    }
+
+    public void activate() {
         TreasurySettings.getInstance().getAvailableInterestRateTypesSet().add(this);
     }
-    
-    public void makeUnavailable() {
+
+    public void deactivate() {
         TreasurySettings.getInstance().getAvailableInterestRateTypesSet().remove(this);
     }
-    
+
+    public void makeDefault() {
+        TreasurySettings.getInstance().setDefaultInterestRateType(this);
+    }
+
     public void delete() {
         super.setDomainRoot(null);
-        
+
         getInterestRateEntriesSet().forEach(e -> e.delete());
-        
+
         super.deleteDomainObject();
     }
 
@@ -124,14 +139,29 @@ public abstract class InterestRateType extends InterestRateType_Base {
         return findByCode(code).findFirst();
     }
 
-    public static Optional<GlobalInterestRateType> findAvailableGlobalInterestRateType() {
-        return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
-                .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast).findFirst();
+    public static Optional<? extends InterestRateType> findUniqueByDescription(String description) {
+        return getAvailableInterestRateTypesSortedByName().stream().filter(
+                type -> type.getDescription().anyMatch(content -> description.equals(content)))
+                .findFirst();
     }
 
-    public static <T extends InterestRateType> T create(Class<T> clazz, String code, LocalizedString description) {
+//    public static Optional<GlobalInterestRateType> findAvailableGlobalInterestRateType() {
+//        return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
+//                .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast).findFirst();
+//    }
+
+    public static List<? extends InterestRateType> getAvailableInterestRateTypesSortedByName() {
+        return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream().sorted(InterestRateType.COMPARE_BY_NAME)
+                .collect(Collectors.toList());
+    }
+    
+    public static InterestRateType getDefaultInterestRateType() {
+        return TreasurySettings.getInstance().getDefaultInterestRateType();
+    }
+
+    public static <T extends InterestRateType> T create(Class<T> clazz, LocalizedString description) {
         try {
-            return clazz.getConstructor(String.class, LocalizedString.class).newInstance(code, description);
+            return clazz.getConstructor(String.class, LocalizedString.class).newInstance(description);
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException | SecurityException e) {
             throw new RuntimeException(e);

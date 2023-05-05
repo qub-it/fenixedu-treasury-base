@@ -17,17 +17,18 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Base {
 
-    private static final String CODE = "FIXED_AMOUNT";
+    private static final String DEFAULT_CODE = "FIXED_AMOUNT";
 
     public FixedAmountInterestRateType() {
         super();
         super.setRequiresInterestFixedAmount(true);
     }
 
-    public FixedAmountInterestRateType(String code, LocalizedString description) {
+    public FixedAmountInterestRateType(LocalizedString description) {
         this();
 
-        super.init(code, description);
+        super.init(description);
+        super.setCode(DEFAULT_CODE);
         
         checkRules();
     }
@@ -80,7 +81,7 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
     }
     
     public static FixedAmountInterestRateType create(LocalizedString description) {
-        return new FixedAmountInterestRateType(CODE, description);
+        return new FixedAmountInterestRateType(description);
     }
 
     public static Stream<FixedAmountInterestRateType> findAll() {

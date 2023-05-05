@@ -136,8 +136,8 @@ public class FixedTariffInterestRateBean implements ITreasuryBean {
 
     public FixedTariffInterestRateBean() {
         this.interestTypeDataSource = new ArrayList<TreasuryTupleDataSourceBean>();
-        TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream() //
-            .sorted(InterestRateType.COMPARE_BY_NAME) //
+        
+        InterestRateType.getAvailableInterestRateTypesSortedByName().stream() //
             .map(type -> new TreasuryTupleDataSourceBean(type.getExternalId(), type.getDescription().getContent())) //
             .collect(Collectors.toCollection(() -> this.interestTypeDataSource));
     }

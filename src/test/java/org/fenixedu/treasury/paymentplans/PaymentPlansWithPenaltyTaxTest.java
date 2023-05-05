@@ -99,8 +99,7 @@ public class PaymentPlansWithPenaltyTaxTest {
                     false, false);
         });
 
-        InterestRateType globalInterestRateType = TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream()
-                .filter(type -> type instanceof GlobalInterestRateType).findFirst().get();
+        InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
         
         globalInterestRateType.getInterestRateEntriesSet().forEach(e -> e.delete());
         

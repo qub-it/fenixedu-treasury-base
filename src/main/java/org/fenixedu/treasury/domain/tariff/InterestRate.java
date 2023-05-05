@@ -115,7 +115,7 @@ public class InterestRate extends InterestRate_Base {
             throw new TreasuryDomainException("error.InterestRate.interestRateType.required");
         }
 
-        if (Boolean.TRUE.equals(getInterestRateType().getRequiresInterestFixedAmount()) && getInterestFixedAmount() == null) {
+        if (getInterestRateType().isInterestFixedAmountRequired() && getInterestFixedAmount() == null) {
             throw new TreasuryDomainException("error.InterestRate.interestFixedAmount.required");
         }
     }
@@ -477,7 +477,7 @@ public class InterestRate extends InterestRate_Base {
     }
 
     public String getUiFullDescription() {
-        if (Boolean.TRUE.equals(getInterestRateType().getRequiresInterestFixedAmount())) {
+        if (getInterestRateType().isInterestFixedAmountRequired()) {
             return this.getInterestRateType().getDescription().getContent() + "-"
                     + getRelatedCurrency().getValueFor(this.getInterestFixedAmount());
         }

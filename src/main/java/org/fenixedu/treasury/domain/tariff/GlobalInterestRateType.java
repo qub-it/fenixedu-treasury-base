@@ -23,17 +23,18 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class GlobalInterestRateType extends GlobalInterestRateType_Base {
 
-    public static final String CODE = "GLOBAL_RATE";
+    public static final String DEFAULT_CODE = "GLOBAL_RATE";
     private static final int MAX_YEARS = 5;
 
     public GlobalInterestRateType() {
         super();
     }
 
-    public GlobalInterestRateType(String code, LocalizedString description) {
+    public GlobalInterestRateType(LocalizedString description) {
         this();
 
-        super.init(CODE, description);
+        super.init(description);
+        super.setCode(DEFAULT_CODE);
 
         checkRules();
     }
@@ -297,7 +298,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
     }
     
     public static GlobalInterestRateType create(LocalizedString description) {
-        return new GlobalInterestRateType(CODE, description);
+        return new GlobalInterestRateType(description);
     }
 
     public static Stream<GlobalInterestRateType> findAll() {
