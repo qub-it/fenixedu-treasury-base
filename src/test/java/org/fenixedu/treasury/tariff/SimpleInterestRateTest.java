@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.tariff.InterestType;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.joda.time.LocalDate;
 import org.junit.BeforeClass;
@@ -109,7 +109,7 @@ public class SimpleInterestRateTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
 
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("5"));
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 
@@ -125,7 +125,7 @@ public class SimpleInterestRateTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
 
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("5"));
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 
@@ -141,7 +141,7 @@ public class SimpleInterestRateTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
 
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("5"));
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 
@@ -157,7 +157,7 @@ public class SimpleInterestRateTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
 
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("5"));
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 
@@ -173,7 +173,7 @@ public class SimpleInterestRateTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("3"));
         
         {
@@ -203,7 +203,7 @@ public class SimpleInterestRateTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("3"));
         
         {
