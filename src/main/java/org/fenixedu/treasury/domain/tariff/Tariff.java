@@ -87,6 +87,7 @@ public abstract class Tariff extends Tariff_Base {
         setFixedDueDate(fixedDueDate);
         setNumberOfDaysAfterCreationForDueDate(numberOfDaysAfterCreationForDueDate);
         setApplyInterests(applyInterests);
+        
         if (getApplyInterests()) {
             InterestRate.createForTariff(this, interestRateType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                     maximumDaysToApplyPenalty, interestFixedAmount, rate);

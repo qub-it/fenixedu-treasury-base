@@ -276,6 +276,10 @@ public class DebitEntry extends DebitEntry_Base {
             return new InterestRateBean();
         }
 
+        if (!this.isApplyInterests()) {
+            return new InterestRateBean();
+        }
+
         if (!toCalculateInterests(whenToCalculate)) {
             return new InterestRateBean();
         }
@@ -285,6 +289,10 @@ public class DebitEntry extends DebitEntry_Base {
 
     public InterestRateBean calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
         if (this.getInterestRate() == null) {
+            return new InterestRateBean();
+        }
+
+        if (!this.isApplyInterests()) {
             return new InterestRateBean();
         }
 

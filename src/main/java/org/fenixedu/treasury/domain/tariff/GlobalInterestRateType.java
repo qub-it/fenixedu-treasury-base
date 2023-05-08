@@ -231,16 +231,13 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
     }
 
     private LocalDate applyOnFirstWorkdayIfNecessary(DebitEntry debitEntry, final LocalDate date) {
-        InterestRate interestRate = debitEntry.getInterestRate();
-        boolean applyInFirstWorkday = interestRate.isApplyInFirstWorkday();
-
         Optional<InterestRateEntry> globalRate = InterestRateEntry.findUniqueAppliedForDate(this, date);
         if (!globalRate.isPresent()) {
             throw new TreasuryDomainException("error.InterestRate.rate.not.defined.for.date",
                     date.toString(TreasuryConstants.DATE_FORMAT_YYYY_MM_DD));
         }
 
-        applyInFirstWorkday = globalRate.get().getApplyInFirstWorkday();
+        boolean applyInFirstWorkday = globalRate.get().getApplyInFirstWorkday();
 
         if (applyInFirstWorkday && isSaturday(date)) {
             return date.plusDays(2);
