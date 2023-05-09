@@ -96,7 +96,7 @@ public class DebitEntryBean implements ITreasuryBean {
     boolean blockAcademicActsOnDebt;
 
     private boolean showLegacyProducts = false;
-
+    
     public Boolean isAmountValuesEditable() {
         return false;
     }

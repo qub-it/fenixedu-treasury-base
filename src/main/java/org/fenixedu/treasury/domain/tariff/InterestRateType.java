@@ -161,7 +161,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
     public static <T extends InterestRateType> T create(Class<T> clazz, LocalizedString description) {
         try {
-            return clazz.getConstructor(String.class, LocalizedString.class).newInstance(description);
+            return clazz.getConstructor(LocalizedString.class).newInstance(description);
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException | SecurityException e) {
             throw new RuntimeException(e);
