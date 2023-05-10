@@ -68,6 +68,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -86,7 +87,6 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
-import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.InvoiceEntryBlockingPaymentContext;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
@@ -649,7 +649,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public List<Integer> getFinantialTransactionReferenceYears() {
         final List<Integer> years =
-                GlobalInterestRate.findAll().map(g -> (Integer) g.getYear()).sorted().collect(Collectors.toList());
+                FiscalYear.findAll().map(g -> (Integer) g.getYear()).sorted().collect(Collectors.toList());
         Collections.reverse(years);
 
         return years;

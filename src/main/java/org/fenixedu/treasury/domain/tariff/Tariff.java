@@ -75,7 +75,7 @@ public abstract class Tariff extends Tariff_Base {
 
     protected void init(final FinantialEntity finantialEntity, final Product product, final DateTime beginDate,
             final DateTime endDate, final DueDateCalculationType dueDateCalculationType, final LocalDate fixedDueDate,
-            final int numberOfDaysAfterCreationForDueDate, final boolean applyInterests, final InterestType interestType,
+            final int numberOfDaysAfterCreationForDueDate, final boolean applyInterests, final InterestRateType interestRateType,
             final int numberOfDaysAfterDueDate, final boolean applyInFirstWorkday, final int maximumDaysToApplyPenalty,
             final BigDecimal interestFixedAmount, final BigDecimal rate) {
         setFinantialEntity(finantialEntity);
@@ -87,8 +87,9 @@ public abstract class Tariff extends Tariff_Base {
         setFixedDueDate(fixedDueDate);
         setNumberOfDaysAfterCreationForDueDate(numberOfDaysAfterCreationForDueDate);
         setApplyInterests(applyInterests);
+        
         if (getApplyInterests()) {
-            InterestRate.createForTariff(this, interestType, numberOfDaysAfterDueDate, applyInFirstWorkday,
+            InterestRate.createForTariff(this, interestRateType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                     maximumDaysToApplyPenalty, interestFixedAmount, rate);
         }
     }
@@ -131,11 +132,11 @@ public abstract class Tariff extends Tariff_Base {
         }
 
         if (isApplyInterests()) {
-            if (getInterestRate() == null || getInterestRate().getInterestType() == null) {
+            if (getInterestRate() == null || getInterestRate().getInterestRateType() == null) {
                 throw new TreasuryDomainException("error.Tariff.interestRate.required");
             }
 
-            if (getInterestRate().getInterestType() == InterestType.FIXED_AMOUNT) {
+            if (getInterestRate().getInterestRateType().isInterestFixedAmountRequired()) {
                 if (BigDecimal.ZERO.compareTo(getInterestRate().getInterestFixedAmount()) >= 0) {
                     throw new TreasuryDomainException("error.Tariff.interestRate.interestfixedamount.invalid");
                 }

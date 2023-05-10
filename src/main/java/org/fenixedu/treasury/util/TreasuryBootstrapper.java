@@ -82,7 +82,9 @@ import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanNumberGenerator;
 import org.fenixedu.treasury.domain.paymentPlan.paymentPlanValidator.PaymentPlanGroupValidator;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.tariff.FixedAmountInterestRateType;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
+import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
 import org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -324,16 +326,27 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeGlobalInterestRate() {
+        GlobalInterestRateType globalInterestRateType = GlobalInterestRateType
+                .create(TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
+
+        FixedAmountInterestRateType fixedAmountInterestRateType = FixedAmountInterestRateType
+                .create(TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description"));
+
         // Check global InterestRate since 1995 till now
-        int year = 1995;
-        while (year <= new LocalDate().getYear()) {
-            if (!GlobalInterestRate.findUniqueByYear(year).isPresent()) {
-                GlobalInterestRate.create(new LocalDate(year, 1, 1),
+        for (int year = 1995; year <= new LocalDate().getYear(); year++) {
+            LocalDate firstDayOfYear = new LocalDate(year, 1, 1);
+
+            if (!InterestRateEntry.findUniqueByStartDate(globalInterestRateType, firstDayOfYear).isPresent()) {
+                InterestRateEntry.create(globalInterestRateType, firstDayOfYear,
                         TreasuryConstants.treasuryBundleI18N("label.interest.for.year", String.valueOf(year)), BigDecimal.ZERO,
                         true, false);
             }
-            year++;
         }
+        
+        globalInterestRateType.activate();
+        globalInterestRateType.makeDefault();
+        
+        fixedAmountInterestRateType.activate();
     }
 
     private static void initializeTreasurySettings() {
@@ -351,10 +364,12 @@ public class TreasuryBootstrapper {
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING")
                         .getContent(Locale.getDefault()),
                 1, true, false, false);
+        
         ReimbursementProcessStatusType.create("ANNULED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED")
                         .getContent(Locale.getDefault()),
                 2, false, true, true);
+        
         ReimbursementProcessStatusType.create("CONCLUDED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
                         .getContent(Locale.getDefault()),
