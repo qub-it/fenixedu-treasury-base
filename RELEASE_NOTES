@@ -1,3 +1,4 @@
+10.1.7 (15-05-2023)
 - Refactor: Add simple junit test for global interest rate calculations
 - Bug Fix: In SIBS Gateway Webhook, check if SIBS Gateway is active. If not throw exception to reject the notifications
 
