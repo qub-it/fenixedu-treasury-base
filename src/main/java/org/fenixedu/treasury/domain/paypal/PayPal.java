@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.Currency;

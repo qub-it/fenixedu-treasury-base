@@ -57,7 +57,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;

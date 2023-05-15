@@ -56,7 +56,7 @@ import java.math.BigDecimal;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.integration.SibsPaymentsGateway;

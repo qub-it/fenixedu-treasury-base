@@ -55,12 +55,10 @@ package org.fenixedu.treasury.domain.paymentcodes;
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
-import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
