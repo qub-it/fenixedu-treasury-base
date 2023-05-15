@@ -52,6 +52,7 @@
  */
 package org.fenixedu.treasury.domain.paymentPlan;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 
