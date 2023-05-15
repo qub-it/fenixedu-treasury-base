@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -59,6 +57,11 @@
 			<version>1.1.0</version>
 		</dependency>
 		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+			<version>1.7.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.qubit.terra</groupId>
 			<artifactId>qub-docs</artifactId>
 			<version>1.1.0</version>
@@ -98,39 +101,39 @@
 			<version>1.60</version>
 		</dependency>
 		<dependency>
-		    <groupId>com.paypal.sdk</groupId>
-		    <artifactId>checkout-sdk</artifactId>
-		    <version>1.0.5</version>
+			<groupId>com.paypal.sdk</groupId>
+			<artifactId>checkout-sdk</artifactId>
+			<version>1.0.5</version>
 		</dependency>
 	</dependencies>
 
 	<pluginRepositories>
 		<pluginRepository>
-			 <id>qubIT-oss</id>
-                        <url>https://repository-oss.omnis.cloud/nexus/repository/releases/</url>
+			<id>qubIT-oss</id>
+			<url>https://repository-oss.omnis.cloud/nexus/repository/releases/</url>
 		</pluginRepository>
 	</pluginRepositories>
 
 	<repositories>
 		<repository>
-			 <id>qubIT-oss</id>
-                        <url>https://repository-oss.omnis.cloud/nexus/repository/releases/</url>
+			<id>qubIT-oss</id>
+			<url>https://repository-oss.omnis.cloud/nexus/repository/releases/</url>
 		</repository>
 		<repository>
 			<id>fenixedu-maven-repository</id>
 			<url>https://repo.fenixedu.org/fenixedu-maven-repository</url>
 		</repository>
 	</repositories>
-	   <distributionManagement>
-                <repository>
-                        <id>qubIT-oss</id>
-                        <url>https://repository-oss.omnis.cloud/nexus/repository/releases/</url>
-                </repository>
-                <snapshotRepository>
-                        <id>qubIT-oss</id>
-                        <url>https://repository-oss.omnis.cloud/nexus/repository/snapshots/</url>
-                </snapshotRepository>
-     </distributionManagement>
+	<distributionManagement>
+		<repository>
+			<id>qubIT-oss</id>
+			<url>https://repository-oss.omnis.cloud/nexus/repository/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>qubIT-oss</id>
+			<url>https://repository-oss.omnis.cloud/nexus/repository/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 
 	<build>
@@ -389,11 +392,9 @@
 							<target>
 								<property name="basedir" refid="maven.project" />
 
-								<echo
-									message="ANTRUN: copy resources and convert to UTF-8 to webapp/WEB-INF/resources" />
+								<echo message="ANTRUN: copy resources and convert to UTF-8 to webapp/WEB-INF/resources" />
 
-								<copy todir="${basedir}/src/main/webapp/WEB-INF/resources"
-									encoding="ISO-8859-15" outputencoding="UTF-8" overwrite="true">
+								<copy todir="${basedir}/src/main/webapp/WEB-INF/resources" encoding="ISO-8859-15" outputencoding="UTF-8" overwrite="true">
 									<fileset dir="${basedir}/src/main/resources/resources/" />
 								</copy>
 							</target>
