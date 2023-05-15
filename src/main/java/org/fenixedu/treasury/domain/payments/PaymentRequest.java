@@ -309,11 +309,17 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                             //######################################
                             //2.1 create the "InterestRate entries"
                             //######################################
-                            InterestRateBean calculateUndebitedInterestValue =
+                            List<InterestRateBean> undebitedInterestRateBeansList =
                                     debitEntry.calculateUndebitedInterestValue(paymentDate.toLocalDate());
-                            if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
-                                debitEntry.createInterestRateDebitEntry(calculateUndebitedInterestValue, paymentDate,
-                                        Optional.<DebitNote> empty());
+                            for (InterestRateBean calculateUndebitedInterestValue : undebitedInterestRateBeansList) {
+                                if (TreasuryConstants.isPositive(calculateUndebitedInterestValue.getInterestAmount())) {
+                                    DateTime whenInterestDebitEntryDateTime = calculateUndebitedInterestValue
+                                            .getInterestDebitEntryDateTime() != null ? calculateUndebitedInterestValue
+                                                    .getInterestDebitEntryDateTime() : paymentDate;
+
+                                    debitEntry.createInterestRateDebitEntry(calculateUndebitedInterestValue,
+                                            whenInterestDebitEntryDateTime, Optional.<DebitNote> empty());
+                                }
                             }
                         }
 
@@ -416,7 +422,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         final List<DebitEntry> result = new ArrayList<DebitEntry>();
         getDebitEntriesSet().stream().collect(Collectors.toCollection(() -> result));
         Collections.sort(result, InvoiceEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
-        
+
         if (result.size() != getDebitEntriesSet().size()) {
             throw new RuntimeException(
                     "error.PaymentEntry.getOrderedDebitEntries.ordered.result.not.equal.to.getDebitEntriesSet");
@@ -429,7 +435,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         final List<Installment> result = new ArrayList<Installment>();
         getInstallmentsSet().stream().collect(Collectors.toCollection(() -> result));
         Collections.sort(result, Installment.COMPARE_BY_DUEDATE);
-        
+
         return result;
     }
 

@@ -53,22 +53,13 @@
 package org.fenixedu.treasury.domain.tariff;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Optional;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.InterestRateBean;
-import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.Atomic;
@@ -147,7 +138,7 @@ public class InterestRate extends InterestRate_Base {
         checkRules();
     }
 
-    public InterestRateBean calculateInterests(LocalDate paymentDate, boolean withAllInterestValues) {
+    public List<InterestRateBean> calculateInterests(LocalDate paymentDate, boolean withAllInterestValues) {
         return getInterestRateType().calculateInterests(getDebitEntry(), paymentDate, withAllInterestValues);
 //        if (getInterestType().isFixedAmount()) {
 //            return calculateForFixedAmount(withAllInterestValues);
@@ -161,7 +152,7 @@ public class InterestRate extends InterestRate_Base {
      * This interest calculation is necessary in processes where the interest rate is calculated
      * in advance and fixed by agreement, and cannot change due to payments made after that.
      */
-    public InterestRateBean calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
+    public List<InterestRateBean> calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
         return getInterestRateType().calculateAllInterestsByLockingAtDate(getDebitEntry(), lockDate);
 //        if (getInterestType().isFixedAmount()) {
 //            return calculateForFixedAmount(true);

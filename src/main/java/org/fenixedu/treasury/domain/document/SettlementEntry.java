@@ -54,6 +54,7 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -134,9 +135,18 @@ public class SettlementEntry extends SettlementEntry_Base {
             if (TreasuryConstants.isEqual(invoiceEntry.getOpenAmount(), amount) && createInterestIfNeeded) {
                 //Check if we need to create more interest for this debitEntry
                 DebitEntry debitEntry = (DebitEntry) invoiceEntry;
-                InterestRateBean undebitedInterestValue = debitEntry.calculateUndebitedInterestValue(entryDateTime.toLocalDate());
-                if (TreasuryConstants.isPositive(undebitedInterestValue.getInterestAmount())) {
-                    debitEntry.createInterestRateDebitEntry(undebitedInterestValue, entryDateTime, Optional.<DebitNote> empty());
+
+                List<InterestRateBean> undebitedInterestRateBeansList =
+                        debitEntry.calculateUndebitedInterestValue(entryDateTime.toLocalDate());
+                for (InterestRateBean undebitedInterestValue : undebitedInterestRateBeansList) {
+                    if (TreasuryConstants.isPositive(undebitedInterestValue.getInterestAmount())) {
+                        DateTime whenInterestDebitEntryDateTime =
+                                undebitedInterestValue.getInterestDebitEntryDateTime() != null ? undebitedInterestValue
+                                        .getInterestDebitEntryDateTime() : entryDateTime;
+
+                        debitEntry.createInterestRateDebitEntry(undebitedInterestValue, whenInterestDebitEntryDateTime,
+                                Optional.<DebitNote> empty());
+                    }
                 }
             }
         }
@@ -144,8 +154,7 @@ public class SettlementEntry extends SettlementEntry_Base {
 
     @Override
     protected void init(final DebtAccount debtAccount, final FinantialDocument finantialDocument,
-            final FinantialEntryType finantialEntryType,
-            final BigDecimal amount, String description, DateTime entryDateTime) {
+            final FinantialEntryType finantialEntryType, final BigDecimal amount, String description, DateTime entryDateTime) {
         throw new RuntimeException("error.SettlementEntry.use.init.without.finantialEntryType");
     }
 
@@ -189,13 +198,14 @@ public class SettlementEntry extends SettlementEntry_Base {
     public static SettlementEntry create(final DebitEntry debitEntry, final BigDecimal debtAmount,
             final SettlementNote settlementNote, DateTime entryDate) {
         boolean createInterestIfNeeded = true;
-        
+
         // Check if any treasury debt process is preventing from interests being created
-        if(TreasuryDebtProcessMainService.isInterestCreationWhenTotalSettledPrevented(debitEntry)) {
+        if (TreasuryDebtProcessMainService.isInterestCreationWhenTotalSettledPrevented(debitEntry)) {
             createInterestIfNeeded = false;
         }
 
-        return new SettlementEntry(debitEntry, settlementNote, debtAmount, debitEntry.getDescription(), entryDate, createInterestIfNeeded);
+        return new SettlementEntry(debitEntry, settlementNote, debtAmount, debitEntry.getDescription(), entryDate,
+                createInterestIfNeeded);
     }
 
     @Atomic
@@ -228,8 +238,9 @@ public class SettlementEntry extends SettlementEntry_Base {
     }
 
     public Set<InstallmentSettlementEntry> getSortedInstallmentSettlementEntries() {
-        Set<InstallmentSettlementEntry> result = new TreeSet<>((o1, o2) -> InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR.compare(o1.getInstallmentEntry(), o2.getInstallmentEntry()));
+        Set<InstallmentSettlementEntry> result = new TreeSet<>((o1, o2) -> InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR
+                .compare(o1.getInstallmentEntry(), o2.getInstallmentEntry()));
         return super.getInstallmentSettlementEntriesSet().stream().collect(Collectors.toCollection(() -> result));
     }
-    
+
 }

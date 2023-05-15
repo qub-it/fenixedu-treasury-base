@@ -56,6 +56,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -272,57 +273,58 @@ public class DebitEntry extends DebitEntry_Base {
         return netAmount;
     }
 
-    public InterestRateBean calculateAllInterestValue(final LocalDate whenToCalculate) {
+    public List<InterestRateBean> calculateAllInterestValue(final LocalDate whenToCalculate) {
         if (this.getInterestRate() == null) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         if (!this.isApplyInterests()) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         if (!toCalculateInterests(whenToCalculate)) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         return this.getInterestRate().calculateInterests(whenToCalculate, true);
     }
 
-    public InterestRateBean calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
+    public List<InterestRateBean> calculateAllInterestsByLockingAtDate(LocalDate lockDate) {
         if (this.getInterestRate() == null) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         if (!this.isApplyInterests()) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         if (!toCalculateInterests(lockDate)) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         return this.getInterestRate().calculateAllInterestsByLockingAtDate(lockDate);
     }
 
-    public InterestRateBean calculateUndebitedInterestValue(final LocalDate whenToCalculate) {
+    public List<InterestRateBean> calculateUndebitedInterestValue(final LocalDate whenToCalculate) {
         if (!this.isApplyInterests()) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         if (isInOpenPaymentPlan() && getOpenPaymentPlan().isCompliant(whenToCalculate)) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
         if (!toCalculateInterests(whenToCalculate)) {
-            return new InterestRateBean();
+            return Collections.emptyList();
         }
 
-        InterestRateBean calculateInterest = getInterestRate().calculateInterests(whenToCalculate, false);
+        List<InterestRateBean> interestRateBeansList = getInterestRate().calculateInterests(whenToCalculate, false);
 
-        calculateInterest.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
-                "label.InterestRateBean.interest.designation", getDescription()));
+        interestRateBeansList
+                .forEach(bean -> bean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+                        "label.InterestRateBean.interest.designation", getDescription())));
 
-        return calculateInterest;
+        return interestRateBeansList;
     }
 
     public boolean isApplyInterests() {
@@ -384,7 +386,8 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public BigDecimal getPendingInterestAmount(LocalDate whenToCalculate) {
-        return calculateUndebitedInterestValue(whenToCalculate).getInterestAmount();
+        return calculateUndebitedInterestValue(whenToCalculate).stream().map(bean -> bean.getInterestAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public boolean isInDebt() {
@@ -570,13 +573,15 @@ public class DebitEntry extends DebitEntry_Base {
             creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, debitNote,
                     debitNote.getUiDocumentNumber());
         }
-        
+
         if (treasuryExemption != null && Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
             throw new TreasuryDomainException("error.DebitEntry.exempt.not.possible.due.to.overriden.calculated.amounts");
         }
-        
-        if(Boolean.TRUE.equals(getCalculatedAmountsOverriden()) && TreasuryConstants.isLessThan(netAmountForCredit, getNetAmount())) {
-            throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.for.overriden.calculated.amounts.only.possible.to.credit.by.full.amount");
+
+        if (Boolean.TRUE.equals(getCalculatedAmountsOverriden())
+                && TreasuryConstants.isLessThan(netAmountForCredit, getNetAmount())) {
+            throw new TreasuryDomainException(
+                    "error.DebitEntry.createCreditEntry.for.overriden.calculated.amounts.only.possible.to.credit.by.full.amount");
         }
 
         if (!Strings.isNullOrEmpty(documentObservations)) {
@@ -598,13 +603,13 @@ public class DebitEntry extends DebitEntry_Base {
         } else {
             creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), netAmountForCredit, documentDate,
                     this, BigDecimal.ONE);
-            
-            if(Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+
+            if (Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
                 // Create a credit entry with the exact amounts as this debit entry
                 creditEntry.overrideCalculatedAmounts(getNetAmount(), getVatRate(), getVatAmount(), getAmountWithVat());
             }
         }
-        
+
         if (!isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
             creditNote.closeDocument();
         }
@@ -809,7 +814,7 @@ public class DebitEntry extends DebitEntry_Base {
     public void setNetExemptedAmount(BigDecimal exemptedAmount) {
         super.setExemptedAmount(exemptedAmount);
     }
-    
+
     public boolean isTotallyExempted() {
         return TreasuryConstants.isPositive(getNetExemptedAmount()) && !TreasuryConstants.isPositive(getNetAmount());
     }
@@ -1237,8 +1242,8 @@ public class DebitEntry extends DebitEntry_Base {
         if (getFinantialDocument() == null || !getFinantialDocument().isPreparing()) {
             throw new TreasuryDomainException("error.DebitEntry.removeFromDocument.invalid.state");
         }
-        
-        if(Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+
+        if (Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.remove.from.document.due.to.calculated.amounts.overriden");
         }
 

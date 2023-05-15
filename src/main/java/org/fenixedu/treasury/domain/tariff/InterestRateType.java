@@ -52,10 +52,10 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
     }
 
-    public abstract InterestRateBean calculateInterests(DebitEntry debitEntry, LocalDate paymentDate,
+    public abstract List<InterestRateBean> calculateInterests(DebitEntry debitEntry, LocalDate paymentDate,
             boolean withAllInterestValues);
 
-    public abstract InterestRateBean calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate);
+    public abstract List<InterestRateBean> calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate);
 
     public boolean isInterestRateTypeActive() {
         return getAvailableInterestRateTypesSortedByName().contains(this);

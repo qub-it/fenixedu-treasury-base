@@ -54,7 +54,7 @@ public class InterestRateWithPartialPaymentsTest {
 
         createSettlementNote(debitEntry, new BigDecimal("50"), new LocalDate(2021, 2, 10));
 
-        InterestRateBean interestRateBean = debitEntry.calculateAllInterestValue(new LocalDate(2023, 4, 23));
+        InterestRateBean interestRateBean = debitEntry.calculateAllInterestValue(new LocalDate(2023, 4, 23)).iterator().next();
         BigDecimal expectedInterestAmount = new BigDecimal("9.07");
 
         assertEquals(String.format("Interest rate of 100 is %s but was calculated as %s", expectedInterestAmount,
@@ -68,9 +68,9 @@ public class InterestRateWithPartialPaymentsTest {
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 
         createSettlementNote(debitEntry, new BigDecimal("50"), new LocalDate(2021, 2, 10));
-        
+
         {
-            InterestRateBean interestRateBean = debitEntry.calculateAllInterestValue(new LocalDate(2023, 4, 1));
+            InterestRateBean interestRateBean = debitEntry.calculateAllInterestValue(new LocalDate(2023, 4, 1)).iterator().next();
 
             // create interest rate of 13.98
             DebitEntry partialInterestRateDebitEntry = debitEntry.createInterestRateDebitEntry(interestRateBean,
@@ -81,26 +81,26 @@ public class InterestRateWithPartialPaymentsTest {
                             partialInterestRateDebitEntry.getTotalAmount()),
                     new BigDecimal("8.89"), partialInterestRateDebitEntry.getTotalAmount());
         }
-        
-        InterestRateBean interestRateBean = debitEntry.calculateUndebitedInterestValue(new LocalDate(2023, 4, 23));
+
+        InterestRateBean interestRateBean =
+                debitEntry.calculateUndebitedInterestValue(new LocalDate(2023, 4, 23)).iterator().next();
         BigDecimal expectedInterestAmount = new BigDecimal("0.18");
 
         assertEquals(String.format("Remaining interest rate of 100 is %s but was calculated as %s", expectedInterestAmount,
                 interestRateBean.getInterestAmount()), expectedInterestAmount, interestRateBean.getInterestAmount());
     }
 
-    
     private void createSettlementNote(DebitEntry debitEntry, BigDecimal amount, LocalDate paymentDate) {
         SettlementNoteBean settlementNoteBean = new SettlementNoteBean(debitEntry.getDebtAccount(), false, true);
         FinantialInstitution finantialInstitution = debitEntry.getDebtAccount().getFinantialInstitution();
-        
-        settlementNoteBean.setDocNumSeries(
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+
+        settlementNoteBean.setDocNumSeries(DocumentNumberSeries
+                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
         settlementNoteBean.setDate(paymentDate.toDateTimeAtStartOfDay());
         settlementNoteBean.getDebitEntries().stream().filter(d -> d.getInvoiceEntry() == debitEntry).findFirst().get()
                 .setIncluded(true);
         settlementNoteBean.getPaymentEntries().add(new PaymentEntryBean(amount, PaymentMethod.findByCode("NU"), null));
-        
+
         SettlementNote.createSettlementNote(settlementNoteBean);
     }
 
@@ -114,12 +114,12 @@ public class InterestRateWithPartialPaymentsTest {
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 
         createSettlementNote(debitEntry, new BigDecimal("50"), new LocalDate(2021, 2, 10));
-        
-        InterestRateBean interestRateBean = debitEntry.calculateAllInterestValue(new LocalDate(2023, 4, 23));
+
+        InterestRateBean interestRateBean = debitEntry.calculateAllInterestValue(new LocalDate(2023, 4, 23)).iterator().next();
         BigDecimal expectedInterestAmount = new BigDecimal("5.00");
 
         assertEquals(String.format("Interest rate of 100 is %s but was calculated as %s", expectedInterestAmount,
                 interestRateBean.getInterestAmount()), expectedInterestAmount, interestRateBean.getInterestAmount());
     }
-    
+
 }

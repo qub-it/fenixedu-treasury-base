@@ -2,6 +2,8 @@ package org.fenixedu.treasury.domain.tariff;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -48,17 +50,17 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
     }
 
     @Override
-    public InterestRateBean calculateInterests(DebitEntry debitEntry, LocalDate paymentDate, boolean withAllInterestValues) {
+    public List<InterestRateBean> calculateInterests(DebitEntry debitEntry, LocalDate paymentDate, boolean withAllInterestValues) {
         return calculateInterestAmount(debitEntry, withAllInterestValues, calculateEvents(debitEntry, paymentDate));
     }
 
     @Override
-    public InterestRateBean calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate) {
+    public List<InterestRateBean> calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate) {
         return calculateInterestAmount(debitEntry, true,
                 calculateEvents(debitEntry, lockDate, lockDate.toDateTimeAtStartOfDay()));
     }
 
-    private InterestRateBean calculateInterestAmount(DebitEntry debitEntry, boolean withAllInterestValues,
+    private List<InterestRateBean> calculateInterestAmount(DebitEntry debitEntry, boolean withAllInterestValues,
             NavigableMap<LocalDate, InterestCalculationEvent> orderedEvents) {
         InterestRateBean result = new InterestRateBean();
 
@@ -99,7 +101,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         result.setInterestAmount(Currency.getValueWithScale(totalInterestAmount));
         result.setNumberOfDays(totalOfDays);
 
-        return result;
+        return Collections.singletonList(result);
     }
 
     private NavigableMap<LocalDate, InterestCalculationEvent> calculateEvents(DebitEntry debitEntry, LocalDate paymentDate) {

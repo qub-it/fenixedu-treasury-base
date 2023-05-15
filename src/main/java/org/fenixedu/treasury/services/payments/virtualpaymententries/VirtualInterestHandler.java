@@ -89,20 +89,24 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
                     debitEntryBean.getSettledAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest =
-                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(settlementNoteBean.getDate().toLocalDate());
-                if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
-                    SettlementInterestEntryBean interestEntryBean =
-                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-                    interestEntryBean.setVirtualPaymentEntryHandler(this);
-                    
-                    // It will be included by default if TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() == false
-                    // and debit not is not exported in legacy ERP
-                    interestEntryBean.setIncluded(
-                            !debitEntryBean.getDebitEntry().isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices());
-                    interestEntryBean.setCalculationDescription(getCalculationDescription(settlementNoteBean, interestEntryBean));
+                List<InterestRateBean> undebitedInterestBeansList = debitEntryBean.getDebitEntry()
+                        .calculateUndebitedInterestValue(settlementNoteBean.getDate().toLocalDate());
 
-                    result.add(interestEntryBean);
+                for (InterestRateBean debitInterest : undebitedInterestBeansList) {
+                    if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
+                        SettlementInterestEntryBean interestEntryBean =
+                                new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
+                        interestEntryBean.setVirtualPaymentEntryHandler(this);
+
+                        // It will be included by default if TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() == false
+                        // and debit not is not exported in legacy ERP
+                        interestEntryBean.setIncluded(
+                                !debitEntryBean.getDebitEntry().isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices());
+                        interestEntryBean
+                                .setCalculationDescription(getCalculationDescription(settlementNoteBean, interestEntryBean));
+
+                        result.add(interestEntryBean);
+                    }
                 }
             }
         }
@@ -156,16 +160,22 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         if (settlementNoteBean.getReferencedCustomers().size() == 1 && settlementNoteBean.getReferencedCustomers().iterator()
                 .next() != settlementNoteBean.getDebtAccount().getCustomer()) {
             Customer payorCustomer = settlementNoteBean.getReferencedCustomers().iterator().next();
-            DebtAccount payorDebtAccount = payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
+            DebtAccount payorDebtAccount =
+                    payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
             interestDebitNote.setPayorDebtAccount(payorDebtAccount);
         }
 
-        DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry().createInterestRateDebitEntry(
-                interestEntryBean.getInterest(), new DateTime(), Optional.<DebitNote> ofNullable(interestDebitNote));
+        DateTime whenInterestDebitEntryDateTime =
+                interestEntryBean.getInterest().getInterestDebitEntryDateTime() != null ? interestEntryBean
+                        .getInterest().getInterestDebitEntryDateTime() : new DateTime();
+        
+        DebitEntry interestDebitEntry =
+                interestEntryBean.getDebitEntry().createInterestRateDebitEntry(interestEntryBean.getInterest(),
+                        whenInterestDebitEntryDateTime, Optional.<DebitNote> ofNullable(interestDebitNote));
         SettlementDebitEntryBean settlementDebitEntryBean = new SettlementDebitEntryBean(interestDebitEntry);
         settlementDebitEntryBean.setIncluded(true);
         settlementNoteBean.getDebitEntries().add(settlementDebitEntryBean);
-        
+
         // As we are adding a debitEntryBean to settle, mark the virtual entry bean as not included, 
         // to not influence the calculation of advanced payment amount
         interestEntryBean.setIncluded(false);
