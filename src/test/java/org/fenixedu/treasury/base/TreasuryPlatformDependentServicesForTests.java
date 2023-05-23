@@ -323,4 +323,14 @@ public class TreasuryPlatformDependentServicesForTests implements ITreasuryPlatf
         return true;
     }
 
+    @Override
+    public String getCertifiedDocumentNumber(FinantialDocument finantialDocument) {
+        return null;
+    }
+
+    @Override
+    public LocalDate getCertifiedDocumentDate(FinantialDocument finantialDocument) {
+        return null;
+    }
+
 }

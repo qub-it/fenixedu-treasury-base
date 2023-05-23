@@ -199,6 +199,10 @@ public interface ITreasuryPlatformDependentServices {
     
     boolean hasCertifiedDocument(FinantialDocument finantialDocument);
     
+    String getCertifiedDocumentNumber(FinantialDocument finantialDocument);
+    
+    LocalDate getCertifiedDocumentDate(FinantialDocument finantialDocument);
+    
     boolean isProductCertified(Product product);
 
     /* Development or quality mode */

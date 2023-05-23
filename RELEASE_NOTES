@@ -1,3 +1,5 @@
+- Refactor: Service to retrieve the certified document number and document date
+
 10.1.9 (23-05-2023)
 - Bug Fix: Apply fix labels of due date calculation type #UL-REIT-3144
 
