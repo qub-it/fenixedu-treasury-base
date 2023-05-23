@@ -182,10 +182,18 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     }
 
     public void delete() {
+        if(!isDeletable()) {
+            throw new RuntimeException("error.SibsReferenceCode.delete.not.possible");
+        }
+        
         super.setDomainRoot(null);
         super.setDigitalPaymentPlatform(null);
 
         super.deleteDomainObject();
+    }
+
+    public boolean isDeletable() {
+        return getSibsPaymentRequest() == null;
     }
 
     public void changeDates(LocalDate validFrom, LocalDate validTo) {
