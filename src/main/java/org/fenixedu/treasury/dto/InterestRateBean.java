@@ -56,11 +56,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.fenixedu.treasury.dto.ITreasuryBean;
-import org.fenixedu.treasury.domain.tariff.InterestType;
-import org.fenixedu.treasury.util.TreasuryConstants;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.joda.time.Days;
-import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Lists;
@@ -140,7 +137,7 @@ public class InterestRateBean implements ITreasuryBean, Serializable {
     }
 
     private BigDecimal interestAmount;
-    private InterestType interestType;
+    private InterestRateType interestRateType;
     private int numberOfDays;
     private int numberOfMonths;
     private String description;
@@ -149,14 +146,14 @@ public class InterestRateBean implements ITreasuryBean, Serializable {
     private List<CreatedInterestEntry> createdInterestEntriesList = Lists.newArrayList();
 
     public InterestRateBean() {
-        setInterestType(null);
+        setInterestRateType(null);
         setInterestAmount(BigDecimal.ZERO);
         setNumberOfDays(0);
         setNumberOfMonths(0);
     }
 
-    public InterestRateBean(final InterestType interestType) {
-        setInterestType(interestType);
+    public InterestRateBean(final InterestRateType interestType) {
+        setInterestRateType(interestType);
     }
 
     public InterestInformationDetail addDetail(final BigDecimal amount, final LocalDate begin, final LocalDate end,
@@ -184,12 +181,12 @@ public class InterestRateBean implements ITreasuryBean, Serializable {
         this.interestAmount = amount;
     }
 
-    public InterestType getInterestType() {
-        return interestType;
+    public InterestRateType getInterestRateType() {
+        return interestRateType;
     }
 
-    public void setInterestType(InterestType interestType) {
-        this.interestType = interestType;
+    public void setInterestRateType(InterestRateType interestRateType) {
+        this.interestRateType = interestRateType;
     }
 
     public int getNumberOfDays() {

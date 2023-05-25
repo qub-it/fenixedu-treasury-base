@@ -32,9 +32,12 @@ import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxSettings;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
-import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
+import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.paymentplans.PaymentPlanTestsUtilities;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -62,24 +65,36 @@ public class TreasuryExemptionTest {
 
             DebtAccount.create(getFinatialInstitution(), customer);
 
-            TreasuryExemptionType.create("TreasuryExemptionType", BasicTreasuryUtils.ls("TreasuryExemptionType"), TreasuryConstants.HUNDRED_PERCENT, true);
+            TreasuryExemptionType.create("TreasuryExemptionType", BasicTreasuryUtils.ls("TreasuryExemptionType"),
+                    TreasuryConstants.HUNDRED_PERCENT, true);
 
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
 
-            GlobalInterestRate globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2020, 1, 1)).get();
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
+
+            InterestRateEntry globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2020, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2021, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2021, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2022, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2022, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2023, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2023, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2024, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2024, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(false);
 
@@ -97,12 +112,13 @@ public class TreasuryExemptionTest {
                 .find(FinantialDocumentType.findForDebitNote(), Series.findByCode(getFinatialInstitution(), "INT")), date);
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
 
-        debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, new BigDecimal(1000), dueDate, null,
+        this.debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, new BigDecimal(1000), dueDate, null,
                 Product.findUniqueByCode(DEBT_PRODUCT).get(), "debt description", BigDecimal.ONE, null, date);
 
-        treasuryEvent = PaymentPenaltyTaxTreasuryEvent
-                .checkAndCreatePaymentPenaltyTax(debitEntry, dueDate.plusDays(15), Optional.empty()).getTreasuryEvent();
-        debitEntry.setTreasuryEvent(treasuryEvent);
+        this.treasuryEvent = PaymentPenaltyTaxTreasuryEvent
+                .checkAndCreatePaymentPenaltyTax(this.debitEntry, dueDate.plusDays(15), Optional.empty()).getTreasuryEvent();
+        
+        this.debitEntry.setTreasuryEvent(this.treasuryEvent);
 
     }
 
@@ -110,10 +126,10 @@ public class TreasuryExemptionTest {
     public void oneExemptionPartialInPreparingDebtNote() {
         TreasuryExemption exemption =
                 TreasuryExemption.create(TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get(),
-                        treasuryEvent, "reason", new BigDecimal(10), debitEntry);
+                        this.treasuryEvent, "reason", new BigDecimal(10), this.debitEntry);
 
         assertEquals("Exemption Exempted amount not equals", new BigDecimal(10), exemption.getNetExemptedAmount());
-        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(10), debitEntry.getNetExemptedAmount().setScale(0));
+        assertEquals("Debit Entry Exempted amount not equals", new BigDecimal(10), this.debitEntry.getNetExemptedAmount().setScale(0));
 
     }
 
@@ -330,8 +346,8 @@ public class TreasuryExemptionTest {
                     true, false);
         });
 
-        GlobalInterestRate.findAll().forEach(i -> i.delete());
-        GlobalInterestRate.create(new LocalDate(1950, 1, 1), PaymentPlanTestsUtilities.ls("Juro oficial para o ano 2021"),
-                new BigDecimal("4.705"), true, false);
+        InterestRateType.getDefaultInterestRateType().getInterestRateEntriesSet().forEach(entry -> entry.delete());
+        InterestRateEntry.create(InterestRateType.getDefaultInterestRateType(), new LocalDate(1950, 1, 1),
+                PaymentPlanTestsUtilities.ls("Juro oficial para o ano 2021"), new BigDecimal("4.705"), true, false);
     }
 }

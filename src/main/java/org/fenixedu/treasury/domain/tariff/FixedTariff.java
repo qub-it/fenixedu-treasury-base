@@ -81,20 +81,20 @@ public class FixedTariff extends FixedTariff_Base {
     protected FixedTariff(final FinantialEntity finantialEntity, final Product product, final DateTime beginDate,
             final DateTime endDate, final BigDecimal amount, final DueDateCalculationType dueDateCalculationType,
             final LocalDate fixedDueDate, final int numberOfDaysAfterCreationForDueDate, final boolean applyInterests,
-            final InterestType interestType, final int numberOfDaysAfterDueDate, final boolean applyInFirstWorkday,
+            final InterestRateType interestRateType, final int numberOfDaysAfterDueDate, final boolean applyInFirstWorkday,
             final int maximumDaysToApplyPenalty, final BigDecimal interestFixedAmount,
             final BigDecimal rate) {
         super();
 
         init(finantialEntity, product, beginDate, endDate, amount, dueDateCalculationType, fixedDueDate,
-                numberOfDaysAfterCreationForDueDate, applyInterests, interestType, numberOfDaysAfterDueDate, applyInFirstWorkday,
+                numberOfDaysAfterCreationForDueDate, applyInterests, interestRateType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                 maximumDaysToApplyPenalty, interestFixedAmount, rate);
     }
 
     @Override
     protected void init(final FinantialEntity finantialEntity, final Product product, final DateTime beginDate,
             final DateTime endDate, final DueDateCalculationType dueDateCalculationType, final LocalDate fixedDueDate,
-            final int numberOfDaysAfterCreationForDueDate, final boolean applyInterests, final InterestType interestType,
+            final int numberOfDaysAfterCreationForDueDate, final boolean applyInterests, final InterestRateType interestRateType,
             final int numberOfDaysAfterDueDate, final boolean applyInFirstWorkday, final int maximumDaysToApplyPenalty,
             final BigDecimal interestFixedAmount, final BigDecimal rate) {
         throw new RuntimeException("error.FixedTariff.use.init.with.amount");
@@ -102,11 +102,11 @@ public class FixedTariff extends FixedTariff_Base {
 
     protected void init(final FinantialEntity finantialEntity, final Product product, final DateTime beginDate,
             final DateTime endDate, final BigDecimal amount, final DueDateCalculationType dueDateCalculationType,
-            LocalDate fixedDueDate, int numberOfDaysAfterCreationForDueDate, boolean applyInterests, InterestType interestType,
+            LocalDate fixedDueDate, int numberOfDaysAfterCreationForDueDate, boolean applyInterests, InterestRateType interestRateType,
             int numberOfDaysAfterDueDate, boolean applyInFirstWorkday, int maximumDaysToApplyPenalty,
             BigDecimal interestFixedAmount, BigDecimal rate) {
         super.init(finantialEntity, product, beginDate, endDate, dueDateCalculationType, fixedDueDate,
-                numberOfDaysAfterCreationForDueDate, applyInterests, interestType, numberOfDaysAfterDueDate, applyInFirstWorkday,
+                numberOfDaysAfterCreationForDueDate, applyInterests, interestRateType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                 maximumDaysToApplyPenalty, interestFixedAmount, rate);
 
         setAmount(amount);
@@ -169,7 +169,7 @@ public class FixedTariff extends FixedTariff_Base {
         if (applyInterests) {
             if (getInterestRate() == null) {
                 InterestRate rate =
-                        InterestRate.createForTariff(this, rateBean.getInterestType(), rateBean.getNumberOfDaysAfterDueDate(),
+                        InterestRate.createForTariff(this, rateBean.getInterestRateType(), rateBean.getNumberOfDaysAfterDueDate(),
                                 rateBean.getApplyInFirstWorkday(), rateBean.getMaximumDaysToApplyPenalty(),
                                 rateBean.getInterestFixedAmount(), rateBean.getRate());
                 setInterestRate(rate);
@@ -177,7 +177,7 @@ public class FixedTariff extends FixedTariff_Base {
                 InterestRate rate = getInterestRate();
                 rate.setApplyInFirstWorkday(rateBean.getApplyInFirstWorkday());
                 rate.setInterestFixedAmount(rateBean.getInterestFixedAmount());
-                rate.setInterestType(rateBean.getInterestType());
+                rate.setInterestRateType(rateBean.getInterestRateType());
                 rate.setMaximumDaysToApplyPenalty(rateBean.getMaximumDaysToApplyPenalty());
                 rate.setNumberOfDaysAfterDueDate(rateBean.getNumberOfDaysAfterDueDate());
                 rate.setRate(rateBean.getRate());

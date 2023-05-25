@@ -16,9 +16,11 @@ import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
-import org.fenixedu.treasury.domain.tariff.GlobalInterestRate;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
-import org.fenixedu.treasury.domain.tariff.InterestType;
+import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
 
@@ -35,28 +37,37 @@ public class InterestRateTestsUtilities {
             Vat.findActiveUnique(VatType.findByCode("INT"), FinantialInstitution.findUnique().get(),
                     new LocalDate(2021, 1, 1).toDateTimeAtStartOfDay()).get().setTaxRate(new BigDecimal("0"));
 
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
+
             // Taxas de juro oficiais desde 2020 incluindo as medidas sobre COVID-19
-            GlobalInterestRate globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2020, 1, 1)).get();
+            InterestRateEntry globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2020, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.786"));
             globalInterestRate.setApplyPaymentMonth(true);
 
-            GlobalInterestRate.create(new LocalDate(2020, 3, 12), ls("Isencao de Juro DL1-A/2020"), BigDecimal.ZERO, true, false);
+            InterestRateEntry.create(globalInterestRateType, new LocalDate(2020, 3, 12), ls("Isencao de Juro DL1-A/2020"),
+                    BigDecimal.ZERO, true, false);
 
-            GlobalInterestRate.create(new LocalDate(2020, 7, 1), ls("Juro oficial para o ano 2020 (retoma)"), new BigDecimal("4.786"), true, false);
-            
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2021, 1, 1)).get();
+            InterestRateEntry.create(globalInterestRateType, new LocalDate(2020, 7, 1),
+                    ls("Juro oficial para o ano 2020 (retoma)"), new BigDecimal("4.786"), true, false);
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2021, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.705"));
             globalInterestRate.setApplyPaymentMonth(true);
-            
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2022, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2022, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("4.510"));
             globalInterestRate.setApplyPaymentMonth(true);
-            
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2023, 1, 1)).get();
+
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2023, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("5.997"));
             globalInterestRate.setApplyPaymentMonth(true);
 
-            globalInterestRate = GlobalInterestRate.findUniqueAppliedForDate(new LocalDate(2024, 1, 1)).get();
+            globalInterestRate =
+                    InterestRateEntry.findUniqueAppliedForDate(globalInterestRateType, new LocalDate(2024, 1, 1)).get();
             globalInterestRate.setRate(new BigDecimal("5.997"));
             globalInterestRate.setApplyPaymentMonth(true);
 
@@ -77,7 +88,9 @@ public class InterestRateTestsUtilities {
             final int maximumDaysToApplyPenalty = 0;
             final BigDecimal rate = null;
 
-            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, InterestType.GLOBAL_RATE,
+            InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
+            
+            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType,
                     numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
         }

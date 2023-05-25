@@ -13,7 +13,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.tariff.InterestType;
+import org.fenixedu.treasury.domain.tariff.InterestRateType;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
@@ -109,7 +109,7 @@ public class InterestRateWithPartialPaymentsTest {
         DebitEntry debitEntry =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), true);
 
-        debitEntry.getInterestRate().setInterestType(InterestType.FIXED_AMOUNT);
+        debitEntry.getInterestRate().setInterestRateType(InterestRateType.findUniqueByCode("FIXED_AMOUNT").get());
         debitEntry.getInterestRate().setInterestFixedAmount(new BigDecimal("5"));
         debitEntry.setDueDate(new LocalDate(2020, 1, 5));
 

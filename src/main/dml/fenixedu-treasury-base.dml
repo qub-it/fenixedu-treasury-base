@@ -620,9 +620,33 @@ class tariff.Tariff {
 	class tariff.FixedTariff extends tariff.Tariff {
 		BigDecimalT amount;
 	}
+
+class tariff.InterestRateType {
+	String code;
+	LocalizedStringT description;
+	Boolean requiresInterestFixedAmount;
+}
+
+	relation InterestRateTypeDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		tariff.InterestRateType playsRole interestRateTypes {
+			multiplicity *;
+		}
+	}
+	
+	class tariff.GlobalInterestRateType extends tariff.InterestRateType {
+	}
+	
+	class tariff.FixedAmountInterestRateType extends tariff.InterestRateType {
+	}
 	
 class tariff.InterestRate {
+	// Deprecated
 	InterestType interestType;
+	
 	int numberOfDaysAfterDueDate;
 	boolean applyInFirstWorkday;
 	int maximumDaysToApplyPenalty;
@@ -630,6 +654,17 @@ class tariff.InterestRate {
 	BigDecimalT rate;
 }
 
+	relation InterestRateTypeInterestRate {
+		tariff.InterestRateType playsRole interestRateType {
+			multiplicity 0..1;
+		}
+		
+		tariff.InterestRate playsRole interestRate {
+			multiplicity *;
+		}
+	}
+
+// Deprecated
 class tariff.GlobalInterestRate {
     int year;
     LocalDate firstDay;
@@ -638,6 +673,34 @@ class tariff.GlobalInterestRate {
     boolean applyPaymentMonth;
     boolean applyInFirstWorkday;
 }
+
+class tariff.InterestRateEntry {
+    LocalDate startDate;
+    LocalizedStringT description;
+    BigDecimalT rate;
+    Boolean applyPaymentMonth;
+    Boolean applyInFirstWorkday;
+}
+
+	relation InterestRateEntryDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		tariff.InterestRateEntry playsRole interestRateEntries {
+			multiplicity *;
+		}
+	}
+	
+	relation InterestRateTypeInterestRateEntry {
+		tariff.InterestRateType playsRole interestRateType {
+			multiplicity 1..1;
+		}
+		
+		tariff.InterestRateEntry playsRole interestRateEntries {
+			multiplicity *;
+		}
+	}
 
 /* -------------------------
  * Digital Payment Platforms
@@ -2341,7 +2404,6 @@ relation GlobalInterestRateBennu {
     }
 }
 
-
 /* --- InterestRate --- */
 
 relation InterestRateBennu {
@@ -3514,3 +3576,25 @@ class paypal.PayPalLog extends payments.PaymentRequestLog {
 	
 	boolean transactionDuplicated;
 }	
+
+/* Interest Rate Type availability */
+
+relation AvailableInterestRateTypeTreasurySettings {
+	settings.TreasurySettings playsRole treasurySettingsForInterestRateTypeAvailability {
+		multiplicity 0..1;
+	}
+
+	tariff.InterestRateType playsRole availableInterestRateTypes {
+		multiplicity *;
+	}
+}
+
+relation DefaultInterestRateTypeTreasurySettings {
+	settings.TreasurySettings playsRole treasurySettingsForDefaultInterestRateType {
+		multiplicity 0..1;
+	}
+
+	tariff.InterestRateType playsRole defaultInterestRateType {
+		multiplicity 0..1;
+	}
+}
