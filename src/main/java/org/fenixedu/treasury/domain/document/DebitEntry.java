@@ -82,6 +82,7 @@ import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
+import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
@@ -1292,4 +1293,13 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
+    public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
+        return getPaymentRequestsSet().stream() //
+                .filter(p -> p instanceof SibsPaymentRequest) //
+                .map(SibsPaymentRequest.class::cast) //
+                .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED || p.getState() == PaymentReferenceCodeStateType.USED) //
+                .filter(p -> p.getExpiresDate() == null || !p.getExpiresDate().isBeforeNow()) //
+                .collect(Collectors.toSet());
+    }
+    
 }

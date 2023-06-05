@@ -1,3 +1,6 @@
+- Improvement: Set expiration date for sibs reference requests, requested by SIBS DPG
+- Improvement: Present active sibs payment requests if expiration date is not set or it is not expired
+
 11.0.0 (25-05-2023)
 - New Feature: Dynamic interest rate calculators
 

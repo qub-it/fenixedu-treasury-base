@@ -141,19 +141,25 @@ public class DebtAccount extends DebtAccount_Base {
         return result;
     }
 
+    /**
+     * Only used to present the active reference codes that can be used.
+     * To be used in UI and reports
+     * @return
+     */
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
         return getPendingInvoiceEntriesSet().stream().filter(e -> e.isDebitNoteEntry()).map(DebitEntry.class::cast)
-                .flatMap(d -> d.getPaymentRequestsSet().stream()).filter(p -> p instanceof SibsPaymentRequest)
-                .map(SibsPaymentRequest.class::cast).filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
-                        || p.getState() == PaymentReferenceCodeStateType.USED)
+                .flatMap(d -> d.getActiveSibsPaymentRequestsOfPendingDebitEntries().stream())
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Only used to present the active reference codes that can be used
+     * To be used in UI and reports
+     * @return
+     */
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingInstallments() {
         return getActivePaymentPlansSet().stream().flatMap(p -> p.getSortedOpenInstallments().stream())
-                .flatMap(d -> d.getPaymentRequestsSet().stream()).filter(p -> p instanceof SibsPaymentRequest)
-                .map(SibsPaymentRequest.class::cast).filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
-                        || p.getState() == PaymentReferenceCodeStateType.USED)
+                .flatMap(d -> d.getActiveSibsPaymentRequestsOfPendingInstallments().stream())
                 .collect(Collectors.toSet());
     }
 

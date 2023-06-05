@@ -663,8 +663,10 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                 log.logRequestSendDate();
             });
 
-            MbCheckoutResultBean checkoutResultBean = generateMBPaymentReference(payableAmount, new DateTime(),
-                    new DateTime().plusMonths(getNumberOfMonthsToExpirePaymentReferenceCode()), merchantTransactionId);
+            DateTime sibsValidFrom = new DateTime();
+            DateTime sibsValidTo = sibsValidFrom.plusMonths(getNumberOfMonthsToExpirePaymentReferenceCode());
+            MbCheckoutResultBean checkoutResultBean =
+                    generateMBPaymentReference(payableAmount, sibsValidFrom, sibsValidTo, merchantTransactionId);
 
             final String sibsReferenceId = checkoutResultBean.getTransactionId();
             FenixFramework.atomic(() -> {
@@ -707,6 +709,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                 SibsPaymentRequest request =
                         SibsPaymentRequest.create(SibsPaymentsGateway.this, debtAccount, debitEntries, installments,
                                 payableAmount, getEntityReferenceCode(), referenceCode, merchantTransactionId, sibsReferenceId);
+                request.setExpiresDate(sibsValidTo);
                 log.setPaymentRequest(request);
 
                 return request;

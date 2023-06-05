@@ -56,11 +56,14 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
@@ -164,4 +167,12 @@ public class Installment extends Installment_Base {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
 
+    public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingInstallments() {
+        return getPaymentRequestsSet().stream().filter(p -> p instanceof SibsPaymentRequest)
+                .map(SibsPaymentRequest.class::cast).filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
+                        || p.getState() == PaymentReferenceCodeStateType.USED)
+                .filter(p -> p.getExpiresDate() == null || !p.getExpiresDate().isBeforeNow())
+                .collect(Collectors.toSet());
+    }
+    
 }
