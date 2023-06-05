@@ -1,3 +1,4 @@
+11.0.1 (05-06-2023)
 - Improvement: Set expiration date for sibs reference requests, requested by SIBS DPG
 - Improvement: Present active sibs payment requests if expiration date is not set or it is not expired
 
