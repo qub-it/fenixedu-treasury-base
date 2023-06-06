@@ -326,11 +326,20 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeGlobalInterestRate() {
-        GlobalInterestRateType globalInterestRateType = GlobalInterestRateType
-                .create(TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
+        if (!GlobalInterestRateType.findUnique().isPresent()) {
+            GlobalInterestRateType globalInterestRateType = GlobalInterestRateType
+                    .create(TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
+            globalInterestRateType.activate();
+            globalInterestRateType.makeDefault();
+        }
 
-        FixedAmountInterestRateType fixedAmountInterestRateType = FixedAmountInterestRateType
-                .create(TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description"));
+        GlobalInterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
+
+        if (!FixedAmountInterestRateType.findUnique().isPresent()) {
+            FixedAmountInterestRateType fixedAmountInterestRateType = FixedAmountInterestRateType
+                    .create(TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description"));
+            fixedAmountInterestRateType.activate();
+        }
 
         // Check global InterestRate since 1995 till now
         for (int year = 1995; year <= new LocalDate().getYear(); year++) {
@@ -342,11 +351,6 @@ public class TreasuryBootstrapper {
                         true, false);
             }
         }
-        
-        globalInterestRateType.activate();
-        globalInterestRateType.makeDefault();
-        
-        fixedAmountInterestRateType.activate();
     }
 
     private static void initializeTreasurySettings() {
@@ -364,12 +368,12 @@ public class TreasuryBootstrapper {
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING")
                         .getContent(Locale.getDefault()),
                 1, true, false, false);
-        
+
         ReimbursementProcessStatusType.create("ANNULED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED")
                         .getContent(Locale.getDefault()),
                 2, false, true, true);
-        
+
         ReimbursementProcessStatusType.create("CONCLUDED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
                         .getContent(Locale.getDefault()),
