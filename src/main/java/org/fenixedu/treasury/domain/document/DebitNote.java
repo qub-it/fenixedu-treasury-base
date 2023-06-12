@@ -414,7 +414,12 @@ public class DebitNote extends DebitNote_Base {
     public BigDecimal getPendingInterestAmount(LocalDate whenToCalculate) {
         BigDecimal interest = BigDecimal.ZERO;
         for (DebitEntry entry : this.getDebitEntriesSet()) {
-            interest = interest.add(entry.calculateUndebitedInterestValue(whenToCalculate).getInterestAmount());
+            List<InterestRateBean> undebitedInterestRateBeansList = entry.calculateUndebitedInterestValue(whenToCalculate);
+
+            BigDecimal interestAmount = undebitedInterestRateBeansList.stream().map(bean -> bean.getInterestAmount())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            interest = interest.add(interestAmount);
         }
         return interest;
     }
@@ -543,8 +548,8 @@ public class DebitNote extends DebitNote_Base {
             if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
                 continue;
             }
-            
-            if(Boolean.TRUE.equals(entry.getCalculatedAmountsOverriden())) {
+
+            if (Boolean.TRUE.equals(entry.getCalculatedAmountsOverriden())) {
                 amountForCreditWithoutVat = entry.getAvailableNetAmountForCredit();
             }
 
@@ -834,10 +839,16 @@ public class DebitNote extends DebitNote_Base {
                         "error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");
             }
 
-            InterestRateBean calculateUndebitedInterestValue = entry.calculateUndebitedInterestValue(paymentDate);
-            if (TreasuryConstants.isGreaterThan(calculateUndebitedInterestValue.getInterestAmount(), BigDecimal.ZERO)) {
-                entry.createInterestRateDebitEntry(calculateUndebitedInterestValue, documentDate,
-                        Optional.<DebitNote> of(interestDebitNote));
+            List<InterestRateBean> undebitedInterestRateBeansList = entry.calculateUndebitedInterestValue(paymentDate);
+            for (InterestRateBean calculateUndebitedInterestValue : undebitedInterestRateBeansList) {
+                if (TreasuryConstants.isGreaterThan(calculateUndebitedInterestValue.getInterestAmount(), BigDecimal.ZERO)) {
+                    DateTime whenInterestDebitEntryDateTime = calculateUndebitedInterestValue
+                            .getInterestDebitEntryDateTime() != null ? calculateUndebitedInterestValue
+                                    .getInterestDebitEntryDateTime() : documentDate;
+
+                    entry.createInterestRateDebitEntry(calculateUndebitedInterestValue, whenInterestDebitEntryDateTime,
+                            Optional.<DebitNote> of(interestDebitNote));
+                }
             }
         }
 

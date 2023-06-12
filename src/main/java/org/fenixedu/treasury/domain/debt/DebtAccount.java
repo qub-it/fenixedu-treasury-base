@@ -55,6 +55,7 @@ package org.fenixedu.treasury.domain.debt;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -72,6 +73,7 @@ import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.dto.InterestRateBean;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -184,10 +186,11 @@ public class DebtAccount extends DebtAccount_Base {
     }
 
     private void transferBalance(final DebtAccount destinyDebtAccount) {
-        if(getFinantialInstitution() != destinyDebtAccount.getFinantialInstitution()) {
-            throw new RuntimeException("error.DebtAccount.transferBalance.must.be.applied.for.debtAccounts.of.same.finantialInstitution");
+        if (getFinantialInstitution() != destinyDebtAccount.getFinantialInstitution()) {
+            throw new RuntimeException(
+                    "error.DebtAccount.transferBalance.must.be.applied.for.debtAccounts.of.same.finantialInstitution");
         }
-        
+
         new BalanceTransferService(this, destinyDebtAccount).transferBalance();
     }
 
@@ -258,8 +261,13 @@ public class DebtAccount extends DebtAccount_Base {
         BigDecimal interestAmount = BigDecimal.ZERO;
         for (InvoiceEntry entry : this.getPendingInvoiceEntriesSet()) {
             if (entry.isDebitNoteEntry()) {
-                interestAmount = interestAmount
-                        .add(((DebitEntry) entry).calculateUndebitedInterestValue(whenToCalculate).getInterestAmount());
+                List<InterestRateBean> undebitedInterestRateBeansList =
+                        ((DebitEntry) entry).calculateUndebitedInterestValue(whenToCalculate);
+                
+                BigDecimal totalInterestAmount = undebitedInterestRateBeansList.stream().map(bean -> bean.getInterestAmount())
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+                interestAmount = interestAmount.add(totalInterestAmount);
             }
         }
         return interestAmount;

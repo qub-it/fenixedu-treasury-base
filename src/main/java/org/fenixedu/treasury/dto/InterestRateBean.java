@@ -57,6 +57,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.fenixedu.treasury.domain.tariff.InterestRateType;
+import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
@@ -141,6 +142,13 @@ public class InterestRateBean implements ITreasuryBean, Serializable {
     private int numberOfDays;
     private int numberOfMonths;
     private String description;
+    
+    /**
+     * README ANIL 2023-05-12: This field is not required but it might be necessary
+     * in cases where there is a need to know if a particular interest entry (of multiple interests entries)
+     * is created or not
+     */
+    private DateTime interestDebitEntryDateTime;
 
     private List<InterestInformationDetail> interestInformationList = Lists.newArrayList();
     private List<CreatedInterestEntry> createdInterestEntriesList = Lists.newArrayList();
@@ -219,6 +227,14 @@ public class InterestRateBean implements ITreasuryBean, Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public DateTime getInterestDebitEntryDateTime() {
+        return interestDebitEntryDateTime;
+    }
+    
+    public void setInterestDebitEntryDateTime(DateTime interestDebitEntryDateTime) {
+        this.interestDebitEntryDateTime = interestDebitEntryDateTime;
     }
 
 }

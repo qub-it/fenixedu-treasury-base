@@ -1,3 +1,5 @@
+- Improvement: Support calculation of multiple interest calculation and multiple debts creation
+
 11.0.2 (06-06-2023)
 - Bug fix: Fix initialization of global interest rate, which might be initialized by migration script
 

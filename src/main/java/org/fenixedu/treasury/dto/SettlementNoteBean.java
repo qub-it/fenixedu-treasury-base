@@ -493,27 +493,27 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
     }
 
-    @Deprecated
-    /**
-     * Replaced by calculateVirtualDebitEntries
-     */
-    public void calculateInterestDebitEntries() {
-        setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
-        for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
-            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
-                    debitEntryBean.getDebtAmount())) {
-
-                //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest =
-                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
-                if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
-                    SettlementInterestEntryBean interestEntryBean =
-                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-                    virtualDebitEntries.add(interestEntryBean);
-                }
-            }
-        }
-    }
+//    @Deprecated
+//    /**
+//     * Replaced by calculateVirtualDebitEntries
+//     */
+//    public void calculateInterestDebitEntries() {
+//        setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
+//        for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
+//            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
+//                    debitEntryBean.getDebtAmount())) {
+//
+//                //Calculate interest only if we are making a FullPayment
+//                InterestRateBean debitInterest =
+//                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
+//                if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
+//                    SettlementInterestEntryBean interestEntryBean =
+//                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
+//                    virtualDebitEntries.add(interestEntryBean);
+//                }
+//            }
+//        }
+//    }
 
     public BigDecimal getTotalAmountToPay() {
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -605,13 +605,15 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                     debitEntryBean.getDebtAmount())) {
 
                 //Calculate interest only if we are making a FullPayment
-                InterestRateBean debitInterest =
+                List<InterestRateBean> undebitedInterestRateBeansList =
                         debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
-                if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
-                    SettlementInterestEntryBean interestEntryBean =
-                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-                    virtualDebitEntries.add(interestEntryBean);
-                    interestEntryBean.setIncluded(true);
+                for (InterestRateBean debitInterest : undebitedInterestRateBeansList) {
+                    if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
+                        SettlementInterestEntryBean interestEntryBean =
+                                new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
+                        this.virtualDebitEntries.add(interestEntryBean);
+                        interestEntryBean.setIncluded(true);
+                    }
                 }
             }
         }
@@ -648,8 +650,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     // @formatter:on
 
     public List<Integer> getFinantialTransactionReferenceYears() {
-        final List<Integer> years =
-                FiscalYear.findAll().map(g -> (Integer) g.getYear()).sorted().collect(Collectors.toList());
+        final List<Integer> years = FiscalYear.findAll().map(g -> (Integer) g.getYear()).sorted().collect(Collectors.toList());
         Collections.reverse(years);
 
         return years;

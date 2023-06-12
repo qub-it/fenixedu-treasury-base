@@ -602,9 +602,9 @@ public class PaymentPlanConfiguratorTest {
         DebitEntry debitEntry =
                 PaymentPlanTestsUtilities.createDebitEntry(new BigDecimal("100"), new LocalDate(2021, 2, 28), true);
 
-        DebitEntry interestEntry =
-                debitEntry.createInterestRateDebitEntry(debitEntry.calculateUndebitedInterestValue(new LocalDate(2021, 4, 1)),
-                        new LocalDate(2021, 4, 1).toDateTimeAtStartOfDay(), Optional.empty());
+        DebitEntry interestEntry = debitEntry.createInterestRateDebitEntry(
+                debitEntry.calculateUndebitedInterestValue(new LocalDate(2021, 4, 1)).iterator().next(),
+                new LocalDate(2021, 4, 1).toDateTimeAtStartOfDay(), Optional.empty());
 
         ISettlementInvoiceEntryBean debitEntryBean =
                 PaymentPlanTestsUtilities.createDebitEntryBean(debitEntry, paymentPlanBean.getCreationDate(), null);

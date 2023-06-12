@@ -1,6 +1,8 @@
 package org.fenixedu.treasury.domain.tariff;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -29,7 +31,7 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
 
         super.init(description);
         super.setCode(DEFAULT_CODE);
-        
+
         checkRules();
     }
 
@@ -42,16 +44,17 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
     }
 
     @Override
-    public InterestRateBean calculateInterests(DebitEntry debitEntry, LocalDate paymentDate, boolean withAllInterestValues) {
+    public List<InterestRateBean> calculateInterests(DebitEntry debitEntry, LocalDate paymentDate,
+            boolean withAllInterestValues) {
         return calculateForFixedAmount(debitEntry, withAllInterestValues);
     }
 
     @Override
-    public InterestRateBean calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate) {
+    public List<InterestRateBean> calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate) {
         return calculateForFixedAmount(debitEntry, true);
     }
 
-    private InterestRateBean calculateForFixedAmount(DebitEntry debitEntry, boolean withAllInterestValues) {
+    private List<InterestRateBean> calculateForFixedAmount(DebitEntry debitEntry, boolean withAllInterestValues) {
         InterestRate interestRate = debitEntry.getInterestRate();
 
         final InterestRateBean result = new InterestRateBean(interestRate.getInterestRateType());
@@ -69,7 +72,7 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
         }
 
         result.setInterestAmount(Currency.getValueWithScale(totalInterestAmount));
-        return result;
+        return Collections.singletonList(result);
     }
 
     //
@@ -79,7 +82,7 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
     public static LocalizedString getPresentationName() {
         return TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description");
     }
-    
+
     public static FixedAmountInterestRateType create(LocalizedString description) {
         return new FixedAmountInterestRateType(description);
     }
