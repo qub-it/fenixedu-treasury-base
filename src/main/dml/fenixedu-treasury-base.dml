@@ -680,6 +680,7 @@ class tariff.InterestRateEntry {
     BigDecimalT rate;
     Boolean applyPaymentMonth;
     Boolean applyInFirstWorkday;
+    BigDecimalT penaltyFixedAmount;
 }
 
 	relation InterestRateEntryDomainRoot {
@@ -3598,3 +3599,10 @@ relation DefaultInterestRateTypeTreasurySettings {
 		multiplicity 0..1;
 	}
 }
+
+
+/* Monthly Interest Rate Type */
+
+class interestrate.MonthlyInterestRateType extends tariff.InterestRateType {
+}
+

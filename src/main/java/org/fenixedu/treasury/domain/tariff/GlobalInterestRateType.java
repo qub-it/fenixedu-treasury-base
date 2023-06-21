@@ -100,6 +100,8 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
 
         result.setInterestAmount(Currency.getValueWithScale(totalInterestAmount));
         result.setNumberOfDays(totalOfDays);
+        result.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+                "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
 
         return Collections.singletonList(result);
     }
@@ -190,6 +192,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         LocalDate firstDayToChargeInterests =
                 applyOnFirstWorkdayIfNecessary(debitEntry, debitEntry.getDueDate().plusDays(numberOfDaysAfterDueDate()));
 
+        // ??? Despacho n.º 5621/2015 » ... » Decreto-lei 73/99 ???
         if (firstDayToChargeInterests.isBefore(lastPayment.minusYears(MAX_YEARS))) {
             firstDayToChargeInterests = lastPayment.minusYears(MAX_YEARS).plusDays(1);
         }
@@ -248,14 +251,6 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         }
 
         return date;
-    }
-
-    private boolean isSaturday(final LocalDate date) {
-        return date.getDayOfWeek() == DateTimeConstants.SATURDAY;
-    }
-
-    private boolean isSunday(final LocalDate date) {
-        return date.getDayOfWeek() == DateTimeConstants.SUNDAY;
     }
 
     private boolean isApplyPaymentMonth(final LocalDate date) {

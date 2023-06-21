@@ -99,6 +99,13 @@ public class InterestRateEntry extends InterestRateEntry_Base {
         return getStartDate().getYear();
     }
     
+    // TODO ANIL 2023-06-19: This property should be called 'applyPenaltyInFirstWorkday'
+    //
+    // The semantics of this property is formed in the subclasses of InterestRateType
+    @Override
+    public Boolean getApplyInFirstWorkday() {
+        return super.getApplyInFirstWorkday();
+    }
     
     public static Stream<InterestRateEntry> findByYear(InterestRateType interestRateType, int year) {
         return interestRateType.getInterestRateEntriesSet().stream().filter(entry -> entry.getYear() == year);

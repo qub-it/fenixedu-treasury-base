@@ -72,6 +72,9 @@ public class FixedAmountInterestRateType extends FixedAmountInterestRateType_Bas
         }
 
         result.setInterestAmount(Currency.getValueWithScale(totalInterestAmount));
+        result.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+                "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
+        
         return Collections.singletonList(result);
     }
 

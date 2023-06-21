@@ -319,11 +319,7 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         List<InterestRateBean> interestRateBeansList = getInterestRate().calculateInterests(whenToCalculate, false);
-
-        interestRateBeansList
-                .forEach(bean -> bean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
-                        "label.InterestRateBean.interest.designation", getDescription())));
-
+        
         return interestRateBeansList;
     }
 
