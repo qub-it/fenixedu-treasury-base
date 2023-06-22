@@ -1,4 +1,5 @@
 - Improvement: Support calculation of multiple interest calculation and multiple debts creation
+- Bug Fix: Error fix in global balance transfer. Do not sum the unit amount with exempted amount, since the treasury certification the unit amount maintains its value (#qubIT-Fenix-4110)
 
 11.0.2 (06-06-2023)
 - Bug fix: Fix initialization of global interest rate, which might be initialized by migration script

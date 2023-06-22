@@ -405,9 +405,9 @@ public class BalanceTransferService {
 
         for (final FinantialDocumentEntry objectEntry : objectDebitNote.getFinantialDocumentEntriesSet()) {
             final DebitEntry debitEntry = (DebitEntry) objectEntry;
-            final BigDecimal amountWithExemptedAmount = debitEntry.getAmount().add(debitEntry.getNetExemptedAmount());
+            final BigDecimal unitAmount = debitEntry.getAmount();
 
-            if (!isPositive(amountWithExemptedAmount)) {
+            if (!isPositive(unitAmount)) {
                 continue;
             }
 
@@ -416,7 +416,7 @@ public class BalanceTransferService {
             }
 
             DebitEntry newDebitEntry = DebitEntry.create(Optional.of(newDebitNote), destinyDebtAccount,
-                    debitEntry.getTreasuryEvent(), debitEntry.getVat(), amountWithExemptedAmount, debitEntry.getDueDate(),
+                    debitEntry.getTreasuryEvent(), debitEntry.getVat(), unitAmount, debitEntry.getDueDate(),
                     debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
                     debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
 
