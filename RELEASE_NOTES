@@ -1,3 +1,6 @@
+- Refactor: Add utility methods to TreasuryEvent to get debit, credit and exempted amounts by product
+- Improvement: Export to ERP quantity different than one with correct unit price
+
 11.0.3 (22-06-2023)
 - Improvement: Support calculation of multiple interest calculation and multiple debts creation
 - Bug Fix: Error fix in global balance transfer. Do not sum the unit amount with exempted amount, since the treasury certification the unit amount maintains its value (#qubIT-Fenix-4110)

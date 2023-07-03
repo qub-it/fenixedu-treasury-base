@@ -982,14 +982,6 @@ public class SAPExporter implements IERPExporter {
         line.setProductDescription(currentProduct.getProductDescription());
 
         // Quantity
-        // 2022-11-28: For now revert to old way to calculate the unit price
-        if (!TreasuryConstants.isEqual(entry.getQuantity(), BigDecimal.ONE)) {
-            // With the change of how netAmount is calculated
-            // Integration with SAP is not supported, if the quantity is different than one
-            // The unit price 
-            throw new RuntimeException("error.SAPExporter.quantity.different.than.one.not.supported");
-        }
-
         line.setQuantity(entry.getQuantity());
 
         // SettlementAmount
@@ -1028,11 +1020,7 @@ public class SAPExporter implements IERPExporter {
         // 2022-11-25: The unit price keeps the unit amount before discount. The SAFT specifies that the unit amount
         // is after the discount. It is safer to calculate the unit amount, as the net amount divided by the quantity.
         // The entry.getNetAmount() already takes into account the discount (which is kept in entry.getNetExemptedAmount())
-        // 2022-11-28: For now revert to old way to calculate the unit price
-        line.setUnitPrice(entry.getNetAmount().setScale(2, RoundingMode.HALF_EVEN));
-//        line.setUnitPrice(TreasuryConstants.divide(entry.getNetAmount(), entry.getQuantity()).setScale(4, RoundingMode.HALF_UP));
-
-        
+        line.setUnitPrice(TreasuryConstants.divide(entry.getNetAmount(), entry.getQuantity()).setScale(4, RoundingMode.HALF_UP));
         
         if (entry.getFinantialDocument().isExportedInLegacyERP()) {
             line.setUnitPrice(
@@ -1661,12 +1649,11 @@ public class SAPExporter implements IERPExporter {
 
         documents = processCreditNoteSettlementsInclusion(documents);
 
-        SAPExporter saftExporter = new SAPExporter();
         DateTime beginDate =
                 documents.stream().min((x, y) -> x.getDocumentDate().compareTo(y.getDocumentDate())).get().getDocumentDate();
         DateTime endDate =
                 documents.stream().max((x, y) -> x.getDocumentDate().compareTo(y.getDocumentDate())).get().getDocumentDate();
-        return saftExporter.generateERPFile(finantialInstitution, beginDate, endDate, documents, false, false,
+        return generateERPFile(finantialInstitution, beginDate, endDate, documents, false, false,
                 preProcessFunctionBeforeSerialize);
     }
 

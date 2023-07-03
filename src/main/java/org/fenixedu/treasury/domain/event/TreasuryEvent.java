@@ -110,7 +110,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     protected void checkRules() {
-        if(getDomainRoot() == null) {
+        if (getDomainRoot() == null) {
             throw new TreasuryDomainException("error.TreasuryEvent.bennu.required");
         }
     }
@@ -134,10 +134,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         }
 
         return DebitEntry.findActive(this) //
-             // TODO: This filter is superfluous, is already done by DebitEntry::findActive
+                // TODO: This filter is superfluous, is already done by DebitEntry::findActive
                 // TODO: Remove the following statement and test the result is equal
-                .filter(d -> !d.isEventAnnuled()) 
-                .count() > 0;
+                .filter(d -> !d.isEventAnnuled()).count() > 0;
     }
 
     // TODO: getTotalAmount()
@@ -146,6 +145,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     // TODO: getTotalAmount()
+    // TODO ANIL 2023-06-30: This is broken, customer argument might be null which is not very intuitive
     public BigDecimal getAmountToPay(final Customer customer, final Product product) {
         Stream<? extends DebitEntry> s = product != null ? DebitEntry.findActive(this, product) : DebitEntry.findActive(this);
         if (customer != null) {
@@ -158,18 +158,27 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
     }
 
+    // TODO: getTotalAmount()
+    public BigDecimal getAmountToPay(Product product) {
+        Stream<? extends DebitEntry> s = product != null ? DebitEntry.findActive(this, product) : DebitEntry.findActive(this);
+
+        final BigDecimal result =
+                s.map(d -> d.getTotalAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmount(product));
+
+        return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
+    }
+
     public BigDecimal getInterestsAmountToPay() {
         return getInterestsAmountToPay(null, null);
     }
-    
+
     public BigDecimal getInterestsAmountToPay(final Customer customer) {
         return getInterestsAmountToPay(customer, null);
     }
 
     public BigDecimal getInterestsAmountToPay(final Customer customer, final Product product) {
         final Product interestProduct = TreasurySettings.getInstance().getInterestProduct();
-        Stream<? extends DebitEntry> s = DebitEntry.findActive(this)
-                .filter(d -> d.getProduct() == interestProduct)
+        Stream<? extends DebitEntry> s = DebitEntry.findActive(this).filter(d -> d.getProduct() == interestProduct)
                 .filter(d -> product == null || (d.getDebitEntry() != null && d.getDebitEntry().getProduct() == product));
 
         if (customer != null) {
@@ -183,10 +192,14 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     }
 
+    // TODO ANIL 2023-06-30: Rename to getCreditAmountWithVat
     public BigDecimal getCreditAmount() {
         return getCreditAmount(null, null);
     }
 
+    // TODO ANIL 2023-06-30: Rename to getCreditAmountWithVat
+    // TODO ANIL 2023-06-30: This is broken, customer argument might be null which is not very intuitive
+    @Deprecated
     public BigDecimal getCreditAmount(final Customer customer, final Product product) {
         Stream<? extends CreditEntry> s = product != null ? CreditEntry.findActive(this, product) : CreditEntry.findActive(this);
 
@@ -195,6 +208,13 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         }
 
         return s.map(c -> c.getAmountWithVat()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);
+    }
+
+    // TODO ANIL 2023-06-30: Rename to getCreditAmountWithVat
+    public BigDecimal getCreditAmountWithVat(Product product) {
+        Stream<? extends CreditEntry> s = product != null ? CreditEntry.findActive(this, product) : CreditEntry.findActive(this);
+
+        return s.map(c -> c.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public BigDecimal getInterestsCreditAmount() {
@@ -231,6 +251,11 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     @Deprecated
     /** Must be replaced by {@link IAcademicTreasuryEvent#getNetExemptedAmount()} */
     public BigDecimal getExemptedAmount() {
+        return getNetExemptedAmount();
+    }
+
+    // TODO: Ensure ::getExemptedAmount is replaced by ::getNetExemptedAmount
+    public BigDecimal getNetExemptedAmount() {
         BigDecimal result =
                 DebitEntry.findActive(this).map(l -> l.getNetExemptedAmount()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);
 
@@ -240,9 +265,17 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return result;
     }
 
-    // TODO: Ensure ::getExemptedAmount is replaced by ::getNetExemptedAmount
-    public BigDecimal getNetExemptedAmount() {
-        return getExemptedAmount();
+    public BigDecimal getNetExemptedAmount(Product product) {
+        BigDecimal result = DebitEntry.findActive(this, product) //
+                .map(l -> l.getNetExemptedAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        result = result.add(CreditEntry.findActive(this, product) //
+                .filter(l -> l.isFromExemption()) //
+                .map(l -> l.getNetAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        return result;
     }
 
     public Map<String, String> getPropertiesMap() {
@@ -256,19 +289,19 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public boolean isDeletable() {
         return true;
     }
-    
+
     public boolean isEventAccountedAsTuition() {
         return false;
     }
-    
+
     public boolean isEventDiscountInTuitionFee() {
         return false;
     }
-    
+
     public boolean isEventDiscountInTuitionFeeWithTreasuryExemption() {
         return false;
     }
-    
+
     public TreasuryExemptionType getTreasuryExemptionToApplyInEventDiscountInTuitionFee() {
         return null;
     }
@@ -280,7 +313,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public abstract String getDegreeName();
 
     public abstract String getExecutionYearName();
-    
+
     public abstract void copyDebitEntryInformation(final DebitEntry sourceDebitEntry, final DebitEntry copyDebitEntry);
 
     /**
@@ -291,7 +324,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
      * @return
      */
     public abstract Optional<Tariff> findMatchTariff(FinantialEntity finantialEntity, Product product, LocalDate when);
-    
+
     @Atomic
     public void delete() {
         if (!isDeletable()) {
@@ -311,7 +344,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         while (DebitEntry.findActive(this).map(DebitEntry.class::cast).count() > 0) {
             final DebitEntry debitEntry = DebitEntry.findActive(this).map(DebitEntry.class::cast).findFirst().get();
 
-            if (debitEntry.isProcessedInClosedDebitNote() && TreasuryConstants.isEqual(debitEntry.getAvailableAmountForCredit(), BigDecimal.ZERO)) {
+            if (debitEntry.isProcessedInClosedDebitNote()
+                    && TreasuryConstants.isEqual(debitEntry.getAvailableAmountForCredit(), BigDecimal.ZERO)) {
                 debitEntry.annulOnEvent();
                 continue;
             }
@@ -336,23 +370,22 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
             // ensure interest debit entries are closed in document entry
             for (final DebitEntry otherDebitEntry : ((DebitNote) debitEntry.getFinantialDocument()).getDebitEntriesSet()) {
                 for (final DebitEntry interestDebitEntry : otherDebitEntry.getInterestDebitEntriesSet()) {
-                    if(interestDebitEntry.isAnnulled()) {
+                    if (interestDebitEntry.isAnnulled()) {
                         continue;
                     }
-                    
+
                     if (!interestDebitEntry.isProcessedInDebitNote()) {
                         final DebitNote debitNoteForUnprocessedEntries =
                                 DebitNote
                                         .create(debitEntry.getDebtAccount(),
                                                 DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
                                                         debitEntry.getDebtAccount().getFinantialInstitution()).get(),
-                                new DateTime());
+                                                new DateTime());
                         interestDebitEntry.setFinantialDocument(debitNoteForUnprocessedEntries);
                     }
 
                     if (!interestDebitEntry.isProcessedInClosedDebitNote()) {
-                        ((DebitNote) interestDebitEntry.getFinantialDocument()).anullDebitNoteWithCreditNote(reason,
-                                false);
+                        ((DebitNote) interestDebitEntry.getFinantialDocument()).anullDebitNoteWithCreditNote(reason, false);
                     }
                 }
             }
@@ -386,10 +419,10 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     public void invokeSettlementCallbacks(SettlementNote settlementNote) {
     }
-    
+
     public void invokeSettlementCallbacks(TreasuryExemption treasuryExemption) {
     }
-    
+
     public Set<TreasuryExemption> getActiveTreasuryExemptions() {
         return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream())
                 .collect(Collectors.<TreasuryExemption> toSet());
@@ -398,7 +431,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public void editPropertiesMap(final Map<String, String> propertiesMap) {
         super.setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
-    
+
     /*
      * Returns a description of the business object connected to 
      * this treasury event. For example academic registration, candidacy
@@ -417,7 +450,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public static Stream<? extends TreasuryEvent> findAll() {
         return FenixFramework.getDomainRoot().getTreasuryEventsSet().stream();
     }
-    
+
     public static Stream<? extends TreasuryEvent> find(final Customer customer) {
         return customer.getTreasuryEventsSet().stream();
     }
