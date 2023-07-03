@@ -163,7 +163,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         Stream<? extends DebitEntry> s = product != null ? DebitEntry.findActive(this, product) : DebitEntry.findActive(this);
 
         final BigDecimal result =
-                s.map(d -> d.getTotalAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmount(product));
+                s.map(d -> d.getTotalAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmountWithVat(product));
 
         return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
     }
