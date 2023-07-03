@@ -1,3 +1,4 @@
+11.0.4 (03-07-2023)
 - Refactor: Add utility methods to TreasuryEvent to get debit, credit and exempted amounts by product
 - Improvement: Export to ERP quantity different than one with correct unit price
 
