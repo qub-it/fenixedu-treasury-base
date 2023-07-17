@@ -1175,6 +1175,33 @@ public class DebitEntry extends DebitEntry_Base {
         debitNote.anullDebitNoteWithCreditNote(reason, false);
     }
 
+    /**
+     * The purpose of this method is to avoid rewriting the logic
+     * of checking if the debit entry is in finantial document or not
+     * and to annul the interest debit entries
+     */
+    public void annulOnlyThisDebitEntryAndInterestsInBusinessContext(String reason) {
+        // Ensure interests are annuled
+        getInterestDebitEntriesSet().stream().forEach(d -> d.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
+
+        annulOnEvent();
+        if (isAnnulled() || !TreasuryConstants.isPositive(getAvailableNetAmountForCredit())) {
+            return;
+        }
+
+        if (getFinantialDocument() != null) {
+            if (getFinantialDocument().isPreparing()) {
+                removeFromDocument();
+                annulDebitEntry(reason);
+            } else {
+                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false);
+                annulOnEvent();
+            }
+        } else {
+            annulDebitEntry(reason);
+        }
+    }
+
     @Atomic
     public void creditDebitEntry(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote) {
 
@@ -1302,9 +1329,10 @@ public class DebitEntry extends DebitEntry_Base {
         return getPaymentRequestsSet().stream() //
                 .filter(p -> p instanceof SibsPaymentRequest) //
                 .map(SibsPaymentRequest.class::cast) //
-                .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED || p.getState() == PaymentReferenceCodeStateType.USED) //
+                .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
+                        || p.getState() == PaymentReferenceCodeStateType.USED) //
                 .filter(p -> p.getExpiresDate() == null || !p.getExpiresDate().isBeforeNow()) //
                 .collect(Collectors.toSet());
     }
-    
+
 }

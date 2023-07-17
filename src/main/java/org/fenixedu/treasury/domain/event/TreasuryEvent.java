@@ -133,41 +133,121 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
             return DebitEntry.findActive(this, product).count() > 0;
         }
 
-        return DebitEntry.findActive(this) //
-                // TODO: This filter is superfluous, is already done by DebitEntry::findActive
-                // TODO: Remove the following statement and test the result is equal
-                .filter(d -> !d.isEventAnnuled()).count() > 0;
+        return DebitEntry.findActive(this).count() > 0;
+    }
+    
+    /*
+     * *********************
+     * getAmountWithVatToPay
+     * *********************
+     */
+
+    // Old name: getAmountToPay
+    public BigDecimal getAmountWithVatToPay() {
+        final BigDecimal result = DebitEntry.findActive(this).map(d -> d.getAmountWithVat())
+                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmountWithVat());
+
+        return result;
     }
 
-    // TODO: getTotalAmount()
-    public BigDecimal getAmountToPay() {
-        return getAmountToPay(null, null);
-    }
-
-    // TODO: getTotalAmount()
-    // TODO ANIL 2023-06-30: This is broken, customer argument might be null which is not very intuitive
-    public BigDecimal getAmountToPay(final Customer customer, final Product product) {
-        Stream<? extends DebitEntry> s = product != null ? DebitEntry.findActive(this, product) : DebitEntry.findActive(this);
-        if (customer != null) {
-            s = s.filter(d -> d.getDebtAccount().getCustomer() == customer);
+    // Old name: getAmountToPay
+    public BigDecimal getAmountWithVatToPay(Customer customer, Product product) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument required");
         }
 
-        final BigDecimal result = s.map(d -> d.getTotalAmount()).reduce((x, y) -> x.add(y)).orElse(BigDecimal.ZERO)
-                .subtract(getCreditAmount(customer, product));
+        if (product == null) {
+            throw new IllegalArgumentException("product argument required");
+        }
 
-        return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
+        Stream<? extends DebitEntry> s =
+                DebitEntry.findActive(this, product).filter(d -> d.getDebtAccount().getCustomer() == customer);
+
+        final BigDecimal result = s.map(d -> d.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .subtract(getCreditAmountWithVat(customer, product));
+
+        return result;
     }
 
-    // TODO: getTotalAmount()
-    public BigDecimal getAmountToPay(Product product) {
-        Stream<? extends DebitEntry> s = product != null ? DebitEntry.findActive(this, product) : DebitEntry.findActive(this);
+    public BigDecimal getAmountWithVatToPay(Customer customer) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument required");
+        }
 
-        final BigDecimal result =
-                s.map(d -> d.getTotalAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmountWithVat(product));
+        Stream<? extends DebitEntry> s = DebitEntry.findActive(this).filter(d -> d.getDebtAccount().getCustomer() == customer);
 
-        return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
+        final BigDecimal result = s.map(d -> d.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .subtract(getCreditAmountWithVat(customer));
+
+        return result;
     }
 
+    public BigDecimal getAmountWithVatToPay(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("product argument required");
+        }
+
+        final BigDecimal result = DebitEntry.findActive(this, product).map(d -> d.getAmountWithVat())
+                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmountWithVat(product));
+
+        return result;
+    }
+
+    /*
+     * *****************
+     * getNetAmountToPay
+     * *****************
+     */
+
+    public BigDecimal getNetAmountToPay() {
+        final BigDecimal result = DebitEntry.findActive(this).map(d -> d.getNetAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditNetAmount());
+
+        return result;
+    }
+
+    public BigDecimal getNetAmountToPay(Customer customer, Product product) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument required");
+        }
+
+        if (product == null) {
+            throw new IllegalArgumentException("product argument required");
+        }
+
+        Stream<? extends DebitEntry> s =
+                DebitEntry.findActive(this, product).filter(d -> d.getDebtAccount().getCustomer() == customer);
+
+        final BigDecimal result = s.map(d -> d.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .subtract(getCreditNetAmount(customer, product));
+
+        return result;
+    }
+
+    public BigDecimal getNetAmountToPay(Customer customer) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument required");
+        }
+
+        Stream<? extends DebitEntry> s = DebitEntry.findActive(this).filter(d -> d.getDebtAccount().getCustomer() == customer);
+
+        final BigDecimal result = s.map(d -> d.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .subtract(getCreditNetAmount(customer));
+
+        return result;
+    }
+
+    public BigDecimal getNetAmountToPay(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("product argument required");
+        }
+
+        final BigDecimal result = DebitEntry.findActive(this, product).map(d -> d.getNetAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditNetAmount(product));
+
+        return result;
+    }
+    
     public BigDecimal getInterestsAmountToPay() {
         return getInterestsAmountToPay(null, null);
     }
@@ -176,7 +256,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return getInterestsAmountToPay(customer, null);
     }
 
-    public BigDecimal getInterestsAmountToPay(final Customer customer, final Product product) {
+    public BigDecimal getInterestsAmountToPay(Customer customer, Product product) {
         final Product interestProduct = TreasurySettings.getInstance().getInterestProduct();
         Stream<? extends DebitEntry> s = DebitEntry.findActive(this).filter(d -> d.getProduct() == interestProduct)
                 .filter(d -> product == null || (d.getDebitEntry() != null && d.getDebitEntry().getProduct() == product));
@@ -191,32 +271,98 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
 
     }
+    
+    /*
+     * **********************
+     * getCreditAmountWithVat
+     * **********************
+     */
 
-    // TODO ANIL 2023-06-30: Rename to getCreditAmountWithVat
-    public BigDecimal getCreditAmount() {
-        return getCreditAmount(null, null);
+    // Old name getCreditAmount
+    public BigDecimal getCreditAmountWithVat() {
+        return CreditEntry.findActive(this).map(c -> c.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // TODO ANIL 2023-06-30: Rename to getCreditAmountWithVat
-    // TODO ANIL 2023-06-30: This is broken, customer argument might be null which is not very intuitive
-    @Deprecated
-    public BigDecimal getCreditAmount(final Customer customer, final Product product) {
-        Stream<? extends CreditEntry> s = product != null ? CreditEntry.findActive(this, product) : CreditEntry.findActive(this);
-
-        if (customer != null) {
-            s = s.filter(d -> d.getDebtAccount().getCustomer() == customer);
+    public BigDecimal getCreditAmountWithVat(Customer customer, Product product) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument is required");
         }
 
-        return s.map(c -> c.getAmountWithVat()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);
-    }
+        if (product == null) {
+            throw new IllegalArgumentException("product argument is required");
+        }
 
-    // TODO ANIL 2023-06-30: Rename to getCreditAmountWithVat
-    public BigDecimal getCreditAmountWithVat(Product product) {
-        Stream<? extends CreditEntry> s = product != null ? CreditEntry.findActive(this, product) : CreditEntry.findActive(this);
+        Stream<? extends CreditEntry> s =
+                CreditEntry.findActive(this, product).filter(d -> d.getDebtAccount().getCustomer() == customer);
 
         return s.map(c -> c.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getCreditAmountWithVat(Customer customer) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument required");
+        }
+
+        Stream<? extends CreditEntry> s = CreditEntry.findActive(this).filter(d -> d.getDebtAccount().getCustomer() == customer);
+
+        return s.map(c -> c.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getCreditAmountWithVat(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("product argument required");
+        }
+
+        Stream<? extends CreditEntry> s = CreditEntry.findActive(this, product);
+
+        return s.map(c -> c.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /*
+     * ******************
+     * getCreditNetAmount
+     * ******************
+     */
+    
+    public BigDecimal getCreditNetAmount() {
+        return CreditEntry.findActive(this).map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getCreditNetAmount(Customer customer, Product product) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument is required");
+        }
+
+        if (product == null) {
+            throw new IllegalArgumentException("product argument is required");
+        }
+
+        Stream<? extends CreditEntry> s =
+                CreditEntry.findActive(this, product).filter(d -> d.getDebtAccount().getCustomer() == customer);
+
+        return s.map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getCreditNetAmount(Customer customer) {
+        if (customer == null) {
+            throw new IllegalArgumentException("customer argument required");
+        }
+
+        Stream<? extends CreditEntry> s = CreditEntry.findActive(this).filter(d -> d.getDebtAccount().getCustomer() == customer);
+
+        return s.map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getCreditNetAmount(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("product argument required");
+        }
+
+        Stream<? extends CreditEntry> s = CreditEntry.findActive(this, product);
+
+        return s.map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    
     public BigDecimal getInterestsCreditAmount() {
         return getInterestsCreditAmount(null);
     }
@@ -231,7 +377,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     public BigDecimal getPayedAmount() {
-        return getAmountToPay().subtract(getRemainingAmountToPay());
+        return getAmountWithVatToPay().subtract(getRemainingAmountToPay());
     }
 
     public BigDecimal getRemainingAmountToPay() {
@@ -248,19 +394,12 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
     }
 
-    @Deprecated
-    /** Must be replaced by {@link IAcademicTreasuryEvent#getNetExemptedAmount()} */
-    public BigDecimal getExemptedAmount() {
-        return getNetExemptedAmount();
-    }
-
-    // TODO: Ensure ::getExemptedAmount is replaced by ::getNetExemptedAmount
     public BigDecimal getNetExemptedAmount() {
         BigDecimal result =
-                DebitEntry.findActive(this).map(l -> l.getNetExemptedAmount()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);
+                DebitEntry.findActive(this).map(l -> l.getNetExemptedAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         result = result.add(CreditEntry.findActive(this).filter(l -> l.isFromExemption()).map(l -> l.getNetAmount())
-                .reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO));
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         return result;
     }
