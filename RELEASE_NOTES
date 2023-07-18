@@ -1,3 +1,4 @@
+11.1.0 (18-07-2023)
 - Refactor: Add helper method DebitEntry::annulOnlyThisDebitEntryAndInterestsInBusinessContext, to annul the debit entry considering if it is closed in debit note or not, to reduce the repetitive methods of annuling debit entry
 - Refactor: Rename TreasuryEvent::getAmountToPay to TreasuryEvent::getAmountWithVatToPay
 - Refactor: Add other methods in TreasuryEvent to get the net amount to pay and net credit amount
