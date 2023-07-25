@@ -1,3 +1,4 @@
+11.2.0 (25-07-2023)
 - New Feature: Monthly interest type
 - Refactor: Set interest rate entry bean description in the interest rate type subclasses
 - Refactor: Record penalty fixed amount in the InterestRateEntry. This will be used by interest rate type, in which the penalty is global and not by debit entry
