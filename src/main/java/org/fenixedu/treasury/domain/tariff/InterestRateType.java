@@ -12,10 +12,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.FenixFramework;
@@ -60,7 +62,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
     public boolean isInterestRateTypeActive() {
         return getAvailableInterestRateTypesSortedByName().contains(this);
     }
-    
+
     public boolean isInterestFixedAmountRequired() {
         return Boolean.TRUE.equals(getRequiresInterestFixedAmount());
     }
@@ -110,6 +112,66 @@ public abstract class InterestRateType extends InterestRateType_Base {
         return result;
     }
 
+    // This method should be used in new interest rate type subclasses
+    //
+    protected LocalDate calculateFirstDateToApplyInterests(DebitEntry debitEntry, boolean postponePaymentLimitDateToFirstWorkDate,
+            boolean applyPenaltyInFirstWorkday) {
+
+        LocalDate dueDate = debitEntry.getDueDate();
+
+        LocalDate lastDayToPay = dueDate;
+        if (postponePaymentLimitDateToFirstWorkDate) {
+            while (!isWorkday(debitEntry, lastDayToPay)) {
+                lastDayToPay = lastDayToPay.plusDays(1);
+            }
+        }
+
+        // TODO ANIL 2023-06-19 : The numberOfDaysAfterDueDate is declared in the InterestRate::numberOfDaysAfterDueDate
+        // but it shouldn't . Generally number of days after due date is one, but if it is necessary, it should be declared
+        // in the interest rate entry. Add this property only if it is necessary
+        //
+        int numberOfDaysAfterDueDate = 1;
+
+        LocalDate firstDayToApplyPenalty = lastDayToPay.plusDays(numberOfDaysAfterDueDate);
+
+        if (applyPenaltyInFirstWorkday) {
+
+            while (!isWorkday(debitEntry, firstDayToApplyPenalty)) {
+                firstDayToApplyPenalty = firstDayToApplyPenalty.plusDays(1);
+            }
+        }
+
+        return firstDayToApplyPenalty;
+    }
+
+    protected boolean isSaturday(final LocalDate date) {
+        return date.getDayOfWeek() == DateTimeConstants.SATURDAY;
+    }
+
+    protected boolean isSunday(final LocalDate date) {
+        return date.getDayOfWeek() == DateTimeConstants.SUNDAY;
+    }
+
+    protected boolean isWorkday(DebitEntry debitEntry, LocalDate date) {
+        return !isWeekend(date) && !isHoliday(debitEntry, date);
+    }
+
+    private boolean isHoliday(DebitEntry debitEntry, LocalDate date) {
+        FinantialEntity finantialEntity = getFinantialEntity(debitEntry);
+        
+        // Find if date is holiday with the FinantialEntity
+        return false;
+    }
+
+    private boolean isWeekend(LocalDate date) {
+        return isSaturday(date) || isSunday(date);
+    }
+
+    private FinantialEntity getFinantialEntity(DebitEntry debitEntry) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     //
     // SERVICES
     //
@@ -140,9 +202,8 @@ public abstract class InterestRateType extends InterestRateType_Base {
     }
 
     public static Optional<? extends InterestRateType> findUniqueByDescription(String description) {
-        return getAvailableInterestRateTypesSortedByName().stream().filter(
-                type -> type.getDescription().anyMatch(content -> description.equals(content)))
-                .findFirst();
+        return getAvailableInterestRateTypesSortedByName().stream()
+                .filter(type -> type.getDescription().anyMatch(content -> description.equals(content))).findFirst();
     }
 
 //    public static Optional<GlobalInterestRateType> findAvailableGlobalInterestRateType() {
@@ -154,7 +215,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
         return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream().sorted(InterestRateType.COMPARE_BY_NAME)
                 .collect(Collectors.toList());
     }
-    
+
     public static InterestRateType getDefaultInterestRateType() {
         return TreasurySettings.getInstance().getDefaultInterestRateType();
     }

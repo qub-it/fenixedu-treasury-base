@@ -116,28 +116,34 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
     private Map<String, List<String>> getCalculationDescription(SettlementNoteBean settlementNoteBean,
             SettlementInterestEntryBean interestEntryBean) {
         Map<String, List<String>> map = new LinkedHashMap<>();
-        final Currency currency = settlementNoteBean.getDebtAccount().getFinantialInstitution().getCurrency();
+
+        Currency currency = settlementNoteBean.getDebtAccount().getFinantialInstitution().getCurrency();
 
         String title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Calculated_interests");
         List<String> lines = new ArrayList<>();
         for (final InterestInformationDetail detail : interestEntryBean.getInterest().getInterestInformationList()) {
-            lines.add(format("[%s - %s]: %s", detail.getBegin().toString(DATE_FORMAT_YYYY_MM_DD),
-                    detail.getEnd().toString(DATE_FORMAT_YYYY_MM_DD), currency.getValueFor(detail.getAmount())));
+            if(detail.getBegin() != null && detail.getEnd() != null) {
+                lines.add(format("[%s - %s]: %s", detail.getBegin().toString(DATE_FORMAT_YYYY_MM_DD),
+                        detail.getEnd().toString(DATE_FORMAT_YYYY_MM_DD), currency.getValueFor(detail.getAmount())));
+                
+                    lines.add(TreasuryConstants.treasuryBundle("label.InterestEntry.affectedAmount.description",
+                            currency.getValueFor(detail.getAffectedAmount()), "" + detail.getNumberOfDays(),
+                            detail.getInterestRate().toString()));
+            } else if(detail.getBegin() != null) {
+                lines.add(format("%s: %s", detail.getBegin().toString(DATE_FORMAT_YYYY_MM_DD), currency.getValueFor(detail.getAmount())));
+            }
 
-            lines.add(TreasuryConstants.treasuryBundle("label.InterestEntry.affectedAmount.description",
-                    currency.getValueFor(detail.getAffectedAmount()), "" + detail.getNumberOfDays(),
-                    detail.getInterestRate().toString()));
         }
+        
         map.put(title, lines);
+        
         if (!interestEntryBean.getInterest().getCreatedInterestEntriesList().isEmpty()) {
             title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Created_interests");
 
             lines = new ArrayList<>();
             for (final CreatedInterestEntry entry : interestEntryBean.getInterest().getCreatedInterestEntriesList()) {
-                {
-                    lines.add(format("[%s]: %s", entry.getEntryDate().toString(DATE_FORMAT_YYYY_MM_DD),
-                            currency.getValueFor(entry.getAmount())));
-                }
+                lines.add(format("[%s]: %s", entry.getEntryDate().toString(DATE_FORMAT_YYYY_MM_DD),
+                        currency.getValueFor(entry.getAmount())));
             }
             map.put(title, lines);
         }

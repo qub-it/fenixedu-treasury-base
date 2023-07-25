@@ -1,3 +1,7 @@
+- New Feature: Monthly interest type
+- Refactor: Set interest rate entry bean description in the interest rate type subclasses
+- Refactor: Record penalty fixed amount in the InterestRateEntry. This will be used by interest rate type, in which the penalty is global and not by debit entry
+
 11.1.0 (18-07-2023)
 - Refactor: Add helper method DebitEntry::annulOnlyThisDebitEntryAndInterestsInBusinessContext, to annul the debit entry considering if it is closed in debit note or not, to reduce the repetitive methods of annuling debit entry
 - Refactor: Rename TreasuryEvent::getAmountToPay to TreasuryEvent::getAmountWithVatToPay

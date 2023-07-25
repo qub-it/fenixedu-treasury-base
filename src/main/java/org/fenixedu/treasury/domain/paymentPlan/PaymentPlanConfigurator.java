@@ -545,6 +545,9 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
 
                 if (TreasuryConstants.isPositive(interestEntryAmout)) {
                     InterestRateBean interestRateBean = new InterestRateBean();
+                    
+                    // TODO ANIL 2023-07-25: Remove the following code line, as the GlobalInterestRateType set
+                    // the description. Remove and test
                     interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                             "label.InterestRateBean.interest.designation", debitEntry.getDescription()));
 
