@@ -74,6 +74,11 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             public BigDecimal getInterestsPercentage() {
                 return rateEntry.getRate();
             }
+
+            @Override
+            public LocalDate getOverridenFirstDayToApplyInterests(int month) {
+                return null;
+            }
         };
 
         return calculateInterests(debitEntry, paymentDate, withAllInterestValues, config);
@@ -96,17 +101,23 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
 
         return monthsIterationList.stream() //
                 .map(monthIteration -> calculateInterestRateBean(debitEntry, paymentDate, withAllInterestValues, monthIteration,
-                        interestsPercentage, postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday)) //
+                        interestsPercentage, postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday,
+                        monthlyInterestRateConfig.getOverridenFirstDayToApplyInterests(monthIteration.getMonthOfYear()))) //
                 .filter(Objects::nonNull) //
                 .collect(Collectors.toList());
     }
 
     private InterestRateBean calculateInterestRateBean(DebitEntry debitEntry, LocalDate paymentDate,
             boolean withAllInterestValues, LocalDate dueDate, BigDecimal interestsPercentage,
-            boolean postponePaymentLimitDateToFirstWorkDate, boolean applyPenaltyInFirstWorkday) {
+            boolean postponePaymentLimitDateToFirstWorkDate, boolean applyPenaltyInFirstWorkday,
+            LocalDate overridenFirstDayToApplyPenalty) {
 
-        LocalDate firstDayToApplyInterests = calculateFirstDateToApplyInterests(debitEntry,
-                postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday);
+        LocalDate firstDayToApplyInterests = overridenFirstDayToApplyPenalty;
+
+        if (firstDayToApplyInterests == null) {
+            firstDayToApplyInterests = calculateFirstDateToApplyInterests(debitEntry, postponePaymentLimitDateToFirstWorkDate,
+                    applyPenaltyInFirstWorkday);
+        }
 
         if (firstDayToApplyInterests.isAfter(paymentDate)) {
             return null;
