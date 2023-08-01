@@ -130,6 +130,10 @@ public class MeoWalletWebhooksController {
 
             if (referenceCodeOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) referenceCodeOptional.get().getDigitalPaymentPlatform();
+                
+                if(!digitalPaymentPlatform.isActive()) {
+                    throw new Exception("MeoWallet not active, payment will not be processed");
+                }
 
                 if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
                     throw new Exception("callback not verified");
@@ -144,6 +148,10 @@ public class MeoWalletWebhooksController {
 
             } else if (mbwayPaymentRequestOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) mbwayPaymentRequestOptional.get().getDigitalPaymentPlatform();
+                
+                if(!digitalPaymentPlatform.isActive()) {
+                    throw new Exception("MeoWallet not active, payment will not be processed");
+                }
 
                 if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
                     throw new Exception("callback not verified");
@@ -157,6 +165,10 @@ public class MeoWalletWebhooksController {
                 digitalPaymentPlatform.processMbwayTransaction(log, bean);
             } else if (forwardPaymentRequesteOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) forwardPaymentRequesteOptional.get().getDigitalPaymentPlatform();
+                
+                if(!digitalPaymentPlatform.isActive()) {
+                    throw new Exception("MeoWallet not active, payment will not be processed");
+                }
 
                 if (!digitalPaymentPlatform.getMeoWalletService().verifyCallback(body)) {
                     throw new Exception("callback not verified");
