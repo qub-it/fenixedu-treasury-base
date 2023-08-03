@@ -438,7 +438,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     public boolean isEventDiscountInTuitionFeeWithTreasuryExemption() {
-        return false;
+        return true;
     }
 
     public TreasuryExemptionType getTreasuryExemptionToApplyInEventDiscountInTuitionFee() {

@@ -1,4 +1,5 @@
 - Improvement: Support override first day to apply penalty in monthly penalty interest type
+- Improvement: The Event discount in tuition fee with treasury exemption is true by default
 
 11.2.0 (25-07-2023)
 - New Feature: Monthly interest type
