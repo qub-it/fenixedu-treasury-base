@@ -57,6 +57,7 @@ import java.util.Comparator;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
@@ -139,6 +140,13 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
         }
         setDomainRoot(null);
         deleteDomainObject();
+    }
+
+    public BigDecimal calculateDefaultNetAmountToExempt(BigDecimal netAmount) {
+        BigDecimal exemptionRate = TreasuryConstants.divide(getDefaultExemptionPercentage(), TreasuryConstants.HUNDRED_PERCENT);
+        BigDecimal defaultExemptionNetAmount = Currency.getValueWithScale(netAmount.multiply(exemptionRate));
+
+        return defaultExemptionNetAmount.min(netAmount);
     }
 
     @Atomic
