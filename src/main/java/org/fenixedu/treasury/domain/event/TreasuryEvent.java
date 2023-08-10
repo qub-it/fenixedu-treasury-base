@@ -58,6 +58,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -135,7 +136,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         return DebitEntry.findActive(this).count() > 0;
     }
-    
+
     /*
      * *********************
      * getAmountWithVatToPay
@@ -200,8 +201,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
      */
 
     public BigDecimal getNetAmountToPay() {
-        final BigDecimal result = DebitEntry.findActive(this).map(d -> d.getNetAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditNetAmount());
+        final BigDecimal result = DebitEntry.findActive(this).map(d -> d.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .subtract(getCreditNetAmount());
 
         return result;
     }
@@ -231,8 +232,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         Stream<? extends DebitEntry> s = DebitEntry.findActive(this).filter(d -> d.getDebtAccount().getCustomer() == customer);
 
-        final BigDecimal result = s.map(d -> d.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
-                .subtract(getCreditNetAmount(customer));
+        final BigDecimal result =
+                s.map(d -> d.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditNetAmount(customer));
 
         return result;
     }
@@ -247,7 +248,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         return result;
     }
-    
+
     public BigDecimal getInterestsAmountToPay() {
         return getInterestsAmountToPay(null, null);
     }
@@ -271,7 +272,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return TreasuryConstants.isPositive(result) ? result : BigDecimal.ZERO;
 
     }
-    
+
     /*
      * **********************
      * getCreditAmountWithVat
@@ -323,7 +324,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
      * getCreditNetAmount
      * ******************
      */
-    
+
     public BigDecimal getCreditNetAmount() {
         return CreditEntry.findActive(this).map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -362,7 +363,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         return s.map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
-    
+
     public BigDecimal getInterestsCreditAmount() {
         return getInterestsCreditAmount(null);
     }
@@ -415,6 +416,20 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         return result;
+    }
+
+    public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap() {
+        return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream())
+                .collect(Collectors.toMap(te -> te.getTreasuryExemptionType(), te -> te.getNetExemptedAmount(), BigDecimal::add,
+                        () -> new TreeMap<TreasuryExemptionType, BigDecimal>(
+                                (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId()))));
+    }
+
+    public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap(Product product) {
+        return DebitEntry.findActive(this, product).flatMap(d -> d.getTreasuryExemptionsSet().stream())
+                .collect(Collectors.toMap(TreasuryExemption::getTreasuryExemptionType, TreasuryExemption::getNetExemptedAmount,
+                        BigDecimal::add, () -> new TreeMap<TreasuryExemptionType, BigDecimal>(
+                                (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId()))));
     }
 
     public Map<String, String> getPropertiesMap() {
