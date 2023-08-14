@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,6 +104,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     protected TreasuryEvent() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
+        setCode(UUID.randomUUID().toString());
     }
 
     protected void init(final Product product, final LocalizedString description) {

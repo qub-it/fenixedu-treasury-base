@@ -313,6 +313,7 @@ class document.DocumentNumberSeries {
 }
 
 class event.TreasuryEvent {
+	String code;
 	LocalizedStringT description;
 	String propertiesJsonMap;
 }

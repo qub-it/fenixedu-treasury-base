@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.domain.exemption;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Product;
@@ -82,10 +83,10 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
         this();
 
-        if(Boolean.TRUE.equals(debitEntry.getCalculatedAmountsOverriden())) {
+        if (Boolean.TRUE.equals(debitEntry.getCalculatedAmountsOverriden())) {
             throw new TreasuryDomainException("error.DebitEntry.exempt.not.possible.due.to.overriden.calculated.amounts");
         }
-        
+
         for (final CreditEntry creditEntry : debitEntry.getCreditEntriesSet()) {
             if (!creditEntry.getFinantialDocument().isAnnulled() && !creditEntry.isFromExemption()) {
                 throw new TreasuryDomainException("error.TreasuryExemption.debitEntry.with.credit.not.from.exemption");
@@ -122,7 +123,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         getDebitEntry().exempt(this);
     }
 
-    private void checkRules() {
+    public void checkRules() {
         if (getTreasuryExemptionType() == null) {
             throw new TreasuryDomainException("error.TreasuryExemption.treasuryExemptionType.required");
         }
@@ -212,7 +213,8 @@ public class TreasuryExemption extends TreasuryExemption_Base {
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
 
-            String reason = TreasuryConstants.treasuryBundle("label.TreasuryExemption.revertExemption.credit.note.annulment.message");
+            String reason =
+                    TreasuryConstants.treasuryBundle("label.TreasuryExemption.revertExemption.credit.note.annulment.message");
             getCreditEntry().getCreditNote().setAnnulledReason(reason);
             getCreditEntry().getCreditNote().setAnnullmentDate(new DateTime());
 
@@ -293,6 +295,35 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     public static TreasuryExemption create(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
             final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
         return new TreasuryExemption(treasuryExemptionType, treasuryEvent, reason, netAmountToExempt, debitEntry);
+    }
+
+    public static TreasuryExemption createForImportation(TreasuryExemptionType treasuryExemptionType,
+            Optional<TreasuryEvent> treasuryEvent, String reason, BigDecimal netAmountToExempt, DebitEntry debitEntry,
+            Optional<CreditEntry> creditEntry) {
+        TreasuryExemption treasuryExemption = new TreasuryExemption();
+
+        treasuryExemption.setTreasuryExemptionType(treasuryExemptionType);
+        treasuryExemption.setTreasuryEvent(treasuryEvent.orElse(null));
+        treasuryExemption.setReason(reason);
+
+        /*
+         * For now percentages are not supported because they are complex to deal with
+         */
+        treasuryExemption.setExemptByPercentage(false);
+
+        // Check the scale of netAmountToExempt has at most the decimal places for cents
+        if (netAmountToExempt.scale() > debitEntry.getDebtAccount().getFinantialInstitution().getCurrency()
+                .getDecimalPlacesForCents()) {
+            throw new IllegalStateException("The netAmountToExempt has scale above the currency decimal places for cents");
+        }
+
+        treasuryExemption.setNetAmountToExempt(netAmountToExempt);
+
+        treasuryExemption.setDebitEntry(debitEntry);
+        treasuryExemption.setProduct(debitEntry.getProduct());
+        treasuryExemption.setCreditEntry(creditEntry.orElse(null));
+
+        return treasuryExemption;
     }
 
 }

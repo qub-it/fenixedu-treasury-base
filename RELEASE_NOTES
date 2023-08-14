@@ -2,6 +2,7 @@
 - Improvement: The Event discount in tuition fee with treasury exemption is true by default
 - Refactor: Add calculation of default exemption in TreasuryExemption
 - Refactor: Add utility methods in treasury event, to get a map of treasury exemption type and respective amount exempted
+- Refactor: Add code property to TreasuryEvent, to add in treasury importations
 
 11.2.0 (25-07-2023)
 - New Feature: Monthly interest type
