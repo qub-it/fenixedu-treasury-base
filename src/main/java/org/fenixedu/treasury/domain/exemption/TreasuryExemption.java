@@ -274,8 +274,13 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     public static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent) {
-        return FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream()
-                .filter(t -> t.getTreasuryEvent() == treasuryEvent);
+        // ANIL 2023-09-01
+        //
+        // This statement was replaced by this
+        // FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream().filter(t -> t.getTreasuryEvent() == treasuryEvent)
+        //
+        
+        return treasuryEvent.getTreasuryExemptionsSet().stream();
     }
 
     protected static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent, final Product product) {
