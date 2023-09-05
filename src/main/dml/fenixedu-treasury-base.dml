@@ -367,6 +367,7 @@ class document.FinantialDocument {
 		String certificationOriginalDocumentCertificateNumber;
 		String certificationOriginalDocumentPrivateKeyVersion;
 		DateTime certificationOriginalDocumentSystemEntryDate;
+		String certificationOriginalDocumentATCUD;
 	}
 
 		class document.DebitNote extends document.Invoice {
