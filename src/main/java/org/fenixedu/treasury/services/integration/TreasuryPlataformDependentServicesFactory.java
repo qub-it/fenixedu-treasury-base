@@ -60,7 +60,7 @@ public class TreasuryPlataformDependentServicesFactory {
         return _impl;
     }
     
-    public static synchronized void registerImplementation(ITreasuryPlatformDependentServices impl) {
+    public static void registerImplementation(ITreasuryPlatformDependentServices impl) {
         _impl = impl;
     }
 	

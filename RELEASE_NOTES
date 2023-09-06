@@ -1,3 +1,6 @@
+- Improvement: Remove checking the duplication of sibs reference codes, to improve performance of reference code generation with check digit protocol
+- Improvement: Remove synchronized keywords, from methods invoked in initialisation of platform
+
 11.3.1 (01-09-2023)
 - Improvement: Avoid TreasuryExemption::find(TreasuryEvent) which was doing a readAll
 

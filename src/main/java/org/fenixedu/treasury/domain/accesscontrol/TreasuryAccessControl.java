@@ -67,7 +67,7 @@ import com.google.common.collect.Sets;
 
 public class TreasuryAccessControl {
 
-    private static TreasuryAccessControl _instance = null;
+    private static TreasuryAccessControl _instance = new TreasuryAccessControl();
 
     private List<ITreasuryAccessControlExtension<?>> extensions = Collections.synchronizedList(Lists.newArrayList());
 
@@ -279,13 +279,8 @@ public class TreasuryAccessControl {
         return result;
     }
     
-    public synchronized static TreasuryAccessControl getInstance() {
-        if (_instance == null) {
-            _instance = new TreasuryAccessControl();
-        }
-
+    public static TreasuryAccessControl getInstance() {
         return _instance;
     }
-
     
 }

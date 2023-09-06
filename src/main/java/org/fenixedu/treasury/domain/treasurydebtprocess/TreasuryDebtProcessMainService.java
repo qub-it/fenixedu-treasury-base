@@ -21,13 +21,13 @@ public class TreasuryDebtProcessMainService {
 
     private static final List<ITreasuryDebtProcessService> services = new ArrayList<>();
 
-    public synchronized static void registerService(ITreasuryDebtProcessService service) {
+    public static void registerService(ITreasuryDebtProcessService service) {
         if (!services.stream().anyMatch(s -> s.getClass().equals(service.getClass()))) {
             services.add(service);
         }
     }
 
-    public synchronized static void removeService(Class<ITreasuryDebtProcessService> clazz) {
+    public static void removeService(Class<ITreasuryDebtProcessService> clazz) {
         Optional<ITreasuryDebtProcessService> optional = services.stream().filter(s -> s.getClass().equals(clazz)).findAny();
 
         if (optional.isPresent()) {

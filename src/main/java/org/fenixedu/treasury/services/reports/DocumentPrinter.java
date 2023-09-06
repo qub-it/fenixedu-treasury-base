@@ -86,7 +86,7 @@ public class DocumentPrinter {
     public static final String PDF = DocumentGenerator.PDF;
     public static final String ODT = DocumentGenerator.ODT;
 
-    public static synchronized void registerService() {
+    private static void registerService() {
         IDocumentTemplateService service = new DocumentPrinterConfiguration();
         DocumentTemplateEngine.registerServiceImplementations(service);
     }

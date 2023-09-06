@@ -150,15 +150,6 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         if(StringUtils.isEmpty(getReferenceCode())) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.referenceCode.required");
         }
-        
-        // For now ensure only one sibsPaymentRequest for the same entityCode and referenceCode exists
-        // Later we may remove this restriction
-        ISibsPaymentCodePoolService poolService = getDigitalPaymentPlatform().castToSibsPaymentCodePoolService();
-        boolean isCheckDigitPaymentCodePool = (poolService instanceof SibsPaymentCodePool) && ((SibsPaymentCodePool) poolService).isUseCheckDigit();
-        
-        if(isCheckDigitPaymentCodePool && find(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
-            throw new TreasuryDomainException("error.SibsPaymentRequest.request.already.exists.for.entityCode.and.referenceCode");
-        }
     }
 
     @Override

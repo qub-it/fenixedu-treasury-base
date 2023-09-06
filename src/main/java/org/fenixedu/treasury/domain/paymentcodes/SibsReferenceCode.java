@@ -117,10 +117,6 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         if(TreasuryConstants.isGreaterThan(getMinAmount(), getMaxAmount())) {
             throw new TreasuryDomainException("error.SibsReferenceCode.minAmount.maxAmount.invalid");
         }
-        
-        if (findByReferenceCode(getEntityReferenceCode(), getReferenceCode()).count() > 1) {
-            throw new TreasuryDomainException("error.SibsReferenceCode.referenceCode.duplicate");
-        }
     }
 
     public String getFormattedCode() {

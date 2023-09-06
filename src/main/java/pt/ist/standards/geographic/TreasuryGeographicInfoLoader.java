@@ -54,14 +54,10 @@ package pt.ist.standards.geographic;
 
 import java.util.stream.Stream;
 
-import pt.ist.standards.geographic.Country;
-import pt.ist.standards.geographic.Place;
-import pt.ist.standards.geographic.Planet;
-
 public class TreasuryGeographicInfoLoader {
 
     public static final String PRT = "PRT";
-    private static TreasuryGeographicInfoLoader geographicInfoLoader;
+    private static TreasuryGeographicInfoLoader geographicInfoLoader = new TreasuryGeographicInfoLoader();
     private final Planet earth;
 
     private TreasuryGeographicInfoLoader() {
@@ -72,10 +68,7 @@ public class TreasuryGeographicInfoLoader {
         return earth.getPlaces().stream();
     }
 
-    synchronized public static TreasuryGeographicInfoLoader getInstance() {
-        if (geographicInfoLoader == null) {
-            geographicInfoLoader = new TreasuryGeographicInfoLoader();
-        }
+    public static TreasuryGeographicInfoLoader getInstance() {
         return geographicInfoLoader;
     }
 

@@ -102,12 +102,8 @@ public class TreasurySettings extends TreasurySettings_Base {
     }
 
     @Atomic
-    public synchronized static TreasurySettings getInstance() {
-        if (!findUnique().isPresent()) {
-            TreasurySettings settings = new TreasurySettings();
-        }
-
-        return findUnique().get();
+    public static TreasurySettings getInstance() {
+        return findUnique().orElseGet(() -> new TreasurySettings());
     }
 
     @Override
