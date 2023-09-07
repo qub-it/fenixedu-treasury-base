@@ -358,6 +358,10 @@ class document.FinantialDocument {
 		Boolean certificationCopyFromCertifiedDocument;
 		InvoiceSourceBillingType certificationOriginalDocumentInvoiceSourceBillingType;
 		LocalDate certificationOriginalDocumentDate;
+		DateTime certificationOriginalDocumentSystemEntryDate;
+		String certificationOriginalDocumentSourceId;
+		String certificationOriginalDocumentOriginalInvoiceType;
+		String certificationOriginalDocumentOriginalEacCode;
 		String certificationOriginalDocumentHash;
 		String certificationOriginalDocumentType;
 		String certificationOriginalDocumentSeries;
@@ -366,8 +370,10 @@ class document.FinantialDocument {
 		Boolean certificationOriginalDocumentManual;
 		String certificationOriginalDocumentCertificateNumber;
 		String certificationOriginalDocumentPrivateKeyVersion;
-		DateTime certificationOriginalDocumentSystemEntryDate;
-		String certificationOriginalDocumentATCUD;
+		String certificationOriginalDocumentAtcud;
+		DateTime certificationOriginalDocumentStatusInvoiceStatusDate;
+		String certificationOriginalDocumentStatusReason;
+		String certificationDocumentDocumentStatusSourceId;
 	}
 
 		class document.DebitNote extends document.Invoice {
