@@ -1,3 +1,4 @@
+11.3.3 (08-09-2023)
 - Improvement: Replace ForwardPayment::findAll by a global counter, to set the orderNumber which must be unique and sequential
 
 11.3.2 (06-09-2023)
