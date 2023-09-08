@@ -1,3 +1,4 @@
+11.3.4 (08-09-2023)
 - Improvement: Avoid invoking payline webservice, for payment request status, inside a write transaction
 
 11.3.3 (08-09-2023)
