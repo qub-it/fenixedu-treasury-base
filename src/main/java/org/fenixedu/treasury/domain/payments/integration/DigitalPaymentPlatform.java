@@ -105,7 +105,7 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
             throw new TreasuryDomainException("error.DigitalPaymentPlatform.name.required");
         }
     }
-
+    
     public boolean isSibsPaymentCodeServiceSupported() {
         return getDigitalPaymentPlatformPaymentModesSet().stream()
                 .anyMatch(m -> m.getPaymentMethod() == TreasurySettings.getInstance().getMbPaymentMethod());

@@ -71,8 +71,15 @@ public class TreasurySettings extends TreasurySettings_Base {
     protected TreasurySettings() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
+        setForwardPaymentOrderNumberCounter(0l);
     }
 
+    public Long incrementAndGetForwardPaymentOrderNumber() {
+        setForwardPaymentOrderNumberCounter(getForwardPaymentOrderNumberCounter() + 1);
+        
+        return getForwardPaymentOrderNumberCounter();
+    }
+    
     @Atomic
     public void edit(final Currency defaultCurrency, Product interestProduct, Product advancePaymentProduct,
             Integer numberOfPaymentPlansActivesPerStudent, Boolean canRegisterPaymentWithMultipleMethods) {

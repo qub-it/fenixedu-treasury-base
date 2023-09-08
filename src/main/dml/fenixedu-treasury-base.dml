@@ -1541,6 +1541,8 @@ class settings.TreasurySettings {
 	Integer numberOfPaymentPlansActivesPerStudent;
 	boolean canRegisterPaymentWithMultipleMethods;
 	String settlementNoteReceiptTemplateCode;
+	
+	Long forwardPaymentOrderNumberCounter;
 }
 
 	relation TreasurySettingsBennu {

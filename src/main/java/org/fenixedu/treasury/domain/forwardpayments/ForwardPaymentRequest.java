@@ -87,7 +87,7 @@ import com.google.common.collect.Maps;
 
 public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
 
-    private static final Comparator<? super ForwardPaymentRequest> ORDER_COMPARATOR = (o1,
+    public static final Comparator<? super ForwardPaymentRequest> ORDER_COMPARATOR = (o1,
             o2) -> Long.compare(o1.getOrderNumber(), o2.getOrderNumber()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
 
     public ForwardPaymentRequest() {
@@ -101,7 +101,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
                 TreasurySettings.getInstance().getCreditCardPaymentMethod());
 
         setState(ForwardPaymentStateType.CREATED);
-        setOrderNumber(lastForwardPayment().isPresent() ? lastForwardPayment().get().getOrderNumber() + 1 : 1);
+        setOrderNumber(TreasurySettings.getInstance().incrementAndGetForwardPaymentOrderNumber());
 
         checkRules();
     }
@@ -113,10 +113,6 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         if (getOrderNumber() <= 0) {
             throw new TreasuryDomainException("error.ForwardPaymentRequest.orderNumber.invalid");
         }
-    }
-
-    private static Optional<ForwardPaymentRequest> lastForwardPayment() {
-        return findAll().max(ORDER_COMPARATOR);
     }
 
     public boolean isActive() {
