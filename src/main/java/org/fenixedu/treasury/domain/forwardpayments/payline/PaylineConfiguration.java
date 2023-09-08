@@ -328,7 +328,6 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         return true;
     }
 
-    @Atomic
     public boolean processPayment(ForwardPaymentRequest forwardPayment, String action) {
 
         if (!isActionReturn(action)) {
@@ -337,7 +336,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
             String statusCode = response.getResultCode();
             String statusMessage =
                     treasuryBundle("label.PaylineImplementation.cancelled") + ": " + response.getResultLongMessage();
-            forwardPayment.reject(action, statusCode, statusMessage, response.getJsonRequest(), response.getJsonResponse());
+            reject(forwardPayment, action, statusCode, statusMessage, response.getJsonRequest(), response.getJsonResponse());
 
             return false;
         }
@@ -350,7 +349,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         final boolean success = TRANSACTION_APPROVED_CODE.equals(statusCode);
 
         if (!success) {
-            forwardPayment.reject(action, statusCode, statusMessage, response.getJsonRequest(), response.getJsonResponse());
+            reject(forwardPayment, action, statusCode, statusMessage, response.getJsonRequest(), response.getJsonResponse());
             return false;
         }
 
@@ -360,12 +359,26 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         final DateTime transactionDate = response.getTransactionDate();
         final BigDecimal paidAmount = response.getPaymentAmount();
 
-        forwardPayment.advanceToPaidState(statusCode, statusMessage, paidAmount, transactionDate, transactionId,
+        advanceToPaidState(forwardPayment, statusCode, statusMessage, paidAmount, transactionDate, transactionId,
                 authorizationNumber, response.getJsonRequest(), response.getJsonResponse(), null);
 
         return true;
     }
 
+    @Atomic
+    private PaymentRequestLog reject(ForwardPaymentRequest forwardPayment, String operationCode, String statusCode, String errorMessage, String requestBody,
+            String responseBody) {
+        return forwardPayment.reject(operationCode, statusCode, errorMessage, requestBody, responseBody);
+    }
+    
+    @Atomic
+    private PaymentRequestLog advanceToPaidState(ForwardPaymentRequest forwardPayment, String statusCode, String statusMessage, BigDecimal paidAmount,
+            DateTime transactionDate, String transactionId, String authorizationNumber, String requestBody, String responseBody,
+            String justification) {
+        return forwardPayment.advanceToPaidState(statusCode, statusMessage, paidAmount, transactionDate, transactionId,
+                authorizationNumber, requestBody, responseBody, null);
+    }
+    
     // @formatter:off
     /*
      * ********
