@@ -119,6 +119,12 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
         LocalDate dueDate = debitEntry.getDueDate();
 
+        return calculateFirstDateToApplyInterests(debitEntry, dueDate, postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday);
+    }
+
+    protected LocalDate calculateFirstDateToApplyInterests(DebitEntry debitEntry, LocalDate dueDate, boolean postponePaymentLimitDateToFirstWorkDate,
+            boolean applyPenaltyInFirstWorkday) {
+
         LocalDate lastDayToPay = dueDate;
         if (postponePaymentLimitDateToFirstWorkDate) {
             while (!isWorkday(debitEntry, lastDayToPay)) {

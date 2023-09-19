@@ -347,8 +347,8 @@ public class DebitNote extends DebitNote_Base {
 
                 final DebitEntry debitEntryCopy = debitEntriesMap.get(sourceDebitEntry);
                 sourceDebitEntry.getTreasuryExemptionsSet().forEach(exemption -> {
-                    TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
-                            exemption.getReason(), exemption.getNetAmountToExempt(), debitEntryCopy);
+                    TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getReason(),
+                            exemption.getNetAmountToExempt(), debitEntryCopy);
                 });
             }
         }
@@ -358,6 +358,10 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
+        if(!isPreparing()) {
+            throw new IllegalStateException("debit note is not in preparing state");
+        }
+        
         debitEntries.forEach(d -> {
             if (d.getFinantialDocument() != null && !d.getFinantialDocument().isPreparing()) {
                 throw new IllegalArgumentException("debit entry with finantial document that is not in preparing state");
@@ -738,8 +742,8 @@ public class DebitNote extends DebitNote_Base {
                     debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
 
             debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
-                TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), debitEntry.getTreasuryEvent(),
-                        treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry);
+                TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), treasuryExemption.getReason(),
+                        treasuryExemption.getNetAmountToExempt(), newDebitEntry);
             });
 
             newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),

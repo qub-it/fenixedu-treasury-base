@@ -319,7 +319,7 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         List<InterestRateBean> interestRateBeansList = getInterestRate().calculateInterests(whenToCalculate, false);
-        
+
         return interestRateBeansList;
     }
 
@@ -909,8 +909,8 @@ public class DebitEntry extends DebitEntry_Base {
 
         if (applyExemption) {
             debitEntryToCopy.getTreasuryExemptionsSet().forEach(exemption -> {
-                TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getTreasuryEvent(),
-                        exemption.getReason(), exemption.getNetAmountToExempt(), result);
+                TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getReason(),
+                        exemption.getNetAmountToExempt(), result);
             });
         }
 

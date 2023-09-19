@@ -138,10 +138,10 @@ public class BalanceTransferService {
         final Set<DebitNote> pendingDebitNotes = Sets.newHashSet();
         for (final InvoiceEntry invoiceEntry : objectDebtAccount.getPendingInvoiceEntriesSet()) {
 
-            if(TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(invoiceEntry)) {
+            if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(invoiceEntry)) {
                 throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
             }
-            
+
             if (invoiceEntry.isDebitNoteEntry()) {
                 final DebitEntry debitEntry = (DebitEntry) invoiceEntry;
                 if (debitEntry.getFinantialDocument() == null) {
@@ -344,7 +344,7 @@ public class BalanceTransferService {
 
                     }
 
-                    if(regulationCreditEntry.getFinantialDocument().isPreparing()) {
+                    if (regulationCreditEntry.getFinantialDocument().isPreparing()) {
                         regulationCreditEntry.getFinantialDocument().closeDocument();
                     }
 
@@ -421,8 +421,8 @@ public class BalanceTransferService {
                     debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
 
             debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
-                TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), debitEntry.getTreasuryEvent(),
-                        treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry);
+                TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), treasuryExemption.getReason(),
+                        treasuryExemption.getNetAmountToExempt(), newDebitEntry);
 
             });
 

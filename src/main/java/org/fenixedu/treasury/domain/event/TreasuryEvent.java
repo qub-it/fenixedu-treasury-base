@@ -597,6 +597,12 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return new LocalizedString();
     }
 
+    // ANIL 2023-09-17 : The exemptions can be retrieved with the associated active debit entries of
+    // this treasury event. No need for a relation
+    public Set<TreasuryExemption> getTreasuryExemptionsSet() {
+        return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream()).collect(Collectors.toSet());
+    }
+
     // @formatter: off
     /************
      * SERVICES *

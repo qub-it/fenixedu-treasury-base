@@ -79,8 +79,8 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected TreasuryExemption(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
-            final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
+    protected TreasuryExemption(final TreasuryExemptionType treasuryExemptionType, final String reason,
+            final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
         this();
 
         if (Boolean.TRUE.equals(debitEntry.getCalculatedAmountsOverriden())) {
@@ -94,7 +94,6 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         }
 
         setTreasuryExemptionType(treasuryExemptionType);
-        setTreasuryEvent(treasuryEvent);
         setReason(reason);
 
         /*
@@ -194,7 +193,6 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         super.setDomainRoot(null);
 
         super.setTreasuryExemptionType(null);
-        super.setTreasuryEvent(null);
         super.setProduct(null);
         super.setCreditEntry(null);
 
@@ -258,6 +256,12 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         super.setValueToExempt(value);
     }
 
+    // ANIL 2023-09-17 : The exemptions can be retrieved with the associated active debit entries of
+    // this treasury event. No need for a relation
+    public TreasuryEvent getTreasuryEvent() {
+        return super.getDebitEntry().getTreasuryEvent();
+    }
+
     // @formatter: off
     /************
      * SERVICES *
@@ -279,7 +283,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         // This statement was replaced by this
         // FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream().filter(t -> t.getTreasuryEvent() == treasuryEvent)
         //
-        
+
         return treasuryEvent.getTreasuryExemptionsSet().stream();
     }
 
@@ -297,18 +301,16 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     @Atomic
-    public static TreasuryExemption create(final TreasuryExemptionType treasuryExemptionType, final TreasuryEvent treasuryEvent,
-            final String reason, final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
-        return new TreasuryExemption(treasuryExemptionType, treasuryEvent, reason, netAmountToExempt, debitEntry);
+    public static TreasuryExemption create(final TreasuryExemptionType treasuryExemptionType, final String reason,
+            final BigDecimal netAmountToExempt, final DebitEntry debitEntry) {
+        return new TreasuryExemption(treasuryExemptionType, reason, netAmountToExempt, debitEntry);
     }
 
-    public static TreasuryExemption createForImportation(TreasuryExemptionType treasuryExemptionType,
-            Optional<TreasuryEvent> treasuryEvent, String reason, BigDecimal netAmountToExempt, DebitEntry debitEntry,
-            Optional<CreditEntry> creditEntry) {
+    public static TreasuryExemption createForImportation(TreasuryExemptionType treasuryExemptionType, String reason,
+            BigDecimal netAmountToExempt, DebitEntry debitEntry, Optional<CreditEntry> creditEntry) {
         TreasuryExemption treasuryExemption = new TreasuryExemption();
 
         treasuryExemption.setTreasuryExemptionType(treasuryExemptionType);
-        treasuryExemption.setTreasuryEvent(treasuryEvent.orElse(null));
         treasuryExemption.setReason(reason);
 
         /*

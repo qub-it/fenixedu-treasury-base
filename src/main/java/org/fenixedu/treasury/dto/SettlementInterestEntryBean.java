@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.VatType;
@@ -71,6 +72,7 @@ import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPay
 import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -88,6 +90,8 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
     private static final String INTEREST_STATIC = "interest";
 
     private static final String DESCRIPTION = "description";
+
+    private static final String INTEREST_DEBIT_ENTRY_DATE_TIME = "interestDebitEntryDateTime";
 
     private static final long serialVersionUID = 1L;
 
@@ -270,14 +274,23 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
         jsonObject.add(INTEREST_DESCRIPTION, new JsonPrimitive(interest2.getDescription()));
         jsonObject.add(AMOUNT, new JsonPrimitive(interest2.getInterestAmount()));
 
+        String interestDebitEntryDateTime = interest2.getInterestDebitEntryDateTime() != null ? interest2
+                .getInterestDebitEntryDateTime().toString(ISODateTimeFormat.dateTime()) : "";
+        jsonObject.add(INTEREST_DEBIT_ENTRY_DATE_TIME, new JsonPrimitive(interestDebitEntryDateTime));
+
         return jsonObject.toString();
     }
 
     private InterestRateBean deserializeInterest(JsonObject jsonObject) {
-
         InterestRateBean interestRateBean = new InterestRateBean();
         interestRateBean.setDescription(jsonObject.get(INTEREST_DESCRIPTION).getAsString());
         interestRateBean.setInterestAmount(jsonObject.get(AMOUNT).getAsBigDecimal());
+
+        if (StringUtils.isNotEmpty(jsonObject.get(INTEREST_DEBIT_ENTRY_DATE_TIME).getAsString())) {
+            String dateTimeSerializedValue = jsonObject.get(INTEREST_DEBIT_ENTRY_DATE_TIME).getAsString();
+            DateTime entryDateTime = ISODateTimeFormat.dateTime().parseDateTime(dateTimeSerializedValue);
+            interestRateBean.setInterestDebitEntryDateTime(entryDateTime);
+        }
 
         return interestRateBean;
     }

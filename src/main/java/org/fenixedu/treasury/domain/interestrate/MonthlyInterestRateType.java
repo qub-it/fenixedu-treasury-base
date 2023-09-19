@@ -112,14 +112,17 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             boolean postponePaymentLimitDateToFirstWorkDate, boolean applyPenaltyInFirstWorkday,
             LocalDate overridenFirstDayToApplyPenalty) {
 
-        LocalDate firstDayToApplyInterests = overridenFirstDayToApplyPenalty;
+        LocalDate firstDayToApplyInterests = calculateFirstDateToApplyInterests(debitEntry,
+                postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday);
 
-        if (firstDayToApplyInterests == null) {
-            firstDayToApplyInterests = calculateFirstDateToApplyInterests(debitEntry, postponePaymentLimitDateToFirstWorkDate,
-                    applyPenaltyInFirstWorkday);
+        LocalDate firstDayToApplyInterestsInMonth = overridenFirstDayToApplyPenalty;
+
+        if (firstDayToApplyInterestsInMonth == null) {
+            firstDayToApplyInterestsInMonth = calculateFirstDateToApplyInterests(debitEntry, dueDate,
+                    postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday);
         }
 
-        if (firstDayToApplyInterests.isAfter(paymentDate)) {
+        if (firstDayToApplyInterestsInMonth.isAfter(paymentDate)) {
             return null;
         }
 
@@ -147,7 +150,7 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             }
         }
 
-        interestRateBean.addDetail(interestAmount, firstDayToApplyInterests, null, BigDecimal.ZERO, debitEntry.getNetAmount(),
+        interestRateBean.addDetail(interestAmount, firstDayToApplyInterestsInMonth, null, BigDecimal.ZERO, debitEntry.getNetAmount(),
                 interestsPercentage);
 
         if (remainingInterestAmount.compareTo(BigDecimal.ZERO) < 0) {
@@ -157,7 +160,7 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
 
         interestRateBean.setDescription(interestRateBeanDescription);
         interestRateBean.setInterestAmount(remainingInterestAmount);
-        interestRateBean.setInterestDebitEntryDateTime(firstDayToApplyInterests.toDateTimeAtStartOfDay());
+        interestRateBean.setInterestDebitEntryDateTime(firstDayToApplyInterestsInMonth.toDateTimeAtStartOfDay());
         interestRateBean.setNumberOfDays(0);
         interestRateBean.setNumberOfMonths(1);
 

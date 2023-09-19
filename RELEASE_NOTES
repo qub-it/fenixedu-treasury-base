@@ -1,3 +1,8 @@
+- Refactor: Remove relation between TreasuryEvent and TreasuryExemption. the treasuryEvent can be infered in treasuryExemption by accessing the associated debitEntry
+- Bug Fix: Protect adding debit entries to debit note, by checking if the debit note is in preparing state
+- Bug Fix: In the monthly interest rate, calculate the first day to apply penalty in the month where the penalty debit entry is being created. Also associated as entryDate, this first day to apply the penalty
+- Bug Fix: Serialize the debitEntryEntryDateTime in SettlementInterestEntryBean, to take into account the interest debit entries necessary to create
+
 11.3.4 (08-09-2023)
 - Improvement: Avoid invoking payline webservice, for payment request status, inside a write transaction
 
