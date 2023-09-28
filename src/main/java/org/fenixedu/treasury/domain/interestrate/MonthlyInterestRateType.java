@@ -1,19 +1,23 @@
 package org.fenixedu.treasury.domain.interestrate;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
 import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -79,6 +83,11 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             public LocalDate getOverridenFirstDayToApplyInterests(int month) {
                 return null;
             }
+
+            public LocalizedString getInterestDebitEntryFormat() {
+                return new LocalizedString(TreasuryPlataformDependentServicesFactory.implementation().defaultLocale(),
+                        "${debitEntryDescription} (in ${monthOfPenaltyDate})");
+            };
         };
 
         return calculateInterests(debitEntry, paymentDate, withAllInterestValues, config);
@@ -102,7 +111,8 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
         return monthsIterationList.stream() //
                 .map(monthIteration -> calculateInterestRateBean(debitEntry, paymentDate, withAllInterestValues, monthIteration,
                         interestsPercentage, postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday,
-                        monthlyInterestRateConfig.getOverridenFirstDayToApplyInterests(monthIteration.getMonthOfYear()))) //
+                        monthlyInterestRateConfig.getOverridenFirstDayToApplyInterests(monthIteration.getMonthOfYear()),
+                        monthlyInterestRateConfig.getInterestDebitEntryFormat())) //
                 .filter(Objects::nonNull) //
                 .collect(Collectors.toList());
     }
@@ -110,7 +120,7 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
     private InterestRateBean calculateInterestRateBean(DebitEntry debitEntry, LocalDate paymentDate,
             boolean withAllInterestValues, LocalDate dueDate, BigDecimal interestsPercentage,
             boolean postponePaymentLimitDateToFirstWorkDate, boolean applyPenaltyInFirstWorkday,
-            LocalDate overridenFirstDayToApplyPenalty) {
+            LocalDate overridenFirstDayToApplyPenalty, LocalizedString interestDebitEntryFormat) {
 
         LocalDate firstDayToApplyInterests = calculateFirstDateToApplyInterests(debitEntry,
                 postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday);
@@ -126,11 +136,18 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             return null;
         }
 
-        BigDecimal interestAmount = Currency.getValueWithScale(debitEntry.getOpenAmount()
+        BigDecimal interestAmount = Currency.getValueWithScale(debitEntry.getAmountInDebt(firstDayToApplyInterestsInMonth)
                 .multiply(TreasuryConstants.divide(interestsPercentage, TreasuryConstants.HUNDRED_PERCENT)));
 
-        String interestRateBeanDescription =
-                String.format("Multa %s (em %s)", debitEntry.getDescription(), dueDate.toString("MMMM"));
+        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+
+        String interestRateBeanDescription = services.availableLocales().stream().map(locale -> {
+            Map<String, String> valueMap = new HashMap<String, String>();
+            valueMap.put("debitEntryDescription", debitEntry.getDescription());
+            valueMap.put("monthOfPenaltyDate", firstDayToApplyInterests.toString("MMMM", locale));
+
+            return new LocalizedString(locale, StrSubstitutor.replace(interestDebitEntryFormat.getContent(locale), valueMap));
+        }).reduce((a, c) -> a.append(c)).get().getContent(services.defaultLocale());
 
         InterestRateBean interestRateBean = new InterestRateBean(this);
 
@@ -140,7 +157,7 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             BigDecimal totalCreatedInterestDebitAmount = debitEntry.getInterestDebitEntriesSet().stream() //
                     .filter(d -> !d.isAnnulled()) //
                     .filter(d -> d.getEntryDateTime().getMonthOfYear() == dueDate.getMonthOfYear()) //
-                    .map(DebitEntry::getAvailableNetAmountForCredit) //
+                    .map(d -> d.getAvailableNetAmountForCredit().add(d.getNetExemptedAmount())) //
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             remainingInterestAmount = interestAmount.subtract(totalCreatedInterestDebitAmount);
@@ -150,8 +167,8 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
             }
         }
 
-        interestRateBean.addDetail(interestAmount, firstDayToApplyInterestsInMonth, null, BigDecimal.ZERO, debitEntry.getNetAmount(),
-                interestsPercentage);
+        interestRateBean.addDetail(interestAmount, firstDayToApplyInterestsInMonth, null, BigDecimal.ZERO,
+                debitEntry.getNetAmount(), interestsPercentage);
 
         if (remainingInterestAmount.compareTo(BigDecimal.ZERO) < 0) {
             // negative

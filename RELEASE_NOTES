@@ -1,3 +1,5 @@
+- Refactor: Replace hardcoded monthly penalty interest debit entry description, with debit entry format (#qubIT-Fenix-4374)
+
 11.4.0 (19-09-2023)
 - Refactor: Remove relation between TreasuryEvent and TreasuryExemption. the treasuryEvent can be infered in treasuryExemption by accessing the associated debitEntry
 - Bug Fix: Protect adding debit entries to debit note, by checking if the debit note is in preparing state
