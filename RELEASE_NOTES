@@ -1,3 +1,4 @@
+11.4.1 (28-09-2023)
 - Refactor: Replace hardcoded monthly penalty interest debit entry description, with debit entry format (#qubIT-Fenix-4374)
 
 11.4.0 (19-09-2023)
