@@ -173,6 +173,8 @@ public class SAPExporter implements IERPExporter {
     private static final int MAX_STREET_NAME = 90;
     private static final int MAX_BUSINESS_ID = 30;
 
+    private static final int MAX_SOURCE_ID = 30;
+
     public static final String SAFT_PT_ENCODING = "UTF-8";
     public final static String ERP_HEADER_VERSION_1_00_00 = "1.0.3";
 
@@ -458,9 +460,13 @@ public class SAPExporter implements IERPExporter {
                             .getFinantialTransactionReference() : "");
 
             //OriginDocumentNumber
-            String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
-            payment.setSourceID(!Strings.isNullOrEmpty(creator) ? creator : " ");
-
+            {
+                String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
+                String sourceId =
+                        !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : " ";
+                payment.setSourceID(sourceId);
+            }
+            
             // CustomerID
             payment.setCustomerID(document.getDebtAccount().getCustomer().getCode());
 
@@ -486,8 +492,10 @@ public class SAPExporter implements IERPExporter {
             if (versioningUpdateDate != null) {
                 status.setPaymentStatusDate(convertToXMLDateTime(dataTypeFactory, versioningUpdateDate));
                 // Utilizador responsável pelo estado atual do docu-mento.
-                status.setSourceID(
-                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document));
+                String versioningUpdatorUsername =
+                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document);
+                String sourceId = versioningUpdatorUsername != null ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(versioningUpdatorUsername).get(0) : " ";
+                status.setSourceID(sourceId);
             } else {
                 status.setPaymentStatusDate(payment.getSystemEntryDate());
                 // Utilizador responsável pelo estado atual do docu-mento.
@@ -784,8 +792,11 @@ public class SAPExporter implements IERPExporter {
             if (versioningUpdateDate != null) {
                 status.setWorkStatusDate(convertToXMLDateTime(dataTypeFactory, versioningUpdateDate));
                 // Utilizador responsável pelo estado atual do docu-mento.
-                status.setSourceID(
-                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document));
+                String versioningUpdatorUsername =
+                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document);
+                String sourceId = versioningUpdatorUsername != null ? Splitter.fixedLength(MAX_SOURCE_ID)
+                        .splitToList(versioningUpdatorUsername).get(0) : " ";
+                status.setSourceID(sourceId);
             } else {
                 status.setWorkStatusDate(workDocument.getSystemEntryDate());
                 // Utilizador responsável pelo estado atual do docu-mento.
@@ -845,7 +856,9 @@ public class SAPExporter implements IERPExporter {
 
             // SourceID
             String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
-            workDocument.setSourceID(!Strings.isNullOrEmpty(creator) ? creator : "");
+            String sourceId =
+                    !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : " ";
+            workDocument.setSourceID(sourceId);
 
         } catch (DatatypeConfigurationException e) {
 
@@ -1021,7 +1034,7 @@ public class SAPExporter implements IERPExporter {
         // is after the discount. It is safer to calculate the unit amount, as the net amount divided by the quantity.
         // The entry.getNetAmount() already takes into account the discount (which is kept in entry.getNetExemptedAmount())
         line.setUnitPrice(TreasuryConstants.divide(entry.getNetAmount(), entry.getQuantity()).setScale(4, RoundingMode.HALF_UP));
-        
+
         if (entry.getFinantialDocument().isExportedInLegacyERP()) {
             line.setUnitPrice(
                     SAPExporterUtils.openAmountAtDate(entry, ERP_INTEGRATION_START_DATE).setScale(2, RoundingMode.HALF_EVEN));
