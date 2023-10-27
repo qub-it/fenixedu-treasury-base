@@ -59,6 +59,10 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
     public abstract List<InterestRateBean> calculateAllInterestsByLockingAtDate(DebitEntry debitEntry, LocalDate lockDate);
 
+    public boolean isInterestRateTypeDefault() {
+        return TreasurySettings.getInstance().getDefaultInterestRateType() == this;
+    }
+
     public boolean isInterestRateTypeActive() {
         return getAvailableInterestRateTypesSortedByName().contains(this);
     }
@@ -119,11 +123,12 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
         LocalDate dueDate = debitEntry.getDueDate();
 
-        return calculateFirstDateToApplyInterests(debitEntry, dueDate, postponePaymentLimitDateToFirstWorkDate, applyPenaltyInFirstWorkday);
+        return calculateFirstDateToApplyInterests(debitEntry, dueDate, postponePaymentLimitDateToFirstWorkDate,
+                applyPenaltyInFirstWorkday);
     }
 
-    protected LocalDate calculateFirstDateToApplyInterests(DebitEntry debitEntry, LocalDate dueDate, boolean postponePaymentLimitDateToFirstWorkDate,
-            boolean applyPenaltyInFirstWorkday) {
+    protected LocalDate calculateFirstDateToApplyInterests(DebitEntry debitEntry, LocalDate dueDate,
+            boolean postponePaymentLimitDateToFirstWorkDate, boolean applyPenaltyInFirstWorkday) {
 
         LocalDate lastDayToPay = dueDate;
         if (postponePaymentLimitDateToFirstWorkDate) {
@@ -164,7 +169,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
     private boolean isHoliday(DebitEntry debitEntry, LocalDate date) {
         FinantialEntity finantialEntity = getFinantialEntity(debitEntry);
-        
+
         // Find if date is holiday with the FinantialEntity
         return false;
     }

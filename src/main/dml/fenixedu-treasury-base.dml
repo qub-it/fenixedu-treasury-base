@@ -12,6 +12,7 @@ enum org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType 									as P
 enum org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum								as AddictionsCalculeType;
 enum org.fenixedu.treasury.domain.InvoiceRegistrationMode                                           as InvoiceRegistrationMode;
 enum org.fenixedu.treasury.domain.document.InvoiceSourceBillingType                                 as InvoiceSourceBillingType;
+enum org.fenixedu.treasury.domain.document.PaymentSourcePaymentType                                 as PaymentSourcePaymentType;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -358,6 +359,9 @@ class document.FinantialDocument {
 		Boolean certificationCopyFromCertifiedDocument;
 		InvoiceSourceBillingType certificationOriginalDocumentInvoiceSourceBillingType;
 		LocalDate certificationOriginalDocumentDate;
+		DateTime certificationOriginalDocumentSystemEntryDate;
+		String certificationOriginalDocumentSourceId;
+		String certificationOriginalDocumentOriginalEacCode;
 		String certificationOriginalDocumentHash;
 		String certificationOriginalDocumentType;
 		String certificationOriginalDocumentSeries;
@@ -366,7 +370,10 @@ class document.FinantialDocument {
 		Boolean certificationOriginalDocumentManual;
 		String certificationOriginalDocumentCertificateNumber;
 		String certificationOriginalDocumentPrivateKeyVersion;
-		DateTime certificationOriginalDocumentSystemEntryDate;
+		String certificationOriginalDocumentAtcud;
+		DateTime certificationOriginalDocumentStatusInvoiceStatusDate;
+		String certificationOriginalDocumentStatusReason;
+		String certificationOriginalDocumentDocumentStatusSourceId;
 	}
 
 		class document.DebitNote extends document.Invoice {
@@ -384,6 +391,19 @@ class document.FinantialDocument {
 	   boolean advancePaymentSetByUser;
 	   String finantialTransactionReference;
 	   boolean usedInBalanceTransfer;
+	   
+	   Boolean certificationCopyFromCertifiedPayment;
+	   PaymentSourcePaymentType certificationOriginalDocumentPaymentSourcePaymentType;
+       LocalDate certificationOriginalTransactionDate;
+       DateTime certificationOriginalDocumentSystemEntryDate;
+	   String certificationOriginalDocumentSourceId;
+       String certificationOriginalDocumentType;
+       String certificationOriginalDocumentSeries;
+       Integer certificationOriginalDocumentNumber;
+       String certificationOriginalDocumentAtcud;
+       DateTime certificationOriginalDocumentStatusPaymentStatusDate;
+       String certificationOriginalDocumentStatusReason;
+       String certificationOriginalDocumentDocumentStatusSourceId;
 	}
 
 class document.FinantialDocumentEntry {

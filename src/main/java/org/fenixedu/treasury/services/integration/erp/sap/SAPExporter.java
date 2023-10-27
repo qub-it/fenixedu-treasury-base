@@ -466,7 +466,7 @@ public class SAPExporter implements IERPExporter {
                         !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : " ";
                 payment.setSourceID(sourceId);
             }
-            
+
             // CustomerID
             payment.setCustomerID(document.getDebtAccount().getCustomer().getCode());
 
@@ -494,7 +494,8 @@ public class SAPExporter implements IERPExporter {
                 // Utilizador responsável pelo estado atual do docu-mento.
                 String versioningUpdatorUsername =
                         TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document);
-                String sourceId = versioningUpdatorUsername != null ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(versioningUpdatorUsername).get(0) : " ";
+                String sourceId = versioningUpdatorUsername != null ? Splitter.fixedLength(MAX_SOURCE_ID)
+                        .splitToList(versioningUpdatorUsername).get(0) : " ";
                 status.setSourceID(sourceId);
             } else {
                 status.setPaymentStatusDate(payment.getSystemEntryDate());
@@ -857,7 +858,7 @@ public class SAPExporter implements IERPExporter {
             // SourceID
             String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
             String sourceId =
-                    !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : " ";
+                    !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : "";
             workDocument.setSourceID(sourceId);
 
         } catch (DatatypeConfigurationException e) {
