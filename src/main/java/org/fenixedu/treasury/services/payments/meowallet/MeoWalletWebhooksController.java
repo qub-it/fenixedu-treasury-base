@@ -95,9 +95,7 @@ public class MeoWalletWebhooksController {
     public Response notification(String body, @Context HttpServletRequest httpRequest, @Context HttpServletResponse response) {
         MeoWalletLog log = createLog();
 
-        FenixFramework.atomic(() -> {
-            log.saveRequest(body);
-        });
+        FenixFramework.atomic(() -> log.saveRequest(body));
 
         Gson s = new GsonBuilder()
                 .registerTypeAdapter(DateTime.class,
@@ -130,8 +128,8 @@ public class MeoWalletWebhooksController {
 
             if (referenceCodeOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) referenceCodeOptional.get().getDigitalPaymentPlatform();
-                
-                if(!digitalPaymentPlatform.isActive()) {
+
+                if (!digitalPaymentPlatform.isActive()) {
                     throw new Exception("MeoWallet not active, payment will not be processed");
                 }
 
@@ -149,7 +147,7 @@ public class MeoWalletWebhooksController {
             } else if (mbwayPaymentRequestOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) mbwayPaymentRequestOptional.get().getDigitalPaymentPlatform();
 
-                if(!digitalPaymentPlatform.isActive()) {
+                if (!digitalPaymentPlatform.isActive()) {
                     throw new Exception("MeoWallet not active, payment will not be processed");
                 }
 
@@ -166,7 +164,7 @@ public class MeoWalletWebhooksController {
             } else if (forwardPaymentRequesteOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) forwardPaymentRequesteOptional.get().getDigitalPaymentPlatform();
 
-                if(!digitalPaymentPlatform.isActive()) {
+                if (!digitalPaymentPlatform.isActive()) {
                     throw new Exception("MeoWallet not active, payment will not be processed");
                 }
 

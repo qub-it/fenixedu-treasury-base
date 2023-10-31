@@ -52,22 +52,14 @@
  */
 package org.fenixedu.treasury.domain.sibspaymentsgateway;
 
-import java.math.BigDecimal;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.joda.time.DateTime;
 
 public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
-
-    public static final String REQUEST_PAYMENT_CODE = "sibsMbPaymentRequest";
-    public static final String MBWAY_REQUEST_PAYMENT = "mbwayPaymentRequest";
-    public static final String WEBHOOK_NOTIFICATION = "WEBHOOK_NOTIFICATION";
 
     public static final String OCTECT_STREAM_CONTENT_TYPE = "application/octet-stream";
 
@@ -92,11 +84,11 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
         checkRules();
     }
 
-    public SibsPaymentsGatewayLog(PaymentRequest paymentRequest, String statusCode, LocalizedString statusDescription) {
+    public SibsPaymentsGatewayLog(PaymentRequest paymentRequest, String stateCode, LocalizedString stateDescription) {
         this();
         setPaymentRequest(paymentRequest);
-        setStateCode(statusCode);
-        setStateDescription(statusDescription);
+        setStateCode(stateCode);
+        setStateDescription(stateDescription);
     }
 
     private void checkRules() {
@@ -111,48 +103,9 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
         return super.getOperationSuccess();
     }
 
-    public void savePaymentInfo(BigDecimal amount, DateTime paymentDate) {
-        setAmount(amount);
-        setPaymentDate(paymentDate);
-    }
-
-    public void savePaymentTypeAndBrand(String paymentType, String paymentBrand) {
-        setPaymentType(paymentType);
-        setPaymentBrand(paymentBrand);
-    }
-
     public void markAsDuplicatedTransaction() {
         setSibsTransactionDuplicated(true);
-    }
-
-    public void logRequestSendDate() {
-        setRequestSendDate(new DateTime());
-    }
-
-    public void logRequestReceiveDateAndData(String transactionId, boolean operationSuccess, boolean transactionPaid,
-            String operationResultCode, String operationResultDescription) {
-        setRequestReceiveDate(new DateTime());
-        setSibsGatewayTransactionId(transactionId);
-        setOperationSuccess(operationSuccess);
-        setTransactionWithPayment(transactionPaid);
-        setStatusCode(operationResultCode);
-        setStatusMessage(operationResultDescription);
-    }
-
-    public void saveWebhookNotificationData(String notificationInitializationVector, String notificationAuthenticationTag,
-            String notificationEncryptedPayload) {
-        final ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-
-        setNotificationInitializationVector(notificationInitializationVector);
-        setNotificationAuthTag(notificationAuthenticationTag);
-
-        if (notificationEncryptedPayload != null) {
-            final String notificationEncryptedPayloadFileId = implementation.createFile(
-                    String.format("sibsOnlinePaymentsGatewayLog-notificationEncryptedPayload-%s.txt", getExternalId()),
-                    OCTECT_STREAM_CONTENT_TYPE, notificationEncryptedPayload.getBytes());
-
-            setNotificationEncryptedPayloadFileId(notificationEncryptedPayloadFileId);
-        }
+        super.markAsDuplicatedTransaction();
     }
 
     public void saveMerchantTransactionId(String merchantTransactionId) {
@@ -171,10 +124,22 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
     public String getInternalMerchantTransactionId() {
         return super.getSibsGatewayMerchantTransactionId();
     }
-    
+
     @Override
     public String getExternalTransactionId() {
         return super.getSibsGatewayTransactionId();
+    }
+
+    @Override
+    public void setSibsGatewayMerchantTransactionId(String sibsGatewayMerchantTransactionId) {
+        super.setSibsGatewayMerchantTransactionId(sibsGatewayMerchantTransactionId);
+        super.setInternalMerchantTransactionId(sibsGatewayMerchantTransactionId);
+    }
+
+    @Override
+    public void setSibsGatewayTransactionId(String sibsGatewayTransactionId) {
+        super.setSibsGatewayTransactionId(sibsGatewayTransactionId);
+        super.setExternalTransactionId(sibsGatewayTransactionId);
     }
 
     // @formatter:off
@@ -191,7 +156,7 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
     }
 
     public static SibsPaymentsGatewayLog createForSibsPaymentRequest(String sibsGatewayMerchantTransactionId) {
-        SibsPaymentsGatewayLog log = new SibsPaymentsGatewayLog(REQUEST_PAYMENT_CODE, sibsGatewayMerchantTransactionId);
+        SibsPaymentsGatewayLog log = new SibsPaymentsGatewayLog("sibsMbPaymentRequest", sibsGatewayMerchantTransactionId);
         log.setStateCode(PaymentReferenceCodeStateType.UNUSED.getCode());
         log.setStateDescription(PaymentReferenceCodeStateType.UNUSED.getDescriptionI18N());
 
@@ -199,7 +164,7 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
     }
 
     public static SibsPaymentsGatewayLog createForMbwayPaymentRequest(String sibsGatewayMerchantTransactionId) {
-        SibsPaymentsGatewayLog log = new SibsPaymentsGatewayLog(MBWAY_REQUEST_PAYMENT, sibsGatewayMerchantTransactionId);
+        SibsPaymentsGatewayLog log = new SibsPaymentsGatewayLog("mbwayPaymentRequest", sibsGatewayMerchantTransactionId);
         log.setStateCode(PaymentReferenceCodeStateType.UNUSED.getCode());
         log.setStateDescription(PaymentReferenceCodeStateType.UNUSED.getDescriptionI18N());
 
@@ -207,7 +172,7 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
     }
 
     public static SibsPaymentsGatewayLog createLogForWebhookNotification() {
-        return new SibsPaymentsGatewayLog(WEBHOOK_NOTIFICATION);
+        return new SibsPaymentsGatewayLog("WEBHOOK_NOTIFICATION");
     }
 
     public static SibsPaymentsGatewayLog create(PaymentRequest paymentRequest, String sibsGatewayMerchantTransactionId) {
@@ -219,8 +184,8 @@ public class SibsPaymentsGatewayLog extends SibsPaymentsGatewayLog_Base {
         return log;
     }
 
-    public static SibsPaymentsGatewayLog createPaymentRequestLog(PaymentRequest paymentRequest, String statusCode,
-            LocalizedString statusDescription) {
-        return new SibsPaymentsGatewayLog(paymentRequest, statusCode, statusDescription);
+    public static SibsPaymentsGatewayLog createPaymentRequestLog(PaymentRequest paymentRequest, String stateCode,
+            LocalizedString stateDescription) {
+        return new SibsPaymentsGatewayLog(paymentRequest, stateCode, stateDescription);
     }
 }

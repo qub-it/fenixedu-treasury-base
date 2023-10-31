@@ -60,7 +60,7 @@ import org.joda.time.DateTime;
 
 public class ForwardPaymentStatusBean {
 
-    private boolean invocationSuccess;
+    private boolean operationSuccess;
 
     private ForwardPaymentStateType stateType;
 
@@ -80,10 +80,10 @@ public class ForwardPaymentStatusBean {
 
     private String sibsOnlinePaymentBrands;
 
-    public ForwardPaymentStatusBean(boolean invocationSuccess, ForwardPaymentStateType type, String statusCode,
+    public ForwardPaymentStatusBean(boolean operationSuccess, ForwardPaymentStateType paymentStateType, String statusCode,
             String statusMessage, String requestBody, String responseBody) {
-        this.invocationSuccess = invocationSuccess;
-        this.stateType = type;
+        this.operationSuccess = operationSuccess;
+        this.stateType = paymentStateType;
         this.statusCode = statusCode;
         this.statusMessage = statusMessage;
         this.requestBody = requestBody;
@@ -124,8 +124,8 @@ public class ForwardPaymentStatusBean {
      */
     // @formatter:on
 
-    public boolean isInvocationSuccess() {
-        return invocationSuccess;
+    public boolean isOperationSuccess() {
+        return operationSuccess;
     }
 
     public ForwardPaymentStateType getStateType() {

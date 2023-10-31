@@ -78,7 +78,6 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         setOperationCode(operationCode);
         setExtInvoiceId(extInvoiceId);
         setExtCustomerId(extCustomerId);
-        checkRules();
     }
 
     public MeoWalletLog(PaymentRequest paymentRequest, String statusCode, LocalizedString stateDescription) {
@@ -88,12 +87,7 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         setStateDescription(stateDescription);
     }
 
-    private void checkRules() {
-
-    }
-
-// Give it a look to check if the method is the way you want!
-    @pt.ist.fenixframework.Atomic
+    @Atomic
     public void delete() {
         super.deleteDomainObject();
     }
@@ -120,10 +114,6 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         return log;
     }
 
-    public void logRequestSendDate() {
-        setRequestSendDate(new DateTime());
-    }
-
     public void logRequestReceiveDateAndData(String id, String type, String method, BigDecimal amount, String status,
             boolean operationSucess) {
         setRequestReceiveDate(new DateTime());
@@ -140,20 +130,28 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         setAmount(paidAmount);
     }
 
-    public void markAsDuplicatedTransaction() {
-        setTransactionDuplicated(true);
-    }
-
     @Override
     public String getInternalMerchantTransactionId() {
         return super.getExtInvoiceId();
     }
-    
+
     @Override
     public String getExternalTransactionId() {
         return super.getMeoWalletId();
     }
-    
+
+    @Override
+    public void setExtInvoiceId(String extInvoiceId) {
+        super.setExtInvoiceId(extInvoiceId);
+        super.setInternalMerchantTransactionId(extInvoiceId);
+    }
+
+    @Override
+    public void setMeoWalletId(String meoWalletId) {
+        super.setMeoWalletId(meoWalletId);
+        super.setExternalTransactionId(meoWalletId);
+    }
+
     // @formatter:off
     /*
      * ********

@@ -906,18 +906,44 @@ class payments.PaymentTransaction {
 
 class payments.PaymentRequestLog {
 	DateTime creationDate;
+
 	String responsibleUsername;	
+
 	String stateCode;
 	LocalizedStringT stateDescription;
+
 	String operationCode;
+
 	String statusCode;
 	String statusMessage;
+
 	boolean operationSuccess;
 	boolean transactionWithPayment;
 	boolean exceptionOccured;
+
 	String authorizationId;
 	DateTime authorizationDate;
+
 	String migrationCode;
+	
+	DateTime requestSendDate;
+	DateTime requestReceiveDate;
+	
+	BigDecimalT amount;
+	DateTime paymentDate;
+	String paymentType;
+	
+	String paymentBrand;
+	String paymentMethod;
+	
+	boolean transactionDuplicated;
+	
+	String internalMerchantTransactionId;
+	String externalTransactionId;
+	
+	String notificationInitializationVector;
+	String notificationAuthTag;
+	String notificationEncryptedPayloadFileId;
 }
 	
 	relation PaymentRequestLogDomainRoot {
@@ -2568,6 +2594,9 @@ class forwardpayments.ForwardPaymentRequest extends payments.PaymentRequest {
 	String returnForwardPaymentUrlChecksum;
 	String redirectUrl;
 	String checkoutId;
+	
+	// SIBS PAY
+	String formContext;	
 }
 
 // deprecated
@@ -2875,25 +2904,11 @@ class sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway {
 	}
 	
 class sibspaymentsgateway.SibsPaymentsGatewayLog extends payments.PaymentRequestLog {
-	
 	String sibsGatewayMerchantTransactionId;
 	String sibsGatewayTransactionId;
 	String sibsGatewayReferenceId;
 	String paymentCode;
 	String referenceId;
-	
-	String paymentType;
-	String paymentBrand;
-	
-	BigDecimalT amount;
-	DateTime paymentDate;
-
-	DateTime requestSendDate;
-	DateTime requestReceiveDate;
-	
-	String notificationInitializationVector;
-	String notificationAuthTag;
-	String notificationEncryptedPayloadFileId;
 	
 	boolean sibsTransactionDuplicated;
 }
@@ -3434,24 +3449,26 @@ class meowallet.MeoWallet extends payments.integration.DigitalPaymentPlatform {
 }
 
 class meowallet.MeoWalletLog extends payments.PaymentRequestLog {
-	
 	String extCustomerId;
 	String extInvoiceId;
 	String meoWalletId;
 	
-	String paymentType;
-	String paymentMethod;
 	String paymentStatus;
-	
-	DateTime requestSendDate;
-	DateTime requestReceiveDate;
-	DateTime paymentDate;
-	
-	BigDecimalT amount;	
-	
-	boolean transactionDuplicated;
 }
 
+
+/***********
+* SIBS PAY
+*************/
+
+class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatform {
+	String clientId;
+	Integer terminalId;
+	String bearerToken;
+	String secretKey;
+	String entityReferenceCode;
+	String endpointUrl;
+}
 
 /*************************
 * PaymentMethodReference *
@@ -3562,14 +3579,6 @@ class paymentpenalty.PaymentPenaltyTaxTreasuryEvent extends event.TreasuryEvent 
 
 	
 class paypal.PayPal extends payments.integration.DigitalPaymentPlatform {
-	//String name;
-	//boolean active;
-	//String migrationCode;
-	
-	//Boolean overrideFinantialInstitutionInfoHeader;
-	// Save data in rich text
-	//LocalizedStringT finantialInstitutionInfoHeader;
-	
 	String accountId;
 	String secret;
 	String mode;
@@ -3578,17 +3587,7 @@ class paypal.PayPal extends payments.integration.DigitalPaymentPlatform {
 class paypal.PayPalLog extends payments.PaymentRequestLog {
 	String payPalId;
 	
-	String paymentType;
-	String paymentMethod;
 	String paymentStatus;
-	
-	DateTime requestSendDate;
-	DateTime requestReceiveDate;
-	DateTime paymentDate;
-	
-	BigDecimalT amount;	
-	
-	boolean transactionDuplicated;
 }	
 
 /* Interest Rate Type availability */

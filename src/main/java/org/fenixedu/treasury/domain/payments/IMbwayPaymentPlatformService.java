@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.payments;
 
-import java.util.List;
 import java.util.Set;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
@@ -70,11 +69,16 @@ public interface IMbwayPaymentPlatformService {
     public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
             String countryPrefix, String localPhoneNumber);
 
+    @Deprecated
+    /*
+     * TODO ANIL 2023-10-25: There are many ways to create a payment request log,
+     * which is confusing. There should be a cleanup in the various methods to
+     * create a payment request log (and in derivate classes)
+     * 
+     */
     public PaymentRequestLog createLogForWebhookNotification();
 
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
-
-    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
 
     public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
 

@@ -25,6 +25,22 @@ public class PayPalLog extends PayPalLog_Base {
         setStateDescription(stateDescription);
     }
 
+    @Override
+    public String getInternalMerchantTransactionId() {
+        return null;
+    }
+
+    @Override
+    public String getExternalTransactionId() {
+        return super.getPayPalId();
+    }
+
+    @Override
+    public void setPayPalId(String payPalId) {
+        super.setPayPalId(payPalId);
+        super.setExternalTransactionId(payPalId);
+    }
+
     public void savePaymentInfo(BigDecimal payedAmount, DateTime transactionDate) {
         setPaymentDate(transactionDate);
         setAmount(payedAmount);

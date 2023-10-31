@@ -63,7 +63,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.fenixedu.treasury.domain.PaymentMethodReference;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -166,8 +165,9 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
             String responseBody) {
         setState(ForwardPaymentStateType.REJECTED);
 
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, errorMessage, requestBody, responseBody);
-        log.setOperationCode(operationCode);
+        PaymentRequestLog log =
+                getDigitalPaymentPlatform().log(this, operationCode, statusCode, errorMessage, requestBody, responseBody);
+
         log.setOperationSuccess(false);
         log.setTransactionWithPayment(false);
 
@@ -182,49 +182,27 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         checkRules();
     }
 
+    @Deprecated
+    /*
+     * Log should be created outside
+     * 
+     * TODO ANIL 2023-08-31: Replace by #advanceToRequestState(String operationCode, PaymentRequestLog log)
+     */
     public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage,
             String requestBody, String responseBody) {
         setState(ForwardPaymentStateType.REQUESTED);
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
-        log.setOperationCode(operationCode);
+        PaymentRequestLog log =
+                getDigitalPaymentPlatform().log(this, operationCode, statusCode, statusMessage, requestBody, responseBody);
 
         checkRules();
 
         return log;
     }
 
-    public PaymentRequestLog advanceToAuthenticatedState(String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
-        setState(ForwardPaymentStateType.AUTHENTICATED);
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
-        log.setOperationCode("advanceToAuthenticatedState");
+    public void advanceToRequestState() {
+        setState(ForwardPaymentStateType.REQUESTED);
 
         checkRules();
-
-        return log;
-    }
-
-    public PaymentRequestLog advanceToAuthorizedState(String statusCode, String errorMessage, String requestBody,
-            String responseBody) {
-        if (!isActive()) {
-            throw new TreasuryDomainException("error.ForwardPayment.not.in.active.state");
-        }
-
-        if (isInAuthorizedState()) {
-            throw new TreasuryDomainException("error.ForwardPayment.already.authorized");
-        }
-
-        if (isInPaidState()) {
-            throw new ForwardPaymentAlreadyPayedException("error.ForwardPayment.already.payed");
-        }
-
-        setState(ForwardPaymentStateType.AUTHORIZED);
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, errorMessage, requestBody, responseBody);
-        log.setOperationCode("advanceToAuthorizedState");
-
-        checkRules();
-
-        return log;
     }
 
     @Deprecated
@@ -246,9 +224,9 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
 
         setState(ForwardPaymentStateType.PAYED);
 
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
+        PaymentRequestLog log =
+                getDigitalPaymentPlatform().log(this, "advanceToPaidState", statusCode, statusMessage, requestBody, responseBody);
 
-        log.setOperationCode("advanceToPaidState");
         log.setOperationSuccess(true);
         log.setTransactionWithPayment(true);
 

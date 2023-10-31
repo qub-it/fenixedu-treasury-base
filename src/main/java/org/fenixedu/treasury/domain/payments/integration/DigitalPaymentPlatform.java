@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.domain.payments.integration;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,6 +61,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -72,6 +74,8 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 
 import com.google.common.base.Strings;
 
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
 public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base {
@@ -105,7 +109,7 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
             throw new TreasuryDomainException("error.DigitalPaymentPlatform.name.required");
         }
     }
-    
+
     public boolean isSibsPaymentCodeServiceSupported() {
         return getDigitalPaymentPlatformPaymentModesSet().stream()
                 .anyMatch(m -> m.getPaymentMethod() == TreasurySettings.getInstance().getMbPaymentMethod());
@@ -165,9 +169,11 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         }
     }
 
-    public PaymentRequestLog log(PaymentRequest paymentRequest, String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
-        final PaymentRequestLog log = log(paymentRequest);
+    @Atomic(mode = TxMode.WRITE)
+    public PaymentRequestLog log(PaymentRequest paymentRequest, String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
+        final PaymentRequestLog log = PaymentRequestLog.create(paymentRequest, operationCode,
+                paymentRequest.getCurrentState().getCode(), paymentRequest.getCurrentState().getLocalizedName());
 
         log.setStatusCode(statusCode);
         log.setStatusMessage(statusMessage);
@@ -183,18 +189,12 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         return log;
     }
 
-    /*
-    public PaymentRequestLog logException(PaymentRequest paymentRequest, Exception e) {
-        PaymentRequestLog log = log(paymentRequest);
-        log.logException(e);
-    
-        return log;
-    }
-    */
+    public PaymentRequestLog logException(PaymentRequest paymentRequest, Exception e, String operationCode, String statusCode,
+            String statusMessage, String requestBody, String responseBody) {
+        PaymentRequestLog log = log(paymentRequest, operationCode, statusCode, statusMessage, requestBody, responseBody);
 
-    public PaymentRequestLog log(PaymentRequest paymentRequest) {
-        return PaymentRequestLog.create(paymentRequest, paymentRequest.getCurrentState().getCode(),
-                paymentRequest.getCurrentState().getLocalizedName());
+        log.logException(e);
+        return log;
     }
 
     public void updateFinantialInstitutionInfoHeader(boolean overrideFinantialInstitutionInfoHeader,
@@ -218,6 +218,9 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         super.setOverrideFinantialInstitutionInfoHeader(overrideFinantialInstitutionInfoHeader);
         super.setFinantialInstitutionInfoHeader(finantialInstitutionInfoHeader);
     }
+
+    public abstract List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(
+            String merchantTransationId);
 
     // @formatter:off
     /*

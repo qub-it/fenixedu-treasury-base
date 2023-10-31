@@ -146,7 +146,7 @@ public class MeoWallet extends MeoWallet_Base
     }
 
     @Override
-    @pt.ist.fenixframework.Atomic
+    @Atomic
     public void delete() {
         super.delete();
         super.deleteDomainObject();
@@ -749,11 +749,12 @@ public class MeoWallet extends MeoWallet_Base
     }
 
     @Override
-    public PaymentRequestLog log(PaymentRequest paymentRequest, String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
+    public PaymentRequestLog log(PaymentRequest paymentRequest, String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
         final MeoWalletLog log = MeoWalletLog.createPaymentRequestLog(paymentRequest, paymentRequest.getCurrentState().getCode(),
                 paymentRequest.getCurrentState().getLocalizedName());
 
+        log.setOperationCode(operationCode);
         log.setExtInvoiceId(paymentRequest.getMerchantTransactionId());
         log.setMeoWalletId(paymentRequest.getTransactionId());
 
@@ -813,7 +814,7 @@ public class MeoWallet extends MeoWallet_Base
                     resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
 
             FenixFramework.atomic(() -> {
-                if (!result.isInvocationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
+                if (!result.isOperationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
                     MeoWalletLog log = (MeoWalletLog) forwardPayment.reject("prepareCheckout",
                             resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
                             resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
@@ -826,7 +827,7 @@ public class MeoWallet extends MeoWallet_Base
                             resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
                             resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
 
-                    log.setOperationSuccess(result.isInvocationSuccess());
+                    log.setOperationSuccess(result.isOperationSuccess());
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
                 }
@@ -835,7 +836,6 @@ public class MeoWallet extends MeoWallet_Base
             return result;
 
         } catch (final Exception e) {
-
             FenixFramework.atomic(() -> {
                 String requestBody = null;
                 String responseBody = null;
@@ -845,15 +845,7 @@ public class MeoWallet extends MeoWallet_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "prepareCheckout", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -916,16 +908,7 @@ public class MeoWallet extends MeoWallet_Base
                 }
 
                 if (!"ERRO".equals(e.getMessage())) {
-                    PaymentRequestLog log = forwardPayment.logException(e);
-                    log.setOperationCode("paymentStatus");
-
-                    if (!StringUtils.isEmpty(requestBody)) {
-                        log.saveRequest(requestBody);
-                    }
-
-                    if (!StringUtils.isEmpty(responseBody)) {
-                        log.saveResponse(responseBody);
-                    }
+                    logException(forwardPayment, e, "paymentStatus", "error", "error", requestBody, responseBody);
                 }
             });
 
@@ -995,14 +978,8 @@ public class MeoWallet extends MeoWallet_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                PaymentRequestLog log =
+                        logException(forwardPayment, e, "processPaymentStatus", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -1122,14 +1099,7 @@ public class MeoWallet extends MeoWallet_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log2 = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "processForwardPaymentFromWebhook", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,

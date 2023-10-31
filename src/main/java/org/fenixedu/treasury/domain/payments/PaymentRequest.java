@@ -448,20 +448,6 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
 
     }
 
-    public PaymentRequestLog logException(Exception e) {
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this);
-        log.logException(e);
-
-        return log;
-    }
-
-    public PaymentRequestLog logException(Exception e, String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
-        PaymentRequestLog log = getDigitalPaymentPlatform().log(this, statusCode, statusMessage, requestBody, responseBody);
-        log.logException(e);
-        return log;
-    }
-
     // @formatter:off
     /*
      * ********

@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.domain.sibspaymentsgateway.integration;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -197,11 +196,13 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     public static final String RETURN_FORWARD_PAYMENT_URL = CONTROLLER_URL + RETURN_FORWARD_PAYMENT_URI;
 
     @Override
-    public PaymentRequestLog log(PaymentRequest paymentRequest, String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
-        final SibsPaymentsGatewayLog log = SibsPaymentsGatewayLog.createPaymentRequestLog(paymentRequest,
+    public PaymentRequestLog log(PaymentRequest paymentRequest, String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
+
+        SibsPaymentsGatewayLog log = SibsPaymentsGatewayLog.createPaymentRequestLog(paymentRequest,
                 paymentRequest.getCurrentState().getCode(), paymentRequest.getCurrentState().getLocalizedName());
 
+        log.setOperationCode(operationCode);
         log.setStatusCode(statusCode);
         log.setStatusMessage(statusMessage);
 
@@ -258,7 +259,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             });
 
             FenixFramework.atomic(() -> {
-                if (!result.isInvocationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
+                if (!result.isOperationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
                     SibsPaymentsGatewayLog log = (SibsPaymentsGatewayLog) forwardPayment.reject("prepareCheckout",
                             checkoutBean.getPaymentGatewayResultCode(), checkoutBean.getPaymentGatewayResultDescription(),
                             checkoutBean.getRequestLog(), checkoutBean.getResponseLog());
@@ -271,7 +272,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                             checkoutBean.getPaymentGatewayResultCode(), checkoutBean.getPaymentGatewayResultDescription(),
                             checkoutBean.getRequestLog(), checkoutBean.getResponseLog());
 
-                    log.setOperationSuccess(result.isInvocationSuccess());
+                    log.setOperationSuccess(result.isOperationSuccess());
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
                 }
@@ -282,7 +283,6 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             return result;
 
         } catch (final Exception e) {
-
             FenixFramework.atomic(() -> {
                 String requestBody = null;
                 String responseBody = null;
@@ -292,15 +292,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "prepareCheckout", "error", "message", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -360,14 +352,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "paymentStatusByCheckoutId", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -418,16 +403,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                 }
 
                 if (!ERROR_UNEXPECTED_NUMBER_TRANSACTIONS_BY_MERCHANT_TRANSACTION_ID.equals(e.getMessage())) {
-                    PaymentRequestLog log = forwardPayment.logException(e);
-                    log.setOperationCode("paymentStatus");
-
-                    if (!StringUtils.isEmpty(requestBody)) {
-                        log.saveRequest(requestBody);
-                    }
-
-                    if (!StringUtils.isEmpty(responseBody)) {
-                        log.saveResponse(responseBody);
-                    }
+                    logException(forwardPayment, e, "paymentStatus", "error", "error", requestBody, responseBody);
                 }
             });
 
@@ -538,14 +514,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "postProcessPayment", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -574,7 +543,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
     @Override
@@ -599,7 +568,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
     @Override
@@ -609,15 +578,16 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             Set<Installment> installments, BigDecimal payableAmount) {
 
         LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+        Set<LocalDate> dueDatesSet = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+        dueDatesSet.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+
+        LocalDate validTo = dueDatesSet.stream().max(LocalDate::compareTo).orElse(now);
 
         if (validTo.isBefore(now)) {
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
     @Override
@@ -638,10 +608,10 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             validTo = now;
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
 
-    private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+    private SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
         if (!isActive()) {
             throw new TreasuryDomainException("error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.paymentCodePool.not.active");
@@ -650,19 +620,12 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
-        //Remove Max active payment requests to online plataforms
-//        checkMaxActiveSibsPaymentRequests(debitEntries);
 
         String merchantTransactionId = generateNewMerchantTransactionId();
 
-        final SibsPaymentsGatewayLog log = createForSibsPaymentRequest(merchantTransactionId);
+        final SibsPaymentsGatewayLog log = createLogForSibsPaymentRequest(merchantTransactionId);
 
         try {
-
-            FenixFramework.atomic(() -> {
-                log.logRequestSendDate();
-            });
-
             DateTime sibsValidFrom = new DateTime();
             DateTime sibsValidTo = sibsValidFrom.plusMonths(getNumberOfMonthsToExpirePaymentReferenceCode());
             MbCheckoutResultBean checkoutResultBean =
@@ -849,15 +812,6 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         throw new RuntimeException("SibsOnlinePaymentsGateway.translateEnviromentMode() unkown environment mode");
     }
 
-    @Override
-    public SibsPaymentsGatewayLog log(PaymentRequest paymentRequest) {
-        SibsPaymentsGatewayLog log = SibsPaymentsGatewayLog.create(paymentRequest, paymentRequest.getMerchantTransactionId());
-        log.setStateCode(paymentRequest.getCurrentState().getCode());
-        log.setStateDescription(paymentRequest.getCurrentState().getLocalizedName());
-
-        return log;
-    }
-
     // @formatter:off
     /* ********
      * SERVICES
@@ -886,8 +840,11 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     }
 
     @Atomic(mode = TxMode.WRITE)
-    public static SibsPaymentsGatewayLog createForSibsPaymentRequest(String sibsGatewayMerchantTransactionId) {
-        return SibsPaymentsGatewayLog.createForSibsPaymentRequest(sibsGatewayMerchantTransactionId);
+    private static SibsPaymentsGatewayLog createLogForSibsPaymentRequest(String sibsGatewayMerchantTransactionId) {
+        SibsPaymentsGatewayLog log = SibsPaymentsGatewayLog.createForSibsPaymentRequest(sibsGatewayMerchantTransactionId);
+        log.logRequestSendDate();
+
+        return log;
     }
 
     public static boolean isMbwayServiceActive(FinantialInstitution finantialInstitution) {
@@ -950,9 +907,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         try {
             MbwayRequest mbwayPaymentRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber,
                     payableAmount, merchantTransactionId);
-            FenixFramework.atomic(() -> {
-                log.logRequestSendDate();
-            });
+
+            FenixFramework.atomic(() -> log.logRequestSendDate());
 
             final MbWayCheckoutResultBean checkoutResultBean =
                     generateMbwayReference(payableAmount, merchantTransactionId, phoneNumber);
@@ -978,7 +934,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             return mbwayPaymentRequest;
 
-        } catch (Exception e) {
+        } catch (
+
+        Exception e) {
             boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
 
             FenixFramework.atomic(() -> {
@@ -1333,14 +1291,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log2 = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "processForwardPaymentFromWebhook", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,

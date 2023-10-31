@@ -53,11 +53,13 @@
 package org.fenixedu.treasury.domain.payments;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
@@ -65,8 +67,10 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class PaymentRequestLog extends PaymentRequestLog_Base {
 
-    public static final Comparator<PaymentRequestLog> COMPARE_BY_CREATION_DATE = (o1,
-            o2) -> o1.getCreationDate().compareTo(o2.getCreationDate()) * 10 + o1.getExternalId().compareTo(o2.getExternalId());
+    public static final String OCTECT_STREAM_CONTENT_TYPE = "application/octet-stream";
+
+    public static final Comparator<PaymentRequestLog> COMPARE_BY_CREATION_DATE =
+            Comparator.comparing(PaymentRequestLog::getCreationDate).thenComparing(PaymentRequestLog::getExternalId);
 
     public PaymentRequestLog() {
         super();
@@ -76,17 +80,19 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
     }
 
-    protected PaymentRequestLog(PaymentRequest request, String stateCode, LocalizedString stateDescription) {
+    protected PaymentRequestLog(PaymentRequest request, String operationCode, String stateCode,
+            LocalizedString stateDescription) {
         this();
 
         setPaymentRequest(request);
+        setOperationCode(operationCode);
         setStateCode(stateCode);
         setStateDescription(stateDescription);
-
-        checkRules();
     }
 
-    private void checkRules() {
+    public PaymentRequestLog(String webhookNotification) {
+        this();
+        setOperationCode(webhookNotification);
     }
 
     public void saveRequest(String requestBody) {
@@ -118,6 +124,7 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
     public void logException(Exception e) {
         String exceptionLog = String.format("%s\n%s", e.getLocalizedMessage(), ExceptionUtils.getFullStackTrace(e));
         setExceptionOccured(true);
+        setOperationSuccess(false);
 
         try {
             String filename = String.format("exception_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), getExternalId());
@@ -131,21 +138,49 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setAuthorizationId(authorizationId);
         setAuthorizationDate(authorizationDate);
     }
-    
-    /**
-     * Returns the merchant transaction id and is used for search
-     * @return
-     */
-    public String getInternalMerchantTransactionId() {
-        return null;
+
+    public void logRequestSendDate() {
+        setRequestSendDate(new DateTime());
     }
-    
-    /**
-     * Returns the digital platform external transaction id and is used for search
-     * @return
-     */
-    public String getExternalTransactionId() {
-        return null;
+
+    public void markAsDuplicatedTransaction() {
+        setTransactionDuplicated(true);
+    }
+
+    public void savePaymentInfo(BigDecimal amount, DateTime paymentDate) {
+        setAmount(amount);
+        setPaymentDate(paymentDate);
+    }
+
+    public void savePaymentTypeAndBrand(String paymentType, String paymentBrand) {
+        setPaymentType(paymentType);
+        setPaymentBrand(paymentBrand);
+    }
+
+    public void logRequestReceiveDateAndData(String transactionId, boolean operationSuccess, boolean transactionPaid,
+            String operationResultCode, String operationResultDescription) {
+        setRequestReceiveDate(new DateTime());
+        setExternalTransactionId(transactionId);
+        setOperationSuccess(operationSuccess);
+        setTransactionWithPayment(transactionPaid);
+        setStatusCode(operationResultCode);
+        setStatusMessage(operationResultDescription);
+    }
+
+    public void saveWebhookNotificationData(String notificationInitializationVector, String notificationAuthenticationTag,
+            String notificationEncryptedPayload) {
+        final ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
+
+        setNotificationInitializationVector(notificationInitializationVector);
+        setNotificationAuthTag(notificationAuthenticationTag);
+
+        if (notificationEncryptedPayload != null) {
+            final String notificationEncryptedPayloadFileId = implementation.createFile(
+                    String.format("sibsOnlinePaymentsGatewayLog-notificationEncryptedPayload-%s.txt", getExternalId()),
+                    OCTECT_STREAM_CONTENT_TYPE, notificationEncryptedPayload.getBytes());
+
+            setNotificationEncryptedPayloadFileId(notificationEncryptedPayloadFileId);
+        }
     }
 
     // @formatter:off
@@ -161,7 +196,9 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         return FenixFramework.getDomainRoot().getPaymentRequestLogsSet().stream();
     }
 
-    public static PaymentRequestLog create(PaymentRequest request, String stateCode, LocalizedString stateDescription) {
-        return new PaymentRequestLog(request, stateCode, stateDescription);
+    public static PaymentRequestLog create(PaymentRequest request, String operationCode, String stateCode,
+            LocalizedString stateDescription) {
+        return new PaymentRequestLog(request, operationCode, stateCode, stateDescription);
     }
+
 }

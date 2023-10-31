@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.forwardpayments.implementations;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -89,8 +88,6 @@ public interface IForwardPaymentPlatformService {
 
     public PostProcessPaymentStatusBean postProcessPayment(ForwardPaymentRequest forwardPayment, String justification,
             Optional<String> specificTransactionId);
-
-    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
 
     public PostProcessPaymentStatusBean processForwardPayment(ForwardPaymentRequest forwardPayment);
 

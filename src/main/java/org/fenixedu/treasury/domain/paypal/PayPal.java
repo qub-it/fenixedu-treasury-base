@@ -67,8 +67,8 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
         super();
     }
 
-    private PayPal(FinantialInstitution finantialInstitution, String name, boolean active, String accountId,
-            String secret, String mode) {
+    private PayPal(FinantialInstitution finantialInstitution, String name, boolean active, String accountId, String secret,
+            String mode) {
 
         this();
         this.init(finantialInstitution, name, active);
@@ -84,8 +84,8 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
     private void checkRules() {
     }
 
-    public static PayPal create(FinantialInstitution finantialInstitution, String name, boolean active,
-            String accountId, String secret, String mode) {
+    public static PayPal create(FinantialInstitution finantialInstitution, String name, boolean active, String accountId,
+            String secret, String mode) {
         return new PayPal(finantialInstitution, name, active, accountId, secret, mode);
     }
 
@@ -188,8 +188,9 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                     new ForwardPaymentStatusBean(true, stateType, order.status(), order.status(), requestLog, responseLog);
 
             FenixFramework.atomic(() -> {
-                if (!result.isInvocationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
-                    PayPalLog log = (PayPalLog) log(forwardPayment, "prepareCheckout", order.status(), requestLog, responseLog);
+                if (!result.isOperationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
+                    PayPalLog log = (PayPalLog) log(forwardPayment, "prepareCheckout", order.status(), order.status(), requestLog,
+                            responseLog);
                     forwardPayment.reject();
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
@@ -198,7 +199,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                     PayPalLog log = (PayPalLog) forwardPayment.advanceToRequestState("prepareCheckout", order.status(),
                             order.status(), requestLog, responseLog);
 
-                    log.setOperationSuccess(result.isInvocationSuccess());
+                    log.setOperationSuccess(result.isOperationSuccess());
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
                 }
@@ -217,15 +218,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "prepareCheckout", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -234,11 +227,12 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
     }
 
     @Override
-    public PaymentRequestLog log(PaymentRequest paymentRequest, String statusCode, String statusMessage, String requestBody,
-            String responseBody) {
+    public PaymentRequestLog log(PaymentRequest paymentRequest, String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
         final PayPalLog log = PayPalLog.createPaymentRequestLog(paymentRequest, paymentRequest.getCurrentState().getCode(),
                 paymentRequest.getCurrentState().getLocalizedName());
 
+        log.setOperationCode(operationCode);
         log.setPayPalId(paymentRequest.getTransactionId());
 
         log.setStatusCode(statusCode);
@@ -311,16 +305,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                 }
 
                 if (!"ERRO".equals(e.getMessage())) {
-                    PaymentRequestLog log = paymentRequest.logException(e);
-                    log.setOperationCode("paymentStatus");
-
-                    if (!StringUtils.isEmpty(requestBody)) {
-                        log.saveRequest(requestBody);
-                    }
-
-                    if (!StringUtils.isEmpty(responseBody)) {
-                        log.saveResponse(responseBody);
-                    }
+                    logException(paymentRequest, e, "paymentStatus", "error", "error", requestBody, responseBody);
                 }
             });
 
@@ -404,14 +389,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "processPaymentStatus", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,
@@ -525,14 +503,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
-                PaymentRequestLog log2 = forwardPayment.logException(e);
-                if (!StringUtils.isEmpty(requestBody)) {
-                    log.saveRequest(requestBody);
-                }
-
-                if (!StringUtils.isEmpty(responseBody)) {
-                    log.saveResponse(responseBody);
-                }
+                logException(forwardPayment, e, "processForwardPaymentFromWebhook", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e,

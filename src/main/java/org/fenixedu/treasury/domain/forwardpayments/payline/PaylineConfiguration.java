@@ -202,7 +202,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
         final boolean success = TRANSACTION_APPROVED_CODE.equals(paymentStatusBean.getStatusCode());
 
-        if (!paymentStatusBean.isInvocationSuccess()) {
+        if (!paymentStatusBean.isOperationSuccess()) {
             throw new TreasuryDomainException("error.ManageForwardPayments.postProcessPayment.invocation.unsucessful",
                     String.valueOf(forwardPayment.getOrderNumber()));
         }
@@ -269,7 +269,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                 TreasuryPlataformDependentServicesFactory.implementation().calculateURLChecksum(returnUrlToChecksum, session);
         forwardPayment.setReturnForwardPaymentUrlChecksum(urlChecksum);
     }
-    
+
     public static String getCancelURL(final ForwardPaymentRequest forwardPayment, final String returnControllerURL) {
         return String.format("%s%s/%s/%s/%s", TreasurySettings.getInstance().getForwardPaymentReturnDefaultURL(),
                 returnControllerURL, forwardPayment.getExternalId(), ACTION_CANCEL_URL,
@@ -292,17 +292,17 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
         String returnUrl;
         String cancelUrl;
-        
+
         // The return url can be different between Spring and OMNIS, 
         // and session is needed and not needed respectively
-        if(session != null) {
+        if (session != null) {
             // Spring
             saveReturnUrlChecksum(forwardPayment, returnControllerURL, session);
             returnUrl = PaylineConfiguration.getReturnURL(forwardPayment, returnControllerURL);
             cancelUrl = PaylineConfiguration.getCancelURL(forwardPayment, returnControllerURL);
         } else {
             // OMNIS
-            returnUrl =  forwardPayment.getForwardPaymentSuccessUrl();
+            returnUrl = forwardPayment.getForwardPaymentSuccessUrl();
             cancelUrl = forwardPayment.getForwardPaymentInsuccessUrl();
         }
 
@@ -321,7 +321,8 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         final String code = response.getResultCode();
         final String longMessage = response.getResultLongMessage();
 
-        forwardPayment.advanceToRequestState("doWebPayment", code, longMessage, response.getJsonRequest(), response.getJsonResponse());
+        forwardPayment.advanceToRequestState("doWebPayment", code, longMessage, response.getJsonRequest(),
+                response.getJsonResponse());
         forwardPayment.setCheckoutId(response.getToken());
         forwardPayment.setRedirectUrl(response.getRedirectURL());
 
@@ -366,19 +367,19 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
     }
 
     @Atomic
-    private PaymentRequestLog reject(ForwardPaymentRequest forwardPayment, String operationCode, String statusCode, String errorMessage, String requestBody,
-            String responseBody) {
+    private PaymentRequestLog reject(ForwardPaymentRequest forwardPayment, String operationCode, String statusCode,
+            String errorMessage, String requestBody, String responseBody) {
         return forwardPayment.reject(operationCode, statusCode, errorMessage, requestBody, responseBody);
     }
-    
+
     @Atomic
-    private PaymentRequestLog advanceToPaidState(ForwardPaymentRequest forwardPayment, String statusCode, String statusMessage, BigDecimal paidAmount,
-            DateTime transactionDate, String transactionId, String authorizationNumber, String requestBody, String responseBody,
-            String justification) {
+    private PaymentRequestLog advanceToPaidState(ForwardPaymentRequest forwardPayment, String statusCode, String statusMessage,
+            BigDecimal paidAmount, DateTime transactionDate, String transactionId, String authorizationNumber, String requestBody,
+            String responseBody, String justification) {
         return forwardPayment.advanceToPaidState(statusCode, statusMessage, paidAmount, transactionDate, transactionId,
                 authorizationNumber, requestBody, responseBody, null);
     }
-    
+
     // @formatter:off
     /*
      * ********
@@ -416,7 +417,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                         bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
 
         doWebPayment(forwardPaymentRequest, null /*forwardPaymentRequest.getForwardPaymentSuccessUrl()*/, null);
-        
+
         return forwardPaymentRequest;
     }
 

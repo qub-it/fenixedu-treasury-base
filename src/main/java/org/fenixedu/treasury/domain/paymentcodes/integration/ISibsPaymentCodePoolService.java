@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.domain.paymentcodes.integration;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
@@ -83,15 +82,14 @@ public interface ISibsPaymentCodePoolService {
     @Deprecated
     // TODO: Only used by PaymentReferenceCodeController.createPaymentCodeForSeveralDebitEntries() method. Replace with settlement note bean
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
-            Set<Installment> installments, BigDecimal paymentAmount);
+            Set<Installment> installments, BigDecimal payableAmount);
 
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate);
 
     public PaymentTransaction processPaymentReferenceCodeTransaction(final PaymentRequestLog log, DigitalPlatformResultBean bean);
 
-    public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId);
-
+    @Deprecated
     public PaymentRequestLog createLogForWebhookNotification();
 
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
