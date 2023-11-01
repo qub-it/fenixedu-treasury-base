@@ -1,3 +1,5 @@
+- Bug Fix: Bug fixes in the SIBS SPG communication and credit card processing [#qubIT-Fenix-4327]
+
 11.6.0 (31-10-2023)
 - New feature: New version of SIBS Gateway or SIBS SPG [#qubIT-Fenix-4327]
 - Refactor: Reduce the various ways to create a payment request log [#qubIT-Fenix-4327]

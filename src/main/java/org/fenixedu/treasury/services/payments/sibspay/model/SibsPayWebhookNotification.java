@@ -1,5 +1,7 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
+import org.joda.time.DateTime;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SibsPayWebhookNotification {
@@ -27,6 +29,12 @@ public class SibsPayWebhookNotification {
 
     @JsonProperty("notificationID")
     private String notificationID = null;
+
+    @JsonProperty("transactionDateTime")
+    private DateTime transactionDateTime = null;
+
+    @JsonProperty("token")
+    private SibsPayToken token = null;
 
     public SibsPayReturnStatus getReturnStatus() {
         return returnStatus;
@@ -92,4 +100,19 @@ public class SibsPayWebhookNotification {
         this.notificationID = notificationID;
     }
 
+    public DateTime getTransactionDateTime() {
+        return transactionDateTime;
+    }
+
+    public void setTransactionDateTime(DateTime transactionDateTime) {
+        this.transactionDateTime = transactionDateTime;
+    }
+
+    public SibsPayToken getToken() {
+        return token;
+    }
+
+    public void setToken(SibsPayToken token) {
+        this.token = token;
+    }
 }

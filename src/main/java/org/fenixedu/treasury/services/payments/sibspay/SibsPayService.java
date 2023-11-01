@@ -51,6 +51,7 @@ public class SibsPayService {
     private static final String PAYMENT_RESULT_CODE_SUCCESS = "Success";
     private static final String PAYMENT_RESULT_CODE_PENDING = "Pending";
     private static final String PAYMENT_RESULT_CODE_EXPIRED = "Expired";
+    private static final String PAYMENT_RESULT_CODE_DECLINED = "Declined";
 
     private static final Logger logger = LoggerFactory.getLogger(SibsPayService.class);
 
@@ -469,6 +470,10 @@ public class SibsPayService {
         return PAYMENT_RESULT_CODE_EXPIRED.equals(paymentStatusCode);
     }
 
+    public static boolean isDeclined(String paymentResultCode) {
+        return PAYMENT_RESULT_CODE_DECLINED.equals(paymentResultCode);
+    }
+
     public String getJsScriptURL(String checkoutId) {
         return "https://spg.qly.site1.sibs.pt/assets/js/widget.js?id=" + checkoutId;
 //        return this.sibsEndpoint + "/assets/js/widget.js?id=" + checkoutId;
@@ -481,5 +486,4 @@ public class SibsPayService {
 
         return result;
     }
-
 }

@@ -1,8 +1,8 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
 import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * Object that defines a Merchant.
@@ -11,14 +11,31 @@ import com.fasterxml.jackson.annotation.JsonCreator;
         date = "2023-08-30T20:20:13.375686+01:00[Europe/Lisbon]")
 
 public class SibsPayMerchant {
+    @JsonProperty("transactionId")
+    private String transactionId = null;
+
     @JsonProperty("terminalId")
     private Integer terminalId = null;
+
+    @JsonProperty("merchantName")
+    private String merchantName = null;
 
     @JsonProperty("channel")
     private String channel = null;
 
     @JsonProperty("merchantTransactionId")
     private String merchantTransactionId = null;
+
+    @JsonProperty("inApp")
+    private Boolean inApp;
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
 
     public SibsPayMerchant terminalId(Integer terminalId) {
         this.terminalId = terminalId;
@@ -36,6 +53,14 @@ public class SibsPayMerchant {
 
     public void setTerminalId(Integer terminalId) {
         this.terminalId = terminalId;
+    }
+
+    public String getMerchantName() {
+        return merchantName;
+    }
+
+    public void setMerchantName(String merchantName) {
+        this.merchantName = merchantName;
     }
 
     public SibsPayMerchant channel(String channel) {
@@ -74,6 +99,14 @@ public class SibsPayMerchant {
 
     public void setMerchantTransactionId(String merchantTransactionId) {
         this.merchantTransactionId = merchantTransactionId;
+    }
+
+    public Boolean isInApp() {
+        return inApp;
+    }
+
+    public void setInApp(Boolean inApp) {
+        this.inApp = inApp;
     }
 
     @Override

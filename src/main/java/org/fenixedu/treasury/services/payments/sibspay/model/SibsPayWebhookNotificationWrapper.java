@@ -31,7 +31,7 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     @Override
     public DateTime getPaymentDate() {
-        return null;
+        return this.webhookNotification.getTransactionDateTime();
     }
 
     @Override
@@ -59,6 +59,18 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
         return this.webhookNotification.getTransactionID();
     }
 
+    public String getOperationStatusCode() {
+        return this.webhookNotification.getReturnStatus().getStatusCode();
+    }
+
+    public String getOperationStatusMessage() {
+        return this.webhookNotification.getReturnStatus().getStatusMsg();
+    }
+
+    public String getOperationStatusDescription() {
+        return this.webhookNotification.getReturnStatus().getStatusDescription();
+    }
+
     @Override
     public boolean isOperationSuccess() {
         return SibsPayService.isOperationSuccess(this.webhookNotification.getReturnStatus().getStatusCode());
@@ -75,6 +87,10 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     public boolean isExpired() {
         return SibsPayService.isExpired(this.getPaymentResultCode());
+    }
+
+    public boolean isDeclined() {
+        return SibsPayService.isDeclined(this.getPaymentResultCode());
     }
 
 }

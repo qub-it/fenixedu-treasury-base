@@ -739,9 +739,13 @@ public class MeoWallet extends MeoWallet_Base
                 bean.getIncludedInvoiceEntryBeans().stream().filter(i -> i instanceof InstallmentPaymenPlanBean && i.isIncluded())
                         .map(InstallmentPaymenPlanBean.class::cast).map(ib -> ib.getInstallment()).collect(Collectors.toSet());
 
-        ForwardPaymentRequest forwardPaymentRequest =
-                ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries, installments,
-                        bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+        ForwardPaymentRequest forwardPaymentRequest = null;
+        try {
+            forwardPaymentRequest = ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
+                    debitEntries, installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         prepareCheckout(forwardPaymentRequest);
 

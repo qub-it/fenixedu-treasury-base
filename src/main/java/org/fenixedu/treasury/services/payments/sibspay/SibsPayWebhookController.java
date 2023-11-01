@@ -1,6 +1,5 @@
 package org.fenixedu.treasury.services.payments.sibspay;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -69,6 +68,9 @@ public class SibsPayWebhookController {
             for (SibsPayPlatform configuration : SibsPayPlatform.findAllActive().collect(Collectors.toList())) {
                 try {
                     String jsonBody = decrypt(configuration.getSecretKey(), iv, authTag, encryptedBody);
+                    FenixFramework.atomic(() -> {
+                        log.saveRequest(jsonBody);
+                    });
 
                     SibsPayWebhookNotification webhookNotificationObj = SibsPayService.deserializeWebhookNotification(jsonBody);
 
@@ -79,7 +81,7 @@ public class SibsPayWebhookController {
 
                         break;
                     }
-                } catch (UnableToDecryptException | IOException e) {
+                } catch (UnableToDecryptException e) {
                     // Continue to the other sibsPayPlatform
                 }
             }
@@ -93,49 +95,59 @@ public class SibsPayWebhookController {
             SibsPayPlatform configurationToUse = configurationToUseOptional.get();
             SibsPayWebhookNotificationWrapper webhookNotificationWrapper = webhookNotificationWrapperOptional.get();
 
+            FenixFramework.atomic(() -> {
+                log.setExternalTransactionId(webhookNotificationWrapper.getTransactionId());
+                log.setStatusCode(webhookNotificationWrapper.getOperationStatusCode());
+                log.setStatusMessage(webhookNotificationWrapper.getOperationStatusMessage());
+                log.setTransactionWithPayment(webhookNotificationWrapper.isPaid());
+                log.setOperationSuccess(webhookNotificationWrapper.isOperationSuccess());
+
+                log.savePaymentTypeAndBrand(webhookNotificationWrapper.getPaymentType(),
+                        webhookNotificationWrapper.getPaymentBrand());
+            });
+
+            // Find payment request
+            Optional<PaymentRequest> paymentRequestOptional = configurationToUse.getPaymentRequestsSet().stream()
+                    .filter(p -> webhookNotificationWrapper.getTransactionId().equals(p.getTransactionId())).findFirst();
+
+            if (!paymentRequestOptional.isPresent()) {
+                // Transaction not recognized, might be from other system, just return HTTP STATUS 200
+                return Response.ok().build();
+            }
+
+            PaymentRequest paymentRequest = paymentRequestOptional.get();
+
+            FenixFramework.atomic(() -> {
+                log.setInternalMerchantTransactionId(paymentRequest.getMerchantTransactionId());
+                log.setPaymentRequest(paymentRequest);
+                log.setStateCode(paymentRequest.getCurrentState().getCode());
+                log.setStateDescription(paymentRequest.getCurrentState().getLocalizedName());
+            });
+
+            if (!paymentRequest.isInCreatedState() && !paymentRequest.isInRequestedState()) {
+                return Response.ok().build();
+            }
+
             if (webhookNotificationWrapper.isPending()) {
                 // Transaction is pending, ignore by returnig 200
                 return Response.ok().build();
             } else if (webhookNotificationWrapper.isPaid()) {
-                // Find payment request
 
-                Optional<PaymentRequest> paymentRequestOptional = configurationToUse.getPaymentRequestsSet().stream()
-                        .filter(p -> webhookNotificationWrapper.getTransactionId().equals(p.getTransactionId())).findFirst();
-
-                if (!paymentRequestOptional.isPresent()) {
-                    // Transaction not recognized, might be from other system, just return HTTP STATUS 200
+                if (paymentRequest instanceof ForwardPaymentRequest) {
+                    configurationToUse.processForwardPaymentFromWebhook(log, webhookNotificationWrapper);
+                    return Response.ok().build();
+                } else if (paymentRequest instanceof SibsPaymentRequest) {
+                    configurationToUse.processPaymentReferenceCodeTransaction(log, webhookNotificationWrapper);
+                    return Response.ok().build();
+                } else if (paymentRequest instanceof MbwayRequest) {
+                    configurationToUse.processMbwayTransaction(log, webhookNotificationWrapper);
                     return Response.ok().build();
                 }
 
-                PaymentRequest paymentRequest = paymentRequestOptional.get();
+                throw new RuntimeException("unknown payment request type");
+            } else if (webhookNotificationWrapper.isExpired() || webhookNotificationWrapper.isDeclined()) {
 
-                FenixFramework.atomic(() -> log.setPaymentRequest(paymentRequest));
-
-                if (paymentRequest.isInPaidState() || paymentRequest.isInAnnuledState()) {
-                    // Nothing to do, just return 200
-                    return Response.ok().build();
-                }
-
-                if (paymentRequest.isInCreatedState() || paymentRequest.isInRequestedState()) {
-
-                    if (paymentRequest instanceof ForwardPaymentRequest) {
-                        configurationToUse.processForwardPaymentFromWebhook(log, webhookNotificationWrapper);
-                        return Response.ok().build();
-                    } else if (paymentRequest instanceof SibsPaymentRequest) {
-                        configurationToUse.processPaymentReferenceCodeTransaction(log, webhookNotificationWrapper);
-                        return Response.ok().build();
-                    } else if (paymentRequest instanceof MbwayRequest) {
-                        configurationToUse.processMbwayTransaction(log, webhookNotificationWrapper);
-                        return Response.ok().build();
-                    }
-
-                    throw new RuntimeException("unknown payment request type");
-                }
-
-                throw new RuntimeException("the payment request  state is invalid");
-            } else if (webhookNotificationWrapper.isExpired()) {
-                // Reject payment
-                configurationToUse.rejectRequest(log, webhookNotificationWrapper);
+                FenixFramework.atomic(() -> configurationToUse.rejectRequest(paymentRequest, log, webhookNotificationWrapper));
 
                 return Response.ok().build();
             }

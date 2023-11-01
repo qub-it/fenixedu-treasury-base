@@ -91,9 +91,12 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
 
         final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = request.getRequestDate();
+        final DateTime paymentDate = bean.getPaymentDate() != null ? bean.getPaymentDate() : request.getRequestDate();
 
-        FenixFramework.atomic(() -> log.savePaymentInfo(paidAmount, paymentDate));
+        FenixFramework.atomic(() -> {
+            log.savePaymentTypeAndBrand(bean.getPaymentType(), bean.getPaymentBrand());
+            log.savePaymentInfo(paidAmount, paymentDate);
+        });
 
         if (paidAmount == null || !TreasuryConstants.isPositive(paidAmount)) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.invalid.amount");
@@ -332,10 +335,22 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 bean.getIncludedInvoiceEntryBeans().stream().filter(i -> i instanceof InstallmentPaymenPlanBean && i.isIncluded())
                         .map(InstallmentPaymenPlanBean.class::cast).map(ib -> ib.getInstallment()).collect(Collectors.toSet());
 
-        ForwardPaymentRequest forwardPayment =
-                ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries, installments,
-                        bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+        ForwardPaymentRequest forwardPayment = null;
+        try {
+            forwardPayment = FenixFramework
+                    .atomic(() -> ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
+                            debitEntries, installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
+        prepareCheckout(bean, forwardPayment);
+
+        return forwardPayment;
+    }
+
+    @Atomic(mode = TxMode.READ)
+    public void prepareCheckout(SettlementNoteBean bean, ForwardPaymentRequest forwardPayment) {
         String merchantTransactionId = generateNewMerchantTransactionId();
 
         FenixFramework.atomic(() -> {
@@ -397,13 +412,12 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 }
 
                 logException(forwardPayment, e, "createForwardPaymentRequest", "error", "error", requestBody, responseBody);
+                forwardPayment.reject();
             });
 
             throw new TreasuryDomainException(e,
                     "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
         }
-
-        return forwardPayment;
     }
 
     @Override
@@ -591,7 +605,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             });
 
             throw new TreasuryDomainException(e,
-                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
+                    "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor.gateway.communication");
         }
     }
 
@@ -864,9 +878,12 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
 
         final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = DateTime.now();
+        final DateTime paymentDate = bean.getPaymentDate() != null ? bean.getPaymentDate() : DateTime.now();
 
-        FenixFramework.atomic(() -> log.savePaymentInfo(paidAmount, paymentDate));
+        FenixFramework.atomic(() -> {
+            log.savePaymentTypeAndBrand(bean.getPaymentType(), bean.getPaymentBrand());
+            log.savePaymentInfo(paidAmount, paymentDate);
+        });
 
         if (paidAmount == null || !TreasuryConstants.isPositive(paidAmount)) {
             throw new TreasuryDomainException("error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.amount");
@@ -934,9 +951,17 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     }
 
-    public void rejectRequest(PaymentRequestLog log, SibsPayWebhookNotificationWrapper webhookNotificationWrapper) {
-        // TODO Auto-generated method stub
-
+    public void rejectRequest(PaymentRequest paymentRequest, PaymentRequestLog log,
+            SibsPayWebhookNotificationWrapper webhookNotificationWrapper) {
+        if (paymentRequest instanceof ForwardPaymentRequest) {
+            ((ForwardPaymentRequest) paymentRequest).reject();
+        } else if (paymentRequest instanceof SibsPaymentRequest) {
+            ((SibsPaymentRequest) paymentRequest).anull();
+        } else if (paymentRequest instanceof MbwayRequest) {
+            ((MbwayRequest) paymentRequest).anull();
+        } else {
+            throw new RuntimeException("unknown payment request type");
+        }
     }
 
     public void delete() {

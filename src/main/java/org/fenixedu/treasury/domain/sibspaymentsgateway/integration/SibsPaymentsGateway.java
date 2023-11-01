@@ -1156,6 +1156,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     }
 
     @Override
+    @Atomic(mode = TxMode.READ)
     public ForwardPaymentRequest createForwardPaymentRequest(SettlementNoteBean bean,
             Function<ForwardPaymentRequest, String> successUrlFunction,
             Function<ForwardPaymentRequest, String> insuccessUrlFunction) {
@@ -1166,9 +1167,15 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         Set<Installment> installments =
                 bean.getIncludedInvoiceEntryBeans().stream().filter(i -> i instanceof InstallmentPaymenPlanBean && i.isIncluded())
                         .map(InstallmentPaymenPlanBean.class::cast).map(ib -> ib.getInstallment()).collect(Collectors.toSet());
-        ForwardPaymentRequest paymentRequest =
-                ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries, installments,
-                        bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+
+        ForwardPaymentRequest paymentRequest = null;
+        try {
+            paymentRequest = FenixFramework
+                    .atomic(() -> ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
+                            debitEntries, installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         prepareCheckout(paymentRequest, bean.getAddressBean());
 
