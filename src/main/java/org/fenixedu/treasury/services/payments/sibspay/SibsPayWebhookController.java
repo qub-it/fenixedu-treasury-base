@@ -33,6 +33,7 @@ import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.sibspay.SibsPayPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotification;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +113,7 @@ public class SibsPayWebhookController {
 
             if (!paymentRequestOptional.isPresent()) {
                 // Transaction not recognized, might be from other system, just return HTTP STATUS 200
-                return Response.ok().build();
+                return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 
             PaymentRequest paymentRequest = paymentRequestOptional.get();
@@ -125,23 +126,23 @@ public class SibsPayWebhookController {
             });
 
             if (!paymentRequest.isInCreatedState() && !paymentRequest.isInRequestedState()) {
-                return Response.ok().build();
+                return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 
             if (webhookNotificationWrapper.isPending()) {
                 // Transaction is pending, ignore by returnig 200
-                return Response.ok().build();
+                return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             } else if (webhookNotificationWrapper.isPaid()) {
 
                 if (paymentRequest instanceof ForwardPaymentRequest) {
                     configurationToUse.processForwardPaymentFromWebhook(log, webhookNotificationWrapper);
-                    return Response.ok().build();
+                    return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
                 } else if (paymentRequest instanceof SibsPaymentRequest) {
                     configurationToUse.processPaymentReferenceCodeTransaction(log, webhookNotificationWrapper);
-                    return Response.ok().build();
+                    return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
                 } else if (paymentRequest instanceof MbwayRequest) {
                     configurationToUse.processMbwayTransaction(log, webhookNotificationWrapper);
-                    return Response.ok().build();
+                    return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
                 }
 
                 throw new RuntimeException("unknown payment request type");
@@ -149,10 +150,10 @@ public class SibsPayWebhookController {
 
                 FenixFramework.atomic(() -> configurationToUse.rejectRequest(paymentRequest, log, webhookNotificationWrapper));
 
-                return Response.ok().build();
+                return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 
-            return Response.ok().build();
+            return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
 
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage(), e);
@@ -171,6 +172,10 @@ public class SibsPayWebhookController {
             return Response.serverError().build();
         }
 
+    }
+
+    private SibsPayWebhookNotificationResponse response(SibsPayWebhookNotificationWrapper webhookNotificationWrapper) {
+        return new SibsPayWebhookNotificationResponse(200, "Success", webhookNotificationWrapper.getNotificationID());
     }
 
     private String decrypt(String aesSecretKey, String ivFromHttpHeader, String authTagFromHttpHeader, String encryptedBody)

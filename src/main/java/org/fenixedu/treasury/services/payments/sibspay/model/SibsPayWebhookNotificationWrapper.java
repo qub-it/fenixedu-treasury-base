@@ -71,6 +71,10 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
         return this.webhookNotification.getReturnStatus().getStatusDescription();
     }
 
+    public String getNotificationID() {
+        return this.webhookNotification.getNotificationID();
+    }
+
     @Override
     public boolean isOperationSuccess() {
         return SibsPayService.isOperationSuccess(this.webhookNotification.getReturnStatus().getStatusCode());

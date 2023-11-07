@@ -57,8 +57,6 @@ import pt.ist.fenixframework.FenixFramework;
 public class SibsPayPlatform extends SibsPayPlatform_Base
         implements ISibsPaymentCodePoolService, IForwardPaymentPlatformService, IMbwayPaymentPlatformService {
 
-    private static final String RETURN_FORWARD_PAYMENT_PATH = "forwardPayment/returnpayment";
-
     public SibsPayPlatform() {
         super();
     }
@@ -421,15 +419,11 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     }
 
     @Override
+    @Atomic(mode = TxMode.READ)
     public PostProcessPaymentStatusBean postProcessPayment(ForwardPaymentRequest forwardPayment, String justification,
             Optional<String> specificTransactionId) {
         if (specificTransactionId.isEmpty()) {
             return null;
-        }
-
-        if (!forwardPayment.getState().isInStateToPostProcessPayment()) {
-            throw new TreasuryDomainException("error.ManageForwardPayments.forwardPayment.not.created.nor.requested",
-                    String.valueOf(forwardPayment.getOrderNumber()));
         }
 
         try {
@@ -488,16 +482,19 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 log.setRequestSendDate(requestSendDate);
                 log.setRequestReceiveDate(requestReceiveDate);
                 log.setOperationSuccess(true);
+                log.setTransactionWithPayment(bean.isInPayedState());
+
+                if (!forwardPayment.isInRequestedState()) {
+                    // Most probably this forward payment was processed in the webhook
+                    // Nothing to process, just return
+                    return;
+                }
 
                 if (bean.isInPayedState()) {
                     forwardPayment.advanceToPaidState(bean.getStatusCode(), bean.getPayedAmount(), bean.getTransactionDate(),
                             bean.getTransactionId(), justification);
-
-                    log.setTransactionWithPayment(true);
                 } else if (bean.isInRejectedState()) {
                     forwardPayment.reject();
-
-                    log.setTransactionWithPayment(false);
                 }
             });
 
@@ -532,9 +529,12 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         return postProcessPayment(forwardPaymentRequest, "", Optional.of(bean.getTransactionId()));
     }
 
+    public static final String CONTROLLER_URL = "/treasury/document/forwardpayments/sibspayplatform";
+    private static final String RETURN_FORWARD_PAYMENT_URL = CONTROLLER_URL + "/returnforwardpayment";
+
     public String getReturnURL(final ForwardPaymentRequest forwardPayment) {
         String forwardPaymentReturnDefaultURL = TreasurySettings.getInstance().getForwardPaymentReturnDefaultURL();
-        return String.format("%s/%s?forwardPaymentId=%s", forwardPaymentReturnDefaultURL, RETURN_FORWARD_PAYMENT_PATH,
+        return String.format("%s/%s/%s", forwardPaymentReturnDefaultURL, RETURN_FORWARD_PAYMENT_URL,
                 forwardPayment.getExternalId());
     }
 

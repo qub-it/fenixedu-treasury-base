@@ -71,10 +71,17 @@ import pt.ist.fenixframework.FenixFramework;
 public class ForwadPaymentController {
 
     private static final String SUCCESS = "/returnpayment";
+    private static final long SLEEP_TIME_TO_PROCESS_WEBHOOK = 3000; // 3 seconds
 
     @GET
     @Path(SUCCESS)
     public void success(@Context HttpServletRequest httpRequest, @Context HttpServletResponse response) throws IOException {
+
+        // Delay this request in order for webhook to process the notification
+        try {
+            Thread.sleep(SLEEP_TIME_TO_PROCESS_WEBHOOK);
+        } catch (InterruptedException e) {
+        }
 
         ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
 
@@ -91,6 +98,7 @@ public class ForwadPaymentController {
             ForwardPaymentRequest forwardPayment = FenixFramework.getDomainObject(forwardPaymentId);
             PostProcessPaymentStatusBean result = forwardPayment.getDigitalPaymentPlatform().castToForwardPaymentPlatformService()
                     .processForwardPayment(forwardPayment);
+
             if (result != null && result.getForwardPaymentStatusBean().isInPayedState()) {
                 url = implementation.getForwardPaymentURL(httpRequest.getContextPath(), screenClass, true, forwardPaymentId,
                         false);
