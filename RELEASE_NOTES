@@ -1,3 +1,4 @@
+11.6.2 (07-11-2023)
 - Bug Fix: Fix the webhook response in SIBS SPG [#qubIT-Fenix-4327]
 - Improvement: Add a delay in returning from forward payment, in order to allow the webhook to process [#qubIT-Fenix-4327]
 
