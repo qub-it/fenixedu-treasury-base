@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import com.google.common.base.Splitter;
 
 public class SibsPayService {
 
@@ -147,11 +148,14 @@ public class SibsPayService {
 
         result.getCustomer().getCustomerInfo().setCustomerName(forwardPayment.getDebtAccount().getCustomer().getName());
         SibsPayAddress address = new SibsPayAddress();
-        address.setCity(billingAddressBean.getCity());
+        String cityText = billingAddressBean.getCity();
+        String zipCodeText = billingAddressBean.getZipCode();
+        String addressText = billingAddressBean.getAddress();
+
+        address.setCity(cityText != null ? Splitter.fixedLength(50).splitToList(cityText).get(0) : null);
         address.setCountry(billingAddressBean.getAddressCountryCode());
-        address.setPostcode(billingAddressBean.getZipCode());
-        address.setStreet1(billingAddressBean.getAddress());
-        address.setStreet2(billingAddressBean.getAddress());
+        address.setPostcode(zipCodeText != null ? Splitter.fixedLength(16).splitToList(zipCodeText).get(0) : null);
+        address.setStreet1(addressText != null ? Splitter.fixedLength(50).splitToList(addressText).get(0) : null);
 
         // result.getCustomer().getCustomerInfo().setShippingAddress(address);
         result.getCustomer().getCustomerInfo().setBillingAddress(address);
