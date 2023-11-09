@@ -1,3 +1,4 @@
+11.6.3 (09-11-2023)
 - Improvement: Add field in Product to mark that applies interests by default [#qubIT-Fenix-4550]
 - Improvement: Limit the address characters sent to SIBS SPG [#qubIT-Fenix-4327]
 
