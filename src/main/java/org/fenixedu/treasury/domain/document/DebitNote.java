@@ -66,7 +66,6 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -358,10 +357,10 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
-        if(!isPreparing()) {
+        if (!isPreparing()) {
             throw new IllegalStateException("debit note is not in preparing state");
         }
-        
+
         debitEntries.forEach(d -> {
             if (d.getFinantialDocument() != null && !d.getFinantialDocument().isPreparing()) {
                 throw new IllegalArgumentException("debit entry with finantial document that is not in preparing state");
@@ -812,55 +811,6 @@ public class DebitNote extends DebitNote_Base {
     public BigDecimal getAvailableNetAmountForCredit() {
         return getDebitEntriesSet().stream().map(de -> de.getAvailableNetAmountForCredit()).reduce(BigDecimal.ZERO,
                 BigDecimal::add);
-    }
-
-    @Atomic
-    public static DebitNote createInterestDebitNoteForDebitNote(final DebitNote debitNote,
-            final DocumentNumberSeries documentNumberSeries, final LocalDate paymentDate, final String documentObservations,
-            final String documentTermsAndConditions) {
-        DebitNote interestDebitNote;
-        if (documentNumberSeries.getSeries().getCertificated()) {
-            interestDebitNote =
-                    DebitNote.createInterestDebitNoteForDebitNote(debitNote, documentNumberSeries, new DateTime(), paymentDate);
-        } else {
-            interestDebitNote = DebitNote.createInterestDebitNoteForDebitNote(debitNote, documentNumberSeries,
-                    paymentDate.toDateTimeAtStartOfDay(), paymentDate);
-        }
-        interestDebitNote.setDocumentObservations(documentObservations);
-        interestDebitNote.setDocumentTermsAndConditions(documentTermsAndConditions);
-
-        return interestDebitNote;
-    }
-
-    public static DebitNote createInterestDebitNoteForDebitNote(DebitNote debitNote, DocumentNumberSeries documentNumberSeries,
-            DateTime documentDate, LocalDate paymentDate) {
-
-        DebitNote interestDebitNote = DebitNote.create(debitNote.getDebtAccount(), documentNumberSeries, documentDate);
-        for (DebitEntry entry : debitNote.getDebitEntriesSet()) {
-
-            if (TreasuryDebtProcessMainService.isDebitEntryInterestCreationInAdvanceBlocked(entry)) {
-                throw new TreasuryDomainException(
-                        "error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");
-            }
-
-            List<InterestRateBean> undebitedInterestRateBeansList = entry.calculateUndebitedInterestValue(paymentDate);
-            for (InterestRateBean calculateUndebitedInterestValue : undebitedInterestRateBeansList) {
-                if (TreasuryConstants.isGreaterThan(calculateUndebitedInterestValue.getInterestAmount(), BigDecimal.ZERO)) {
-                    DateTime whenInterestDebitEntryDateTime = calculateUndebitedInterestValue
-                            .getInterestDebitEntryDateTime() != null ? calculateUndebitedInterestValue
-                                    .getInterestDebitEntryDateTime() : documentDate;
-
-                    entry.createInterestRateDebitEntry(calculateUndebitedInterestValue, whenInterestDebitEntryDateTime,
-                            Optional.<DebitNote> of(interestDebitNote));
-                }
-            }
-        }
-
-        if (TreasuryConstants.isEqual(interestDebitNote.getTotalAmount(), BigDecimal.ZERO)) {
-            interestDebitNote.delete(true);
-            throw new TreasuryDomainException(treasuryBundle("error.DebitNote.no.interest.to.generate"));
-        }
-        return interestDebitNote;
     }
 
     public static DebitEntry createBalanceTransferDebit(final DebtAccount debtAccount, final DateTime entryDate,

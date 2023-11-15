@@ -637,6 +637,7 @@ class tariff.InterestRateType {
 	String code;
 	LocalizedStringT description;
 	Boolean requiresInterestFixedAmount;
+	Boolean allowsPeriodicInterestDebitEntryCreation;
 }
 
 	relation InterestRateTypeDomainRoot {

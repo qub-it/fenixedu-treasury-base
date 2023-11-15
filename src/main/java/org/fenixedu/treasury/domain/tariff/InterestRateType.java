@@ -1,11 +1,15 @@
 package org.fenixedu.treasury.domain.tariff;
 
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -13,13 +17,20 @@ import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialEntity;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.DebitNote;
+import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
+import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 
+import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public abstract class InterestRateType extends InterestRateType_Base {
@@ -179,7 +190,6 @@ public abstract class InterestRateType extends InterestRateType_Base {
     }
 
     private FinantialEntity getFinantialEntity(DebitEntry debitEntry) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -239,4 +249,83 @@ public abstract class InterestRateType extends InterestRateType_Base {
             throw new RuntimeException(e);
         }
     }
+
+    @Atomic
+    public static Set<DebitNote> createInterestDebitNoteForDebitNote(final DebitNote debitNote,
+            final DocumentNumberSeries documentNumberSeries, final LocalDate paymentDate, final String documentObservations,
+            final String documentTermsAndConditions, boolean createDebitNoteForEachInterestDebitEntry) {
+        Set<DebitNote> interestDebitNotesSet = createInterestDebitNoteForDebitNote(debitNote, documentNumberSeries,
+                new DateTime(), paymentDate, createDebitNoteForEachInterestDebitEntry);
+
+        interestDebitNotesSet.forEach(d -> {
+            d.setDocumentObservations(documentObservations);
+            d.setDocumentTermsAndConditions(documentTermsAndConditions);
+        });
+
+        return interestDebitNotesSet;
+    }
+
+    private static Set<DebitNote> createInterestDebitNoteForDebitNote(DebitNote debitNote,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate paymentDate,
+            boolean createDebitNoteForEachInterestDebitEntry) {
+        Set<DebitNote> result = new HashSet<>();
+
+        DebtAccount debtAccount = debitNote.getDebtAccount();
+        DebitNote interestDebitNoteForAllInterests = createDebitNoteForEachInterestDebitEntry ? null : DebitNote
+                .create(debtAccount, documentNumberSeries, documentDate);
+        for (DebitEntry entry : debitNote.getDebitEntriesSet()) {
+
+            if (entry.getInterestRate() == null || entry.getInterestRate().getInterestRateType() == null) {
+                continue;
+            }
+
+            InterestRateType interestRateType = entry.getInterestRate().getInterestRateType();
+
+            if (createDebitNoteForEachInterestDebitEntry) {
+                DebitNote d = DebitNote.create(debtAccount, documentNumberSeries, documentDate);
+                result.add(d);
+
+                interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate, Optional.of(d));
+            } else {
+                result.add(interestDebitNoteForAllInterests);
+                interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate,
+                        Optional.of(interestDebitNoteForAllInterests));
+            }
+        }
+
+        if (!TreasuryConstants
+                .isPositive((result.stream().map(DebitNote::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add)))) {
+            throw new TreasuryDomainException(treasuryBundle("error.DebitNote.no.interest.to.generate"));
+        }
+
+        return result;
+    }
+
+    @Atomic
+    public Set<DebitEntry> createInterestDebitEntriesForOriginDebitEntry(DebitEntry originDebitEntry, DateTime documentDate,
+            LocalDate paymentDate, Optional<DebitNote> interestDebitNote) {
+        if (TreasuryDebtProcessMainService.isDebitEntryInterestCreationInAdvanceBlocked(originDebitEntry)) {
+            throw new TreasuryDomainException(
+                    "error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");
+        }
+
+        Set<DebitEntry> result = new HashSet<>();
+
+        List<InterestRateBean> undebitedInterestRateBeansList = originDebitEntry.calculateUndebitedInterestValue(paymentDate);
+        for (InterestRateBean calculateUndebitedInterestValue : undebitedInterestRateBeansList) {
+            if (TreasuryConstants.isGreaterThan(calculateUndebitedInterestValue.getInterestAmount(), BigDecimal.ZERO)) {
+                DateTime whenInterestDebitEntryDateTime =
+                        calculateUndebitedInterestValue.getInterestDebitEntryDateTime() != null ? calculateUndebitedInterestValue
+                                .getInterestDebitEntryDateTime() : documentDate;
+
+                DebitEntry interestDebitEntry = originDebitEntry.createInterestRateDebitEntry(calculateUndebitedInterestValue,
+                        whenInterestDebitEntryDateTime, interestDebitNote);
+
+                result.add(interestDebitEntry);
+            }
+        }
+
+        return result;
+    }
+
 }
