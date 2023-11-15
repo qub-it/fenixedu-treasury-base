@@ -1,3 +1,4 @@
+11.7.0 (15-11-2023)
 - Improvement: add property to mark if interest rate type can be run periodically to create interest debit entries [#qubIT-Fenix-4420]
 - Refactor: Move the methods to create interest debit entries in advance, from DebitNote to InterestRateType [#qubIT-Fenix-4420]
 - Refactor: Allow the override of manual creation of debit entries by advance or by periodic task [#qubIT-Fenix-4420]
