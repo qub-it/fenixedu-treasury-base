@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -183,6 +184,12 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
     @Override
     public boolean isForInstallment() {
         return true;
+    }
+
+    @Override
+    public boolean isForFinantialEntity(FinantialEntity finantialEntity) {
+        return installment.getInstallmentEntriesSet().stream().map(ie -> ie.getDebitEntry())
+                .anyMatch(de -> de.getAssociatedFinantialEntity() == finantialEntity);
     }
 
     @Override

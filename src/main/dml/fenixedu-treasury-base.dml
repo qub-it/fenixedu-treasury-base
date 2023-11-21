@@ -174,6 +174,8 @@ class FinantialInstitution {
 	
 	// Codigo CAE
 	String eacCode;
+	
+	Boolean limitPaymentRequestsByFinantialEntity;
 }
 
 class FinantialEntity {
@@ -755,6 +757,16 @@ class payments.integration.DigitalPaymentPlatform {
 			multiplicity *;
 		}
 	}
+	
+	relation DigitalPaymentPlatformFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 0..1;
+		}
+	
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatforms {
+			multiplicity *;
+		}
+	}
 
 	relation DefaultDigitalPaymentPlatformFinantialInstitution {
 		payments.integration.DigitalPaymentPlatform playsRole defaultDigitalPaymentPlatform {
@@ -764,10 +776,17 @@ class payments.integration.DigitalPaymentPlatform {
 		FinantialInstitution playsRole defaultFinantialInstitution{
 			multiplicity 0..1;
 		}
-	
-		
 	}
-
+	
+	relation DefaultDigitalPaymentPlatformFinantialEntity {
+		payments.integration.DigitalPaymentPlatform playsRole defaultDigitalPaymentPlatform {
+			multiplicity 0..1;
+		}
+		
+		FinantialEntity playsRole defaultFinantialEntity {
+			multiplicity 0..1;
+		}
+	}
 
 class payments.integration.DigitalPaymentPlatformPaymentMode {
 	boolean active;

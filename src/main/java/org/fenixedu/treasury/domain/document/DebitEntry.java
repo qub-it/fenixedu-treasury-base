@@ -71,6 +71,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -1331,4 +1332,20 @@ public class DebitEntry extends DebitEntry_Base {
                 .collect(Collectors.toSet());
     }
 
+    // @formatter:off
+    /*
+     * ********************************
+     * FINANTIAL ENTITY RELATED METHODS
+     * ********************************
+     */
+    // @formatter:on
+
+    @Override
+    public FinantialEntity getAssociatedFinantialEntity() {
+        if (getTreasuryEvent() != null) {
+            return getTreasuryEvent().getAssociatedFinantialEntity();
+        }
+
+        return null;
+    }
 }

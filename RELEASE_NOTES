@@ -1,3 +1,8 @@
+- New Feature: Digital payment platforms by finantial entity [#qubIT-Fenix-4584]
+- Improvement: New service method to verify if user has frontoffice permission by finantial entity [#qubIT-Fenix-4596]
+- Improvement: Method to obtain the associated finantial entity by debit entry or credit entry [#qubIT-Fenix-4597]
+- Improvement: Method to obtain the associated finantial entity by treasury event [#qubIT-Fenix-4598]
+
 11.7.0 (15-11-2023)
 - Improvement: add property to mark if interest rate type can be run periodically to create interest debit entries [#qubIT-Fenix-4420]
 - Refactor: Move the methods to create interest debit entries in advance, from DebitNote to InterestRateType [#qubIT-Fenix-4420]

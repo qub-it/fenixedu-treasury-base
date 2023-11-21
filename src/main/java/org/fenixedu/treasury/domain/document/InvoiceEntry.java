@@ -56,13 +56,13 @@ import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -72,8 +72,6 @@ import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.MbwayPaymentReques
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
-import pt.ist.fenixframework.Atomic;
 
 public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
@@ -121,28 +119,28 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
         return c2 != 0 ? c2 : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
-    public static final Comparator<InvoiceEntry> COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION = (o1, o2) -> {
-        if(o1.getEntryOrder() != null && o2.getEntryOrder() != null) {
-            int c = o1.getEntryOrder().compareTo(o2.getEntryOrder());
-            
-            if(c != 0) {
-                return c;
-            }
-        } else if(o1.getEntryOrder() != null && o2.getEntryOrder() == null) {
-            return -1;
-        } else if(o1.getEntryOrder() == null && o2.getEntryOrder() != null) { 
-            return 1;
-        }
 
-        return COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION.compare(o1, o2);
-    };
+    public static final Comparator<InvoiceEntry> COMPARATOR_BY_ENTRY_ORDER_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION =
+            (o1, o2) -> {
+                if (o1.getEntryOrder() != null && o2.getEntryOrder() != null) {
+                    int c = o1.getEntryOrder().compareTo(o2.getEntryOrder());
+
+                    if (c != 0) {
+                        return c;
+                    }
+                } else if (o1.getEntryOrder() != null && o2.getEntryOrder() == null) {
+                    return -1;
+                } else if (o1.getEntryOrder() == null && o2.getEntryOrder() != null) {
+                    return 1;
+                }
+
+                return COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION.compare(o1, o2);
+            };
 
     public static final int MAX_DESCRIPTION_LENGTH = 200;
-    
-    @Override protected void checkForDeletionBlockers(
-    Collection<String> blockers)
-    {
+
+    @Override
+    protected void checkForDeletionBlockers(Collection<String> blockers) {
         super.checkForDeletionBlockers(blockers);
 
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
@@ -376,7 +374,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         if (!TreasuryConstants.isPositive(amountWithVat)) {
             throw new TreasuryDomainException("error.DebitEntry.overrideCalculatedAmounts.invalid.amountWithVat");
         }
-        
+
         setNetAmount(netAmount);
         setVatRate(vatRate);
         setVatAmount(vatAmount);
@@ -404,7 +402,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         setCalculatedAmountsOverriden(false);
         recalculateAmountValues();
     }
-    
+
     public abstract BigDecimal getOpenAmountWithInterests();
 
     public abstract LocalDate getDueDate();
@@ -483,5 +481,15 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         // TODO Auto-generated method stub
         return super.getMbwayPaymentRequestsSet();
     }
+
+    // @formatter:off
+    /*
+     * ********************************
+     * FINANTIAL ENTITY RELATED METHODS
+     * ********************************
+     */
+    // @formatter:on
+
+    public abstract FinantialEntity getAssociatedFinantialEntity();
 
 }

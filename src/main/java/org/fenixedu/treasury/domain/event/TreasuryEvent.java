@@ -604,6 +604,16 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     // @formatter: off
+    /* ******************************** *
+     * FINANTIAL ENTITY RELATED METHODS *
+     * ******************************** */
+    // @formatter: on
+
+    public FinantialEntity getAssociatedFinantialEntity() {
+        return null;
+    }
+
+    // @formatter: off
     /************
      * SERVICES *
      ************/
