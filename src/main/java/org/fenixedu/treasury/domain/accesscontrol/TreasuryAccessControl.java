@@ -76,7 +76,7 @@ public class TreasuryAccessControl {
 
     public boolean isFrontOfficeMember() {
         final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-        
+
         return isFrontOfficeMember(services.getLoggedUsername());
     }
 
@@ -124,17 +124,27 @@ public class TreasuryAccessControl {
         return false;
     }
 
+    public boolean isFrontOfficeMember(String username, FinantialEntity finantialEntity) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.isFrontOfficeMember(username, finantialEntity)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public <T> boolean isFrontOfficeMemberWithinContext(final String username, final T context) {
         for (ITreasuryAccessControlExtension<?> ext : extensions) {
-            if(!ext.isContextObjectApplied(context)) {
+            if (!ext.isContextObjectApplied(context)) {
                 continue;
             }
-            
+
             if (((ITreasuryAccessControlExtension<T>) ext).isFrontOfficeMemberWithinContext(username, context)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -167,18 +177,18 @@ public class TreasuryAccessControl {
 
         return false;
     }
-    
+
     public <T> boolean isBackOfficeMemberWithinContext(final String username, final T context) {
         for (ITreasuryAccessControlExtension<?> ext : extensions) {
-            if(!ext.isContextObjectApplied(context)) {
+            if (!ext.isContextObjectApplied(context)) {
                 continue;
             }
-            
+
             if (((ITreasuryAccessControlExtension<T>) ext).isBackOfficeMemberWithinContext(username, context)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -191,7 +201,7 @@ public class TreasuryAccessControl {
 
         return false;
     }
-    
+
     public boolean isRegistered(Class<? extends ITreasuryAccessControlExtension<?>> clazz) {
         return extensions.stream().anyMatch(e -> clazz.equals(e.getClass()));
     }
@@ -203,7 +213,7 @@ public class TreasuryAccessControl {
     public void unregisterExtension(Class<? extends ITreasuryAccessControlExtension<?>> extensionClazz) {
         extensions.removeIf(e -> extensionClazz.equals(e.getClass()));
     }
-    
+
     public List<ITreasuryAccessControlExtension<?>> getRegisteredExtensions() {
         return this.extensions;
     }
@@ -248,14 +258,14 @@ public class TreasuryAccessControl {
 
         return false;
     }
-    
+
     public java.util.Set<String> getFrontOfficeMemberUsernames() {
         final java.util.Set<String> result = Sets.newHashSet();
 
         for (ITreasuryAccessControlExtension<?> ext : extensions) {
             result.addAll(ext.getFrontOfficeMemberUsernames());
         }
-        
+
         return result;
     }
 
@@ -265,7 +275,7 @@ public class TreasuryAccessControl {
         for (ITreasuryAccessControlExtension<?> ext : extensions) {
             result.addAll(ext.getBackOfficeMemberUsernames());
         }
-        
+
         return result;
     }
 
@@ -275,12 +285,12 @@ public class TreasuryAccessControl {
         for (ITreasuryAccessControlExtension<?> ext : extensions) {
             result.addAll(ext.getTreasuryManagerMemberUsernames());
         }
-        
+
         return result;
     }
-    
+
     public static TreasuryAccessControl getInstance() {
         return _instance;
     }
-    
+
 }

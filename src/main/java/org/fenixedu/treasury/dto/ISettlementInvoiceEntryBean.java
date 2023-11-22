@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
@@ -74,7 +75,7 @@ public interface ISettlementInvoiceEntryBean {
     public static final String CREATION_DATE = "creationDate";
     public static final String DESCRITPION = "descritpion";
     public static final String AMOUNT = "amount";
-    
+
     public static final String PRODUCT_ID = "productId";
     public static final String INCLUDED = "included";
     public static final String NOT_VALID = "notValid";
@@ -156,6 +157,10 @@ public interface ISettlementInvoiceEntryBean {
 
     default Map<String, List<String>> getCalculationDescription() {
         return Collections.emptyMap();
+    }
+
+    default boolean isForFinantialEntity(FinantialEntity finantialEntity) {
+        return true;
     }
 
     public String serialize();

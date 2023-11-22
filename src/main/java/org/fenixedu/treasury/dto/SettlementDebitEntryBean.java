@@ -58,6 +58,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -218,6 +219,11 @@ public class SettlementDebitEntryBean implements ISettlementInvoiceEntryBean, IT
     @Override
     public boolean isForDebitEntry() {
         return true;
+    }
+
+    @Override
+    public boolean isForFinantialEntity(FinantialEntity finantialEntity) {
+        return getInvoiceEntry().getAssociatedFinantialEntity() == finantialEntity;
     }
 
     @Override

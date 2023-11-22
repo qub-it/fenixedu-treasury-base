@@ -61,10 +61,11 @@ import org.fenixedu.treasury.services.accesscontrol.spi.ITreasuryAccessControlEx
 public class TreasuryAccessControlAPI {
 
     public static void registerExtension(ITreasuryAccessControlExtension<?> extension) {
-        if(TreasuryAccessControl.getInstance().isRegistered((Class<? extends ITreasuryAccessControlExtension<?>>) extension.getClass())) {
+        if (TreasuryAccessControl.getInstance()
+                .isRegistered((Class<? extends ITreasuryAccessControlExtension<?>>) extension.getClass())) {
             return;
         }
-        
+
         TreasuryAccessControl.getInstance().registerExtension(extension);
     }
 
@@ -81,12 +82,13 @@ public class TreasuryAccessControlAPI {
     public static boolean isAllowToModifySettlements(final String username, final FinantialInstitution finantialInstitution) {
         return TreasuryAccessControl.getInstance().isAllowToModifySettlements(username, finantialInstitution);
     }
-    
+
     public static boolean isAllowToConditionallyAnnulSettlementNote(final String username, final SettlementNote settlementNote) {
         return TreasuryAccessControl.getInstance().isAllowToConditionallyAnnulSettlementNote(username, settlementNote);
     }
 
-    public static boolean isAllowToAnnulSettlementNoteWithoutAnyRestriction(final String username, final SettlementNote settlementNote) {
+    public static boolean isAllowToAnnulSettlementNoteWithoutAnyRestriction(final String username,
+            final SettlementNote settlementNote) {
         return TreasuryAccessControl.getInstance().isAllowToAnnulSettlementNoteWithoutAnyRestriction(username, settlementNote);
     }
 
@@ -97,7 +99,11 @@ public class TreasuryAccessControlAPI {
     public static boolean isFrontOfficeMember(final String username, final FinantialInstitution finantialInstitution) {
         return TreasuryAccessControl.getInstance().isFrontOfficeMember(username, finantialInstitution);
     }
-    
+
+    public static boolean isFrontOfficeMember(String username, FinantialEntity finantialEntity) {
+        return TreasuryAccessControl.getInstance().isFrontOfficeMember(username, finantialEntity);
+    }
+
     public static <T> boolean isFrontOfficeMemberWithinContext(final String username, final T context) {
         return TreasuryAccessControl.getInstance().isFrontOfficeMemberWithinContext(username, context);
     }
@@ -113,7 +119,7 @@ public class TreasuryAccessControlAPI {
     public static boolean isBackOfficeMember(final String username, final FinantialEntity finantialEntity) {
         return TreasuryAccessControl.getInstance().isBackOfficeMember(username, finantialEntity);
     }
-    
+
     public static <T> boolean isBackOfficeMemberWithinContext(final String username, final T context) {
         return TreasuryAccessControl.getInstance().isBackOfficeMemberWithinContext(username, context);
     }
@@ -133,5 +139,5 @@ public class TreasuryAccessControlAPI {
     public static java.util.Set<String> getTreasuryManagerMemberUsernames() {
         return TreasuryAccessControl.getInstance().getTreasuryManagerMemberUsernames();
     }
-    
+
 }
