@@ -328,4 +328,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
         return result;
     }
 
+    public void checkDebitEntryRequirementsForInterestCalculation(DebitEntry debitEntry) {
+    }
+
 }

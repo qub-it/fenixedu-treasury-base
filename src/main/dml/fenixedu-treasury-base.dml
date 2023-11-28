@@ -384,6 +384,14 @@ class document.FinantialDocument {
 		
 		class document.CreditNote extends document.Invoice {
 			String reason;
+			
+			// ANIL 2023-11-15: This is a solution for the credit notes
+			// which are not associated with their debit notes
+			// but need to be certified, exported to SAFT and sent to
+			// Tax Authority. This will be used in migrated open
+			// credit notes
+			
+			String certificationOriginDocumentReference;
 		}
 		
 		class document.AdvancedPaymentCreditNote extends document.CreditNote{

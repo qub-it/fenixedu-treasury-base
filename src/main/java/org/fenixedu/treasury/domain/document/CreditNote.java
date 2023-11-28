@@ -84,7 +84,7 @@ public class CreditNote extends CreditNote_Base {
     protected CreditNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
             final DateTime documentDate, DebitNote debitNote) {
         super();
-        
+
         init(debtAccount, documentNumberSeries, documentDate, debitNote);
         checkRules();
     }
@@ -419,6 +419,19 @@ public class CreditNote extends CreditNote_Base {
                 .allMatch(de -> de.getSettlementEntriesSet().stream().allMatch(se -> se.getFinantialDocument().isAnnulled()));
 
         return withAllSettlementNotesAnnuled;
+    }
+
+    public void updateCertificationOriginDocumentReference(String certificationOriginDocumentReference) {
+        if (!isPreparing()) {
+            throw new TreasuryDomainException("error.CreditNote.updateCertificationOriginDocumentReference.is.not.preparing");
+        }
+
+        if (getDebitNote() != null) {
+            throw new TreasuryDomainException(
+                    "error.CreditNote.updateCertificationOriginDocumentReference.is.associated.with.debitNote");
+        }
+
+        super.setCertificationOriginDocumentReference(certificationOriginDocumentReference);
     }
 
     // @formatter:off

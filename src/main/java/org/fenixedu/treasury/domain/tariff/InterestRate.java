@@ -90,6 +90,10 @@ public class InterestRate extends InterestRate_Base {
         setRate(rate);
 
         checkRules();
+
+        if (debitEntry != null && getInterestRateType() != null) {
+            getInterestRateType().checkDebitEntryRequirementsForInterestCalculation(debitEntry);
+        }
     }
 
     private void checkRules() {
@@ -136,6 +140,10 @@ public class InterestRate extends InterestRate_Base {
         setRate(rate);
 
         checkRules();
+
+        if (getDebitEntry() != null && getInterestRateType() != null) {
+            getInterestRateType().checkDebitEntryRequirementsForInterestCalculation(getDebitEntry());
+        }
     }
 
     public List<InterestRateBean> calculateInterests(LocalDate paymentDate, boolean withAllInterestValues) {
@@ -445,7 +453,7 @@ public class InterestRate extends InterestRate_Base {
         setInterestRateType(null);
         deleteDomainObject();
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -456,7 +464,7 @@ public class InterestRate extends InterestRate_Base {
         // TODO Auto-generated method stub
         return super.getNumberOfDaysAfterDueDate();
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -466,7 +474,7 @@ public class InterestRate extends InterestRate_Base {
         // TODO Auto-generated method stub
         super.setNumberOfDaysAfterDueDate(numberOfDaysAfterDueDate);
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -475,7 +483,7 @@ public class InterestRate extends InterestRate_Base {
     public int getMaximumDaysToApplyPenalty() {
         return super.getMaximumDaysToApplyPenalty();
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -485,7 +493,7 @@ public class InterestRate extends InterestRate_Base {
         // TODO Auto-generated method stub
         super.setMaximumDaysToApplyPenalty(maximumDaysToApplyPenalty);
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -496,7 +504,7 @@ public class InterestRate extends InterestRate_Base {
         // TODO Auto-generated method stub
         return super.getApplyInFirstWorkday();
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -506,7 +514,7 @@ public class InterestRate extends InterestRate_Base {
         // TODO Auto-generated method stub
         super.setApplyInFirstWorkday(applyInFirstWorkday);
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -516,7 +524,7 @@ public class InterestRate extends InterestRate_Base {
     public BigDecimal getRate() {
         return super.getRate();
     }
-    
+
     @Override
     @Deprecated
     /*
@@ -525,12 +533,12 @@ public class InterestRate extends InterestRate_Base {
     public void setRate(BigDecimal rate) {
         super.setRate(rate);
     }
-    
+
     @Deprecated
     public InterestType getInterestType() {
         return super.getInterestType();
     }
-    
+
     @Override
     @Deprecated
     public void setInterestType(InterestType interestType) {
