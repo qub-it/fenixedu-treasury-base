@@ -1,3 +1,4 @@
+11.9.0 (28-11-2023)
 - Improvement: Check the requirements of debit entry, when setting interest rate type [#qubIT-Fenix-4524]
 - Improvement: Allow registration of credit note origin invoice number, for the cases when it is necessary to certify credit note without debit note [#qubIT-Fenix-4569]
 
