@@ -53,18 +53,14 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
-import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
@@ -214,6 +210,9 @@ public class Series extends Series_Base {
         return super.getExternSeries();
     }
 
+    @Deprecated
+    // TODO ANIL 2023-11-30: This property does not have any meaning
+    // Remove in the future
     public boolean isCertificated() {
         return super.getCertificated();
     }

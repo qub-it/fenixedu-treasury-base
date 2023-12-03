@@ -396,8 +396,13 @@ public class TreasuryBootstrapper {
         String locality = null;
         String zipCode = null;
 
-        return FinantialInstitution.create(fiscalCountryRegion, currency, code, fiscalNumber, companyId, name, companyName,
-                address, country, district, municipality, locality, zipCode);
+        FinantialInstitution institution = FinantialInstitution.create(fiscalCountryRegion, currency, code, fiscalNumber,
+                companyId, name, companyName, address, country, district, municipality, locality, zipCode);
+
+        institution.setSplitCreditEntriesWithSettledAmount(true);
+        institution.setSplitDebitEntriesWithSettledAmount(false);
+
+        return institution;
     }
 
     private static void initializeFinantialEntity(FinantialInstitution finantialInstitution) {

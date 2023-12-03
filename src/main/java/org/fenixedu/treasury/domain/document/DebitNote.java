@@ -503,6 +503,14 @@ public class DebitNote extends DebitNote_Base {
                 throw new TreasuryDomainException("error.DebitNote.creditNote.not.empty");
             }
 
+            if (anullGeneratedInterests) {
+                //Annul open interest debit entry
+                getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream())
+                        .filter(interest -> !interest.isAnnulled()
+                                && TreasuryConstants.isPositive(interest.getAvailableNetAmountForCredit()))
+                        .forEach(interest -> interest.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
+            }
+
             for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
 
                 // Also remove from treasury event

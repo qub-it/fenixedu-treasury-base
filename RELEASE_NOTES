@@ -1,3 +1,8 @@
+- Refactor: Remove unused method SettlementNoteBean#includeAllInterestOfSelectedDebitEntries [#qubIT-Fenix-4637]
+- Refactor: Control credit entries split with specific configuration in finantial institution [#qubIT-Fenix-4637]
+- New Feature: Split debit entries when settle [#qubIT-Fenix-4637]
+- Bug Fix: Invalidate interests when annul preparing debit entry [#qubIT-Fenix-4640]
+
 11.9.0 (28-11-2023)
 - Improvement: Check the requirements of debit entry, when setting interest rate type [#qubIT-Fenix-4524]
 - Improvement: Allow registration of credit note origin invoice number, for the cases when it is necessary to certify credit note without debit note [#qubIT-Fenix-4569]

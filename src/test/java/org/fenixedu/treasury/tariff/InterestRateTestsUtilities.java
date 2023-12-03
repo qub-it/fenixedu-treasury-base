@@ -16,7 +16,6 @@ import org.fenixedu.treasury.domain.VatType;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
@@ -89,7 +88,7 @@ public class InterestRateTestsUtilities {
             final BigDecimal rate = null;
 
             InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
-            
+
             InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType,
                     numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
@@ -103,7 +102,7 @@ public class InterestRateTestsUtilities {
 
     public static void createDebtAccount() {
         AdhocCustomer create = AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(),
-                Customer.DEFAULT_FISCAL_NUMBER, "Diogo", "morada", "", "", "", "pt", "", List.of(getFinatialInstitution()));
+                Customer.DEFAULT_FISCAL_NUMBER, "Cliente", "morada", "", "", "", "pt", "", List.of(getFinatialInstitution()));
         DebtAccount.create(getFinatialInstitution(), create);
     }
 
