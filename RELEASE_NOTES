@@ -1,5 +1,6 @@
 - Refactor: Remove unused method SettlementNoteBean#includeAllInterestOfSelectedDebitEntries [#qubIT-Fenix-4637]
 - Refactor: Control credit entries split with specific configuration in finantial institution [#qubIT-Fenix-4637]
+- Refactor: Remove the SAP exporter for testing integration of invoice entries with quantity different than one [#UL-ISEG-4541]
 - New Feature: Split debit entries when settle [#qubIT-Fenix-4637]
 - Bug Fix: Invalidate interests when annul preparing debit entry [#qubIT-Fenix-4640]
 
