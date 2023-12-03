@@ -503,6 +503,13 @@ public class DebitNote extends DebitNote_Base {
                 throw new TreasuryDomainException("error.DebitNote.creditNote.not.empty");
             }
 
+            if (anullGeneratedInterests) {
+                //Annul open interest debit entry
+                getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream())
+                        .filter(interest -> !interest.isAnnulled())
+                        .forEach(interest -> interest.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
+            }
+
             for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
 
                 // Also remove from treasury event
@@ -523,6 +530,13 @@ public class DebitNote extends DebitNote_Base {
 
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
+
+            if (anullGeneratedInterests) {
+                getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream())
+                        .filter(interest -> !interest.isAnnulled()
+                                && TreasuryConstants.isPositive(interest.getAvailableNetAmountForCredit()))
+                        .forEach(interest -> interest.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
+            }
         } else {
             throw new TreasuryDomainException("error.DebitNote.cannot.anull.is.empty");
         }

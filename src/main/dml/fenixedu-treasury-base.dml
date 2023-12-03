@@ -176,6 +176,8 @@ class FinantialInstitution {
 	String eacCode;
 	
 	Boolean limitPaymentRequestsByFinantialEntity;
+	Boolean splitCreditEntriesWithSettledAmount;
+	Boolean splitDebitEntriesWithSettledAmount;
 }
 
 class FinantialEntity {
@@ -2294,7 +2296,23 @@ relation debitEntryTuitionPayorDebtAccount {
 		multiplicity *;
 	}
 }
+
+/* ANIL 2023-11-30
+ * To calculate correctly interests, it is necessary to maintain a track of the
+ * interests that were splitted. If the treasury platform does not maintain a track,
+ * it might calculate additional interests
+ */
+
+relation SplittedDebitEntry {
+
+	.org.fenixedu.treasury.domain.document.DebitEntry playsRole splittingOriginDebitEntry {
+		multiplicity 0..1;
+	}
 	
+	.org.fenixedu.treasury.domain.document.DebitEntry playsRole splittedDebitEntries {
+		multiplicity *;
+	}
+}
 
 /* --- CreditEntry --- */
 

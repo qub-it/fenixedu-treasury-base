@@ -597,47 +597,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return false;
     }
 
-    public void includeAllInterestOfSelectedDebitEntries() {
-        List<SettlementDebitEntryBean> debitEntriesToIterate =
-                Lists.newArrayList(getDebitEntriesByType(SettlementDebitEntryBean.class));
-        for (SettlementDebitEntryBean debitEntryBean : debitEntriesToIterate) {
-            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
-                    debitEntryBean.getDebtAmount())) {
-
-                //Calculate interest only if we are making a FullPayment
-                List<InterestRateBean> undebitedInterestRateBeansList =
-                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
-                for (InterestRateBean debitInterest : undebitedInterestRateBeansList) {
-                    if (debitInterest.getInterestAmount().compareTo(BigDecimal.ZERO) != 0) {
-                        SettlementInterestEntryBean interestEntryBean =
-                                new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-                        this.virtualDebitEntries.add(interestEntryBean);
-                        interestEntryBean.setIncluded(true);
-                    }
-                }
-            }
-        }
-
-        for (SettlementDebitEntryBean debitEntryBean : debitEntriesToIterate) {
-            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
-                    debitEntryBean.getDebtAmount())) {
-                for (final DebitEntry interestDebitEntry : debitEntryBean.getDebitEntry().getInterestDebitEntriesSet()) {
-                    if (getDebitEntriesByType(SettlementDebitEntryBean.class).stream().filter(e -> e.isIncluded())
-                            .filter(e -> e.getDebitEntry() == interestDebitEntry).findAny().isPresent()) {
-                        continue;
-                    }
-
-                    if (interestDebitEntry.isInDebt()) {
-                        getDebitEntries().stream()
-                                .filter(e -> ((SettlementDebitEntryBean) e).getDebitEntry() == interestDebitEntry).findAny().get()
-                                .setIncluded(true);
-                    }
-                }
-            }
-        }
-
-    }
-
     public void markCheckingInvoiceEntriesPaymentBlockingForBackoffice() {
         this.invoiceEntriesPaymentBlockingContext = InvoiceEntryBlockingPaymentContext.BACKOFFICE;
     }

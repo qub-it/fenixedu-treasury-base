@@ -232,8 +232,8 @@ public class CreditEntry extends CreditEntry_Base {
 
     // TODO: Review the calculation of remainingUnitAmount, which might be losing
     // precision
-    public CreditEntry splitCreditEntry(BigDecimal remainingAmountWithVat) {
-        if (!TreasuryConstants.isLessThan(remainingAmountWithVat, getOpenAmount())) {
+    public CreditEntry splitCreditEntry(BigDecimal amountWithVatOfNewCreditEntry) {
+        if (!TreasuryConstants.isLessThan(amountWithVatOfNewCreditEntry, getOpenAmount())) {
             throw new TreasuryDomainException("error.CreditEntry.splitCreditEntry.remainingAmount.less.than.open.amount");
         }
 
@@ -244,27 +244,30 @@ public class CreditEntry extends CreditEntry_Base {
         BigDecimal oldNetAmount = getNetAmount();
         BigDecimal oldAmountWithVat = getAmountWithVat();
 
-        CreditNote newCreditNote = CreditNote.create(this.getDebtAccount(), getFinantialDocument().getDocumentNumberSeries(),
-                getFinantialDocument().getDocumentDate(), ((CreditNote) getFinantialDocument()).getDebitNote(),
-                getFinantialDocument().getOriginDocumentNumber());
-        newCreditNote.setDocumentObservations(getFinantialDocument().getDocumentObservations());
-        newCreditNote.setDocumentTermsAndConditions(getFinantialDocument().getDocumentTermsAndConditions());
+        CreditNote newCreditNote = CreditNote.create(this.getDebtAccount(), getCreditNote().getDocumentNumberSeries(),
+                getCreditNote().getDocumentDate(), getCreditNote().getDebitNote(), getCreditNote().getOriginDocumentNumber());
+
+        newCreditNote.setDocumentObservations(getCreditNote().getDocumentObservations());
+        newCreditNote.setDocumentTermsAndConditions(getCreditNote().getDocumentTermsAndConditions());
+        newCreditNote.editPropertiesMap(getCreditNote().getPropertiesMap());
+        newCreditNote.setCertificationOriginDocumentReference(getCreditNote().getCertificationOriginDocumentReference());
+        newCreditNote.setCloseDate(getCreditNote().getCloseDate());
 
         // TODO: Check if precision is lost in cents
-        BigDecimal remainingAmountWithoutVatDividedByQuantity = Currency.getValueWithScale(TreasuryConstants.divide(
-                TreasuryConstants.divide(remainingAmountWithVat, BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
-                getQuantity()));
+        BigDecimal unitAmountOfNewCreditEntry =
+                Currency.getValueWithScale(TreasuryConstants.divide(TreasuryConstants.divide(amountWithVatOfNewCreditEntry,
+                        BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))), getQuantity()));
 
         // TODO: the amountPerUnit should be truncated to fewer decimal places?
-        BigDecimal newOpenAmountWithoutVatDividedByQuantity = TreasuryConstants.divide(
+        BigDecimal openUnitAmountOfThisCreditEntry = TreasuryConstants.divide(
                 TreasuryConstants.divide(getOpenAmount(), BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
                 getQuantity());
 
-        setAmount(newOpenAmountWithoutVatDividedByQuantity.subtract(remainingAmountWithoutVatDividedByQuantity));
+        setAmount(openUnitAmountOfThisCreditEntry.subtract(unitAmountOfNewCreditEntry));
         recalculateAmountValues();
 
-        CreditEntry newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(),
-                remainingAmountWithoutVatDividedByQuantity, getEntryDateTime(), getDebitEntry(), getQuantity());
+        CreditEntry newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(), unitAmountOfNewCreditEntry,
+                getEntryDateTime(), getDebitEntry(), getQuantity());
         newCreditEntry.setFromExemption(isFromExemption());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()

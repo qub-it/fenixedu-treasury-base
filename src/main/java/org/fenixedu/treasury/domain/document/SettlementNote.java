@@ -66,7 +66,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -96,7 +95,6 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -359,7 +357,7 @@ public class SettlementNote extends SettlementNote_Base {
 
     @Atomic
     public void processSettlementNoteCreation(SettlementNoteBean bean) {
-        processDebtEntries(bean);
+        processDebitEntries(bean);
         processCreditEntries(bean);
 
         if (bean.isReimbursementNote()) {
@@ -430,14 +428,17 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     private void processCreditEntries(SettlementNoteBean bean) {
-        boolean isInvoiceRegistrationByTreasuryCertification =
-                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+//        boolean isInvoiceRegistrationByTreasuryCertification =
+//                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
+        boolean splitCreditEntriesWithSettledAmount =
+                getDebtAccount().getFinantialInstitution().getSplitCreditEntriesWithSettledAmount();
 
         for (SettlementCreditEntryBean creditEntryBean : bean.getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
                 CreditEntry creditEntry = creditEntryBean.getCreditEntry();
 
-                final BigDecimal creditAmountWithVat = creditEntryBean.getCreditAmountWithVat();
+                final BigDecimal creditAmountWithVat = creditEntryBean.getSettledAmount();
 
                 if (bean.isReimbursementNote()) {
                     if (ReimbursementUtils.isCreditNoteForReimbursementMustBeClosedWithDebitNoteAndCreatedNew(creditEntry)) {
@@ -446,8 +447,8 @@ public class SettlementNote extends SettlementNote_Base {
                     }
                 }
 
-                if (!creditEntry.getFinantialDocument().isClosed()) {
-                    if (!isInvoiceRegistrationByTreasuryCertification
+                if (creditEntry.getFinantialDocument().isPreparing()) {
+                    if (splitCreditEntriesWithSettledAmount
                             && TreasuryConstants.isLessThan(creditAmountWithVat, creditEntry.getOpenAmount())) {
                         creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(creditAmountWithVat));
                     }
@@ -461,7 +462,10 @@ public class SettlementNote extends SettlementNote_Base {
         }
     }
 
-    private void processDebtEntries(SettlementNoteBean bean) {
+    private void processDebitEntries(SettlementNoteBean bean) {
+        boolean splitDebitEntriesWithSettledAmount =
+                bean.getDebtAccount().getFinantialInstitution().getSplitDebitEntriesWithSettledAmount();
+
         BigDecimal paymentEntriesAmount =
                 bean.getPaymentEntries().stream().map(p -> p.getPaymentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal creditsAmount = bean.getCreditEntries().stream().filter(c -> c.isIncluded())
@@ -486,6 +490,12 @@ public class SettlementNote extends SettlementNote_Base {
             }
 
             DebitEntry debitEntry = debitEntryBean.getDebitEntry();
+
+            if (splitDebitEntriesWithSettledAmount
+                    && (debitEntry.getFinantialDocument() == null || debitEntry.getFinantialDocument().isPreparing())
+                    && TreasuryConstants.isLessOrEqualThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
+                debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()));
+            }
 
             if (debitEntry.getFinantialDocument() == null) {
                 untiedDebitEntries.add(debitEntry);
@@ -940,14 +950,14 @@ public class SettlementNote extends SettlementNote_Base {
     public Comparator<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderComparator() {
         return SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION;
     }
-    
+
     @Override
     public List<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription() {
         final List<SettlementEntry> result = new ArrayList<>();
 
         getFinantialDocumentEntriesSet().stream().map(SettlementEntry.class::cast).collect(Collectors.toCollection(() -> result));
         Collections.sort(result, SettlementEntry.COMPARATOR_BY_TUITION_INSTALLMENT_ORDER_AND_DESCRIPTION);
-        
+
         if (result.size() != getFinantialDocumentEntriesSet().size()) {
             throw new RuntimeException("error");
         }
@@ -957,12 +967,12 @@ public class SettlementNote extends SettlementNote_Base {
 
     public void updateOverrideCertificationDateWithCloseDate(boolean overrideCertificationDateWithCloseDate, DateTime closeDate) {
         super.updateOverrideCertificationDateWithCloseDate(overrideCertificationDateWithCloseDate, closeDate);
-        
+
         for (SettlementEntry settlementEntry : getSettlemetEntriesSet()) {
             settlementEntry.setCloseDate(closeDate);
         }
     }
-    
+
     // @formatter:off
     /* ********
      * SERVICES
