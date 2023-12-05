@@ -79,9 +79,9 @@ public class Product extends Product_Base {
 
     private static final int MIN_DESCRIPTION_LENGTH = 2;
     private static final int MAX_DESCRIPTION_LENGTH = 200;
-    
+
     public static final int MAX_CODE_LENGTH = 20;
-    
+
     public static final Comparator<Product> COMPARE_BY_NAME = (o1, o2) -> {
         int c = o1.getName().getContent().compareTo(o2.getName().getContent());
 
@@ -147,15 +147,15 @@ public class Product extends Product_Base {
         }
 
         getName().getLocales().stream().forEach(lc -> {
-            if(StringUtils.isNotEmpty(getName().getContent(lc)) && getName().getContent(lc).length() < MIN_DESCRIPTION_LENGTH) {
+            if (StringUtils.isNotEmpty(getName().getContent(lc)) && getName().getContent(lc).length() < MIN_DESCRIPTION_LENGTH) {
                 throw new TreasuryDomainException("error.Product.description.length.minimum");
             }
-            
-            if(StringUtils.isNotEmpty(getName().getContent(lc)) && getName().getContent(lc).length() > MAX_DESCRIPTION_LENGTH) {
+
+            if (StringUtils.isNotEmpty(getName().getContent(lc)) && getName().getContent(lc).length() > MAX_DESCRIPTION_LENGTH) {
                 throw new TreasuryDomainException("error.Product.description.length.maximum");
             }
         });
-        
+
     }
 
     public boolean isActive() {
@@ -190,7 +190,7 @@ public class Product extends Product_Base {
 
     public boolean isDeletable() {
         return getInvoiceEntriesSet().isEmpty() && getTreasuryExemptionSet().isEmpty() && getTreasuryEventsSet().isEmpty()
-                && getAdvancePaymentTreasurySettings() == null && getTreasurySettings() == null;
+                && getAdvancePaymentTreasurySettings() == null && getTreasurySettings() == null && getTariffSet().isEmpty();
     }
 
     public boolean isTransferBalanceProduct() {

@@ -3,6 +3,7 @@
 - Refactor: Remove the SAP exporter for testing integration of invoice entries with quantity different than one [#UL-ISEG-4541]
 - New Feature: Split debit entries when settle [#qubIT-Fenix-4637]
 - Bug Fix: Invalidate interests when annul preparing debit entry [#qubIT-Fenix-4640]
+- Refactor: Only mark if product is deletable if does not have tariffs associated [#UL-REIT-3078]
 
 11.9.0 (28-11-2023)
 - Improvement: Check the requirements of debit entry, when setting interest rate type [#qubIT-Fenix-4524]
