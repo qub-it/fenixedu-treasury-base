@@ -178,6 +178,8 @@ class FinantialInstitution {
 	Boolean limitPaymentRequestsByFinantialEntity;
 	Boolean splitCreditEntriesWithSettledAmount;
 	Boolean splitDebitEntriesWithSettledAmount;
+	
+	String balanceTransferServiceImplementationClass;
 }
 
 class FinantialEntity {
