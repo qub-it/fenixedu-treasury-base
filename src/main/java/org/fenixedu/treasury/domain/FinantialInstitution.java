@@ -96,7 +96,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
             final Country country, final District district, final Municipality municipality, final String locality,
             final String zipCode) {
         this();
-        
+
         setFiscalCountryRegion(fiscalCountryRegion);
         setCode(code);
         setFiscalNumber(fiscalNumber);
@@ -116,7 +116,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
 
         setTreasuryCertificationActive(false);
         setEacCode(null);
-        
+
         checkRules();
     }
 
@@ -292,7 +292,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
     public boolean isToCloseCreditNoteWhenCreated() {
         return getErpIntegrationConfiguration() != null && getErpIntegrationConfiguration().isToCloseCreditNoteWhenCreated();
     }
-    
+
     public boolean isInvoiceRegistrationByErpIntegration() {
         return getInvoiceRegistrationMode() == InvoiceRegistrationMode.ERP_INTEGRATION;
     }
@@ -304,11 +304,11 @@ public class FinantialInstitution extends FinantialInstitution_Base {
     public void activateTreasuryCertification() {
         setTreasuryCertificationActive(true);
     }
-    
+
     public void deactivateTreasuryCertification() {
         setTreasuryCertificationActive(false);
     }
-    
+
     // ********
     // SERVICES
     // ********

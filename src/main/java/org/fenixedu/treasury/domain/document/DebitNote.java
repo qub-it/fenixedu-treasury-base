@@ -259,6 +259,7 @@ public class DebitNote extends DebitNote_Base {
         note.setFinantialDocumentType(FinantialDocumentType.findForDebitNote());
         note.setOriginDocumentNumber("");
         note.setDocumentDueDate(documentDate.toLocalDate());
+
         note.checkRules();
         return note;
     }
@@ -272,6 +273,23 @@ public class DebitNote extends DebitNote_Base {
         note.setFinantialDocumentType(FinantialDocumentType.findForDebitNote());
         note.setOriginDocumentNumber(originNumber);
         note.setDocumentDueDate(documentDueDate);
+
+        note.checkRules();
+
+        return note;
+    }
+
+    @Atomic
+    public static DebitNote create(DebtAccount debtAccount, DebtAccount payorDebtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate, String originNumber,
+            Map<String, String> propertiesMap, String documentObservations, String documentTermsAndConditions) {
+
+        DebitNote note = create(debtAccount, payorDebtAccount, documentNumberSeries, documentDate, documentDueDate, originNumber);
+
+        note.setDocumentObservations(documentObservations);
+        note.setDocumentTermsAndConditions(documentTermsAndConditions);
+        note.editPropertiesMap(propertiesMap);
+
         note.checkRules();
 
         return note;
@@ -280,7 +298,7 @@ public class DebitNote extends DebitNote_Base {
     @Atomic
     public static DebitNote createDebitNoteForDebitEntry(DebitEntry debitEntry, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate,
-            String originDocumentNumber, String documentObservations, String documentTermsAndConditionss) {
+            String originDocumentNumber, String documentObservations, String documentTermsAndConditions) {
         if (debitEntry.getFinantialDocument() != null) {
             throw new IllegalStateException(
                     "error.DebitNote.createDebitNoteForDebitEntry.debitEntry.already.is.attached.to.finantialDocument");
@@ -289,14 +307,16 @@ public class DebitNote extends DebitNote_Base {
         final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
                 documentDate, documentDueDate, originDocumentNumber);
         debitNote.setDocumentObservations(documentObservations);
-        debitNote.setDocumentTermsAndConditions(documentTermsAndConditionss);
+        debitNote.setDocumentTermsAndConditions(documentTermsAndConditions);
 
         debitEntry.setFinantialDocument(debitNote);
 
         return debitNote;
     }
 
-    public static DebitNote copyDebitNote(final DebitNote debitNoteToCopy, final boolean copyDocumentDate,
+    // TODO ANIL 2023-12-07: This method is not used and might be outdated. At least
+    // DebitEntry._copyDebitEntry was
+    private static DebitNote _copyDebitNote(final DebitNote debitNoteToCopy, final boolean copyDocumentDate,
             final boolean copyCloseDate, final boolean applyExemptions) {
         final DebitNote result = DebitNote.create(debitNoteToCopy.getDebtAccount(), debitNoteToCopy.getPayorDebtAccount(),
                 debitNoteToCopy.getDocumentNumberSeries(), copyDocumentDate ? debitNoteToCopy.getDocumentDate() : new DateTime(),
@@ -320,7 +340,7 @@ public class DebitNote extends DebitNote_Base {
             final boolean applyExemptionOnDebitEntry = applyExemptions && (!sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
                     && TreasuryConstants.isPositive(sourceDebitEntry.getNetExemptedAmount()));
 
-            final DebitEntry debitEntryCopy = DebitEntry.copyDebitEntry(sourceDebitEntry, result, applyExemptionOnDebitEntry);
+            final DebitEntry debitEntryCopy = DebitEntry._copyDebitEntry(sourceDebitEntry, result, applyExemptionOnDebitEntry);
 
             debitEntriesMap.put(sourceDebitEntry, debitEntryCopy);
 

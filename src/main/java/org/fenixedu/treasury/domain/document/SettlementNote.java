@@ -490,7 +490,7 @@ public class SettlementNote extends SettlementNote_Base {
 
             if (splitDebitEntriesWithSettledAmount
                     && (debitEntry.getFinantialDocument() == null || debitEntry.getFinantialDocument().isPreparing())
-                    && TreasuryConstants.isLessOrEqualThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
+                    && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
                 debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()));
             }
 
