@@ -1,3 +1,8 @@
+- Refactor: Deprecate DebitNote#copy and DebitEntry#copy methods [#qubIT-Fenix-4663]
+- Improvement: Pluggable balance transfer service [#qubIT-Fenix-4662]
+- Improvement: Allow change of debit entry amount and save log about the change [#qubIT-Fenix-4663]
+- Bug Fix: Fix bug when settling debit entry with total open amount. Do not apply the split in these cases [#qubIT-Fenix-4664]
+
 12.0.0 (05-12-2023)
 - Refactor: Remove unused method SettlementNoteBean#includeAllInterestOfSelectedDebitEntries [#qubIT-Fenix-4637]
 - Refactor: Control credit entries split with specific configuration in finantial institution [#qubIT-Fenix-4637]

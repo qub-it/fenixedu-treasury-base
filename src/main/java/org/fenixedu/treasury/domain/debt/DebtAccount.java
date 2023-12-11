@@ -71,7 +71,6 @@ import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
-import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.joda.time.DateTime;
@@ -146,23 +145,23 @@ public class DebtAccount extends DebtAccount_Base {
     /**
      * Only used to present the active reference codes that can be used.
      * To be used in UI and reports
+     * 
      * @return
      */
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
         return getPendingInvoiceEntriesSet().stream().filter(e -> e.isDebitNoteEntry()).map(DebitEntry.class::cast)
-                .flatMap(d -> d.getActiveSibsPaymentRequestsOfPendingDebitEntries().stream())
-                .collect(Collectors.toSet());
+                .flatMap(d -> d.getActiveSibsPaymentRequestsOfPendingDebitEntries().stream()).collect(Collectors.toSet());
     }
 
     /**
      * Only used to present the active reference codes that can be used
      * To be used in UI and reports
+     * 
      * @return
      */
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingInstallments() {
         return getActivePaymentPlansSet().stream().flatMap(p -> p.getSortedOpenInstallments().stream())
-                .flatMap(d -> d.getActiveSibsPaymentRequestsOfPendingInstallments().stream())
-                .collect(Collectors.toSet());
+                .flatMap(d -> d.getActiveSibsPaymentRequestsOfPendingInstallments().stream()).collect(Collectors.toSet());
     }
 
     public boolean isClosed() {
@@ -191,7 +190,7 @@ public class DebtAccount extends DebtAccount_Base {
                     "error.DebtAccount.transferBalance.must.be.applied.for.debtAccounts.of.same.finantialInstitution");
         }
 
-        new BalanceTransferService(this, destinyDebtAccount).transferBalance();
+        BalanceTransferService.getService(this, destinyDebtAccount).transferBalance();
     }
 
     public Stream<? extends InvoiceEntry> pendingInvoiceEntries() {
@@ -263,10 +262,10 @@ public class DebtAccount extends DebtAccount_Base {
             if (entry.isDebitNoteEntry()) {
                 List<InterestRateBean> undebitedInterestRateBeansList =
                         ((DebitEntry) entry).calculateUndebitedInterestValue(whenToCalculate);
-                
+
                 BigDecimal totalInterestAmount = undebitedInterestRateBeansList.stream().map(bean -> bean.getInterestAmount())
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-                
+
                 interestAmount = interestAmount.add(totalInterestAmount);
             }
         }

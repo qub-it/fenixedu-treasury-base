@@ -178,6 +178,8 @@ class FinantialInstitution {
 	Boolean limitPaymentRequestsByFinantialEntity;
 	Boolean splitCreditEntriesWithSettledAmount;
 	Boolean splitDebitEntriesWithSettledAmount;
+	
+	String balanceTransferServiceImplementationClass;
 }
 
 class FinantialEntity {
@@ -461,6 +463,41 @@ class document.FinantialDocumentEntry {
 			// if not payed
 			boolean blockAcademicActsOnDebt;
 	}
+	
+		class document.log.DebitEntryChangeAmountsLog {
+			String debitEntryCode;
+			DateTime changeDate;
+			String responsible;
+			String changeContext;
+			
+			BigDecimalT oldUnitAmount;
+			BigDecimalT oldQuantity;
+			BigDecimalT oldVatRate;
+			BigDecimalT oldExemptedAmount;
+			BigDecimalT oldNetAmount;
+			BigDecimalT oldVatAmount;
+			BigDecimalT oldAmountWithVat;
+		}
+		
+			relation DebitEntryChangeAmountsLogDomainRoot {
+				.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+					multiplicity 1..1;
+				}
+		
+				document.log.DebitEntryChangeAmountsLog playsRole debitEntryChangeAmountsLogs {
+					multiplicity *;
+				}
+			}
+			
+			relation DebitEntryChangeAmountsLogDebitEntry {
+				document.DebitEntry playsRole debitEntry {
+					multiplicity 0..1;
+				}
+					
+				document.log.DebitEntryChangeAmountsLog playsRole debitEntryChangeAmountsLogs {
+					multiplicity *;
+				}
+			}
 		
 	class document.CreditEntry extends document.InvoiceEntry {
 		boolean fromExemption;

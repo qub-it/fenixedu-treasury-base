@@ -52,9 +52,8 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,6 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,6 +76,7 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
+import org.fenixedu.treasury.domain.document.log.DebitEntryChangeAmountsLog;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.event.TreasuryEvent.TreasuryEventKeys;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -236,6 +237,8 @@ public class DebitEntry extends DebitEntry_Base {
             this.setInterestRate(null);
             oldRate.delete();
         }
+
+        getDebitEntryChangeAmountsLogsSet().forEach(log -> log.setDebitEntry(null));
 
         this.setSplittingOriginDebitEntry(null);
         this.setDebitEntry(null);
@@ -510,8 +513,8 @@ public class DebitEntry extends DebitEntry_Base {
 
             DateTime now = new DateTime();
 
-            String reason = treasuryBundle("label.TreasuryExemption.credit.entry.exemption.description", getDescription(),
-                    treasuryExemption.getTreasuryExemptionType().getName().getContent());
+            String reason = TreasuryConstants.treasuryBundle("label.TreasuryExemption.credit.entry.exemption.description",
+                    getDescription(), treasuryExemption.getTreasuryExemptionType().getName().getContent());
 
             final CreditEntry creditEntryFromExemption =
                     createCreditEntry(now, getDescription(), null, null, netExemptedAmount, treasuryExemption, null);
@@ -687,8 +690,8 @@ public class DebitEntry extends DebitEntry_Base {
 
         final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
 
-        final String reasonDescription =
-                treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE, "label.TreasuryEvent.credit.by.annulAllDebitEntries.reason");
+        final String reasonDescription = TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
+                "label.TreasuryEvent.credit.by.annulAllDebitEntries.reason");
 
         final SettlementNote settlementNote =
                 SettlementNote.create(this.getDebtAccount(), documentNumberSeriesSettlementNote, now, now, "", null);
@@ -895,6 +898,85 @@ public class DebitEntry extends DebitEntry_Base {
 
         setAmount(amount);
         recalculateAmountValues();
+    }
+
+    public boolean isAllowEditAmounts() {
+        if (isAnnulled()) {
+            return false;
+        }
+
+        if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
+            return false;
+        }
+
+        if (!getTreasuryExemptionsSet().isEmpty()) {
+            return false;
+        }
+
+        if (TreasuryDebtProcessMainService.getDebtProcesses(this).stream().anyMatch(process -> process.isProcessActive())) {
+            return false;
+        }
+
+        if (getOpenPaymentPlan() != null) {
+            return false;
+        }
+
+        if (getCreditEntriesSet().stream().anyMatch(c -> !c.isAnnulled())) {
+            return false;
+        }
+
+        if (Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
+            return false;
+        }
+
+        if (getFinantialDocument() != null && getFinantialDocument().getDocumentNumberSeries().getSeries().isRegulationSeries()) {
+            return false;
+        }
+
+        if (getFinantialDocument() != null && getFinantialDocument().getDocumentNumberSeries().getSeries().isLegacy()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void editAmounts(BigDecimal unitAmount, BigDecimal quantity) {
+        if (isProcessedInClosedDebitNote()) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.closed.in.debit.note");
+        }
+
+        if (isAnnulled()) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.annuled.state");
+        }
+
+        if (!getTreasuryExemptionsSet().isEmpty()) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.existing.exemptions");
+        }
+
+        if (TreasuryDebtProcessMainService.getDebtProcesses(this).stream().anyMatch(process -> process.isProcessActive())) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.existing.processes");
+        }
+
+        if (getOpenPaymentPlan() != null) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.existing.open.paymentPlan");
+        }
+
+        if (getCreditEntriesSet().stream().anyMatch(c -> !c.isAnnulled())) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.existing.creditEntries");
+        }
+
+        if (!isAllowEditAmounts()) {
+            throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount");
+        }
+
+        DebitEntryChangeAmountsLog.log(this, "editAmounts");
+
+        setAmount(unitAmount);
+        setQuantity(quantity);
+
+        recalculateAmountValues();
+
+        checkRules();
     }
 
     public void changeInterestRate(InterestRate oldInterestRate) {
@@ -1220,21 +1302,43 @@ public class DebitEntry extends DebitEntry_Base {
     public FinantialEntity getAssociatedFinantialEntity() {
         if (getTreasuryEvent() != null) {
             return getTreasuryEvent().getAssociatedFinantialEntity();
+        } else if (getDebitEntry() != null) {
+            return getDebitEntry().getAssociatedFinantialEntity();
         }
 
         return null;
+    }
+
+    // ANIL 2023-12-10: This consumers allows to establish the relation connections when
+    // splitting a debit entry. This should be registered in other modules than treasury
+    private static List<BiConsumer<DebitEntry, DebitEntry>> CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST =
+            new ArrayList<>();
+
+    public static void registerConnectRelationsWhenSplittingDebitEntryConsumer(BiConsumer<DebitEntry, DebitEntry> consumer) {
+        CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST.add(consumer);
     }
 
     // TODO: Review the calculation of remainingUnitAmount, which might be losing
     // precision
     public DebitEntry splitDebitEntry(BigDecimal withAmountWithVatOfNewDebitEntry) {
         if (!TreasuryConstants.isLessThan(withAmountWithVatOfNewDebitEntry, getOpenAmount())) {
-            throw new TreasuryDomainException("error.DebitEntry.splitDebitEntry.remainingAmount.less.than.open.amount");
+            throw new IllegalStateException("error.DebitEntry.splitDebitEntry.remainingAmount.less.than.open.amount");
         }
 
+        // TODO: Check if precision is lost in cents
+        BigDecimal withNetAmountOfNewDebitEntry = TreasuryConstants.divide(withAmountWithVatOfNewDebitEntry,
+                BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this)));
+
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
-            throw new TreasuryDomainException("error.DebitEntry.splitDebitEntry.finantialDocument.not.preparing");
+            throw new IllegalStateException("error.DebitEntry.splitDebitEntry.finantialDocument.not.preparing");
         }
+
+        if (getFinantialDocument() != null && getFinantialDocument().isExportedInLegacyERP()) {
+            throw new IllegalStateException(
+                    "error.DebitEntry.splitDebitEntry.not.supported.for.finantialDocument.exportedInLegacyERP");
+        }
+
+        annulAllActiveSibsPaymentRequests();
 
         BigDecimal oldNetAmount = getNetAmount();
         BigDecimal oldAmountWithVat = getAmountWithVat();
@@ -1250,54 +1354,48 @@ public class DebitEntry extends DebitEntry_Base {
             newDebitNote.get().setDocumentTermsAndConditions(getFinantialDocument().getDocumentTermsAndConditions());
             newDebitNote.get().editPropertiesMap(getDebitNote().getPropertiesMap());
             newDebitNote.get().setCloseDate(getDebitNote().getCloseDate());
+            newDebitNote.get()
+                    .setLegacyERPCertificateDocumentReference(getDebitNote().getLegacyERPCertificateDocumentReference());
         }
 
-        // TODO: Check if precision is lost in cents
         BigDecimal withUnitAmountOfNewDebitEntry =
-                Currency.getValueWithScale(TreasuryConstants.divide(TreasuryConstants.divide(withAmountWithVatOfNewDebitEntry,
-                        BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))), getQuantity()));
+                Currency.getValueWithScale(TreasuryConstants.divide(withNetAmountOfNewDebitEntry, getQuantity()));
 
         // TODO: the amountPerUnit should be truncated to fewer decimal places?
-        BigDecimal openUnitAmountOfThisDebitEntry = TreasuryConstants.divide(
-                TreasuryConstants.divide(getOpenAmount(), BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
-                getQuantity());
+        BigDecimal openNetAmountOfThisDebitEntry =
+                TreasuryConstants.divide(getOpenAmount(), BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this)));
+        BigDecimal openUnitAmountOfThisDebitEntry =
+                TreasuryConstants.divide(openNetAmountOfThisDebitEntry.add(getNetExemptedAmount()), getQuantity());
 
+        DebitEntryChangeAmountsLog.log(this, "splitDebitEntry");
         setAmount(openUnitAmountOfThisDebitEntry.subtract(withUnitAmountOfNewDebitEntry));
         recalculateAmountValues();
 
-        DebitEntry newDebitEntry =
-                create(newDebitNote, getDebtAccount(), getTreasuryEvent(), getVat(), withUnitAmountOfNewDebitEntry, getDueDate(),
-                        getPropertiesMap(), getProduct(), getDescription(), getQuantity(), null, getEntryDateTime());
+        DebitEntry newDebitEntry = _create(newDebitNote, getDebtAccount(), getTreasuryEvent(), getVat(),
+                withUnitAmountOfNewDebitEntry, getDueDate(), getPropertiesMap(), getProduct(), getDescription(), getQuantity(),
+                getInterestRate(), getEntryDateTime(), isAcademicalActBlockingSuspension(), isBlockAcademicActsOnDebt());
 
         newDebitEntry.setSplittingOriginDebitEntry(this);
 
-        newDebitEntry.edit(getDescription(), getTreasuryEvent(), getDueDate(), isAcademicalActBlockingSuspension(),
-                isBlockAcademicActsOnDebt());
-        if (getInterestRate() != null) {
-            InterestRate.createForDebitEntry(newDebitEntry, getInterestRate().getInterestRateType(),
-                    getInterestRate().getNumberOfDaysAfterDueDate(), getInterestRate().isApplyInFirstWorkday(),
-                    getInterestRate().getMaximumDaysToApplyPenalty(), getInterestRate().getInterestFixedAmount(),
-                    getInterestRate().getRate());
-        }
+        CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST.forEach(consumer -> consumer.accept(this, newDebitEntry));
 
-        getPaymentRequestsSet().stream() //
-                .filter(request -> request.isInCreatedState() || request.isInRequestedState()) //
-                .filter(request -> request instanceof SibsPaymentRequest)
-                .forEach(request -> ((SibsPaymentRequest) request).anull());
+        // TODO: ANIL 2023-12-07: This is wrong, the amount of the new installment entries
+        // must be proportional with the amount of the new debit entry open amount and the installment entry amount
+        //
+//        if (getInstallmentEntrySet().stream()
+//                .anyMatch(installmentEntry -> installmentEntry.getInstallment().getPaymentPlan().getState().isOpen())) {
+//
+//            getInstallmentEntrySet().stream()
+//                    .filter(installmentEntry -> installmentEntry.getInstallment().getPaymentPlan().getState().isOpen())
+//                    .forEach(installmentEntry -> {
+//                        InstallmentEntry.create(newDebitEntry, newDebitEntry.getOpenAmount(),
+//                                installmentEntry.getInstallment();
+//                    });
+//        }
 
-        if (getInstallmentEntrySet().stream()
-                .anyMatch(installmentEntry -> installmentEntry.getInstallment().getPaymentPlan().getState().isOpen())) {
-
-            getInstallmentEntrySet().stream()
-                    .filter(installmentEntry -> installmentEntry.getInstallment().getPaymentPlan().getState().isOpen())
-                    .forEach(installmentEntry -> InstallmentEntry.create(newDebitEntry, newDebitEntry.getOpenAmount(),
-                            installmentEntry.getInstallment()));
-        }
-
-        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
-                && getFinantialDocument().isExportedInLegacyERP()) {
-            newDebitEntry.getFinantialDocument().setExportedInLegacyERP(true);
-            newDebitEntry.getFinantialDocument().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
+        // TODO: ANIL 2023-12-07: For now just throw an exception if open payment plans are envolved
+        if (getOpenPaymentPlan() != null) {
+            throw new IllegalStateException("error.DebitEntry.splitDebitEntry.not.supported.for.open.payment.plans");
         }
 
         // Ensure the netAmount before and after are equals
@@ -1313,6 +1411,13 @@ public class DebitEntry extends DebitEntry_Base {
         return newDebitEntry;
     }
 
+    private void annulAllActiveSibsPaymentRequests() {
+        getPaymentRequestsSet().stream() //
+                .filter(request -> request.isInCreatedState() || request.isInRequestedState()) //
+                .filter(request -> request instanceof SibsPaymentRequest)
+                .forEach(request -> ((SibsPaymentRequest) request).anull());
+    }
+
     // @formatter:off
     /* ********
      * SERVICES
@@ -1320,7 +1425,10 @@ public class DebitEntry extends DebitEntry_Base {
      */
     // @formatter:on
 
-    public static DebitEntry copyDebitEntry(final DebitEntry debitEntryToCopy, final DebitNote debitNoteToAssociate,
+    @Deprecated
+    // TODO ANIL 2023-12-07: This method is to old and has some errors. It is only used with
+    // the copy of debit note. It needs a review
+    static DebitEntry _copyDebitEntry(final DebitEntry debitEntryToCopy, final DebitNote debitNoteToAssociate,
             final boolean applyExemption) {
         ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
         String loggedUsername = services.getLoggedUsername();
@@ -1428,6 +1536,19 @@ public class DebitEntry extends DebitEntry_Base {
                 interestRate, entryDateTime);
     }
 
+    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
+            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime, boolean academicalActBlockingSuspension,
+            boolean blockAcademicActsOnDebt) {
+
+        DebitEntry result = create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product,
+                description, quantity, interestRate, entryDateTime);
+
+        result.edit(description, treasuryEvent, dueDate, academicalActBlockingSuspension, blockAcademicActsOnDebt);
+
+        return result;
+    }
+
     public static DebitEntry createForImportationPurpose(Optional<DebitNote> debitNote, DebtAccount debtAccount,
             TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap,
             Product product, String description, BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
@@ -1464,4 +1585,20 @@ public class DebitEntry extends DebitEntry_Base {
         return entry;
     }
 
+    private static DebitEntry _create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent,
+            Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime, boolean academicalActBlockingSuspension,
+            boolean blockAcademicActsOnDebt) {
+
+        final DebitEntry entry = new DebitEntry(debitNote.orElse(null), debtAccount, treasuryEvent, vat, amount, dueDate,
+                propertiesMap, product, description, quantity, null, entryDateTime);
+
+        if (interestRate != null) {
+            InterestRate.createForDebitEntry(entry, interestRate);
+        }
+
+        entry.edit(description, treasuryEvent, dueDate, academicalActBlockingSuspension, blockAcademicActsOnDebt);
+
+        return entry;
+    }
 }
