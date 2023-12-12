@@ -469,6 +469,7 @@ class document.FinantialDocumentEntry {
 			DateTime changeDate;
 			String responsible;
 			String changeContext;
+			String reason;
 			
 			BigDecimalT oldUnitAmount;
 			BigDecimalT oldQuantity;

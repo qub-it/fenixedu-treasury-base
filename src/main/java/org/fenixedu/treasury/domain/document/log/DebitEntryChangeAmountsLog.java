@@ -17,12 +17,18 @@ public class DebitEntryChangeAmountsLog extends DebitEntryChangeAmountsLog_Base 
         setResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
     }
 
-    public static DebitEntryChangeAmountsLog log(DebitEntry debitEntry, String changeContext) {
+    public DebitEntryChangeAmountsLog(String reason) {
+        this();
+
+        setReason(reason);
+    }
+
+    public static DebitEntryChangeAmountsLog log(DebitEntry debitEntry, String changeContext, String reason) {
         if (StringUtils.isEmpty(changeContext)) {
             throw new IllegalArgumentException("error.DebitEntryChangeAmountsLog.changeContext.required");
         }
 
-        DebitEntryChangeAmountsLog log = new DebitEntryChangeAmountsLog();
+        DebitEntryChangeAmountsLog log = new DebitEntryChangeAmountsLog(reason);
 
         log.setDebitEntry(debitEntry);
         log.setDebitEntryCode(debitEntry.getCode());

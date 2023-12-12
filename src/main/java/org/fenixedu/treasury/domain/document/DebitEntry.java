@@ -940,7 +940,7 @@ public class DebitEntry extends DebitEntry_Base {
         return true;
     }
 
-    public void editAmounts(BigDecimal unitAmount, BigDecimal quantity) {
+    public void editAmounts(BigDecimal unitAmount, BigDecimal quantity, String reason) {
         if (isProcessedInClosedDebitNote()) {
             throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount.due.to.closed.in.debit.note");
         }
@@ -969,7 +969,7 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.editAmount.cannot.edit.amount");
         }
 
-        DebitEntryChangeAmountsLog.log(this, "editAmounts");
+        DebitEntryChangeAmountsLog.log(this, "editAmounts", reason);
 
         setAmount(unitAmount);
         setQuantity(quantity);
@@ -1219,6 +1219,38 @@ public class DebitEntry extends DebitEntry_Base {
         }
     }
 
+    public void annulOrReduceOrCredit(BigDecimal netAmountToCredit, String reason) {
+        if (isAnnulled()) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.credit.is.already.annuled");
+        }
+
+        if (Strings.isNullOrEmpty(reason)) {
+            throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.requires.reason");
+        }
+
+        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
+
+        if (!TreasuryConstants.isPositive(netAmountToCredit)) {
+            throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.amountToCreditWithVat.must.be.positive");
+        }
+
+        if (!TreasuryConstants.isLessOrEqualThan(netAmountToCredit, getAvailableNetAmountForCredit())) {
+            throw new TreasuryDomainException(
+                    "error.DebitEntry.credit.debit.entry.amountToCreditWithVat.must.be.less.or.equal.than.amountAvailableForCredit");
+        }
+
+        if (getFinantialDocument() == null || getFinantialDocument().isPreparing()) {
+            BigDecimal newNetAmount = getNetAmount().subtract(netAmountToCredit);
+            BigDecimal newUnitAmount = TreasuryConstants.divide(newNetAmount.add(getNetExemptedAmount()), getQuantity());
+
+            editAmounts(newUnitAmount, getQuantity(), reason);
+        } else {
+            creditDebitEntry(netAmountToCredit, reason, false);
+        }
+    }
+
     @Atomic
     public void removeFromDocument() {
         if (getFinantialDocument() == null || !getFinantialDocument().isPreparing()) {
@@ -1367,7 +1399,7 @@ public class DebitEntry extends DebitEntry_Base {
         BigDecimal openUnitAmountOfThisDebitEntry =
                 TreasuryConstants.divide(openNetAmountOfThisDebitEntry.add(getNetExemptedAmount()), getQuantity());
 
-        DebitEntryChangeAmountsLog.log(this, "splitDebitEntry");
+        DebitEntryChangeAmountsLog.log(this, "splitDebitEntry", "Debit entry splitted");
         setAmount(openUnitAmountOfThisDebitEntry.subtract(withUnitAmountOfNewDebitEntry));
         recalculateAmountValues();
 
