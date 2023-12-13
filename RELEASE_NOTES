@@ -1,3 +1,5 @@
+- Improvement: Adds fenixedu OSS DM [#qubIT-Omnis-4736]
+
 12.2.0 (12-12-2023)
 - Improvement: Added reason in debit entry change amount log [#qubIT-Fenix-4663]
 - Improvement: In DebitEntry#editAmounts save the reason of edited amount [#qubIT-Fenix-4663]
