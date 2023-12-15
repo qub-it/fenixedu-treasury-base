@@ -84,6 +84,7 @@ import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
+import org.fenixedu.treasury.domain.payments.integration.StandardSibsPaymentExpiryStrategy;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
@@ -119,6 +120,8 @@ public class MeoWallet extends MeoWallet_Base
 
     public MeoWallet() {
         super();
+
+        new StandardSibsPaymentExpiryStrategy(this);
     }
 
     public MeoWallet(FinantialInstitution finantialInstitution, String name, boolean active, String endpointUrl,
@@ -440,13 +443,19 @@ public class MeoWallet extends MeoWallet_Base
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+        LocalDate validTo = null;
+        if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
+            validTo =
+                    getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments, false, null);
+        } else {
+            LocalDate now = new LocalDate();
+            Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+            map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+            validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
-        if (validTo.isBefore(now)) {
-            validTo = now;
+            if (validTo.isBefore(now)) {
+                validTo = now;
+            }
         }
 
         return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
@@ -458,13 +467,19 @@ public class MeoWallet extends MeoWallet_Base
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, BigDecimal payableAmount) {
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+        LocalDate validTo = null;
+        if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
+            validTo =
+                    getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments, false, null);
+        } else {
+            LocalDate now = new LocalDate();
+            Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+            map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+            validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
-        if (validTo.isBefore(now)) {
-            validTo = now;
+            if (validTo.isBefore(now)) {
+                validTo = now;
+            }
         }
 
         return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
@@ -483,22 +498,30 @@ public class MeoWallet extends MeoWallet_Base
 
         BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+        LocalDate validTo = null;
+        if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
+            validTo = getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments,
+                    settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate(),
+                    settlementNoteBean.getCustomSibsPaymentRequestDueDate());
+        } else {
+            LocalDate now = new LocalDate();
+            Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+            map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+            validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
-        if (settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate()
-                && settlementNoteBean.getCustomSibsPaymentRequestDueDate() == null) {
-            throw new IllegalArgumentException("customSibsPaymentRequestDueDate is null");
-        }
+            if (settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate()
+                    && settlementNoteBean.getCustomSibsPaymentRequestDueDate() == null) {
+                throw new IllegalArgumentException("customSibsPaymentRequestDueDate is null");
+            }
 
-        if (settlementNoteBean.getCustomSibsPaymentRequestDueDate() != null) {
-            validTo = settlementNoteBean.getCustomSibsPaymentRequestDueDate();
-        }
+            if (settlementNoteBean.getCustomSibsPaymentRequestDueDate() != null) {
+                validTo = settlementNoteBean.getCustomSibsPaymentRequestDueDate();
+            }
 
-        if (validTo.isBefore(now)) {
-            validTo = now;
+            if (validTo.isBefore(now)) {
+                validTo = now;
+            }
+
         }
 
         return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount,
@@ -514,13 +537,19 @@ public class MeoWallet extends MeoWallet_Base
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
+        LocalDate validTo = null;
+        if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
+            validTo =
+                    getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments, false, null);
+        } else {
+            LocalDate now = new LocalDate();
+            Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
+            map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
+            validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
-        if (validTo.isBefore(now)) {
-            validTo = now;
+            if (validTo.isBefore(now)) {
+                validTo = now;
+            }
         }
 
         return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
@@ -551,8 +580,12 @@ public class MeoWallet extends MeoWallet_Base
         MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMBPaymentBean(payableAmount, merchantTransactionId,
                 debtAccount.getCustomer().getExternalId(), debtAccount.getCustomer().getName(), items);
 
-        if (limitSibsPaymentRequestToValidTo) {
+        if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
             payment.setExpires(validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1));
+        } else {
+            if (limitSibsPaymentRequestToValidTo) {
+                payment.setExpires(validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1));
+            }
         }
 
         final MeoWalletLog log = createLogForSibsPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());
@@ -583,15 +616,21 @@ public class MeoWallet extends MeoWallet_Base
                     .count() >= 2) {
                 throw new TreasuryDomainException("error.PaymentReferenceCode.referenceCode.duplicated");
             }
+
             SibsPaymentRequest sibsPaymentRequest = FenixFramework.atomic(() -> {
                 SibsPaymentRequest request = SibsPaymentRequest.create(MeoWallet.this, debtAccount, debitEntries, installments,
                         payableAmount, paymentBean.getMb().getEntity(), paymentBean.getMb().getRef(), merchantTransactionId,
                         sibsReferenceId);
                 log.setPaymentRequest(request);
 
-                if (limitSibsPaymentRequestToValidTo) {
+                if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
                     request.setPaymentDueDate(validTo);
                     request.setExpiresDate(paymentBean.getExpires());
+                } else {
+                    if (limitSibsPaymentRequestToValidTo) {
+                        request.setPaymentDueDate(validTo);
+                        request.setExpiresDate(paymentBean.getExpires());
+                    }
                 }
 
                 return request;

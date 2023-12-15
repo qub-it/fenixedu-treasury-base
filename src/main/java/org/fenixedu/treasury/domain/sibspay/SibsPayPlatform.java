@@ -35,6 +35,7 @@ import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
+import org.fenixedu.treasury.domain.payments.integration.StandardSibsPaymentExpiryStrategy;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
@@ -59,6 +60,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     public SibsPayPlatform() {
         super();
+
+        new StandardSibsPaymentExpiryStrategy(this);
     }
 
     public SibsPayPlatform(FinantialInstitution finantialInstitution, String name, boolean active, String clientId,
@@ -629,14 +632,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
-
-        if (validTo.isBefore(now)) {
-            validTo = now;
-        }
+        LocalDate validTo =
+                getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments, false, null);
 
         return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
@@ -653,14 +650,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
         BigDecimal payableAmount = settlementNoteBean.getTotalAmountToPay();
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
-
-        if (validTo.isBefore(now)) {
-            validTo = now;
-        }
+        LocalDate validTo = getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments,
+                settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate(),
+                settlementNoteBean.getCustomSibsPaymentRequestDueDate());
 
         return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
@@ -671,15 +663,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, BigDecimal payableAmount) {
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> dueDatesSet = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        dueDatesSet.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-
-        LocalDate validTo = dueDatesSet.stream().max(LocalDate::compareTo).orElse(now);
-
-        if (validTo.isBefore(now)) {
-            validTo = now;
-        }
+        LocalDate validTo =
+                getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments, false, null);
 
         return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
@@ -693,14 +678,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
 
-        LocalDate now = new LocalDate();
-        Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
-        map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
-        LocalDate validTo = map.stream().max(LocalDate::compareTo).orElse(now);
-
-        if (validTo.isBefore(now)) {
-            validTo = now;
-        }
+        LocalDate validTo =
+                getSibsPaymentExpiryStrategy().calculateSibsPaymentRequestExpiryDate(debitEntries, installments, false, null);
 
         return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount);
     }
@@ -723,7 +702,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         SibsPayService sibsPayService =
                 new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(), getEntityReferenceCode());
         DateTime sibsValidFrom = new DateTime();
-        DateTime sibsValidTo = validTo.plusDays(2).toDateTimeAtStartOfDay().minusSeconds(1);
+
+        // Set validTo to 23:59:59
+        DateTime sibsValidTo = validTo.plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
 
         List<PaymentRequestLog> logsList = new ArrayList<>();
 
@@ -830,6 +811,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                     SibsPaymentRequest request = SibsPaymentRequest.create(this, debtAccount, debitEntries, installments,
                             payableAmount, getEntityReferenceCode(), referenceCode, merchantTransactionId, transactionId);
 
+                    request.setPaymentDueDate(validTo);
                     request.setExpiresDate(sibsValidTo);
 
                     logsList.forEach(l -> l.setPaymentRequest(request));

@@ -1,5 +1,6 @@
 - Improvement: Updates java [#qubIT-Omnis-4717]
 - Improvement: Adds fenixedu OSS DM [#qubIT-Omnis-4736]
+- Improvement: Calculation strategy for SIBS payment reference code, only applied to SIBS SPG and MeoWallet [#ISCTE-FENIXEDU-113]
 
 12.2.0 (12-12-2023)
 - Improvement: Added reason in debit entry change amount log [#qubIT-Fenix-4663]

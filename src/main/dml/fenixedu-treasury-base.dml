@@ -872,6 +872,40 @@ class payments.integration.DigitalPaymentPlatformPaymentMode {
 			multiplicity *;
 		}
 	}
+	
+class payments.integration.SibsPaymentExpiryStrategy {
+	
+	// ANIL 2023-12-15: This property is temporary, it is just to allow 
+	// the customers to test the solution in quality mode, but still
+	// support the legacy mode in production 
+	Boolean newModeApplied;
+}
+
+	relation SibsPaymentExpiryStrategyDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+	
+		payments.integration.SibsPaymentExpiryStrategy playsRole sibsPaymentExpiryStrategies {
+			multiplicity *;
+		}
+	}
+	
+	relation SibsPaymentExpiryStrategyDigitalPaymentPlatform {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform {
+			multiplicity 1..1;
+		}
+		
+		payments.integration.SibsPaymentExpiryStrategy playsRole sibsPaymentExpiryStrategy {
+			multiplicity 0..1;
+		}
+	}
+
+class payments.integration.StandardSibsPaymentExpiryStrategy extends payments.integration.SibsPaymentExpiryStrategy {
+	Boolean useEntriesMaximumDueDate;
+	Integer minimumExpiryDaysFromRequestDate;
+	Integer maximumExpiryDaysFromRequestDate;
+}
 
 class payments.PaymentRequest {
 	DateTime requestDate;
@@ -880,7 +914,18 @@ class payments.PaymentRequest {
 	String transactionId;
 	String merchantTransactionId;
 	String migrationCode;
+	
+	// ANIL 2023-12-14: The payment due date is used to change the presentation date, 
+	// in order to convey the pay limit date to the user. It is used due to the 
+	// difficulty of controlling the due date with tariffs. It is more relevant in
+	// candidacies.
+	//
+	// It should be replaced with the expiresDate
 	LocalDate paymentDueDate;
+	
+	// ANIL 2023-12-14: The expiryDate should track the limit date set by
+	// the digital payment platform
+	DateTime expiresDate;	
 }
 
 	relation PaymentRequestDomainRoot {
@@ -1119,7 +1164,6 @@ class paymentcodes.SibsPaymentRequest extends payments.PaymentRequest {
 	String entityReferenceCode;
 	String referenceCode;
 	PaymentReferenceCodeStateType state;
-	DateTime expiresDate;
 }
 
 class paymentcodes.SibsReferenceCode {
