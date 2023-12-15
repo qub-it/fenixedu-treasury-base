@@ -194,15 +194,6 @@
 					<arguments></arguments>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>8</source>
-					<target>8</target>
-				</configuration>
-			</plugin>
 			<!-- Dependency needed because we cannot be a child of 2 parent projects 
 				(versioning and webservices) -->
 			<plugin>
