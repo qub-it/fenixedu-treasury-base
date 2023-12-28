@@ -237,7 +237,7 @@ public class SplitDebitEntriesTest {
 
         assertEquals("Splitted debit entry maintains quantity of 2", new BigDecimal("2"), splittedDebitEntry.getQuantity());
 
-        assertEquals("Splitted debit entry unit amount is 37.5", new BigDecimal("37.50"), splittedDebitEntry.getAmount());
+        assertEquals("Splitted debit entry unit amount is 37.5", new BigDecimal("37.5000"), splittedDebitEntry.getAmount());
     }
 
 }

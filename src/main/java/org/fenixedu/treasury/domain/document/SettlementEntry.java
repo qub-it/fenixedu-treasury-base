@@ -61,7 +61,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.treasury.domain.bennu.signals.BennuSignalsServices;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
@@ -144,8 +143,18 @@ public class SettlementEntry extends SettlementEntry_Base {
                                 undebitedInterestValue.getInterestDebitEntryDateTime() != null ? undebitedInterestValue
                                         .getInterestDebitEntryDateTime() : entryDateTime;
 
+                        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
+                                .find(FinantialDocumentType.findForDebitNote(),
+                                        debitEntry.getDebtAccount().getFinantialInstitution())
+                                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
+
+                        DebitNote interestDebitNote =
+                                DebitNote.create(debitEntry.getDebtAccount(), debitNoteSeries, new DateTime());
+
+                        interestDebitNote.setPayorDebtAccount(debitEntry.getDebitNote().getPayorDebtAccount());
+
                         debitEntry.createInterestRateDebitEntry(undebitedInterestValue, whenInterestDebitEntryDateTime,
-                                Optional.<DebitNote> empty());
+                                Optional.of(interestDebitNote));
                     }
                 }
             }

@@ -830,7 +830,6 @@ public class SettlementNote extends SettlementNote_Base {
 
     private void createExcessPaymentDebitNote(SettlementNoteBean bean, BigDecimal availableAmount, String comments,
             String originDocumentNumber) {
-        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
         FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
 
         if (getReferencedCustomers().size() > 1) {

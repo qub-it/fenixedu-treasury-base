@@ -1,3 +1,11 @@
+- Refactor: Associate InvoiceEntry with FinantialEntity. This has precedence over the treasury event's financial entity [#qubIT-Fenix-4745]
+- Refactor: Mark as deprecated one of DebitEntry::create methods [#qubIT-Fenix-4745]
+- Bug Fix: If the net amount argument to DebitEntry::annulOrReduceOrCredit is equal to available net amount to credit, annul the debit entry [#qubIT-Fenix-4753]
+- Bug Fix: Fix the split debit entry to split the exemptions. Also take a new algorithm to split the debit entry, in order to fix the final amount with vat [#qubIT-Fenix-4735]
+- Bug Fix: Also fix that the debit note of the splitted debit entry must be new [#qubIT-Fenix-4696]
+- Refactor: Declare a constant of the unit amount scale with the value of 4, instead of using the literal "4" directly [#qubIT-Fenix-4745]
+- Bug Fix: Create debit note for interests that are created with the creation of settlement entry [#qubIT-Fenix-4698]
+
 12.3.0 (15-12-2023)
 - Improvement: Updates java [#qubIT-Omnis-4717]
 - Improvement: Adds fenixedu OSS DM [#qubIT-Omnis-4736]
