@@ -1,3 +1,4 @@
+12.4.0 (28-12-2023)
 - Refactor: Associate InvoiceEntry with FinantialEntity. This has precedence over the treasury event's financial entity [#qubIT-Fenix-4745]
 - Refactor: Mark as deprecated one of DebitEntry::create methods [#qubIT-Fenix-4745]
 - Bug Fix: If the net amount argument to DebitEntry::annulOrReduceOrCredit is equal to available net amount to credit, annul the debit entry [#qubIT-Fenix-4753]
