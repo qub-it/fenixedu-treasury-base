@@ -447,6 +447,16 @@ class document.FinantialDocumentEntry {
 		// and partial credits are not possible
 		Boolean calculatedAmountsOverriden;
 	}
+	
+		relation InvoiceEntryFinantialEntity {
+			FinantialEntity playsRole finantialEntity {
+				multiplicity 0..1;
+			}
+			
+			document.InvoiceEntry playsRole invoiceEntries {
+				multiplicity *;
+			}
+		}
 
 	class document.DebitEntry extends document.InvoiceEntry {
 			boolean eventAnnuled;

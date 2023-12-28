@@ -75,6 +75,8 @@ import org.joda.time.LocalDate;
 
 public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
+    public static final int UNIT_PRICE_SCALE = 4;
+
     public static final Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE = (o1, o2) -> {
         int c = o1.getDueDate().compareTo(o2.getDueDate());
 
