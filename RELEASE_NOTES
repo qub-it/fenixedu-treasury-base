@@ -1,3 +1,6 @@
+- Bug Fix: Translate missing message key [#qubIT-Fenix-4748]
+- Bug Fix: Fix "Finantial" description to "Financial" in person customer debt account [#qubIT-Fenix-4748]
+
 12.4.0 (28-12-2023)
 - Refactor: Associate InvoiceEntry with FinantialEntity. This has precedence over the treasury event's financial entity [#qubIT-Fenix-4745]
 - Refactor: Mark as deprecated one of DebitEntry::create methods [#qubIT-Fenix-4745]
