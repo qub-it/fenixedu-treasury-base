@@ -429,6 +429,9 @@ class document.FinantialDocumentEntry {
 	DateTime entryDateTime;
 	Integer entryOrder;
 	String propertiesJsonMap;
+	
+	// ANIL 2024-01-03: These notes are not intended to be printed or exported to other systems
+	String internalComments;
 }
 
 	class document.InvoiceEntry extends document.FinantialDocumentEntry {

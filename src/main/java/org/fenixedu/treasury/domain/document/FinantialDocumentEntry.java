@@ -52,8 +52,6 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
@@ -185,6 +183,10 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
 
     public void editPropertiesMap(final Map<String, String> propertiesMap) {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
+    }
+
+    public void editInternalComments(String internalComments) {
+        setInternalComments(internalComments);
     }
 
     public static Stream<? extends FinantialDocumentEntry> findAll() {
