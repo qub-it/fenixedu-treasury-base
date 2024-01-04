@@ -491,7 +491,8 @@ public class SettlementNote extends SettlementNote_Base {
             if (splitDebitEntriesWithSettledAmount
                     && (debitEntry.getFinantialDocument() == null || debitEntry.getFinantialDocument().isPreparing())
                     && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
-                debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()));
+                debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()),
+                        "partial payment (system)");
             }
 
             if (debitEntry.getFinantialDocument() == null) {

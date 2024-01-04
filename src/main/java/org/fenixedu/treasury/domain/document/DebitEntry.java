@@ -1359,7 +1359,7 @@ public class DebitEntry extends DebitEntry_Base {
         CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST.add(consumer);
     }
 
-    public DebitEntry splitDebitEntry(BigDecimal withAmountWithVatOfNewDebitEntry) {
+    public DebitEntry splitDebitEntry(BigDecimal withAmountWithVatOfNewDebitEntry, String splitDebitEntryReason) {
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
             throw new IllegalStateException("error.DebitEntry.splitDebitEntry.finantialDocument.not.preparing");
         }
@@ -1375,7 +1375,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         BigDecimal totalAmount = getTotalAmount();
 
-        DebitEntryChangeAmountsLog.log(this, "splitDebitEntry", "Debit entry splitted");
+        DebitEntryChangeAmountsLog.log(this, "splitDebitEntry", splitDebitEntryReason);
 
         annulAllActiveSibsPaymentRequests();
 
@@ -1495,11 +1495,11 @@ public class DebitEntry extends DebitEntry_Base {
             BigDecimal netAmountToExempt = exemptionsNetAmountForCurrentDebitEntryMap.get(treasuryExemption);
 
             if (TreasuryConstants.isPositive(netAmountToExempt)) {
-                String reason = treasuryExemption.getReason();
+                String exemptionReason = treasuryExemption.getReason();
                 TreasuryExemptionType treasuryExemptionType = treasuryExemption.getTreasuryExemptionType();
 
                 treasuryExemption.revertExemption();
-                TreasuryExemption.create(treasuryExemptionType, reason, netAmountToExempt, this);
+                TreasuryExemption.create(treasuryExemptionType, exemptionReason, netAmountToExempt, this);
             }
         }
 

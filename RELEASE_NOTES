@@ -1,3 +1,5 @@
+- Improvement: Allow record the reason for debit entry amount change and split debit entry in two [#qubIT-Fenix-4756]
+
 12.4.2 (03-01-2024)
 - Improvement: Internal notes in finantial document entry [#qubIT-Fenix-4756]
 

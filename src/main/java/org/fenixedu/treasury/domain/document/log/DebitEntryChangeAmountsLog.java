@@ -32,6 +32,7 @@ public class DebitEntryChangeAmountsLog extends DebitEntryChangeAmountsLog_Base 
 
         log.setDebitEntry(debitEntry);
         log.setDebitEntryCode(debitEntry.getCode());
+        log.setChangeContext(changeContext);
         log.setOldUnitAmount(debitEntry.getAmount());
         log.setOldQuantity(debitEntry.getQuantity());
         log.setOldVatRate(debitEntry.getVatRate());
