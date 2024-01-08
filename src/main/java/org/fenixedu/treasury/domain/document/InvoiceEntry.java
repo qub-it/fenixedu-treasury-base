@@ -494,4 +494,19 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
     public abstract FinantialEntity getAssociatedFinantialEntity();
 
+    // Used in screens to display negative amounts for credit entries
+    public BigDecimal getUiTotalAmount() {
+        return getTotalAmount();
+    }
+
+    // Used in screens to display negative amounts for credit entries
+    public BigDecimal getUiOpenAmount() {
+        return getOpenAmount();
+    }
+
+    // Used in screens to display negative amounts for credit entries
+    public BigDecimal getUiOpenAmountWithInterests() {
+        return getOpenAmountWithInterests();
+    }
+
 }
