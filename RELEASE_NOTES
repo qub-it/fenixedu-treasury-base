@@ -1,3 +1,6 @@
+- Improvement: Add SIBS entity code in SibsInputFile and SibsReportFile [#qubIT-Fenix-4805]
+- Improvement: After executing a SIBS input file, save the execution date [#qubIT-Fenix-4806]
+
 12.4.4 (09-01-2024)
 - Improvement: Add UI methods in InvoiceEntry and override in CreditEntry to return negative numbers, to be presented in manage debt account UI [#qubIT-Fenix-4804]
 - Bug Fix: Translate missing message key [#qubIT-Fenix-4748]

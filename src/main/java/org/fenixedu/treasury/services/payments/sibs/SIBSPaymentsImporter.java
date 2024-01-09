@@ -55,6 +55,7 @@ package org.fenixedu.treasury.services.payments.sibs;
 import static java.lang.String.join;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,7 +74,6 @@ import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentCodeTransaction;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.SibsReportFile;
-import org.fenixedu.treasury.domain.paymentcodes.SibsTransactionDetail;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -134,6 +134,29 @@ public class SIBSPaymentsImporter {
         }
     }
 
+    public String readSibsEntityCode(String filename, byte[] content) {
+
+        InputStream fileInputStream = null;
+        try {
+            fileInputStream = new ByteArrayInputStream(content);
+
+            final SibsIncommingPaymentFile sibsFile = SibsIncommingPaymentFile.parse(filename, fileInputStream);
+            final SIBSImportationFileDTO reportDTO = new SIBSImportationFileDTO(sibsFile);
+
+            return reportDTO.getSibsEntityCode();
+        } catch (Exception e) {
+            throw new TreasuryDomainException(e, "error.manager.SIBS.getSibsEntityCode.invalid");
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     public ProcessResult processSIBSPaymentFiles(SibsInputFile inputFile) throws IOException {
         // HACK:    Avoid concurrent and duplicated processing file
         synchronized (SIBSPaymentsImporter.class) {
@@ -190,7 +213,6 @@ public class SIBSPaymentsImporter {
                 reportFile = SibsReportFile.processSIBSIncommingFile(reportDTO);
                 processResult.addMessage("label.manager.SIBS.reportCreated");
                 processResult.setReportFile(reportFile);
-
             } catch (Exception ex) {
                 ex.printStackTrace();
                 processResult.addError("error.manager.SIBS.reportException", getMessage(ex));
@@ -224,6 +246,8 @@ public class SIBSPaymentsImporter {
             if (processResult.hasFailed()) {
                 processResult.addError("error.manager.SIBS.nonProcessedCodes");
             }
+
+            inputFile.updateLastProcessExecutionDate();
 
             processResult.addMessage("label.manager.SIBS.done");
 

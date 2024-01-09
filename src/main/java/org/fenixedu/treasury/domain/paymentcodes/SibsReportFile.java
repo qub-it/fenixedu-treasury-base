@@ -65,7 +65,6 @@ import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServ
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibs.SIBSImportationFileDTO;
 import org.fenixedu.treasury.services.payments.sibs.SIBSPaymentsImporter.ProcessResult;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.streaming.spreadsheet.ExcelSheet;
 import org.fenixedu.treasury.util.streaming.spreadsheet.Spreadsheet;
 import org.joda.time.DateTime;
@@ -78,10 +77,10 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
 
     public static final Comparator<SibsReportFile> COMPARATOR_BY_CREATION_DATE = (o1, o2) -> {
         int c = o1.getCreationDate().compareTo(o2.getCreationDate());
-        
+
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     public static final String CONTENT_TYPE = "text/plain";
     public static final String FILE_EXTENSION = ".idm";
 
@@ -91,22 +90,24 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
         setCreationDate(new DateTime());
     }
 
-    protected SibsReportFile(final DateTime whenProcessedBySibs, final BigDecimal transactionsTotalAmount,
+    protected SibsReportFile(String sibsEntityCode, final DateTime whenProcessedBySibs, final BigDecimal transactionsTotalAmount,
             final BigDecimal totalCost, final String displayName, final String fileName, final byte[] content) {
         this();
-        this.init(whenProcessedBySibs, transactionsTotalAmount, totalCost, displayName, fileName, content);
+        this.init(sibsEntityCode, whenProcessedBySibs, transactionsTotalAmount, totalCost, displayName, fileName, content);
 
         checkRules();
     }
 
-    protected void init(final DateTime whenProcessedBySibs, final BigDecimal transactionsTotalAmount, final BigDecimal totalCost,
-            final String displayName, final String fileName, final byte[] content) {
+    protected void init(String sibsEntityCode, DateTime whenProcessedBySibs, BigDecimal transactionsTotalAmount,
+            BigDecimal totalCost, String displayName, String fileName, byte[] content) {
 
         TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, CONTENT_TYPE, content);
 
+        setSibsEntityCode(sibsEntityCode);
         setWhenProcessedBySibs(whenProcessedBySibs);
         setTransactionsTotalAmount(transactionsTotalAmount);
         setTotalCost(totalCost);
+
         checkRules();
     }
 
@@ -177,9 +178,10 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
     }
 
     @Atomic
-    public static SibsReportFile create(final DateTime whenProcessedBySibs, final BigDecimal transactionsTotalAmount,
-            final BigDecimal totalCost, final String displayName, final String fileName, final byte[] content) {
-        return new SibsReportFile(whenProcessedBySibs, transactionsTotalAmount, totalCost, displayName, fileName, content);
+    public static SibsReportFile create(String sibsEntityCode, DateTime whenProcessedBySibs, BigDecimal transactionsTotalAmount,
+            BigDecimal totalCost, String displayName, String fileName, byte[] content) {
+        return new SibsReportFile(sibsEntityCode, whenProcessedBySibs, transactionsTotalAmount, totalCost, displayName, fileName,
+                content);
 
     }
 
@@ -212,8 +214,10 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
     @Atomic
     public static SibsReportFile processSIBSIncommingFile(final SIBSImportationFileDTO reportDTO) {
         byte[] content = buildContentFor(reportDTO);
-        SibsReportFile result = SibsReportFile.create(reportDTO.getWhenProcessedBySibs(), reportDTO.getTransactionsTotalAmount(),
-                reportDTO.getTotalCost(), displayNameFor(reportDTO), filenameFor(reportDTO), content);
+
+        SibsReportFile result = SibsReportFile.create(reportDTO.getSibsEntityCode(), reportDTO.getWhenProcessedBySibs(),
+                reportDTO.getTransactionsTotalAmount(), reportDTO.getTotalCost(), displayNameFor(reportDTO),
+                filenameFor(reportDTO), content);
 
         return result;
     }

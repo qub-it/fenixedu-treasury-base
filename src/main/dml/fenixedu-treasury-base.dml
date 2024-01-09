@@ -1445,6 +1445,7 @@ class paymentcodes.SibsTransactionDetail  {
 		String infoLog;
 		DateTime creationDate;
 		String creator;
+		String sibsEntityCode;
 	}
 		
 		relation SibsReportFileDomainRoot {
@@ -1493,6 +1494,8 @@ class paymentcodes.SibsTransactionDetail  {
 		String uploaderUsername;
 		DateTime creationDate;
 		String creator;
+		DateTime lastProcessExecutionDate;
+		String sibsEntityCode;
 	}
 
 		relation SibsInputFileFinantialInstitution {

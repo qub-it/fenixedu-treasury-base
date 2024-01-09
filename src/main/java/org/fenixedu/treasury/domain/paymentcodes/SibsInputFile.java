@@ -62,6 +62,7 @@ import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.services.payments.sibs.SIBSPaymentsImporter;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.joda.time.DateTime;
 
@@ -84,18 +85,19 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
         setCreationDate(new DateTime());
     }
 
-    protected SibsInputFile(DateTime whenProcessedBySIBS, String filename, byte[] content,
-            final String uploader) {
+    protected SibsInputFile(DateTime whenProcessedBySIBS, String filename, byte[] content, final String uploader) {
         this();
         init(whenProcessedBySIBS, filename, content, uploader);
     }
 
-    protected void init(DateTime whenProcessedBySIBS, String filename, byte[] content,
-            final String uploader) {
+    protected void init(DateTime whenProcessedBySIBS, String filename, byte[] content, final String uploader) {
         TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, CONTENT_TYPE, content);
 
         setWhenProcessedBySibs(whenProcessedBySIBS);
         setUploaderUsername(uploader);
+
+        String sibsEntityCode = new SIBSPaymentsImporter().readSibsEntityCode(filename, content);
+        setSibsEntityCode(sibsEntityCode);
 
         checkRules();
     }
@@ -138,9 +140,18 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
         super.deleteDomainObject();
     }
 
+    @Override
+    public boolean isAccessible(final String username) {
+        return TreasuryAccessControlAPI.isBackOfficeMember(username, getFinantialInstitution());
+    }
+
     @Atomic
-    public static SibsInputFile create(DateTime whenProcessedBySIBS,
-            String filename, byte[] content, final String uploader) {
+    public void updateLastProcessExecutionDate() {
+        setLastProcessExecutionDate(new DateTime());
+    }
+
+    @Atomic
+    public static SibsInputFile create(DateTime whenProcessedBySIBS, String filename, byte[] content, final String uploader) {
         return new SibsInputFile(whenProcessedBySIBS, filename, content, uploader);
     }
 
@@ -155,7 +166,7 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
             }
 
             String entityReferenceCode = file.getHeader().getEntityCode();
-            
+
             if (!SibsPaymentCodePool.find(entityReferenceCode).findAny().isPresent()) {
                 throw new TreasuryDomainException(
                         "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile.poolNull",
@@ -163,9 +174,8 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
             }
 
             String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
-            SibsInputFile sibsInputFile = new SibsInputFile(whenProcessedBySibs, filename, 
-                    sibsContent, loggedUsername);
-            
+            SibsInputFile sibsInputFile = new SibsInputFile(whenProcessedBySibs, filename, sibsContent, loggedUsername);
+
             return sibsInputFile;
         } catch (RuntimeException ex) {
             throw new TreasuryDomainException(
@@ -177,11 +187,6 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     public static Stream<SibsInputFile> findAll() {
         return FenixFramework.getDomainRoot().getSibsInputFilesSet().stream();
-    }
-
-    @Override
-    public boolean isAccessible(final String username) {
-        return TreasuryAccessControlAPI.isBackOfficeMember(username, getFinantialInstitution());
     }
 
 }

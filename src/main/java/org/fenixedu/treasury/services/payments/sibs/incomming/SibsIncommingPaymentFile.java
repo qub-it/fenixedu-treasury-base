@@ -82,8 +82,8 @@ public class SibsIncommingPaymentFile {
 
     private String filename;
 
-    public SibsIncommingPaymentFile(String filename, SibsIncommingPaymentFileHeader header,
-            SibsIncommingPaymentFileFooter footer, List<SibsIncommingPaymentFileDetailLine> detailLines) {
+    public SibsIncommingPaymentFile(String filename, SibsIncommingPaymentFileHeader header, SibsIncommingPaymentFileFooter footer,
+            List<SibsIncommingPaymentFileDetailLine> detailLines) {
         this.filename = filename;
         this.header = header;
         this.footer = footer;
@@ -103,11 +103,11 @@ public class SibsIncommingPaymentFile {
         }
 
     }
-    
+
     public static SibsIncommingPaymentFile parse(String filename, InputStream stream) throws IOException {
         return parse(filename, IOUtils.toByteArray(stream));
     }
-    
+
     public static SibsIncommingPaymentFile parse(final String filename, byte[] content) {
         SibsIncommingPaymentFileHeader header = null;
         SibsIncommingPaymentFileFooter footer = null;
