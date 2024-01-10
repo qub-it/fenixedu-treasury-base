@@ -190,7 +190,8 @@ public class Product extends Product_Base {
 
     public boolean isDeletable() {
         return getInvoiceEntriesSet().isEmpty() && getTreasuryExemptionSet().isEmpty() && getTreasuryEventsSet().isEmpty()
-                && getAdvancePaymentTreasurySettings() == null && getTreasurySettings() == null && getTariffSet().isEmpty();
+                && getAdvancePaymentTreasurySettings() == null && getTreasurySettings() == null && getTariffSet().isEmpty()
+                && getPaymentPlanSettings() == null && getPaymentPlanConfiguratorsSet().isEmpty();
     }
 
     public boolean isTransferBalanceProduct() {
