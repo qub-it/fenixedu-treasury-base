@@ -65,7 +65,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     }
 
     public SibsPayPlatform(FinantialInstitution finantialInstitution, String name, boolean active, String clientId,
-            String bearerToken, Integer terminalId, String entityReferenceCode, String endpoint) {
+            String bearerToken, Integer terminalId, String entityReferenceCode, String endpoint, String assetsEndpointUrl) {
         this();
 
         super.setFinantialInstitution(finantialInstitution);
@@ -76,6 +76,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         super.setBearerToken(bearerToken);
         super.setEntityReferenceCode(entityReferenceCode);
         super.setEndpointUrl(endpoint);
+        super.setAssetsEndpointUrl(assetsEndpointUrl);
 
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getCreditCardPaymentMethod());
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getMbPaymentMethod());
@@ -187,8 +188,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         Optional<String> transactionIdOptional = Optional.empty();
         Optional<String> transactionSignatureOptional = Optional.empty();
 
-        SibsPayService sibsPayService =
-                new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
         MbwayRequest mbwayRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber, payableAmount,
                 merchantTransactionId);
@@ -366,8 +367,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         try {
             DateTime requestSendDate = new DateTime();
 
-            SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
-                    getEntityReferenceCode());
+            SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                    getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
             final SibsPayReturnCheckout returnCheckout =
                     sibsPayService.processForwardPaymentCheckout(forwardPayment, bean.getAddressBean());
@@ -430,8 +431,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
 
         try {
-            SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
-                    getEntityReferenceCode());
+            SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                    getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
             DateTime requestSendDate = new DateTime();
 
@@ -547,8 +548,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public String getPaymentURL(ForwardPaymentRequest request) {
-        return new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(), getEntityReferenceCode())
-                .getJsScriptURL(request.getTransactionId());
+        return new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                getEntityReferenceCode()).getJsScriptURL(request.getTransactionId());
     }
 
     @Override
@@ -558,8 +559,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public ForwardPaymentStatusBean paymentStatus(ForwardPaymentRequest request) {
-        SibsPayService sibsPayService =
-                new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
         try {
             SibsPayResponseInquiryWrapper responseInquiryWrapper = null;
@@ -699,8 +700,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         Optional<String> transactionIdOptional = Optional.empty();
         Optional<String> transactionSignatureOptional = Optional.empty();
 
-        SibsPayService sibsPayService =
-                new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                getBearerToken(), getTerminalId(), getEntityReferenceCode());
         DateTime sibsValidFrom = new DateTime();
 
         // Set validTo to 23:59:59
@@ -893,8 +894,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
-        SibsPayService sibsPayService =
-                new SibsPayService(getEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
         try {
             SibsPayResponseInquiryWrapper responseInquiryWrapper =
@@ -966,9 +967,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     }
 
     public static SibsPayPlatform create(FinantialInstitution finantialInstitution, String name, boolean active, String clientId,
-            String bearerToken, Integer terminalId, String entityReferenceCode, String endpointUrl) {
+            String bearerToken, Integer terminalId, String entityReferenceCode, String endpointUrl, String assetsEndpointUrl) {
         return new SibsPayPlatform(finantialInstitution, name, active, clientId, bearerToken, terminalId, entityReferenceCode,
-                endpointUrl);
+                endpointUrl, assetsEndpointUrl);
     }
 
     public static Stream<SibsPayPlatform> findAllActive() {

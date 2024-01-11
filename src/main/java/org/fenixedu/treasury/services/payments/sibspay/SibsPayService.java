@@ -56,6 +56,8 @@ public class SibsPayService {
 
     private static final Logger logger = LoggerFactory.getLogger(SibsPayService.class);
 
+    private String sibsEndpoint;
+    private String sibsAssetsEndpoint;
     private String clientId;
     private String bearerToken;
     private Integer terminalId;
@@ -64,7 +66,10 @@ public class SibsPayService {
     private Client client;
     private WebTarget webTarget;
 
-    public SibsPayService(String sibsEndpoint, String clientId, String bearerToken, Integer terminalId, String sibsEntityCode) {
+    public SibsPayService(String sibsEndpoint, String sibsAssetsEndpoint, String clientId, String bearerToken, Integer terminalId,
+            String sibsEntityCode) {
+        this.sibsEndpoint = sibsEndpoint;
+        this.sibsAssetsEndpoint = sibsAssetsEndpoint;
         this.clientId = clientId;
         this.bearerToken = bearerToken;
         this.terminalId = terminalId;
@@ -479,8 +484,7 @@ public class SibsPayService {
     }
 
     public String getJsScriptURL(String checkoutId) {
-        return "https://spg.qly.site1.sibs.pt/assets/js/widget.js?id=" + checkoutId;
-//        return this.sibsEndpoint + "/assets/js/widget.js?id=" + checkoutId;
+        return this.sibsAssetsEndpoint + "/assets/js/widget.js?id=" + checkoutId;
     }
 
     public static SibsPayWebhookNotification deserializeWebhookNotification(String jsonBody)

@@ -3616,6 +3616,7 @@ class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatfor
 	String secretKey;
 	String entityReferenceCode;
 	String endpointUrl;
+	String assetsEndpointUrl;
 }
 
 /*************************
