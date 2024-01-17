@@ -62,7 +62,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
-import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -483,16 +482,6 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         // TODO Auto-generated method stub
         return super.getMbwayPaymentRequestsSet();
     }
-
-    // @formatter:off
-    /*
-     * ********************************
-     * FINANTIAL ENTITY RELATED METHODS
-     * ********************************
-     */
-    // @formatter:on
-
-    public abstract FinantialEntity getAssociatedFinantialEntity();
 
     // Used in screens to display negative amounts for credit entries
     public BigDecimal getUiTotalAmount() {

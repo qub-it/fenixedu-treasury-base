@@ -189,7 +189,7 @@ public class InstallmentPaymenPlanBean implements ISettlementInvoiceEntryBean, I
     @Override
     public boolean isForFinantialEntity(FinantialEntity finantialEntity) {
         return installment.getInstallmentEntriesSet().stream().map(ie -> ie.getDebitEntry())
-                .anyMatch(de -> de.getAssociatedFinantialEntity() == finantialEntity);
+                .anyMatch(de -> de.getFinantialEntity() == finantialEntity);
     }
 
     @Override

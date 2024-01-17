@@ -1,3 +1,6 @@
+- Refactor: Change InvoiceEntry::getAssociatedFinantialEntity to InvoiceEntry::getFinantialEntity [#qubIT-Fenix-4587]
+- Refactor: Move up relationship between InvoiceEntry and FinantialEntity, to FinantialDocumentEntry and FinantialEntity [#qubIT-Fenix-4587]
+
 12.4.7 (11-01-2024)
 - Bug Fix: Fix typo in message translation [#qubIT-Fenix-4748]
 - Refactor: Add SIBS Pay SPG assets url in configuration, because the hostname is different between the REST endpoint and the javascript assets URL [#qubIT-Fenix-4820]

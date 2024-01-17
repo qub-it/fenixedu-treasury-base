@@ -290,9 +290,13 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     @Override
-    public FinantialEntity getAssociatedFinantialEntity() {
+    public FinantialEntity getFinantialEntity() {
+        if (super.getFinantialEntity() != null) {
+            return super.getFinantialEntity();
+        }
+
         if (getDebitEntry() != null) {
-            return getDebitEntry().getAssociatedFinantialEntity();
+            return getDebitEntry().getFinantialEntity();
         }
 
         return null;

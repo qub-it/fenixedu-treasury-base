@@ -1336,7 +1336,7 @@ public class DebitEntry extends DebitEntry_Base {
     // @formatter:on
 
     @Override
-    public FinantialEntity getAssociatedFinantialEntity() {
+    public FinantialEntity getFinantialEntity() {
         if (super.getFinantialEntity() != null) {
             return super.getFinantialEntity();
         }
@@ -1344,7 +1344,7 @@ public class DebitEntry extends DebitEntry_Base {
         if (getTreasuryEvent() != null) {
             return getTreasuryEvent().getAssociatedFinantialEntity();
         } else if (getDebitEntry() != null) {
-            return getDebitEntry().getAssociatedFinantialEntity();
+            return getDebitEntry().getFinantialEntity();
         }
 
         return null;

@@ -434,6 +434,17 @@ class document.FinantialDocumentEntry {
 	String internalComments;
 }
 
+	relation FinantialDocumentEntryFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 0..1;
+		}
+		
+		document.FinantialDocumentEntry playsRole FinantialDocumentEntries {
+			multiplicity *;
+		}
+	}
+
+
 	class document.InvoiceEntry extends document.FinantialDocumentEntry {
 		BigDecimalT quantity;
 		BigDecimalT vatAmount;
@@ -451,16 +462,6 @@ class document.FinantialDocumentEntry {
 		Boolean calculatedAmountsOverriden;
 	}
 	
-		relation InvoiceEntryFinantialEntity {
-			FinantialEntity playsRole finantialEntity {
-				multiplicity 0..1;
-			}
-			
-			document.InvoiceEntry playsRole invoiceEntries {
-				multiplicity *;
-			}
-		}
-
 	class document.DebitEntry extends document.InvoiceEntry {
 			boolean eventAnnuled;
 			LocalDate dueDate;
