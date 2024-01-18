@@ -696,8 +696,8 @@ public class DebitEntry extends DebitEntry_Base {
         final String reasonDescription = TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                 "label.TreasuryEvent.credit.by.annulAllDebitEntries.reason");
 
-        final SettlementNote settlementNote =
-                SettlementNote.create(this.getDebtAccount(), documentNumberSeriesSettlementNote, now, now, "", null);
+        final SettlementNote settlementNote = SettlementNote.create(getFinantialEntity(), this.getDebtAccount(),
+                documentNumberSeriesSettlementNote, now, now, "", null);
         settlementNote
                 .setDocumentObservations(reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
 

@@ -72,6 +72,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -126,16 +127,16 @@ public class SettlementNote extends SettlementNote_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected SettlementNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate, final DateTime paymentDate, final String originDocumentNumber,
-            final String finantialTransactionReference) {
+    protected SettlementNote(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate, DateTime paymentDate, String originDocumentNumber, String finantialTransactionReference) {
         this();
-        init(debtAccount, documentNumberSeries, documentDate, paymentDate, originDocumentNumber, finantialTransactionReference);
+        init(finantialEntity, debtAccount, documentNumberSeries, documentDate, paymentDate, originDocumentNumber,
+                finantialTransactionReference);
     }
 
-    protected void init(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate, final DateTime paymentDate, final String originDocumentNumber,
-            final String finantialTransactionReference) {
+    protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate, DateTime paymentDate, String originDocumentNumber, String finantialTransactionReference) {
+        setFinantialEntity(finantialEntity);
         setFinantialTransactionReference(finantialTransactionReference);
         setOriginDocumentNumber(originDocumentNumber);
         if (paymentDate == null) {
@@ -645,8 +646,8 @@ public class SettlementNote extends SettlementNote_Base {
                 // Settle excess debit and credit
                 DateTime now = new DateTime();
 
-                SettlementNote excessCloseSettlementNote =
-                        create(getDebtAccount(), getDocumentNumberSeries(), now, now, getUiDocumentNumber(), null);
+                SettlementNote excessCloseSettlementNote = create(getFinantialEntity(), getDebtAccount(),
+                        getDocumentNumberSeries(), now, now, getUiDocumentNumber(), null);
                 DebitEntry excessDebitEntry = this.getExcessPaymentDebitNote().getDebitEntriesSet().iterator().next();
                 CreditEntry excessCreditEntry = this.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next()
                         .getCreditEntriesSet().iterator().next();
@@ -867,7 +868,8 @@ public class SettlementNote extends SettlementNote_Base {
         Product advancePaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
         Vat vat = Vat.findActiveUnique(advancePaymentProduct.getVatType(), finantialInstitution, now).get();
         DebitEntry debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, amount, now.toLocalDate(),
-                new HashMap<>(), advancePaymentProduct, comments, BigDecimal.ONE, null, now);
+                new HashMap<>(), advancePaymentProduct, comments, BigDecimal.ONE, null, now, false, false,
+                Optional.ofNullable(getFinantialEntity()));
 
         if (!TreasuryConstants.isEqual(debitEntry.getTotalAmount(), availableAmount)) {
             throw new RuntimeException(
@@ -902,7 +904,8 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         AdvancedPaymentCreditNote creditNote = AdvancedPaymentCreditNote.createCreditNoteForAdvancedPayment(documentNumberSeries,
-                this.getDebtAccount(), availableAmount, this.getDocumentDate(), comments, originDocumentNumber, payorDebtAccount);
+                this.getDebtAccount(), availableAmount, this.getDocumentDate(), comments, originDocumentNumber, payorDebtAccount,
+                getFinantialEntity());
 
         this.setAdvancedPaymentCreditNote(creditNote);
     }
@@ -977,11 +980,11 @@ public class SettlementNote extends SettlementNote_Base {
      */
     // @formatter:on
 
-    public static SettlementNote create(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate, final DateTime paymentDate, final String originDocumentNumber,
-            final String finantialTransactionReference) {
-        SettlementNote settlementNote = new SettlementNote(debtAccount, documentNumberSeries, documentDate, paymentDate,
-                originDocumentNumber, finantialTransactionReference);
+    public static SettlementNote create(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate, DateTime paymentDate, String originDocumentNumber,
+            String finantialTransactionReference) {
+        SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,
+                paymentDate, originDocumentNumber, finantialTransactionReference);
 
         return settlementNote;
     }
@@ -991,8 +994,8 @@ public class SettlementNote extends SettlementNote_Base {
         DateTime documentDate = new DateTime();
         SettlementNoteBean copy = SettlementNoteBean.copyForSettlementNoteCreation(bean);
 
-        SettlementNote settlementNote = SettlementNote.create(copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
-                copy.getDate(), copy.getOriginDocumentNumber(),
+        SettlementNote settlementNote = SettlementNote.create(copy.getFinantialEntity(), copy.getDebtAccount(),
+                copy.getDocNumSeries(), documentDate, copy.getDate(), copy.getOriginDocumentNumber(),
                 !Strings.isNullOrEmpty(copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear()
                         + "/" + copy.getFinantialTransactionReference() : "");
 

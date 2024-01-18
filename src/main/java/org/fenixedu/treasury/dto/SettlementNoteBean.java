@@ -68,6 +68,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.VatType;
@@ -89,6 +90,8 @@ import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
 import org.fenixedu.treasury.domain.treasurydebtprocess.InvoiceEntryBlockingPaymentContext;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
+import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.IVirtualPaymentEntryHandler;
 import org.fenixedu.treasury.services.payments.virtualpaymententries.VirtualPaymentEntryFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -117,6 +120,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     private boolean reimbursementNote;
 
     private DebtAccount debtAccount;
+
+    private FinantialEntity finantialEntity;
 
     private DateTime date;
 
@@ -185,9 +190,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         setAdvancePayment(true);
 
         this.debtAccount = paymentRequest.getDebtAccount();
+        this.finantialEntity = paymentRequest.getFinantialEntity();
         this.reimbursementNote = false;
 
-        docNumSeries = DocumentNumberSeries
+        this.docNumSeries = DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
                 .get();
 
@@ -215,7 +221,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             for (DebitEntry debitEntry : sortedDebitEntriesToPay) {
                 SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean(debitEntry);
                 debitEntryBean.setIncluded(TreasuryConstants.isPositive(debitEntry.getOpenAmount()));
-                debitEntries.add(debitEntryBean);
+                this.debitEntries.add(debitEntryBean);
             }
         }
 
@@ -233,18 +239,18 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             for (Installment installment : sortedInstallments) {
                 InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
                 installmentBean.setIncluded(TreasuryConstants.isPositive(installment.getOpenAmount()));
-                debitEntries.add(installmentBean);
+                this.debitEntries.add(installmentBean);
             }
         }
 
         if (getReferencedCustomers().size() > 1) {
             // Register advance payment only
-            debitEntries.clear();
+            this.debitEntries.clear();
         }
 
         BigDecimal amountToDistribute = paidAmount;
 
-        for (ISettlementInvoiceEntryBean entryBean : debitEntries) {
+        for (ISettlementInvoiceEntryBean entryBean : this.debitEntries) {
             if (!entryBean.isIncluded()) {
                 continue;
             }
@@ -267,13 +273,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         PaymentEntryBean paymentEntryBean =
                 new PaymentEntryBean(paidAmount, paymentRequest.getPaymentMethod(), paymentRequest.fillPaymentEntryMethodId());
 
-        paymentEntries.add(paymentEntryBean);
+        this.paymentEntries.add(paymentEntryBean);
 
     }
 
     private SettlementNoteBean(SettlementNoteBean settlementNoteBean) {
         init();
         this.debtAccount = settlementNoteBean.getDebtAccount();
+        this.finantialEntity = settlementNoteBean.getFinantialEntity();
         this.reimbursementNote = settlementNoteBean.isReimbursementNote();
         this.advancePayment = settlementNoteBean.isAdvancePayment();
         this.date = settlementNoteBean.getDate();
@@ -368,6 +375,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         init();
 
         this.debtAccount = debtAccount;
+        this.finantialEntity = FinantialEntity.findAll()
+                .filter(fe -> TreasuryAccessControlAPI
+                        .isFrontOfficeMember(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername(), fe))
+                .filter(fe -> fe.getFinantialInstitution() == debtAccount.getFinantialInstitution()).findFirst().orElse(null);
+
         this.reimbursementNote = reimbursementNote;
 
         List<InvoiceEntry> pendingInvoiceEntriesList = debtAccount.getPendingInvoiceEntriesSet().stream() //
@@ -425,6 +437,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             final boolean reimbursementNote, final boolean excludeDebtsForPayorAccount) {
         init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount);
 
+        this.finantialEntity = digitalPaymentPlatform.getFinantialEntity();
         setDigitalPaymentPlatform(digitalPaymentPlatform);
     }
 
@@ -632,6 +645,14 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public void setDebtAccount(DebtAccount debtAccount) {
         this.debtAccount = debtAccount;
+    }
+
+    public FinantialEntity getFinantialEntity() {
+        return finantialEntity;
+    }
+
+    public void setFinantialEntity(FinantialEntity finantialEntity) {
+        this.finantialEntity = finantialEntity;
     }
 
     public DateTime getDate() {

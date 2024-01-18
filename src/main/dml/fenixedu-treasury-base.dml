@@ -360,6 +360,16 @@ class document.FinantialDocument {
 	
 	Boolean overrideCertificationDateWithCloseDate;
 }
+	
+	relation FinantialDocumentFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 0..1;
+		}
+		
+		document.FinantialDocument playsRole finantialDocuments {
+			multiplicity *;
+		}
+	}
 
 	class document.Invoice extends document.FinantialDocument {
 		// Migration of certified documents from other systems
@@ -990,6 +1000,16 @@ class payments.PaymentRequest {
 		document.DebitEntry playsRole debitEntries {
 			multiplicity *;
 		}		
+	}
+	
+	relation PaymentRequestFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 0..1;
+		}
+		
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
 	}
 	
 class payments.PaymentTransaction {

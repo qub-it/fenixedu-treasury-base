@@ -88,10 +88,10 @@ public class ReimbursementUtils {
     }
 
     public static boolean isCreditNoteForReimbursementMustBeClosedWithDebitNoteAndCreatedNew(final CreditEntry creditEntry) {
-        if(creditEntry.getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+        if (creditEntry.getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
             return false;
         }
-        
+
         if (!isInReimbursementCreditsRestrictionModeOfSAP(creditEntry)) {
             return false;
         }
@@ -117,9 +117,9 @@ public class ReimbursementUtils {
         if (creditNote.isExportedInLegacyERP()) {
             return true;
         }
-        
-        if(creditNote.getDocumentNumberSeries().getSeries().isRegulationSeries() && 
-                creditNote.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
+
+        if (creditNote.getDocumentNumberSeries().getSeries().isRegulationSeries()
+                && creditNote.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)) {
             // ANIL 2017-05-04: This is applied to advanced payments in legacy ERP converted 
             // to regulation series with specific product
             return true;
@@ -187,14 +187,14 @@ public class ReimbursementUtils {
     private static void settlementCompensation(final CreditEntry originalCreditEntry, final BigDecimal amountToReimburseWithVat,
             final DateTime now, final DebtAccount debtAccount, final DocumentNumberSeries settlementNumberSeries,
             final DebitEntry compensationDebitEntry) {
-        final SettlementNote compensationSettlementNote =
-                SettlementNote.create(debtAccount, settlementNumberSeries, now, now, null, null);
+        final SettlementNote compensationSettlementNote = SettlementNote.create(originalCreditEntry.getFinantialEntity(),
+                debtAccount, settlementNumberSeries, now, now, null, null);
 
         SettlementEntry.create(compensationDebitEntry, compensationSettlementNote, amountToReimburseWithVat,
                 compensationDebitEntry.getDescription(), now, false);
         SettlementEntry.create(originalCreditEntry, compensationSettlementNote, amountToReimburseWithVat,
                 originalCreditEntry.getDescription(), now, false);
-        
+
         compensationSettlementNote.closeDocument();
     }
 

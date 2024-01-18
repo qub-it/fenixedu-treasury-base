@@ -57,6 +57,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -169,6 +170,20 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
     public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(DocumentNumberSeries documentNumberSeries,
             DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description,
             String originDocumentNumber, final DebtAccount payorDebtAccount) {
+        return _create(documentNumberSeries, debtAccount, availableAmount, documentDate, description, originDocumentNumber,
+                payorDebtAccount, null);
+    }
+
+    public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(DocumentNumberSeries documentNumberSeries,
+            DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description,
+            String originDocumentNumber, DebtAccount payorDebtAccount, FinantialEntity finantialEntity) {
+        return _create(documentNumberSeries, debtAccount, availableAmount, documentDate, description, originDocumentNumber,
+                payorDebtAccount, finantialEntity);
+    }
+
+    private static AdvancedPaymentCreditNote _create(DocumentNumberSeries documentNumberSeries, DebtAccount debtAccount,
+            BigDecimal availableAmount, DateTime documentDate, String description, String originDocumentNumber,
+            DebtAccount payorDebtAccount, FinantialEntity finantialEntity) {
         AdvancedPaymentCreditNote note = create(debtAccount, payorDebtAccount != debtAccount ? payorDebtAccount : null,
                 documentNumberSeries, documentDate);
 
@@ -184,8 +199,8 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
         }
         String lineDescription = treasuryBundleI18N("label.AdvancedPaymentCreditNote.advanced.payment.description")
                 .getContent(TreasuryConstants.DEFAULT_LANGUAGE) + description;
-        CreditEntry entry = CreditEntry.create(null, note, lineDescription, advancedPaymentProduct, vat, availableAmount,
-                documentDate, BigDecimal.ONE);
+        CreditEntry entry = CreditEntry.create(finantialEntity, note, lineDescription, advancedPaymentProduct, vat,
+                availableAmount, documentDate, BigDecimal.ONE);
 
         return note;
     }

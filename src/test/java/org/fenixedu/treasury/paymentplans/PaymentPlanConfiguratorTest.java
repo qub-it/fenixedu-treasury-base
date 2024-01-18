@@ -927,7 +927,7 @@ public class PaymentPlanConfiguratorTest {
                 PaymentPlanTestsUtilities.createDebitEntry(new BigDecimal("99.99"), new LocalDate(2021, 2, 28), true);
         debtNote.addDebitNoteEntries(List.of(debitEntry));
 
-        SettlementNote settlementNote = SettlementNote.create(paymentPlanBean.getDebtAccount(),
+        SettlementNote settlementNote = SettlementNote.create(null, paymentPlanBean.getDebtAccount(),
                 DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
                         Series.findByCode(PaymentPlanTestsUtilities.getFinatialInstitution(), "INT")),
                 new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay(), new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay(), null,

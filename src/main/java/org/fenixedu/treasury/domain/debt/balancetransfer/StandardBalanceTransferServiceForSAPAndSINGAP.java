@@ -252,7 +252,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         }
 
         regulationDebitEntry.getFinantialDocument().closeDocument();
-        CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(destinyDebtAccount, now, originNumber,
+        CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(this.destinyDebtAccount, now, originNumber,
                 creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
@@ -266,7 +266,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
         }
 
-        final SettlementNote settlementNote = SettlementNote.create(fromDebtAccount, settlementNoteSeries, now, now, null, null);
+        final SettlementNote settlementNote = SettlementNote.create(invoiceEntry.getFinantialEntity(), this.fromDebtAccount,
+                settlementNoteSeries, now, now, null, null);
 
         if (creditEntry.getFinantialDocument().isPreparing()) {
             creditEntry.getFinantialDocument().closeDocument();
@@ -292,11 +293,11 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
             final DebtAccount payorDebtAccount =
                     objectDebitNote.isForPayorDebtAccount() ? objectDebitNote.getPayorDebtAccount() : null;
 
-            final DebitNote destinyDebitNote = DebitNote.create(destinyDebtAccount, payorDebtAccount,
+            final DebitNote destinyDebitNote = DebitNote.create(this.destinyDebtAccount, payorDebtAccount,
                     objectDebitNote.getDocumentNumberSeries(), now, now.toLocalDate(), objectDebitNote.getUiDocumentNumber());
 
-            final SettlementNote settlementNote =
-                    SettlementNote.create(fromDebtAccount, settlementNumberSeries, now, now, null, null);
+            final SettlementNote settlementNote = SettlementNote.create(objectDebitNote.getFinantialEntity(),
+                    this.fromDebtAccount, settlementNumberSeries, now, now, null, null);
             for (final FinantialDocumentEntry objectEntry : objectDebitNote.getFinantialDocumentEntriesSet()) {
                 if (!isPositive(((DebitEntry) objectEntry).getOpenAmount())) {
                     continue;

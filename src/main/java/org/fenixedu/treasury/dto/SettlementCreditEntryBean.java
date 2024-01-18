@@ -58,6 +58,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -220,6 +221,11 @@ public class SettlementCreditEntryBean implements ISettlementInvoiceEntryBean, I
     @Override
     public boolean isForCreditEntry() {
         return true;
+    }
+
+    @Override
+    public boolean isForFinantialEntity(FinantialEntity finantialEntity) {
+        return this.creditEntry.getFinantialEntity() == finantialEntity;
     }
 
     @Override

@@ -121,17 +121,18 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                 throw new TreasuryDomainException("error.PaymentRequest.debit.entry.open.amount.must.be.greater.than.zero");
             }
         }
+
         if (getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
 
         setDigitalPaymentPlatform(platform);
+        setFinantialEntity(platform.getFinantialEntity());
         setDebtAccount(debtAccount);
         getDebitEntriesSet().addAll(debitEntries);
         getInstallmentsSet().addAll(installments);
         setPayableAmount(payableAmount);
         setPaymentMethod(paymentMethod);
-
     }
 
     protected void checkRules() {
@@ -275,8 +276,8 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
                 .get();
 
-        final SettlementNote settlementNote = SettlementNote.create(getDebtAccount(), docNumberSeriesForPayments, new DateTime(),
-                paymentDate, originDocumentNumber, null);
+        final SettlementNote settlementNote = SettlementNote.create(getFinantialEntity(), getDebtAccount(),
+                docNumberSeriesForPayments, new DateTime(), paymentDate, originDocumentNumber, null);
 
         settlementNote.setDocumentObservations(comments);
 
@@ -364,7 +365,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
 
         //if "availableAmount" still exists, then we must create a "pending Payment" or "CreditNote"
         if (availableAmount.compareTo(BigDecimal.ZERO) > 0) {
-            final SettlementNote advancedPaymentSettlementNote = SettlementNote.create(getDebtAccount(),
+            final SettlementNote advancedPaymentSettlementNote = SettlementNote.create(getFinantialEntity(), getDebtAccount(),
                     docNumberSeriesForPayments, new DateTime(), paymentDate, originDocumentNumber, null);
 
             advancedPaymentSettlementNote.setDocumentObservations(comments);
