@@ -615,7 +615,7 @@ public class DebitEntry extends DebitEntry_Base {
         CreditEntry creditEntry = null;
         if (treasuryExemption != null) {
             creditEntry = CreditEntry.createFromExemption(treasuryExemption, creditNote, description, netAmountForCredit,
-                    new DateTime(), this, BigDecimal.ONE);
+                    new DateTime(), BigDecimal.ONE);
         } else {
             creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), netAmountForCredit, documentDate,
                     this, BigDecimal.ONE);

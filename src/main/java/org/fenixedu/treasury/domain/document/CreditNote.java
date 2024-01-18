@@ -378,8 +378,18 @@ public class CreditNote extends CreditNote_Base {
                 create(getDebtAccount(), getDocumentNumberSeries(), new DateTime(), getDebitNote(), getOriginDocumentNumber());
 
         for (final CreditEntry creditEntry : getCreditEntriesSet()) {
-            CreditEntry.create(creditNote, creditEntry.getDescription(), creditEntry.getProduct(), creditEntry.getVat(),
-                    creditEntry.getAmount(), new DateTime(), creditEntry.getDebitEntry(), creditEntry.getQuantity());
+            if (creditEntry.isFromExemption()) {
+                CreditEntry.createFromExemption(creditEntry.getTreasuryExemption(), creditNote, creditEntry.getDescription(),
+                        creditEntry.getAmount(), new DateTime(), creditEntry.getQuantity());
+            } else if (creditEntry.getDebitEntry() != null) {
+                CreditEntry.create(creditNote, creditEntry.getDescription(), creditEntry.getProduct(), creditEntry.getVat(),
+                        creditEntry.getAmount(), new DateTime(), creditEntry.getDebitEntry(), creditEntry.getQuantity());
+            } else {
+                CreditEntry.create(creditEntry.getFinantialEntity(), creditNote, creditEntry.getDescription(),
+                        creditEntry.getProduct(), creditEntry.getVat(), creditEntry.getAmount(), new DateTime(),
+                        creditEntry.getQuantity());
+            }
+
         }
 
         return creditNote;
@@ -470,6 +480,8 @@ public class CreditNote extends CreditNote_Base {
         return note;
     }
 
+    @Deprecated
+    // TODO ANIL 2024-01-17 : This is to be discontinued
     public static CreditEntry createBalanceTransferCredit(final DebtAccount debtAccount, final DateTime documentDate,
             final String originNumber, final Product product, final BigDecimal amountWithVat, final DebtAccount payorDebtAccount,
             String entryDescription) {
@@ -489,8 +501,8 @@ public class CreditNote extends CreditNote_Base {
         final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
                 TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
 
-        CreditEntry entry = CreditEntry.create(creditNote, entryDescription, product, transferVat, amountWithoutVat, documentDate,
-                null, BigDecimal.ONE);
+        CreditEntry entry = CreditEntry.create(null, creditNote, entryDescription, product, transferVat, amountWithoutVat,
+                documentDate, BigDecimal.ONE);
 
         creditNote.editPayorDebtAccount(payorDebtAccount);
 

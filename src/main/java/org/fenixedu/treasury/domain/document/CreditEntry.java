@@ -75,11 +75,11 @@ import com.google.common.collect.Sets;
 
 public class CreditEntry extends CreditEntry_Base {
 
-    protected CreditEntry(final FinantialDocument finantialDocument, final Product product, final Vat vat,
-            final BigDecimal unitAmount, String description, BigDecimal quantity, final DateTime entryDateTime,
+    protected CreditEntry(FinantialEntity finantialEntity, final FinantialDocument finantialDocument, final Product product,
+            final Vat vat, final BigDecimal unitAmount, String description, BigDecimal quantity, final DateTime entryDateTime,
             final DebitEntry debitEntry, final TreasuryExemption treasuryExemption) {
-        init(finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption);
-
+        init(finantialEntity, finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime, debitEntry,
+                treasuryExemption);
     }
 
     @Override
@@ -94,11 +94,13 @@ public class CreditEntry extends CreditEntry_Base {
         throw new RuntimeException("error.CreditEntry.use.init.without.finantialEntryType");
     }
 
-    protected void init(final FinantialDocument finantialDocument, final Product product, final Vat vat,
-            final BigDecimal unitAmount, String description, BigDecimal quantity, final DateTime entryDateTime,
-            final DebitEntry debitEntry, final TreasuryExemption treasuryExemption) {
+    protected void init(FinantialEntity finantialEntity, FinantialDocument finantialDocument, Product product, final Vat vat,
+            BigDecimal unitAmount, String description, BigDecimal quantity, DateTime entryDateTime, DebitEntry debitEntry,
+            TreasuryExemption treasuryExemption) {
         super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat,
                 unitAmount, description, quantity, entryDateTime);
+
+        super.setFinantialEntity(finantialEntity);
         this.setDebitEntry(debitEntry);
         this.setFromExemption(treasuryExemption != null);
         this.setTreasuryExemption(treasuryExemption);
@@ -194,19 +196,32 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
-            BigDecimal unitAmount, final DateTime entryDateTime, final DebitEntry debitEntry, BigDecimal quantity) {
+            BigDecimal unitAmount, DateTime entryDateTime, DebitEntry debitEntry, BigDecimal quantity) {
         if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 
-        CreditEntry cr = new CreditEntry(finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime,
-                debitEntry, null);
+        if (debitEntry == null) {
+            throw new TreasuryDomainException("error.CreditEntry.debitEntry.required");
+        }
+
+        CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, product, vat, unitAmount,
+                description, quantity, entryDateTime, debitEntry, null);
+        return cr;
+    }
+
+    public static CreditEntry create(FinantialEntity finantialEntity, FinantialDocument finantialDocument, String description,
+            Product product, Vat vat, BigDecimal unitAmount, DateTime entryDateTime, BigDecimal quantity) {
+        CreditEntry cr = new CreditEntry(finantialEntity, finantialDocument, product, vat, unitAmount, description, quantity,
+                entryDateTime, null, null);
+
         return cr;
     }
 
     static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption, final FinantialDocument finantialDocument,
-            final String description, final BigDecimal unitAmount, final DateTime entryDateTime, final DebitEntry debitEntry,
-            BigDecimal quantity) {
+            final String description, final BigDecimal unitAmount, final DateTime entryDateTime, BigDecimal quantity) {
+        DebitEntry debitEntry = treasuryExemption.getDebitEntry();
+
         if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
@@ -215,8 +230,8 @@ public class CreditEntry extends CreditEntry_Base {
             throw new TreasuryDomainException("error.CreditEntry.createFromExemption.requires.treasuryExemption");
         }
 
-        final CreditEntry cr = new CreditEntry(finantialDocument, debitEntry.getProduct(), debitEntry.getVat(), unitAmount,
-                description, quantity, entryDateTime, debitEntry, treasuryExemption);
+        final CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, debitEntry.getProduct(),
+                debitEntry.getVat(), unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption);
 
         return cr;
     }
@@ -266,8 +281,11 @@ public class CreditEntry extends CreditEntry_Base {
         setAmount(openUnitAmountOfThisCreditEntry.subtract(unitAmountOfNewCreditEntry));
         recalculateAmountValues();
 
-        CreditEntry newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(), unitAmountOfNewCreditEntry,
-                getEntryDateTime(), getDebitEntry(), getQuantity());
+        CreditEntry newCreditEntry = getDebitEntry() != null ? create(newCreditNote, getDescription(), getProduct(), getVat(),
+                unitAmountOfNewCreditEntry, getEntryDateTime(), getDebitEntry(), getQuantity()) : create(getFinantialEntity(),
+                        newCreditNote, getDescription(), getProduct(), getVat(), unitAmountOfNewCreditEntry, getEntryDateTime(),
+                        getQuantity());
+
         newCreditEntry.setFromExemption(isFromExemption());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()

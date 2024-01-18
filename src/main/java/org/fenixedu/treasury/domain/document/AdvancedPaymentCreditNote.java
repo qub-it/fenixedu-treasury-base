@@ -127,7 +127,7 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
             setState(FinantialDocumentStateType.ANNULED);
             setAnnulledReason(reason);
             setAnnullmentDate(new DateTime());
-            
+
             final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else {
@@ -167,11 +167,10 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
     }
 
     public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(DocumentNumberSeries documentNumberSeries,
-            DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description, String originDocumentNumber,
-            final DebtAccount payorDebtAccount) {
-        AdvancedPaymentCreditNote note = create(debtAccount, 
-                payorDebtAccount != debtAccount ? payorDebtAccount : null,
-                documentNumberSeries,  documentDate);
+            DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description,
+            String originDocumentNumber, final DebtAccount payorDebtAccount) {
+        AdvancedPaymentCreditNote note = create(debtAccount, payorDebtAccount != debtAccount ? payorDebtAccount : null,
+                documentNumberSeries, documentDate);
 
         note.setOriginDocumentNumber(originDocumentNumber);
         Product advancedPaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
@@ -183,11 +182,10 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
         if (vat == null) {
             throw new TreasuryDomainException("error.AdvancedPaymentCreditNote.invalid.vat.type.for.advanced.payment");
         }
-        String lineDescription =
-                treasuryBundleI18N("label.AdvancedPaymentCreditNote.advanced.payment.description").getContent(TreasuryConstants.DEFAULT_LANGUAGE)
-                        + description;
-        CreditEntry entry = CreditEntry.create(note, lineDescription, advancedPaymentProduct, vat, availableAmount, documentDate,
-                null, BigDecimal.ONE);
+        String lineDescription = treasuryBundleI18N("label.AdvancedPaymentCreditNote.advanced.payment.description")
+                .getContent(TreasuryConstants.DEFAULT_LANGUAGE) + description;
+        CreditEntry entry = CreditEntry.create(null, note, lineDescription, advancedPaymentProduct, vat, availableAmount,
+                documentDate, BigDecimal.ONE);
 
         return note;
     }

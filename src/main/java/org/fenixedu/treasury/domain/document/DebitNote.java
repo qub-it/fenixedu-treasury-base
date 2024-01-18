@@ -314,68 +314,6 @@ public class DebitNote extends DebitNote_Base {
         return debitNote;
     }
 
-    // TODO ANIL 2023-12-07: This method is not used and might be outdated. At least
-    // DebitEntry._copyDebitEntry was
-    @Deprecated
-    private static DebitNote _copyDebitNote(final DebitNote debitNoteToCopy, final boolean copyDocumentDate,
-            final boolean copyCloseDate, final boolean applyExemptions) {
-        final DebitNote result = DebitNote.create(debitNoteToCopy.getDebtAccount(), debitNoteToCopy.getPayorDebtAccount(),
-                debitNoteToCopy.getDocumentNumberSeries(), copyDocumentDate ? debitNoteToCopy.getDocumentDate() : new DateTime(),
-                debitNoteToCopy.getDocumentDueDate(), debitNoteToCopy.getOriginDocumentNumber());
-
-        if (copyCloseDate) {
-            result.setCloseDate(debitNoteToCopy.getCloseDate());
-            result.setExportedInLegacyERP(debitNoteToCopy.isExportedInLegacyERP());
-        }
-
-        result.setAddress(debitNoteToCopy.getAddress());
-        result.setDocumentObservations(debitNoteToCopy.getDocumentObservations());
-        result.setDocumentTermsAndConditions(debitNoteToCopy.getDocumentTermsAndConditions());
-
-        result.setLegacyERPCertificateDocumentReference(debitNoteToCopy.getLegacyERPCertificateDocumentReference());
-
-        final Map<DebitEntry, DebitEntry> debitEntriesMap = Maps.newHashMap();
-
-        for (final FinantialDocumentEntry finantialDocumentEntry : debitNoteToCopy.getFinantialDocumentEntriesSet()) {
-            final DebitEntry sourceDebitEntry = (DebitEntry) finantialDocumentEntry;
-            final boolean applyExemptionOnDebitEntry = applyExemptions && (!sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
-                    && TreasuryConstants.isPositive(sourceDebitEntry.getNetExemptedAmount()));
-
-            final DebitEntry debitEntryCopy = DebitEntry._copyDebitEntry(sourceDebitEntry, result, applyExemptionOnDebitEntry);
-
-            debitEntriesMap.put(sourceDebitEntry, debitEntryCopy);
-
-        }
-
-        if (applyExemptions) {
-            for (final FinantialDocumentEntry finantialDocumentEntry : debitNoteToCopy.getFinantialDocumentEntriesSet()) {
-                final DebitEntry sourceDebitEntry = (DebitEntry) finantialDocumentEntry;
-
-                // TODO : To verify if debit entry has exemptions applied with credit entries, we can check if
-                // there are credit entries with exemptions associated. But first associate credit entries with
-                // the exemptions in all running instances
-                final boolean exemptionAppliedWithCreditNote = !sourceDebitEntry.getTreasuryExemptionsSet().isEmpty()
-                        && !TreasuryConstants.isPositive(sourceDebitEntry.getNetExemptedAmount());
-
-                if (!exemptionAppliedWithCreditNote) {
-                    continue;
-                }
-
-                if (result.isPreparing()) {
-                    result.closeDocument();
-                }
-
-                final DebitEntry debitEntryCopy = debitEntriesMap.get(sourceDebitEntry);
-                sourceDebitEntry.getTreasuryExemptionsSet().forEach(exemption -> {
-                    TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getReason(),
-                            exemption.getNetAmountToExempt(), debitEntryCopy);
-                });
-            }
-        }
-
-        return result;
-    }
-
     @Atomic
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
         if (!isPreparing()) {
@@ -842,6 +780,8 @@ public class DebitNote extends DebitNote_Base {
                 BigDecimal::add);
     }
 
+    @Deprecated
+    // TODO ANIL 2024-01-17 : This is to be discontinued
     public static DebitEntry createBalanceTransferDebit(final DebtAccount debtAccount, final DateTime entryDate,
             final LocalDate dueDate, final String originNumber, final Product product, final BigDecimal amountWithVat,
             final DebtAccount payorDebtAccount, String entryDescription, final InterestRate interestRate) {

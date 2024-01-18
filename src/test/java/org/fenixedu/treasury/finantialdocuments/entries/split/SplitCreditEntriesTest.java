@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
@@ -59,9 +60,10 @@ public class SplitCreditEntriesTest {
         CreditNote creditNote = CreditNote.create(debtAccount, creditNoteNumberSeries, new DateTime(), null, null);
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
-        CreditEntry creditEntry = CreditEntry.create(creditNote, "Credit note", Product.findUniqueByCode("PAGAMENTO").get(), vat,
-                new BigDecimal("100.00"), new DateTime(), null, BigDecimal.ONE);
+        CreditEntry creditEntry = CreditEntry.create(finantialEntity, creditNote, "Credit note",
+                Product.findUniqueByCode("PAGAMENTO").get(), vat, new BigDecimal("100.00"), new DateTime(), BigDecimal.ONE);
 
         finantialInstitution.setSplitCreditEntriesWithSettledAmount(true);
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(false);
@@ -106,9 +108,10 @@ public class SplitCreditEntriesTest {
         CreditNote creditNote = CreditNote.create(debtAccount, creditNoteNumberSeries, new DateTime(), null, null);
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
-        CreditEntry creditEntry = CreditEntry.create(creditNote, "Credit note", Product.findUniqueByCode("PAGAMENTO").get(), vat,
-                new BigDecimal("100.00"), new DateTime(), null, BigDecimal.ONE);
+        CreditEntry creditEntry = CreditEntry.create(finantialEntity, creditNote, "Credit note",
+                Product.findUniqueByCode("PAGAMENTO").get(), vat, new BigDecimal("100.00"), new DateTime(), BigDecimal.ONE);
 
         creditNote.closeDocument();
 
@@ -153,9 +156,10 @@ public class SplitCreditEntriesTest {
         CreditNote creditNote = CreditNote.create(debtAccount, creditNoteNumberSeries, new DateTime(), null, null);
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
-        CreditEntry creditEntry = CreditEntry.create(creditNote, "Credit note", Product.findUniqueByCode("PAGAMENTO").get(), vat,
-                new BigDecimal("100.00"), new DateTime(), null, BigDecimal.ONE);
+        CreditEntry creditEntry = CreditEntry.create(finantialEntity, creditNote, "Credit note",
+                Product.findUniqueByCode("PAGAMENTO").get(), vat, new BigDecimal("100.00"), new DateTime(), BigDecimal.ONE);
 
         finantialInstitution.setSplitCreditEntriesWithSettledAmount(false);
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(false);

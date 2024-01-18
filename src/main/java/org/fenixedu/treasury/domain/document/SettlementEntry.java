@@ -172,6 +172,7 @@ public class SettlementEntry extends SettlementEntry_Base {
         super.init(finantialDocument.getDebtAccount(), finantialDocument, FinantialEntryType.SETTLEMENT_ENTRY, amount,
                 description, entryDateTime);
         setInvoiceEntry(invoiceEntry);
+        setFinantialEntity(invoiceEntry.getFinantialEntity());
         checkRules();
     }
 
