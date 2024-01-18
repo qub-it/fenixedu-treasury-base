@@ -1,3 +1,5 @@
+- Refactor: Revert translation of exempted amount in portuguese [#qubIT-Fenix-4748]
+
 12.5.0 (18-01-2024)
 - Refactor: Associate FinantialEntity to CreditEntry [#qubIT-Fenix-4587]
 - Refactor: Change API of CreditEntry::create. One is mandatory the DebitEntry argument, the other is without DebitEntry argument but with FinantialEntity argument [#qubIT-Fenix-4587]
