@@ -1,3 +1,6 @@
+- Refactor: Mark DebitEntry#getActiveSibsPaymentRequestsOfPendingDebitEntries as deprecated, to be replaced with DebitEntry#getActiveSibsPaymentRequests [#ISCTE-FENIXEDU-267]
+- Bug Fix: Delete temporary files, generated with excel treasury reports [#qubIT-Fenix-4864]
+
 12.6.0 (19-01-2024)
 - Improvement: Associate FinantialEntity to SettlementNote [#qubIT-Fenix-4587]
 - Improvement: Associate PaymentRequest with FinantialEntity, by the FinantialEntity set in DigitalPaymentPlatform [#qubIT-Fenix-4587]

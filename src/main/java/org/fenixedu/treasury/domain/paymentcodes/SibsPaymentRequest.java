@@ -69,7 +69,6 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
@@ -91,12 +90,12 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     protected SibsPaymentRequest(SibsReferenceCode sibsReferenceCode, DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, BigDecimal payableAmount) {
         this();
-        
+
         // Double check if sibsReferenceCode is not associated to other sibsPaymentRequest
-        if(sibsReferenceCode.getSibsPaymentRequest() != null) {
+        if (sibsReferenceCode.getSibsPaymentRequest() != null) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.sibsReferenceCode.not.free");
         }
-        
+
         this.init(sibsReferenceCode.getDigitalPaymentPlatform(), debtAccount, debitEntries, installments, payableAmount,
                 TreasurySettings.getInstance().getMbPaymentMethod());
 
@@ -127,7 +126,6 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsMerchantTransaction.required");
         }
 
-
         checkRules();
     }
 
@@ -138,16 +136,16 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         if (!getDigitalPaymentPlatform().isSibsPaymentCodeServiceSupported()) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.digitalPaymentPlatform.not.supports.sibs.service");
         }
-        
-        if(getDigitalPaymentPlatform() instanceof SibsPaymentCodePool && getSibsReferenceCode() == null) {
+
+        if (getDigitalPaymentPlatform() instanceof SibsPaymentCodePool && getSibsReferenceCode() == null) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.sibsReferenceCode.required");
         }
-        
-        if(StringUtils.isEmpty(getEntityReferenceCode())) {
+
+        if (StringUtils.isEmpty(getEntityReferenceCode())) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.entityReferenceCode.required");
         }
-        
-        if(StringUtils.isEmpty(getReferenceCode())) {
+
+        if (StringUtils.isEmpty(getReferenceCode())) {
             throw new TreasuryDomainException("error.SibsPaymentRequest.referenceCode.required");
         }
     }
@@ -155,13 +153,14 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     @Override
     public void setSibsReferenceCode(SibsReferenceCode sibsReferenceCode) {
         // Double check if sibsReferenceCode is not associated to other sibsPaymentRequest
-        if(sibsReferenceCode.getSibsPaymentRequest() != null && sibsReferenceCode.getSibsPaymentRequest() != this) {
-            throw new TreasuryDomainException("error.SibsPaymentRequest.sibsReferenceCode.associated.to.other.sibsPaymentRequest");
+        if (sibsReferenceCode.getSibsPaymentRequest() != null && sibsReferenceCode.getSibsPaymentRequest() != this) {
+            throw new TreasuryDomainException(
+                    "error.SibsPaymentRequest.sibsReferenceCode.associated.to.other.sibsPaymentRequest");
         }
-        
+
         super.setSibsReferenceCode(sibsReferenceCode);
     }
-    
+
     @Override
     public PaymentReferenceCodeStateType getCurrentState() {
         return super.getState();
@@ -185,6 +184,14 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     @Override
     public boolean isInAnnuledState() {
         return getState() == PaymentReferenceCodeStateType.ANNULLED;
+    }
+
+    public boolean isExpired(DateTime when) {
+        return getExpiresDate() != null && when.isAfter(getExpiresDate());
+    }
+
+    public boolean isExpired() {
+        return isExpired(new DateTime());
     }
 
     public void anull() {
@@ -316,7 +323,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         return debitEntry.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
                 .map(SibsPaymentRequest.class::cast);
     }
-    
+
     public static Stream<SibsPaymentRequest> find(Installment installment) {
         return installment.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
                 .map(SibsPaymentRequest.class::cast);
@@ -337,14 +344,17 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         return result.stream();
     }
 
-    public static Stream<SibsPaymentRequest> findWithDebitEntriesAndInstallments(Set<DebitEntry> debitEntries, Set<Installment> installments) {
+    public static Stream<SibsPaymentRequest> findWithDebitEntriesAndInstallments(Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
         final Set<SibsPaymentRequest> paymentCodes = debitEntries.stream().flatMap(d -> find(d)).collect(Collectors.toSet());
 
         final Set<SibsPaymentRequest> result = Sets.newHashSet();
         for (SibsPaymentRequest code : paymentCodes) {
-            boolean symmetricDifferencesInDebitEntries = !Sets.symmetricDifference(code.getDebitEntriesSet(), debitEntries).isEmpty();
-            boolean symmetricDifferencesInInstallments = !Sets.symmetricDifference(code.getInstallmentsSet(), installments).isEmpty();
-            
+            boolean symmetricDifferencesInDebitEntries =
+                    !Sets.symmetricDifference(code.getDebitEntriesSet(), debitEntries).isEmpty();
+            boolean symmetricDifferencesInInstallments =
+                    !Sets.symmetricDifference(code.getInstallmentsSet(), installments).isEmpty();
+
             if (symmetricDifferencesInDebitEntries && symmetricDifferencesInInstallments) {
                 continue;
             }
@@ -378,15 +388,17 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     public static Stream<SibsPaymentRequest> findRequestedByDebitEntriesSet(final Set<DebitEntry> debitEntries) {
         return findWithDebitEntries(debitEntries).filter(p -> p.isInRequestedState());
     }
-    
-    public static Stream<SibsPaymentRequest> findCreatedByDebitEntriesSet(Set<DebitEntry> debitEntries, Set<Installment> installments) {
+
+    public static Stream<SibsPaymentRequest> findCreatedByDebitEntriesSet(Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
         return findWithDebitEntriesAndInstallments(debitEntries, installments).filter(p -> p.isInCreatedState());
     }
 
-    public static Stream<SibsPaymentRequest> findRequestedByDebitEntriesSet(Set<DebitEntry> debitEntries, Set<Installment> installments) {
+    public static Stream<SibsPaymentRequest> findRequestedByDebitEntriesSet(Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
         return findWithDebitEntriesAndInstallments(debitEntries, installments).filter(p -> p.isInRequestedState());
     }
-    
+
     public static SibsPaymentRequest create(SibsReferenceCode sibsReferenceCode, DebtAccount debtAccount,
             Set<DebitEntry> debitEntries, Set<Installment> installments, BigDecimal payableAmount) {
         return new SibsPaymentRequest(sibsReferenceCode, debtAccount, debitEntries, installments, payableAmount);

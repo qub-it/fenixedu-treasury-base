@@ -1317,7 +1317,13 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
+    // TODO ANIL 2024-01-23: Replace this method to #getActiveSibsPaymentRequests
+    @Deprecated
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
+        return getActiveSibsPaymentRequests();
+    }
+
+    public Set<SibsPaymentRequest> getActiveSibsPaymentRequests() {
         return getPaymentRequestsSet().stream() //
                 .filter(p -> p instanceof SibsPaymentRequest) //
                 .map(SibsPaymentRequest.class::cast) //
