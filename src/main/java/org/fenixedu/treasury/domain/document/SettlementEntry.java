@@ -193,6 +193,37 @@ public class SettlementEntry extends SettlementEntry_Base {
         }
     }
 
+    @Override
+    public BigDecimal getTotalAmount() {
+        return this.getAmount();
+    }
+
+    @Override
+    public BigDecimal getNetAmount() {
+        return this.getAmount();
+    }
+
+    public String getInvoiceEntryAmountSignal() {
+        if (this.getInvoiceEntry().isDebitNoteEntry()) {
+            return "";
+        } else {
+            return "-";
+        }
+    }
+
+    /* Avoid cast from FinantialDocument to SettlementNote */
+    public SettlementNote getSettlementNote() {
+        return (SettlementNote) getFinantialDocument();
+    }
+
+    public Set<InstallmentSettlementEntry> getSortedInstallmentSettlementEntries() {
+        Set<InstallmentSettlementEntry> result = new TreeSet<>((o1, o2) -> InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR
+                .compare(o1.getInstallmentEntry(), o2.getInstallmentEntry()));
+        return super.getInstallmentSettlementEntriesSet().stream().collect(Collectors.toCollection(() -> result));
+    }
+
+    /* SERVICES */
+
     public static Stream<SettlementEntry> findAll() {
         return FinantialDocumentEntry.findAll().filter(f -> f instanceof SettlementEntry).map(SettlementEntry.class::cast);
     }
@@ -223,34 +254,4 @@ public class SettlementEntry extends SettlementEntry_Base {
             final String creditDescription, final SettlementNote settlementNote, final DateTime entryDate) {
         return new SettlementEntry(creditEntry, settlementNote, creditAmount, creditDescription, entryDate, false);
     }
-
-    @Override
-    public BigDecimal getTotalAmount() {
-        return this.getAmount();
-    }
-
-    @Override
-    public BigDecimal getNetAmount() {
-        return this.getAmount();
-    }
-
-    public String getInvoiceEntryAmountSignal() {
-        if (this.getInvoiceEntry().isDebitNoteEntry()) {
-            return "";
-        } else {
-            return "-";
-        }
-    }
-
-    /* Avoid cast from FinantialDocument to SettlementNote */
-    public SettlementNote getSettlementNote() {
-        return (SettlementNote) getFinantialDocument();
-    }
-
-    public Set<InstallmentSettlementEntry> getSortedInstallmentSettlementEntries() {
-        Set<InstallmentSettlementEntry> result = new TreeSet<>((o1, o2) -> InstallmentEntry.COMPARE_BY_DEBIT_ENTRY_COMPARATOR
-                .compare(o1.getInstallmentEntry(), o2.getInstallmentEntry()));
-        return super.getInstallmentSettlementEntriesSet().stream().collect(Collectors.toCollection(() -> result));
-    }
-
 }

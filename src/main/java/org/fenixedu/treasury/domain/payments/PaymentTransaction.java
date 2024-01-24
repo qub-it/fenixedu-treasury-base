@@ -58,7 +58,6 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentCodeTransaction;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -81,12 +80,12 @@ public class PaymentTransaction extends PaymentTransaction_Base {
         if (isTransactionDuplicate(transactionId)) {
             throw new TreasuryDomainException("error.PaymentTransaction.transaction.duplicate", transactionId);
         }
-        
+
         this.init(paymentRequest, transactionId, paymentDate, paidAmount, settlementNotes);
-        
+
         checkRules();
     }
-    
+
     protected void init(PaymentRequest paymentRequest, String transactionId, DateTime paymentDate, BigDecimal paidAmount,
             Set<SettlementNote> settlementNotes) {
 
@@ -97,30 +96,30 @@ public class PaymentTransaction extends PaymentTransaction_Base {
 
         getSettlementNotesSet().addAll(settlementNotes);
     }
-    
+
     public void checkRules() {
-        
-        if(getPaymentRequest() == null) {
+
+        if (getPaymentRequest() == null) {
             throw new TreasuryDomainException("error.PaymentTransaction.paymentRequest.required");
         }
-        
-        if(getPaymentDate() == null) {
+
+        if (getPaymentDate() == null) {
             throw new TreasuryDomainException("error.PaymentTransaction.paymentDate.required");
         }
-        
-        if(getPaidAmount() == null) {
+
+        if (getPaidAmount() == null) {
             throw new TreasuryDomainException("error.PaymentTransaction.paidAmount.required");
         }
-        
-        if(!TreasuryConstants.isPositive(getPaidAmount())) {
+
+        if (!TreasuryConstants.isPositive(getPaidAmount())) {
             throw new TreasuryDomainException("error.PaymentTransaction.paidAmount.invalid");
         }
-        
-        if(findByTransactionId(getTransactionId()).count() > 1) {
+
+        if (findByTransactionId(getTransactionId()).count() > 1) {
             throw new TreasuryDomainException("error.PaymentTransaction.transaction.duplicate", getTransactionId());
         }
     }
-    
+
     public void delete() {
         super.setDomainRoot(null);
 
@@ -142,17 +141,17 @@ public class PaymentTransaction extends PaymentTransaction_Base {
     public static Stream<? extends PaymentTransaction> findAll() {
         return FenixFramework.getDomainRoot().getPaymentTransactionsSet().stream();
     }
-    
+
     public static Stream<? extends PaymentTransaction> findByTransactionId(String transactionId) {
         return findAll().filter(t -> transactionId.equalsIgnoreCase(t.getTransactionId()));
     }
-    
+
     public static boolean isTransactionDuplicate(String transactionId) {
         return findByTransactionId(transactionId).findAny().isPresent();
     }
-    
-    public static PaymentTransaction create(PaymentRequest paymentRequest, String transactionId, DateTime paymentDate, BigDecimal paidAmount,
-            Set<SettlementNote> settlementNotes) {
+
+    public static PaymentTransaction create(PaymentRequest paymentRequest, String transactionId, DateTime paymentDate,
+            BigDecimal paidAmount, Set<SettlementNote> settlementNotes) {
         return new PaymentTransaction(paymentRequest, transactionId, paymentDate, paidAmount, settlementNotes);
     }
 }

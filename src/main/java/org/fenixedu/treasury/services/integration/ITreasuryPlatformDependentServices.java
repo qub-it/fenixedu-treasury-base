@@ -61,6 +61,7 @@ import javax.servlet.http.HttpSession;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -157,7 +158,8 @@ public interface ITreasuryPlatformDependentServices {
 
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
 
-    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl, String cancelUrl);
+    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl,
+            String cancelUrl);
 
     void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
 
@@ -175,10 +177,10 @@ public interface ITreasuryPlatformDependentServices {
             boolean isException);
 
     /* Web Docs */
-    
-    InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, LocalDate documentDateFrom,
-            LocalDate documentDateTo);
-    
+
+    InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, FinantialEntity finantialEntity,
+            LocalDate documentDateFrom, LocalDate documentDateTo, String username);
+
     String exportDocumentFileExtension();
 
     InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
@@ -194,18 +196,18 @@ public interface ITreasuryPlatformDependentServices {
     void certifyDocument(FinantialDocument finantialDocument);
 
     void updateCertifiedDocument(FinantialDocument finantialDocument);
-    
+
     void annulCertifiedDocument(FinantialDocument finantialDocument);
-    
+
     boolean hasCertifiedDocument(FinantialDocument finantialDocument);
-    
+
     String getCertifiedDocumentNumber(FinantialDocument finantialDocument);
-    
+
     LocalDate getCertifiedDocumentDate(FinantialDocument finantialDocument);
-    
+
     boolean isProductCertified(Product product);
 
     /* Development or quality mode */
-    
+
     boolean isQualityOrDevelopmentMode();
 }

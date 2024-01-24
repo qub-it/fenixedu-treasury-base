@@ -1,3 +1,5 @@
+- Improvement: Filter transaction summanry document generation, by financial entity and user [#qubIT-Fenix-4794]
+
 12.6.1 (23-01-2024)
 - Refactor: Mark DebitEntry#getActiveSibsPaymentRequestsOfPendingDebitEntries as deprecated, to be replaced with DebitEntry#getActiveSibsPaymentRequests [#ISCTE-FENIXEDU-267]
 - Bug Fix: Delete temporary files, generated with excel treasury reports [#qubIT-Fenix-4864]
