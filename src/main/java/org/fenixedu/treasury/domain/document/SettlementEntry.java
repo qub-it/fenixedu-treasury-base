@@ -65,6 +65,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -199,8 +200,37 @@ public class SettlementEntry extends SettlementEntry_Base {
     }
 
     @Override
+    @Deprecated
+    // TODO ANIL 2024-01-25: The netAmount should not be used and should be removed
+    // The amount always includes VAT
     public BigDecimal getNetAmount() {
         return this.getAmount();
+    }
+
+    /*
+     * ANIL 2024-01-25 :  This method must only be used only in UI or reports
+     *
+     */
+    public BigDecimal getUiAmount() {
+        if (getInvoiceEntry().isCreditNoteEntry()
+                && Boolean.TRUE.equals(TreasurySettings.getInstance().getDisplayNegativeAmountsForCreditEntries())) {
+            return getAmount().negate();
+        }
+
+        return getAmount();
+    }
+
+    /*
+     * ANIL 2024-01-25 :  This method must only be used only in UI or reports
+     *
+     */
+    public BigDecimal getUiTotalAmount() {
+        if (getInvoiceEntry().isCreditNoteEntry()
+                && Boolean.TRUE.equals(TreasurySettings.getInstance().getDisplayNegativeAmountsForCreditEntries())) {
+            return getTotalAmount().negate();
+        }
+
+        return getTotalAmount();
     }
 
     public String getInvoiceEntryAmountSignal() {
