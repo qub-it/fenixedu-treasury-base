@@ -71,7 +71,6 @@ import org.fenixedu.treasury.domain.PaymentMethodReference;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
@@ -319,7 +318,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
                                                     .getInterestDebitEntryDateTime() : paymentDate;
 
                                     debitEntry.createInterestRateDebitEntry(calculateUndebitedInterestValue,
-                                            whenInterestDebitEntryDateTime, Optional.<DebitNote> empty());
+                                            whenInterestDebitEntryDateTime, null);
                                 }
                             }
                         }

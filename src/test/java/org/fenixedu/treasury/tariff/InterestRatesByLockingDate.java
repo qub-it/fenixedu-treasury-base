@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
-import java.util.Optional;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -23,8 +22,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import pt.ist.esw.advice.pt.ist.fenixframework.AtomicInstance;
-import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.Atomic.TxMode;
+import pt.ist.fenixframework.FenixFramework;
 
 @RunWith(FenixFrameworkRunner.class)
 public class InterestRatesByLockingDate {
@@ -75,7 +74,7 @@ public class InterestRatesByLockingDate {
 
             // create interest rate of 13.98
             DebitEntry partialInterestRateDebitEntry = debitEntry.createInterestRateDebitEntry(interestRateBean,
-                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), Optional.ofNullable(null));
+                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), null);
 
             assertEquals(
                     String.format("Interest rate of 100 at 2023-04-01 is %s, but was calculated as %s", new BigDecimal("8.89"),

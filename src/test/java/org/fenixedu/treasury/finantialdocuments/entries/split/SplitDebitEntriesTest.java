@@ -5,9 +5,9 @@ import static org.junit.Assert.assertEquals;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
@@ -197,12 +197,13 @@ public class SplitDebitEntriesTest {
         DebtAccount debtAccount = InterestRateTestsUtilities.getDebtAccount();
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
         TreasuryEvent treasuryEvent = null;
-        DebitEntry debitEntry =
-                DebitEntry.create(Optional.empty(), debtAccount, treasuryEvent, vat, new BigDecimal("50.00"), new LocalDate(),
-                        null, Product.findUniqueByCode("PAGAMENTO").get(), "debt 1", new BigDecimal("2"), null, new DateTime());
+        DebitEntry debitEntry = DebitEntry.create(finantialEntity, debtAccount, treasuryEvent, vat, new BigDecimal("50.00"),
+                new LocalDate(), null, Product.findUniqueByCode("PAGAMENTO").get(), "debt 1", new BigDecimal("2"), null,
+                new DateTime(), false, false, null);
 
         DebitNote debitNote = DebitNote.create(debtAccount,
                 DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),

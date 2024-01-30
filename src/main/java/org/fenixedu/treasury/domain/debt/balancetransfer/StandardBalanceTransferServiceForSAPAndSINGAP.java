@@ -62,7 +62,6 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -238,7 +237,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 creditEntry.getFinantialDocument() != null && ((Invoice) creditEntry.getFinantialDocument())
                         .isForPayorDebtAccount() ? ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() : null;
         DebitEntry regulationDebitEntry = DebitNote.createBalanceTransferDebit(fromDebtAccount, now, now.toLocalDate(),
-                originNumber, creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), null);
+                originNumber, creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), null,
+                invoiceEntry.getFinantialEntity());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
@@ -252,8 +252,9 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         }
 
         regulationDebitEntry.getFinantialDocument().closeDocument();
-        CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(this.destinyDebtAccount, now, originNumber,
-                creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription());
+        CreditEntry regulationCreditEntry =
+                CreditNote.createBalanceTransferCredit(this.destinyDebtAccount, now, originNumber, creditEntry.getProduct(),
+                        creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), creditEntry.getFinantialEntity());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
@@ -331,8 +332,9 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
                 } else {
 
-                    final CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(fromDebtAccount, now,
-                            objectDebitNote.getUiDocumentNumber(), debitEntry.getProduct(), openAmount, payorDebtAccount, null);
+                    final CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(this.fromDebtAccount, now,
+                            objectDebitNote.getUiDocumentNumber(), debitEntry.getProduct(), openAmount, payorDebtAccount, null,
+                            debitEntry.getFinantialEntity());
 
                     if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
@@ -354,10 +356,11 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                     SettlementEntry.create(regulationCreditEntry, settlementNote, openAmount,
                             regulationCreditEntry.getDescription(), now, false);
 
-                    final DebitEntry regulationDebitEntry = DebitNote.createBalanceTransferDebit(destinyDebtAccount,
-                            debitEntry.getEntryDateTime(), debitEntry.getDueDate(),
-                            regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(), debitEntry.getProduct(),
-                            openAmount, payorDebtAccount, debitEntry.getDescription(), debitEntry.getInterestRate());
+                    final DebitEntry regulationDebitEntry =
+                            DebitNote.createBalanceTransferDebit(this.destinyDebtAccount, debitEntry.getEntryDateTime(),
+                                    debitEntry.getDueDate(), regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(),
+                                    debitEntry.getProduct(), openAmount, payorDebtAccount, debitEntry.getDescription(),
+                                    debitEntry.getInterestRate(), debitEntry.getFinantialEntity());
 
                     destinyDebitEntry = regulationDebitEntry;
 
@@ -374,8 +377,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 }
 
                 //paymentPlan
-                conversionMap.put(debitEntry, destinyDebitEntry);
-                settlementOfDebitEntryMap.put(debitEntry, destinySettlementEntry);
+                this.conversionMap.put(debitEntry, destinyDebitEntry);
+                this.settlementOfDebitEntryMap.put(debitEntry, destinySettlementEntry);
             }
 
             settlementNote.markAsUsedInBalanceTransfer();
@@ -387,20 +390,18 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         final BigDecimal openAmountWithoutVat =
                 TreasuryConstants.divide(debitEntry.getOpenAmount(), BigDecimal.ONE.add(rationalVatRate(debitEntry)));
 
-        final DebitEntry newDebitEntry = DebitEntry.create(Optional.of(destinyDebitNote), destinyDebtAccount,
+        final DebitEntry newDebitEntry = DebitEntry.create(debitEntry.getFinantialEntity(), this.destinyDebtAccount,
                 debitEntry.getTreasuryEvent(), debitEntry.getVat(), openAmountWithoutVat, debitEntry.getDueDate(),
                 debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
-                debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
-
-        newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),
-                debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());
+                debitEntry.getInterestRate(), debitEntry.getEntryDateTime(), debitEntry.isAcademicalActBlockingSuspension(),
+                debitEntry.isBlockAcademicActsOnDebt(), destinyDebitNote);
 
         return newDebitEntry;
     }
 
     private void anullPreparingDebitNote(final DebitNote objectDebitNote) {
         final DateTime now = new DateTime();
-        final DebitNote newDebitNote = DebitNote.create(destinyDebtAccount, objectDebitNote.getPayorDebtAccount(),
+        final DebitNote newDebitNote = DebitNote.create(this.destinyDebtAccount, objectDebitNote.getPayorDebtAccount(),
                 objectDebitNote.getDocumentNumberSeries(), now, now.toLocalDate(), "");
 
         for (final FinantialDocumentEntry objectEntry : objectDebitNote.getFinantialDocumentEntriesSet()) {
@@ -415,19 +416,17 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 debitEntry.annulOnEvent();
             }
 
-            DebitEntry newDebitEntry = DebitEntry.create(Optional.of(newDebitNote), destinyDebtAccount,
+            DebitEntry newDebitEntry = DebitEntry.create(debitEntry.getFinantialEntity(), this.destinyDebtAccount,
                     debitEntry.getTreasuryEvent(), debitEntry.getVat(), unitAmount, debitEntry.getDueDate(),
                     debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
-                    debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
+                    debitEntry.getInterestRate(), debitEntry.getEntryDateTime(), debitEntry.isAcademicalActBlockingSuspension(),
+                    debitEntry.isBlockAcademicActsOnDebt(), newDebitNote);
 
             debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
                 TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), treasuryExemption.getReason(),
                         treasuryExemption.getNetAmountToExempt(), newDebitEntry);
 
             });
-
-            newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),
-                    debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());
 
             //paymentPlan
             conversionMap.put(debitEntry, newDebitEntry);

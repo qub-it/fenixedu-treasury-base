@@ -217,12 +217,12 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
     }
 
     public static DebitEntry checkAndCreatePaymentPenaltyTax(DebitEntry originDebitEntry, LocalDate lastPaymentDate,
-            Optional<DebitNote> debitNoteOptional) {
-        return checkAndCreatePaymentPenaltyTax(originDebitEntry, lastPaymentDate, new LocalDate(), debitNoteOptional);
+            DebitNote debitNote) {
+        return checkAndCreatePaymentPenaltyTax(originDebitEntry, lastPaymentDate, new LocalDate(), debitNote);
     }
 
     public static DebitEntry checkAndCreatePaymentPenaltyTax(DebitEntry originDebitEntry, LocalDate lastPaymentDate,
-            LocalDate whenDebtCreationDate, Optional<DebitNote> debitNoteOptional) {
+            LocalDate whenDebtCreationDate, DebitNote debitNote) {
 
         if (!shouldPenaltyBeCreatedForDebitEntry(originDebitEntry, lastPaymentDate)) {
             return null;
@@ -270,22 +270,21 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         DebtAccount debtAccount = originDebitEntry.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
-        if (debitNoteOptional == null || debitNoteOptional.isEmpty()) {
+        if (debitNote == null) {
             DocumentNumberSeries documentNumberSeries =
                     DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
-            
-            debitNoteOptional = Optional
-                    .of(DebitNote.create(debtAccount, documentNumberSeries, whenDebtCreationDate.toDateTimeAtStartOfDay()));
+
+            debitNote = DebitNote.create(debtAccount, documentNumberSeries, whenDebtCreationDate.toDateTimeAtStartOfDay());
         }
 
         BigDecimal totalAmount = tariff.amountToPay();
         LocalDate dueDate = tariff.dueDate(lastPaymentDate);
         Vat vat = Vat.findActiveUnique(settings.getPenaltyProduct().getVatType(), finantialInstitution, new DateTime()).get();
 
-        DebitEntry penaltyDebitEntry = DebitEntry.create(debitNoteOptional, debtAccount, paymentPenaltyTaxTreasuryEvent, vat,
-                totalAmount, dueDate, Collections.emptyMap(), settings.getPenaltyProduct(),
+        DebitEntry penaltyDebitEntry = DebitEntry.create(tariff.getFinantialEntity(), debtAccount, paymentPenaltyTaxTreasuryEvent,
+                vat, totalAmount, dueDate, Collections.emptyMap(), settings.getPenaltyProduct(),
                 paymentPenaltyTaxTreasuryEvent.getDescription().getContent(TreasuryConstants.DEFAULT_LANGUAGE), BigDecimal.ONE,
-                tariff.getInterestRate(), lastPaymentDate.toDateTimeAtStartOfDay());
+                tariff.getInterestRate(), lastPaymentDate.toDateTimeAtStartOfDay(), false, false, debitNote);
 
         {
             Map<String, String> map = penaltyDebitEntry.getPropertiesMap();
@@ -389,7 +388,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
                 continue;
             }
 
-            DebitEntry penaltyDebitEntry = checkAndCreatePaymentPenaltyTax(d, lastPaymentDate.toLocalDate(), now, Optional.empty());
+            DebitEntry penaltyDebitEntry = checkAndCreatePaymentPenaltyTax(d, lastPaymentDate.toLocalDate(), now, null);
             if (penaltyDebitEntry == null) {
                 result.add(penaltyDebitEntry);
             }

@@ -1,3 +1,7 @@
+- Refactor: Change DebitEntry#create method to receive the finantial entity, remove the anti pattern Optional as argument and set the optional DebitNote as last argument [#qubIT-Fenix-4587]
+- Refactor: In debit entry and credit entry creation, pass the FinantialEntity instance [#qubIT-Fenix-4587]
+- Bug Fix: Fix the annul and recreate debit entry, to associate the missing relations set by other modules [#qubIT-Fenix-4913]
+
 12.6.3 (25-01-2024)
 - Improvement: Declare methods in settlement note entry, to return the amount as negative for credits, to make easier the visualization and reports [#qubIT-Fenix-4794]
 

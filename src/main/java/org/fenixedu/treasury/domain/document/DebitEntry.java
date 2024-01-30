@@ -70,7 +70,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialEntity;
@@ -94,7 +93,6 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -103,7 +101,6 @@ import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import pt.ist.fenixframework.Atomic;
 //import sun.text.normalizer.ICUBinary.Authenticate;
@@ -179,12 +176,11 @@ public class DebitEntry extends DebitEntry_Base {
 
     public static Comparator<DebitEntry> COMPARE_BY_EXTERNAL_ID = (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId());
 
-    protected DebitEntry(final DebitNote debitNote, final DebtAccount debtAccount, final TreasuryEvent treasuryEvent,
-            final Vat vat, final BigDecimal amount, final LocalDate dueDate, final Map<String, String> propertiesMap,
-            final Product product, final String description, final BigDecimal quantity, final InterestRate interestRate,
-            final DateTime entryDateTime) {
-        init(debitNote, debtAccount, treasuryEvent, product, vat, amount, dueDate, propertiesMap, description, quantity,
-                interestRate, entryDateTime);
+    protected DebitEntry(final DebtAccount debtAccount, final TreasuryEvent treasuryEvent, final Vat vat, final BigDecimal amount,
+            final LocalDate dueDate, final Map<String, String> propertiesMap, final Product product, final String description,
+            final BigDecimal quantity, final InterestRate interestRate, final DateTime entryDateTime, DebitNote debitNote) {
+        init(debtAccount, treasuryEvent, product, vat, amount, dueDate, propertiesMap, description, quantity, interestRate,
+                entryDateTime, debitNote);
 
     }
 
@@ -259,10 +255,9 @@ public class DebitEntry extends DebitEntry_Base {
         throw new RuntimeException("error.CreditEntry.use.init.without.finantialEntryType");
     }
 
-    protected void init(final DebitNote debitNote, final DebtAccount debtAccount, final TreasuryEvent treasuryEvent,
-            final Product product, final Vat vat, final BigDecimal amount, final LocalDate dueDate,
-            final Map<String, String> propertiesMap, final String description, final BigDecimal quantity,
-            final InterestRate interestRate, final DateTime entryDateTime) {
+    protected void init(final DebtAccount debtAccount, final TreasuryEvent treasuryEvent, final Product product, final Vat vat,
+            final BigDecimal amount, final LocalDate dueDate, final Map<String, String> propertiesMap, final String description,
+            final BigDecimal quantity, final InterestRate interestRate, final DateTime entryDateTime, final DebitNote debitNote) {
         super.init(debitNote, debtAccount, product, FinantialEntryType.DEBIT_ENTRY, vat, amount, description, quantity,
                 entryDateTime);
 
@@ -415,8 +410,7 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     @Atomic
-    public DebitEntry createInterestRateDebitEntry(final InterestRateBean interest, final DateTime when,
-            final Optional<DebitNote> debitNote) {
+    public DebitEntry createInterestRateDebitEntry(final InterestRateBean interest, final DateTime when, DebitNote debitNote) {
         Product product = TreasurySettings.getInstance().getInterestProduct();
 
         if (product == null) {
@@ -433,9 +427,9 @@ public class DebitEntry extends DebitEntry_Base {
             entryDescription = product.getName().getContent() + "-" + this.getDescription();
         }
 
-        DebitEntry interestEntry = _create(debitNote, getDebtAccount(), getTreasuryEvent(), vat, interest.getInterestAmount(),
-                when.toLocalDate(), TreasuryConstants.propertiesJsonToMap(getPropertiesJsonMap()), product, entryDescription,
-                BigDecimal.ONE, null, when, false, false, Optional.ofNullable(getFinantialEntity()));
+        DebitEntry interestEntry = _create(getFinantialEntity(), getDebtAccount(), getTreasuryEvent(), vat,
+                interest.getInterestAmount(), when.toLocalDate(), TreasuryConstants.propertiesJsonToMap(getPropertiesJsonMap()),
+                product, entryDescription, BigDecimal.ONE, null, when, false, false, debitNote);
 
         addInterestDebitEntries(interestEntry);
 
@@ -1444,22 +1438,6 @@ public class DebitEntry extends DebitEntry_Base {
 
         // Find the amount that is being lost, which is will cents, and call it delta
 
-        BigDecimal deltaAmountWithVatOfNewDebitEntry =
-                withAmountWithVatOfNewDebitEntry
-                        .subtract(
-                                unitAmountForNewDebitEntry.multiply(getQuantity())
-                                        .subtract(exemptionsNetAmountForNewDebitEntryMap.values().stream().reduce(BigDecimal.ZERO,
-                                                BigDecimal::add)))
-                        .multiply(BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this)));
-
-        BigDecimal deltaAmountWithVatOfCurrentDebitEntry =
-                amountWithVatOfCurrentDebitEntry
-                        .subtract(
-                                unitAmountForCurrentDebitEntry.multiply(getQuantity())
-                                        .subtract(exemptionsNetAmountForCurrentDebitEntryMap.values().stream()
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add)))
-                        .multiply(BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this)));
-
         DebitNote oldDebitNote = getDebitNote();
 
         if (getDebitNote() != null) {
@@ -1476,10 +1454,10 @@ public class DebitEntry extends DebitEntry_Base {
             newDebitNote.addDebitNoteEntries(List.of(this));
         }
 
-        DebitEntry newDebitEntry = _create(Optional.ofNullable(oldDebitNote), getDebtAccount(), getTreasuryEvent(), getVat(),
-                unitAmountForNewDebitEntry, getDueDate(), getPropertiesMap(), getProduct(), getDescription(), getQuantity(),
-                getInterestRate(), getEntryDateTime(), isAcademicalActBlockingSuspension(), isBlockAcademicActsOnDebt(),
-                Optional.ofNullable(getFinantialEntity()));
+        DebitEntry newDebitEntry =
+                _create(getFinantialEntity(), getDebtAccount(), getTreasuryEvent(), getVat(), unitAmountForNewDebitEntry,
+                        getDueDate(), getPropertiesMap(), getProduct(), getDescription(), getQuantity(), getInterestRate(),
+                        getEntryDateTime(), isAcademicalActBlockingSuspension(), isBlockAcademicActsOnDebt(), oldDebitNote);
 
         newDebitEntry.setSplittingOriginDebitEntry(this);
 
@@ -1516,7 +1494,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         // The method InvoiceEntry::recalculateAmountValues will not be called
 
-        CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST.forEach(consumer -> consumer.accept(this, newDebitEntry));
+        applyAdditionalRelationConnectionsOfDebitEntry(this, newDebitEntry);
 
         // Ensure the amountWithVat before and after are equals
         if (totalAmount.compareTo(getAmountWithVat().add(newDebitEntry.getAmountWithVat())) != 0) {
@@ -1524,6 +1502,11 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         return newDebitEntry;
+    }
+
+    static void applyAdditionalRelationConnectionsOfDebitEntry(DebitEntry oldDebitEntry, DebitEntry newDebitEntry) {
+        CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST
+                .forEach(consumer -> consumer.accept(oldDebitEntry, newDebitEntry));
     }
 
     private void annulAllActiveSibsPaymentRequests() {
@@ -1557,50 +1540,6 @@ public class DebitEntry extends DebitEntry_Base {
      * ********
      */
     // @formatter:on
-
-    @Deprecated
-    // TODO ANIL 2023-12-07: This method is to old and has some errors. It is only used with
-    // the copy of debit note. It needs a review
-    static DebitEntry _copyDebitEntry(final DebitEntry debitEntryToCopy, final DebitNote debitNoteToAssociate,
-            final boolean applyExemption) {
-        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-        String loggedUsername = services.getLoggedUsername();
-
-        final Map<String, String> propertiesMap = Maps.newHashMap(
-                debitEntryToCopy.getPropertiesMap() != null ? debitEntryToCopy.getPropertiesMap() : Maps.newHashMap());
-        propertiesMap.put(TreasuryEvent.TreasuryEventKeys.COPIED_FROM_DEBIT_ENTRY_ID.getDescriptionI18N()
-                .getContent(TreasuryConstants.DEFAULT_LANGUAGE), debitEntryToCopy.getExternalId());
-        propertiesMap.put(TreasuryEvent.TreasuryEventKeys.COPY_DEBIT_ENTRY_RESPONSIBLE.getDescriptionI18N()
-                .getContent(TreasuryConstants.DEFAULT_LANGUAGE), StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "");
-
-        final DebitEntry result = DebitEntry.create(Optional.ofNullable(debitNoteToAssociate), debitEntryToCopy.getDebtAccount(),
-                debitEntryToCopy.getTreasuryEvent(), debitEntryToCopy.getVat(),
-                debitEntryToCopy.getAmount().add(debitEntryToCopy.getNetExemptedAmount()), debitEntryToCopy.getDueDate(),
-                propertiesMap, debitEntryToCopy.getProduct(), debitEntryToCopy.getDescription(), debitEntryToCopy.getQuantity(),
-                debitEntryToCopy.getInterestRate(), debitEntryToCopy.getEntryDateTime());
-
-        result.edit(result.getDescription(), result.getTreasuryEvent(), result.getDueDate(),
-                debitEntryToCopy.getAcademicalActBlockingSuspension(), debitEntryToCopy.getBlockAcademicActsOnDebt());
-
-        // We could copy eventAnnuled property, but in most cases we want to create an
-        // active debit entry
-        result.setEventAnnuled(false);
-
-        // Interest relation must be done outside because the origin
-        // debit entry of debitEntryToCopy will may be annuled
-        // result.setDebitEntry(debitEntryToCopy.getDebitEntry());
-
-        result.setPayorDebtAccount(debitEntryToCopy.getPayorDebtAccount());
-
-        if (applyExemption) {
-            debitEntryToCopy.getTreasuryExemptionsSet().forEach(exemption -> {
-                TreasuryExemption.create(exemption.getTreasuryExemptionType(), exemption.getReason(),
-                        exemption.getNetAmountToExempt(), result);
-            });
-        }
-
-        return result;
-    }
 
     public static Stream<? extends DebitEntry> findAll() {
         return FinantialDocumentEntry.findAll().filter(f -> f instanceof DebitEntry).map(DebitEntry.class::cast);
@@ -1657,61 +1596,61 @@ public class DebitEntry extends DebitEntry_Base {
         return findActive(treasuryEvent).map(d -> d.getOpenAmount()).reduce((x, y) -> x.add(y)).orElse(BigDecimal.ZERO);
     }
 
-    @Deprecated
-    // TODO ANIL 2023-12-28: Replace with the extended version of this method
-    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
-            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
-            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
+//    @Deprecated
+//    // TODO ANIL 2023-12-28: Replace with the extended version of this method
+//    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
+//            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+//            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
+//
+//        if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
+//            throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
+//        }
+//
+//        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
+//                interestRate, entryDateTime, false, false, Optional.empty());
+//    }
 
-        if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
-            throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
-        }
-
-        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
-                interestRate, entryDateTime, false, false, Optional.empty());
-    }
-
-    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
-            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+    public static DebitEntry create(FinantialEntity finantialEntity, DebtAccount debtAccount, TreasuryEvent treasuryEvent,
+            Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
             BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime, boolean academicalActBlockingSuspension,
-            boolean blockAcademicActsOnDebt, Optional<FinantialEntity> finantialEntity) {
+            boolean blockAcademicActsOnDebt, DebitNote debitNote) {
 
         if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
             throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
         }
 
-        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
-                interestRate, entryDateTime, academicalActBlockingSuspension, blockAcademicActsOnDebt, finantialEntity);
+        return _create(finantialEntity, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description,
+                quantity, interestRate, entryDateTime, academicalActBlockingSuspension, blockAcademicActsOnDebt, debitNote);
     }
 
-    public static DebitEntry createForImportationPurpose(Optional<DebitNote> debitNote, DebtAccount debtAccount,
+    public static DebitEntry createForImportationPurpose(FinantialEntity finantialEntity, DebtAccount debtAccount,
             TreasuryEvent treasuryEvent, Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap,
-            Product product, String description, BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
+            Product product, String description, BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime,
+            DebitNote debitNote) {
 
-        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
-                interestRate, entryDateTime, false, false, Optional.empty());
+        return _create(finantialEntity, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description,
+                quantity, interestRate, entryDateTime, false, false, debitNote);
     }
 
-    private static boolean isDebitEntryCreationAllowed(final DebtAccount debtAccount, Optional<DebitNote> debitNote,
-            Product product) {
+    private static boolean isDebitEntryCreationAllowed(DebtAccount debtAccount, DebitNote debitNote, Product product) {
         if (debtAccount.getCustomer().isActive()) {
             return true;
         }
 
-        if (debitNote.isPresent() && debitNote.get().getDocumentNumberSeries().getSeries().isRegulationSeries()) {
+        if (debitNote != null && debitNote.getDocumentNumberSeries().getSeries().isRegulationSeries()) {
             return true;
         }
 
         return false;
     }
 
-    private static DebitEntry _create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent,
+    private static DebitEntry _create(FinantialEntity finantialEntity, DebtAccount debtAccount, TreasuryEvent treasuryEvent,
             Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
             BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime, boolean academicalActBlockingSuspension,
-            boolean blockAcademicActsOnDebt, Optional<FinantialEntity> finantialEntity) {
+            boolean blockAcademicActsOnDebt, DebitNote debitNote) {
 
-        final DebitEntry entry = new DebitEntry(debitNote.orElse(null), debtAccount, treasuryEvent, vat, amount, dueDate,
-                propertiesMap, product, description, quantity, null, entryDateTime);
+        final DebitEntry entry = new DebitEntry(debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product,
+                description, quantity, null, entryDateTime, debitNote);
 
         if (interestRate != null) {
             InterestRate.createForDebitEntry(entry, interestRate);
@@ -1719,7 +1658,9 @@ public class DebitEntry extends DebitEntry_Base {
 
         entry.edit(description, treasuryEvent, dueDate, academicalActBlockingSuspension, blockAcademicActsOnDebt);
 
-        finantialEntity.ifPresent(e -> entry.associateWithFinantialEntity(e));
+        if (finantialEntity != null) {
+            entry.associateWithFinantialEntity(finantialEntity);
+        }
 
         return entry;
     }

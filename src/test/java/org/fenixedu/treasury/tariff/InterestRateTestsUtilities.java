@@ -2,13 +2,13 @@ package org.fenixedu.treasury.tariff;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.base.BasicTreasuryUtils;
 import org.fenixedu.treasury.domain.AdhocCustomer;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -75,12 +75,14 @@ public class InterestRateTestsUtilities {
     }
 
     public static DebitEntry createDebitEntry(BigDecimal debitAmount, LocalDate dueDate, boolean applyInterest) {
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
         Vat vat =
                 Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), dueDate.toDateTimeAtStartOfDay()).get();
         TreasuryEvent treasuryEvent = null;
-        DebitEntry debitEntry = DebitEntry.create(Optional.empty(), getDebtAccount(), treasuryEvent, vat, debitAmount, dueDate,
+        DebitEntry debitEntry = DebitEntry.create(finantialEntity, getDebtAccount(), treasuryEvent, vat, debitAmount, dueDate,
                 null, Product.findUniqueByCode(DEBT_PRODUCT).get(), "debt " + debitAmount, BigDecimal.ONE, null,
-                dueDate.toDateTimeAtStartOfDay());
+                dueDate.toDateTimeAtStartOfDay(), false, false, null);
         if (applyInterest) {
             final int numberOfDaysAfterDueDate = 1;
             final boolean applyInFirstWorkday = false;

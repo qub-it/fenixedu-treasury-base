@@ -64,7 +64,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -867,9 +866,8 @@ public class SettlementNote extends SettlementNote_Base {
 
         Product advancePaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
         Vat vat = Vat.findActiveUnique(advancePaymentProduct.getVatType(), finantialInstitution, now).get();
-        DebitEntry debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, amount, now.toLocalDate(),
-                new HashMap<>(), advancePaymentProduct, comments, BigDecimal.ONE, null, now, false, false,
-                Optional.ofNullable(getFinantialEntity()));
+        DebitEntry debitEntry = DebitEntry.create(getFinantialEntity(), getDebtAccount(), null, vat, amount, now.toLocalDate(),
+                new HashMap<>(), advancePaymentProduct, comments, BigDecimal.ONE, null, now, false, false, debitNote);
 
         if (!TreasuryConstants.isEqual(debitEntry.getTotalAmount(), availableAmount)) {
             throw new RuntimeException(

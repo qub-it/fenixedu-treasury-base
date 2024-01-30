@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -229,17 +230,17 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .collect(Collectors.toSet());
     }
 
-    private static Optional<DebitNote> createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
-        return Optional.of(DebitNote.create(paymentPlanBean.getDebtAccount(),
+    private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
+        return DebitNote.create(paymentPlanBean.getDebtAccount(),
                 DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
                         paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
-                result.getCreationDate().toDateTimeAtStartOfDay()));
+                result.getCreationDate().toDateTimeAtStartOfDay());
     }
 
-    private static DebitEntry createDebitEntry(DebtAccount debtAccount, Optional<DebitNote> debitNote, String description,
-            BigDecimal amount, LocalDate creationDate, LocalDate endDate, Product product, Vat vat) {
-        return DebitEntry.create(debitNote, debtAccount, null, vat, amount, endDate, Maps.newHashMap(), product, description,
-                BigDecimal.ONE, null, creationDate.toDateTimeAtStartOfDay());
+    private static DebitEntry createDebitEntry(FinantialEntity finantialEntity, DebtAccount debtAccount, String description,
+            BigDecimal amount, LocalDate creationDate, LocalDate endDate, Product product, Vat vat, DebitNote debitNote) {
+        return DebitEntry.create(finantialEntity, debtAccount, null, vat, amount, endDate, Maps.newHashMap(), product,
+                description, BigDecimal.ONE, null, creationDate.toDateTimeAtStartOfDay(), false, false, debitNote);
     }
 
     private Map<ISettlementInvoiceEntryBean, DebitEntry> createDebitEntriesMap(PaymentPlanBean paymentPlanBean) {
@@ -254,18 +255,24 @@ public class PaymentPlan extends PaymentPlan_Base {
                     result.put(debitEntryBean, (DebitEntry) debitEntryBean.getInvoiceEntry());
                 });
 
+        if (FinantialEntity.find(debtAccount.getFinantialInstitution()).count() != 1) {
+            throw new RuntimeException("not supported for more than one finantial entity by finantial institution");
+        }
+
+        FinantialEntity finantialEntity = FinantialEntity.find(debtAccount.getFinantialInstitution()).findAny().get();
+
         //PendingDebitEntries (Emolument)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPendingDebitEntry())
                 .forEach(bean -> {
                     PendingDebitEntryBean debitEntryBean = (PendingDebitEntryBean) bean;
 
-                    Optional<DebitNote> debitNote = createDebitNote(paymentPlanBean, this);
+                    DebitNote debitNote = createDebitNote(paymentPlanBean, this);
                     Product product = debitEntryBean.getProduct();
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
 
-                    DebitEntry debitEntry = createDebitEntry(debtAccount, debitNote, debitEntryBean.getDescription(),
-                            debitEntryBean.getSettledAmount(), creationDate, endDate, product, vat);
+                    DebitEntry debitEntry = createDebitEntry(finantialEntity, debtAccount, debitEntryBean.getDescription(),
+                            debitEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
 
                     result.put(bean, debitEntry);
                 });
@@ -275,13 +282,13 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .forEach(bean -> {
                     SettlementInterestEntryBean interestEntryBean = (SettlementInterestEntryBean) bean;
 
-                    Optional<DebitNote> debitNote = createDebitNote(paymentPlanBean, this);
+                    DebitNote debitNote = createDebitNote(paymentPlanBean, this);
                     Product product = TreasurySettings.getInstance().getInterestProduct();
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
 
-                    DebitEntry debitEntry = createDebitEntry(debtAccount, debitNote, interestEntryBean.getDescription(),
-                            interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat);
+                    DebitEntry debitEntry = createDebitEntry(finantialEntity, debtAccount, interestEntryBean.getDescription(),
+                            interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
 
                     interestEntryBean.getDebitEntry().addInterestDebitEntries(debitEntry);
                     result.put(bean, debitEntry);
@@ -291,9 +298,8 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .forEach(bean -> {
                     PaymentPenaltyEntryBean penaltyBean = (PaymentPenaltyEntryBean) bean;
 
-                    DebitEntry debitEntry =
-                            PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(penaltyBean.getDebitEntry(),
-                                    penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), Optional.empty());
+                    DebitEntry debitEntry = PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(
+                            penaltyBean.getDebitEntry(), penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), null);
                     result.put(bean, debitEntry);
                 });
 

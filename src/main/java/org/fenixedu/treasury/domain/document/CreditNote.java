@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -484,7 +485,7 @@ public class CreditNote extends CreditNote_Base {
     // TODO ANIL 2024-01-17 : This is to be discontinued
     public static CreditEntry createBalanceTransferCredit(final DebtAccount debtAccount, final DateTime documentDate,
             final String originNumber, final Product product, final BigDecimal amountWithVat, final DebtAccount payorDebtAccount,
-            String entryDescription) {
+            String entryDescription, FinantialEntity finantialEntity) {
 
         final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
         final Series regulationSeries = finantialInstitution.getRegulationSeries();
@@ -501,8 +502,8 @@ public class CreditNote extends CreditNote_Base {
         final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
                 TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
 
-        CreditEntry entry = CreditEntry.create(null, creditNote, entryDescription, product, transferVat, amountWithoutVat,
-                documentDate, BigDecimal.ONE);
+        CreditEntry entry = CreditEntry.create(finantialEntity, creditNote, entryDescription, product, transferVat,
+                amountWithoutVat, documentDate, BigDecimal.ONE);
 
         creditNote.editPayorDebtAccount(payorDebtAccount);
 

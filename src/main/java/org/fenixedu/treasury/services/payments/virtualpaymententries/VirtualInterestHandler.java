@@ -59,7 +59,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
@@ -68,7 +67,6 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.InterestRateBean.CreatedInterestEntry;
@@ -122,21 +120,22 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         String title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Calculated_interests");
         List<String> lines = new ArrayList<>();
         for (final InterestInformationDetail detail : interestEntryBean.getInterest().getInterestInformationList()) {
-            if(detail.getBegin() != null && detail.getEnd() != null) {
+            if (detail.getBegin() != null && detail.getEnd() != null) {
                 lines.add(format("[%s - %s]: %s", detail.getBegin().toString(DATE_FORMAT_YYYY_MM_DD),
                         detail.getEnd().toString(DATE_FORMAT_YYYY_MM_DD), currency.getValueFor(detail.getAmount())));
-                
-                    lines.add(TreasuryConstants.treasuryBundle("label.InterestEntry.affectedAmount.description",
-                            currency.getValueFor(detail.getAffectedAmount()), "" + detail.getNumberOfDays(),
-                            detail.getInterestRate().toString()));
-            } else if(detail.getBegin() != null) {
-                lines.add(format("%s: %s", detail.getBegin().toString(DATE_FORMAT_YYYY_MM_DD), currency.getValueFor(detail.getAmount())));
+
+                lines.add(TreasuryConstants.treasuryBundle("label.InterestEntry.affectedAmount.description",
+                        currency.getValueFor(detail.getAffectedAmount()), "" + detail.getNumberOfDays(),
+                        detail.getInterestRate().toString()));
+            } else if (detail.getBegin() != null) {
+                lines.add(format("%s: %s", detail.getBegin().toString(DATE_FORMAT_YYYY_MM_DD),
+                        currency.getValueFor(detail.getAmount())));
             }
 
         }
-        
+
         map.put(title, lines);
-        
+
         if (!interestEntryBean.getInterest().getCreatedInterestEntriesList().isEmpty()) {
             title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Created_interests");
 
@@ -172,12 +171,11 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         }
 
         DateTime whenInterestDebitEntryDateTime =
-                interestEntryBean.getInterest().getInterestDebitEntryDateTime() != null ? interestEntryBean
-                        .getInterest().getInterestDebitEntryDateTime() : new DateTime();
-        
-        DebitEntry interestDebitEntry =
-                interestEntryBean.getDebitEntry().createInterestRateDebitEntry(interestEntryBean.getInterest(),
-                        whenInterestDebitEntryDateTime, Optional.<DebitNote> ofNullable(interestDebitNote));
+                interestEntryBean.getInterest().getInterestDebitEntryDateTime() != null ? interestEntryBean.getInterest()
+                        .getInterestDebitEntryDateTime() : new DateTime();
+
+        DebitEntry interestDebitEntry = interestEntryBean.getDebitEntry()
+                .createInterestRateDebitEntry(interestEntryBean.getInterest(), whenInterestDebitEntryDateTime, interestDebitNote);
         SettlementDebitEntryBean settlementDebitEntryBean = new SettlementDebitEntryBean(interestDebitEntry);
         settlementDebitEntryBean.setIncluded(true);
         settlementNoteBean.getDebitEntries().add(settlementDebitEntryBean);

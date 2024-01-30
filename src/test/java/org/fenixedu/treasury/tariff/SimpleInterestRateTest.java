@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -94,7 +93,7 @@ public class SimpleInterestRateTest {
 
             // create interest rate of 13.98
             DebitEntry partialInterestRateDebitEntry = debitEntry.createInterestRateDebitEntry(interestRateBean,
-                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), Optional.ofNullable(null));
+                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), null);
 
             assertEquals(
                     String.format("Interest rate of 100 at 2023-04-01 is %s, but was calculated as %s", new BigDecimal("13.98"),
@@ -191,7 +190,7 @@ public class SimpleInterestRateTest {
 
             // create interest rate of 13.98
             DebitEntry partialInterestRateDebitEntry = debitEntry.createInterestRateDebitEntry(interestRateBean,
-                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), Optional.ofNullable(null));
+                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), null);
 
             assertEquals(
                     String.format("Interest rate of 100 at 2023-04-01 is %s, but was calculated as %s", new BigDecimal("3.00"),
@@ -222,7 +221,7 @@ public class SimpleInterestRateTest {
 
             // create interest rate of 13.98
             DebitEntry partialInterestRateDebitEntry = debitEntry.createInterestRateDebitEntry(interestRateBean,
-                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), Optional.ofNullable(null));
+                    new LocalDate(2023, 4, 1).toDateTimeAtStartOfDay(), null);
 
             assertEquals(
                     String.format("Interest rate of 100 at 2023-04-01 is %s, but was calculated as %s", new BigDecimal("3.00"),

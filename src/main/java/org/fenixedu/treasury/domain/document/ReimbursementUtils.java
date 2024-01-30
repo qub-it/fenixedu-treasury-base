@@ -57,7 +57,6 @@ import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Vat;
@@ -164,11 +163,12 @@ public class ReimbursementUtils {
 
         final DebitNote compensationDebitNote = DebitNote.create(debtAccount, payorDebtAccount, debitNumberSeries, now,
                 new LocalDate(), originalCreditNote.getUiDocumentNumber());
-        final DebitEntry compensationDebitEntry = DebitEntry.create(Optional.of(compensationDebitNote), debtAccount, null, vat,
-                amountToReimburseWithoutVat, new LocalDate(), Maps.newHashMap(), originalCreditEntry.getProduct(),
-                treasuryBundle("label.ReimbursementUtils.compensation.debit.entry.description",
-                        originalCreditEntry.getDescription()),
-                BigDecimal.ONE, null, now);
+        final DebitEntry compensationDebitEntry =
+                DebitEntry.create(originalCreditEntry.getFinantialEntity(), debtAccount, null, vat, amountToReimburseWithoutVat,
+                        new LocalDate(), Maps.newHashMap(), originalCreditEntry.getProduct(),
+                        treasuryBundle("label.ReimbursementUtils.compensation.debit.entry.description",
+                                originalCreditEntry.getDescription()),
+                        BigDecimal.ONE, null, now, false, false, compensationDebitNote);
 
         compensationDebitNote.closeDocument();
 

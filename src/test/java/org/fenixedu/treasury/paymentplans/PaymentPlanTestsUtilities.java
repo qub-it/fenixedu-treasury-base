@@ -4,13 +4,13 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.base.BasicTreasuryUtils;
 import org.fenixedu.treasury.domain.AdhocCustomer;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.CustomerType;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -19,7 +19,6 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.GlobalInterestRateType;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.tariff.InterestRateEntry;
@@ -194,12 +193,14 @@ public class PaymentPlanTestsUtilities {
     }
 
     public static DebitEntry createDebitEntry(BigDecimal debitAmount, LocalDate dueDate, boolean aplyInterest) {
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
         Vat vat =
                 Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), dueDate.toDateTimeAtStartOfDay()).get();
         TreasuryEvent treasuryEvent = null;
-        DebitEntry debitEntry = DebitEntry.create(Optional.empty(), getDebtAccount(), treasuryEvent, vat, debitAmount, dueDate,
+        DebitEntry debitEntry = DebitEntry.create(finantialEntity, getDebtAccount(), treasuryEvent, vat, debitAmount, dueDate,
                 null, Product.findUniqueByCode(DEBT_PRODUCT).get(), "debt " + debitAmount, BigDecimal.ONE, null,
-                dueDate.toDateTimeAtStartOfDay());
+                dueDate.toDateTimeAtStartOfDay(), false, false, null);
         if (aplyInterest) {
             final int numberOfDaysAfterDueDate = 1;
             final boolean applyInFirstWorkday = false;
@@ -208,8 +209,8 @@ public class PaymentPlanTestsUtilities {
 
             InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
-            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType, numberOfDaysAfterDueDate,
-                    applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
+            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType,
+                    numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
         }
         return debitEntry;

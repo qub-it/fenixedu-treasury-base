@@ -59,12 +59,12 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
@@ -687,8 +687,6 @@ public class DebitNote extends DebitNote_Base {
         return updatingDebitNote;
     }
 
-    // TODO: Debit entries are not copied well, it misses curricularCourse, evaluationSeason and
-    // executionSemester
     private DebitNote anullAndCopyDebitNote(final String reason) {
         if (!isClosed()) {
             throw new TreasuryDomainException("error.DebitNote.anullAndCopyDebitNote.copy.only.on.closed.debit.note");
@@ -700,20 +698,18 @@ public class DebitNote extends DebitNote_Base {
         for (final FinantialDocumentEntry finantialDocumentEntry : getFinantialDocumentEntriesSet()) {
             final DebitEntry debitEntry = (DebitEntry) finantialDocumentEntry;
 
-            // TODO Use DebitEntry.copyDebitEntry service
-            DebitEntry newDebitEntry = DebitEntry.create(Optional.of(newDebitNote), debitEntry.getDebtAccount(),
+            DebitEntry newDebitEntry = DebitEntry.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(),
                     debitEntry.getTreasuryEvent(), debitEntry.getVat(),
                     debitEntry.getAmount().add(debitEntry.getNetExemptedAmount()), debitEntry.getDueDate(),
                     debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
-                    debitEntry.getInterestRate(), debitEntry.getEntryDateTime());
+                    debitEntry.getInterestRate(), debitEntry.getEntryDateTime(), debitEntry.isAcademicalActBlockingSuspension(),
+                    debitEntry.isBlockAcademicActsOnDebt(), newDebitNote);
 
-            debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
-                TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), treasuryExemption.getReason(),
-                        treasuryExemption.getNetAmountToExempt(), newDebitEntry);
-            });
+            DebitEntry.applyAdditionalRelationConnectionsOfDebitEntry(debitEntry, newDebitEntry);
 
-            newDebitEntry.edit(newDebitEntry.getDescription(), newDebitEntry.getTreasuryEvent(), newDebitEntry.getDueDate(),
-                    debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt());
+            debitEntry.getTreasuryExemptionsSet()
+                    .forEach(treasuryExemption -> TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(),
+                            treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry));
         }
 
         anullDebitNoteWithCreditNote(reason, false);
@@ -784,7 +780,8 @@ public class DebitNote extends DebitNote_Base {
     // TODO ANIL 2024-01-17 : This is to be discontinued
     public static DebitEntry createBalanceTransferDebit(final DebtAccount debtAccount, final DateTime entryDate,
             final LocalDate dueDate, final String originNumber, final Product product, final BigDecimal amountWithVat,
-            final DebtAccount payorDebtAccount, String entryDescription, final InterestRate interestRate) {
+            final DebtAccount payorDebtAccount, String entryDescription, final InterestRate interestRate,
+            FinantialEntity finantialEntity) {
         final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
         final Series regulationSeries = finantialInstitution.getRegulationSeries();
         final DocumentNumberSeries numberSeries =
@@ -801,8 +798,8 @@ public class DebitNote extends DebitNote_Base {
         final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
                 TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
 
-        return DebitEntry.create(Optional.of(debitNote), debtAccount, null, transferVat, amountWithoutVat, dueDate,
-                Maps.newHashMap(), product, entryDescription, BigDecimal.ONE, interestRate, entryDate);
+        return DebitEntry.create(finantialEntity, debtAccount, null, transferVat, amountWithoutVat, dueDate, Maps.newHashMap(),
+                product, entryDescription, BigDecimal.ONE, interestRate, entryDate, false, false, debitNote);
     }
 
 }

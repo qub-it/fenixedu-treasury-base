@@ -285,11 +285,11 @@ public abstract class InterestRateType extends InterestRateType_Base {
                 DebitNote d = DebitNote.create(debtAccount, documentNumberSeries, documentDate);
                 result.add(d);
 
-                interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate, Optional.of(d));
+                interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate, d);
             } else {
                 result.add(interestDebitNoteForAllInterests);
                 interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate,
-                        Optional.of(interestDebitNoteForAllInterests));
+                        interestDebitNoteForAllInterests);
             }
         }
 
@@ -303,7 +303,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
 
     @Atomic
     public Set<DebitEntry> createInterestDebitEntriesForOriginDebitEntry(DebitEntry originDebitEntry, DateTime documentDate,
-            LocalDate paymentDate, Optional<DebitNote> interestDebitNote) {
+            LocalDate paymentDate, DebitNote interestDebitNote) {
         if (TreasuryDebtProcessMainService.isDebitEntryInterestCreationInAdvanceBlocked(originDebitEntry)) {
             throw new TreasuryDomainException(
                     "error.DebitNote.createInterestDebitNoteForDebitNote.not.possible.due.to.some.debt.process");

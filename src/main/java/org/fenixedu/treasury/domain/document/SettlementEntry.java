@@ -55,7 +55,6 @@ package org.fenixedu.treasury.domain.document;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -155,7 +154,7 @@ public class SettlementEntry extends SettlementEntry_Base {
                         interestDebitNote.setPayorDebtAccount(debitEntry.getDebitNote().getPayorDebtAccount());
 
                         debitEntry.createInterestRateDebitEntry(undebitedInterestValue, whenInterestDebitEntryDateTime,
-                                Optional.of(interestDebitNote));
+                                interestDebitNote);
                     }
                 }
             }

@@ -4,7 +4,6 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
 import org.fenixedu.treasury.domain.PaymentMethod;
@@ -604,7 +603,7 @@ public class PaymentPlanConfiguratorTest {
 
         DebitEntry interestEntry = debitEntry.createInterestRateDebitEntry(
                 debitEntry.calculateUndebitedInterestValue(new LocalDate(2021, 4, 1)).iterator().next(),
-                new LocalDate(2021, 4, 1).toDateTimeAtStartOfDay(), Optional.empty());
+                new LocalDate(2021, 4, 1).toDateTimeAtStartOfDay(), null);
 
         ISettlementInvoiceEntryBean debitEntryBean =
                 PaymentPlanTestsUtilities.createDebitEntryBean(debitEntry, paymentPlanBean.getCreationDate(), null);

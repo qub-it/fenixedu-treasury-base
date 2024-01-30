@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.fenixedu.treasury.base.BasicTreasuryUtils;
@@ -104,6 +103,8 @@ public class TreasuryExemptionTest {
 
     @Before
     public void before() {
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
@@ -111,11 +112,12 @@ public class TreasuryExemptionTest {
                 .find(FinantialDocumentType.findForDebitNote(), Series.findByCode(getFinatialInstitution(), "INT")), date);
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
 
-        this.debitEntry = DebitEntry.create(Optional.of(debitNote), getDebtAccount(), null, vat, new BigDecimal(1000), dueDate,
-                null, Product.findUniqueByCode(DEBT_PRODUCT).get(), "debt description", BigDecimal.ONE, null, date);
+        this.debitEntry = DebitEntry.create(finantialEntity, getDebtAccount(), null, vat, new BigDecimal(1000), dueDate, null,
+                Product.findUniqueByCode(DEBT_PRODUCT).get(), "debt description", BigDecimal.ONE, null, date, false, false,
+                debitNote);
 
         this.treasuryEvent = PaymentPenaltyTaxTreasuryEvent
-                .checkAndCreatePaymentPenaltyTax(this.debitEntry, dueDate.plusDays(15), Optional.empty()).getTreasuryEvent();
+                .checkAndCreatePaymentPenaltyTax(this.debitEntry, dueDate.plusDays(15), null).getTreasuryEvent();
 
         this.debitEntry.setTreasuryEvent(this.treasuryEvent);
 
