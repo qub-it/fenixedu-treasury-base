@@ -1516,24 +1516,6 @@ public class DebitEntry extends DebitEntry_Base {
                 .forEach(request -> ((SibsPaymentRequest) request).anull());
     }
 
-    public void associateWithFinantialEntity(FinantialEntity finantialEntity) {
-        if (finantialEntity == null) {
-            throw new TreasuryDomainException("error.DebitEntry.associateWithFinantialEntity.finantialEntity.required");
-        }
-
-        if (super.getFinantialEntity() != null) {
-            throw new TreasuryDomainException("error.DebitEntry.associateWithFinantialEntity.finantialEntity.already.set");
-        }
-
-        if (getTreasuryEvent() != null && getTreasuryEvent().getAssociatedFinantialEntity() != null
-                && getTreasuryEvent().getAssociatedFinantialEntity() != finantialEntity) {
-            throw new TreasuryDomainException(
-                    "error.DebitEntry.associateWithFinantialEntity.finantialEntity.mismatch.with.treasuryEvent.finantialEntity");
-        }
-
-        super.setFinantialEntity(finantialEntity);
-    }
-
     // @formatter:off
     /* ********
      * SERVICES
@@ -1649,6 +1631,10 @@ public class DebitEntry extends DebitEntry_Base {
             BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime, boolean academicalActBlockingSuspension,
             boolean blockAcademicActsOnDebt, DebitNote debitNote) {
 
+        if (finantialEntity == null && treasuryEvent != null) {
+            finantialEntity = treasuryEvent.getAssociatedFinantialEntity();
+        }
+
         final DebitEntry entry = new DebitEntry(debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product,
                 description, quantity, null, entryDateTime, debitNote);
 
@@ -1658,9 +1644,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         entry.edit(description, treasuryEvent, dueDate, academicalActBlockingSuspension, blockAcademicActsOnDebt);
 
-        if (finantialEntity != null) {
-            entry.associateWithFinantialEntity(finantialEntity);
-        }
+        entry.setFinantialEntity(finantialEntity);
 
         return entry;
     }

@@ -2448,6 +2448,15 @@ relation CreditEntryDebitEntry {
 	}
 }
 
+relation CreditEntryTreasuryEvent {
+	event.TreasuryEvent playsRole treasuryEvent {
+		multiplicity 0..1;
+	}
+	
+	document.CreditEntry playsRole creditEntries {
+		multiplicity *;
+	}
+}
 
 /* --- SettlementEntry --- */
 

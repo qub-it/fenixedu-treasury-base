@@ -71,7 +71,6 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 
 public class CreditEntry extends CreditEntry_Base {
 
@@ -181,18 +180,23 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     public static Stream<? extends CreditEntry> find(final TreasuryEvent treasuryEvent) {
-        return DebitEntry.find(treasuryEvent).map(d -> d.getCreditEntriesSet()).reduce((a, b) -> Sets.union(a, b))
-                .orElse(Sets.newHashSet()).stream();
+        return Stream.concat(DebitEntry.find(treasuryEvent).flatMap(d -> d.getCreditEntriesSet().stream()),
+                treasuryEvent.getCreditEntriesSet().stream());
     }
 
     public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent) {
-        return DebitEntry.findActive(treasuryEvent).map(d -> d.getCreditEntriesSet()).reduce((a, b) -> Sets.union(a, b))
-                .orElse(Sets.newHashSet()).stream();
+        return Stream.concat(
+                DebitEntry.findActive(treasuryEvent)
+                        .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
+                treasuryEvent.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled()));
     }
 
     public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent, final Product product) {
-        return DebitEntry.findActive(treasuryEvent, product).map(d -> d.getCreditEntriesSet()).reduce((a, b) -> Sets.union(a, b))
-                .orElse(Sets.newHashSet()).stream();
+        return Stream.concat(
+                DebitEntry.findActive(treasuryEvent, product)
+                        .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
+                treasuryEvent.getCreditEntriesSet().stream().filter(ce -> ce.getProduct() == product)
+                        .filter(ce -> !ce.isAnnulled()));
     }
 
     public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
@@ -345,5 +349,14 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         return super.getUiOpenAmountWithInterests();
+    }
+
+    @Override
+    public TreasuryEvent getTreasuryEvent() {
+        if (super.getTreasuryEvent() != null) {
+            return super.getTreasuryEvent();
+        }
+
+        return super.getDebitEntry() != null ? super.getDebitEntry().getTreasuryEvent() : null;
     }
 }
