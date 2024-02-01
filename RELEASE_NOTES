@@ -1,3 +1,4 @@
+12.7.1 (01-02-2024)
 - Refactor: Set finantial entity in debit entry from treasury event [#qubIT-Fenix-4587]
 - Improvement: Associate credit entry to treasury event [#qubIT-Fenix-4928]
 
