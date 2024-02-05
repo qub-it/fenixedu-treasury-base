@@ -1676,6 +1676,16 @@ relation ERPConfigurationSeries
     }
 }
 
+relation ERPConfigurationPaymentMethod {
+	PaymentMethod playsRole balanceCompensationPaymentMethod {
+		multiplicity 0..1;
+	}
+	
+	integration.ERPConfiguration playsRole erpConfiguration {
+		multiplicity *;
+	}
+}
+
 relation ConfigurationBennu {
     integration.Configuration playsRole configurations {
         multiplicity *;

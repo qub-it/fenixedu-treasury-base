@@ -1,3 +1,5 @@
+- Improvement: New balance transfer for SAP and SINGAP, to make compensation of advance payment credits with reimbursement notes [#UL-REIT-3443]
+
 12.7.1 (01-02-2024)
 - Refactor: Set finantial entity in debit entry from treasury event [#qubIT-Fenix-4587]
 - Improvement: Associate credit entry to treasury event [#qubIT-Fenix-4928]

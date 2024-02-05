@@ -100,11 +100,11 @@ import pt.ist.fenixframework.Atomic;
 
 public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTransferService {
 
-    private DebtAccount fromDebtAccount;
-    private DebtAccount destinyDebtAccount;
+    protected DebtAccount fromDebtAccount;
+    protected DebtAccount destinyDebtAccount;
 
-    private Map<DebitEntry, DebitEntry> conversionMap;
-    private Map<DebitEntry, SettlementEntry> settlementOfDebitEntryMap;
+    protected Map<DebitEntry, DebitEntry> conversionMap;
+    protected Map<DebitEntry, SettlementEntry> settlementOfDebitEntryMap;
 
     private Set<PaymentPlan> openPaymentPlans;
 
@@ -221,8 +221,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         }
     }
 
-    private void transferCreditEntry(final CreditEntry invoiceEntry) {
-        final FinantialInstitution finantialInstitution = fromDebtAccount.getFinantialInstitution();
+    protected void transferCreditEntry(final CreditEntry invoiceEntry) {
+        final FinantialInstitution finantialInstitution = this.fromDebtAccount.getFinantialInstitution();
         final Series defaultSeries = Series.findUniqueDefault(finantialInstitution).get();
         final DocumentNumberSeries settlementNoteSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), defaultSeries);
@@ -282,7 +282,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         settlementNote.closeDocument();
     }
 
-    private void transferDebitEntries(final DebitNote objectDebitNote) {
+    protected void transferDebitEntries(final DebitNote objectDebitNote) {
         final FinantialInstitution finantialInstitution = objectDebitNote.getDebtAccount().getFinantialInstitution();
         final DocumentNumberSeries settlementNumberSeries =
                 DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get();
