@@ -54,11 +54,13 @@ package org.fenixedu.treasury.domain;
 
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -113,6 +115,7 @@ public class Product extends Product_Base {
         setTuitionInstallmentOrder(tuitionInstallmentOrder);
         setVatType(vatType);
         setVatExemptionReason(vatExemptionReason);
+        setSystemProduct(false);
         updateFinantialInstitutions(finantialInstitutions);
 
         checkRules();
@@ -188,10 +191,24 @@ public class Product extends Product_Base {
         checkRules();
     }
 
+    private static List<Predicate<Product>> IS_DELETABLE_PRODUCT_PREDICATES_LIST = new ArrayList<>();
+
+    public static void registerIsDeletableProductPredicate(Predicate<Product> deletablePredicate) {
+        IS_DELETABLE_PRODUCT_PREDICATES_LIST.add(deletablePredicate);
+    }
+
     public boolean isDeletable() {
-        return getInvoiceEntriesSet().isEmpty() && getTreasuryExemptionSet().isEmpty() && getTreasuryEventsSet().isEmpty()
-                && getAdvancePaymentTreasurySettings() == null && getTreasurySettings() == null && getTariffSet().isEmpty()
-                && getPaymentPlanSettings() == null && getPaymentPlanConfiguratorsSet().isEmpty();
+        return getInvoiceEntriesSet().isEmpty() && //
+                getTreasuryExemptionSet().isEmpty() && //
+                getTreasuryEventsSet().isEmpty() && //
+                getAdvancePaymentTreasurySettings() == null && //
+                getTreasurySettings() == null && //
+                getTariffSet().isEmpty() && //
+                getPaymentPlanSettings() == null && //
+                getPaymentPlanConfiguratorsSet().isEmpty() && //
+                !Boolean.TRUE.equals(getSystemProduct()) && //
+                (IS_DELETABLE_PRODUCT_PREDICATES_LIST == null || IS_DELETABLE_PRODUCT_PREDICATES_LIST.isEmpty()
+                        || IS_DELETABLE_PRODUCT_PREDICATES_LIST.stream().allMatch(p -> p.test(this)));
     }
 
     public boolean isTransferBalanceProduct() {

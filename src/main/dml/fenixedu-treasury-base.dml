@@ -105,6 +105,7 @@ class Product {
 	boolean legacy;
 	int tuitionInstallmentOrder;
 	Boolean applyInterestsByDefault;
+	Boolean systemProduct;
 }
 
 class Currency {
