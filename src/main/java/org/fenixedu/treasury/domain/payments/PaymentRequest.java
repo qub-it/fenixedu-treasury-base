@@ -445,7 +445,6 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     public void delete() {
-
     }
 
     // @formatter:off

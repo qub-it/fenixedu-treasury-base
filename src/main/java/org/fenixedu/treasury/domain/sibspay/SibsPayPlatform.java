@@ -43,7 +43,8 @@ import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
-import org.fenixedu.treasury.services.payments.sibspay.SibsPayService;
+import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayResponseInquiryWrapper;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayReturnCheckout;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
@@ -188,7 +189,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         Optional<String> transactionIdOptional = Optional.empty();
         Optional<String> transactionSignatureOptional = Optional.empty();
 
-        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
                 getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
         MbwayRequest mbwayRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber, payableAmount,
@@ -207,7 +208,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 DateTime requestReceiveDate = new DateTime();
 
                 boolean isOperationSuccess =
-                        SibsPayService.isOperationSuccess(sibsPayReturnCheckout.getReturnStatus().getStatusCode());
+                        SibsPayAPIService.isOperationSuccess(sibsPayReturnCheckout.getReturnStatus().getStatusCode());
 
                 FenixFramework.atomic(() -> {
                     mbwayRequest.setTransactionId(sibsPayReturnCheckout.getTransactionID());
@@ -367,7 +368,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         try {
             DateTime requestSendDate = new DateTime();
 
-            SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+            SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
                     getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
             final SibsPayReturnCheckout returnCheckout =
@@ -375,7 +376,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
             DateTime requestReceiveDate = new DateTime();
 
-            boolean isOperationSuccess = SibsPayService.isOperationSuccess(returnCheckout.getReturnStatus().getStatusCode());
+            boolean isOperationSuccess = SibsPayAPIService.isOperationSuccess(returnCheckout.getReturnStatus().getStatusCode());
             final ForwardPaymentStateType stateType =
                     isOperationSuccess ? ForwardPaymentStateType.REQUESTED : ForwardPaymentStateType.REJECTED;
 
@@ -431,7 +432,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
 
         try {
-            SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+            SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
                     getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
             DateTime requestSendDate = new DateTime();
@@ -548,7 +549,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public String getPaymentURL(ForwardPaymentRequest request) {
-        return new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+        return new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
                 getEntityReferenceCode()).getJsScriptURL(request.getTransactionId());
     }
 
@@ -559,7 +560,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public ForwardPaymentStatusBean paymentStatus(ForwardPaymentRequest request) {
-        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
                 getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
         try {
@@ -700,7 +701,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         Optional<String> transactionIdOptional = Optional.empty();
         Optional<String> transactionSignatureOptional = Optional.empty();
 
-        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
                 getBearerToken(), getTerminalId(), getEntityReferenceCode());
         DateTime sibsValidFrom = new DateTime();
 
@@ -720,7 +721,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                         payableAmount, sibsValidFrom, sibsValidTo, merchantTransactionId);
 
                 boolean isOperationSuccess =
-                        SibsPayService.isOperationSuccess(sibsPayReturnCheckout.getReturnStatus().getStatusCode());
+                        SibsPayAPIService.isOperationSuccess(sibsPayReturnCheckout.getReturnStatus().getStatusCode());
 
                 FenixFramework.atomic(() -> {
                     log.logRequestReceiveDateAndData(sibsPayReturnCheckout.getTransactionID(), isOperationSuccess, false,
@@ -894,7 +895,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
-        SibsPayService sibsPayService = new SibsPayService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
                 getBearerToken(), getTerminalId(), getEntityReferenceCode());
 
         try {
@@ -950,6 +951,93 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     public void delete() {
         super.delete();
         super.deleteDomainObject();
+    }
+
+    @Override
+    public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
+        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+
+        try {
+            // 1. First check the state of the sibsPaymentRequest in the platform
+            SibsPayResponseInquiryWrapper responseInquiryWrapper =
+                    sibsPayService.getPaymentStatusBySibsTransactionId(sibsPaymentRequest.getTransactionId());
+
+            if (responseInquiryWrapper == null) {
+                throw new IllegalStateException("unable to check the payment request status");
+            }
+
+            if (responseInquiryWrapper.isDeclined()) {
+                // Just remove from the pending for annulment
+                FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+
+                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "DECLINED_REMOVE_FROM_PENDING",
+                        "declined, remove from pending", "", "");
+
+                return true;
+            } else if (responseInquiryWrapper.isExpired()) {
+                // Just remove from the pending for annulment
+                FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+
+                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
+                        "expired, remove from pending", "", "");
+                return true;
+            } else if (responseInquiryWrapper.isPaid()) {
+                if (!sibsPaymentRequest.getPaymentTransactionsSet().isEmpty()) {
+                    // The payment is processed, just remove from the pending for annulment
+                    FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+
+                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
+                            "paid, remove from pending", "", "");
+
+                    return true;
+                } else {
+                    // Do not remove and report that it was not processed
+
+                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_CHECK", "paid, check pending payment", "", "");
+
+                    return false;
+                }
+            } else if (responseInquiryWrapper.isPending()) {
+                // Annul in the platform
+
+                SibsPayCancellationResponse cancellationResponse =
+                        sibsPayService.cancelTransaction(sibsPaymentRequest.getMerchantTransactionId(),
+                                sibsPaymentRequest.getTransactionId(), sibsPaymentRequest.getPayableAmount());
+
+                cancellationResponse.getReturnStatus().getStatusCode();
+
+                String statusCode = cancellationResponse.getReturnStatus() != null ? cancellationResponse.getReturnStatus()
+                        .getStatusCode() : "";
+                String statusMessage = cancellationResponse.getReturnStatus() != null ? cancellationResponse.getReturnStatus()
+                        .getStatusDescription() : "";
+
+                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", statusCode, statusMessage,
+                        cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog());
+
+                FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+
+                return true;
+            }
+
+        } catch (final Exception e) {
+
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(sibsPaymentRequest, e, "annulPaymentRequestInPlatform", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.annulPaymentRequestInPlatform");
+        }
+
+        return false;
     }
 
     @Atomic(mode = TxMode.WRITE)

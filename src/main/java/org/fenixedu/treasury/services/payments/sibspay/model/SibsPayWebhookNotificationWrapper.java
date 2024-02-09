@@ -3,7 +3,7 @@ package org.fenixedu.treasury.services.payments.sibspay.model;
 import java.math.BigDecimal;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
-import org.fenixedu.treasury.services.payments.sibspay.SibsPayService;
+import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.joda.time.DateTime;
 
 public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultBean {
@@ -77,24 +77,24 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     @Override
     public boolean isOperationSuccess() {
-        return SibsPayService.isOperationSuccess(this.webhookNotification.getReturnStatus().getStatusCode());
+        return SibsPayAPIService.isOperationSuccess(this.webhookNotification.getReturnStatus().getStatusCode());
     }
 
     @Override
     public boolean isPaid() {
-        return SibsPayService.isPaid(this.getPaymentResultCode());
+        return SibsPayAPIService.isPaid(this.getPaymentResultCode());
     }
 
     public boolean isPending() {
-        return SibsPayService.isPending(this.getPaymentResultCode());
+        return SibsPayAPIService.isPending(this.getPaymentResultCode());
     }
 
     public boolean isExpired() {
-        return SibsPayService.isExpired(this.getPaymentResultCode());
+        return SibsPayAPIService.isExpired(this.getPaymentResultCode());
     }
 
     public boolean isDeclined() {
-        return SibsPayService.isDeclined(this.getPaymentResultCode());
+        return SibsPayAPIService.isDeclined(this.getPaymentResultCode());
     }
 
 }

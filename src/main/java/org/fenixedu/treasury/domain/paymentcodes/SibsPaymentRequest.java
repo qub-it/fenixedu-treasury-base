@@ -196,6 +196,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
 
     public void anull() {
         setState(PaymentReferenceCodeStateType.ANNULLED);
+        setDigitalPaymentPlatformPendingForAnnulment(getDigitalPaymentPlatform());
     }
 
     public String getDescription() {

@@ -1192,4 +1192,10 @@ public class MeoWallet extends MeoWallet_Base
         }
     }
 
+    @Override
+    public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
+        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+        return true;
+    }
+
 }

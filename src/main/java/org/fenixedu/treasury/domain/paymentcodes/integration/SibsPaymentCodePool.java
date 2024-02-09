@@ -65,7 +65,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -83,8 +82,6 @@ import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.services.payments.paymentscodegenerator.CheckDigitGenerator;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.LocalDate;
-
-import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -359,7 +356,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
                 || SibsPaymentRequest.findCreatedByDebitEntriesSet(debitEntries).count() > 0) {
             throw new TreasuryDomainException("error.SibsPaymentCodePool.paymentCode.already.exists.for.selected.debit.entries");
         }
-        
+
         checkMaxActiveSibsPaymentRequests(debitEntries, installments);
 
         SibsReferenceCode code = isUseCheckDigit() ? generateCheckDigitPaymentCode(payableAmount,
@@ -535,5 +532,11 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     @Override
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean) {
 
+    }
+
+    @Override
+    public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
+        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+        return true;
     }
 }

@@ -2,6 +2,9 @@ package org.fenixedu.treasury.services.payments.sibspay.model;
 
 import java.util.Objects;
 
+import org.joda.time.DateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -28,6 +31,9 @@ public class SibsPayMerchant {
 
     @JsonProperty("inApp")
     private Boolean inApp;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+    private DateTime merchantTransactionTimestamp = null;
 
     public String getTransactionId() {
         return transactionId;
@@ -99,6 +105,14 @@ public class SibsPayMerchant {
 
     public void setMerchantTransactionId(String merchantTransactionId) {
         this.merchantTransactionId = merchantTransactionId;
+    }
+
+    public DateTime getMerchantTransactionTimestamp() {
+        return merchantTransactionTimestamp;
+    }
+
+    public void setMerchantTransactionTimestamp(DateTime merchantTransactionTimestamp) {
+        this.merchantTransactionTimestamp = merchantTransactionTimestamp;
     }
 
     public Boolean isInApp() {

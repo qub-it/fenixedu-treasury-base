@@ -3,7 +3,7 @@ package org.fenixedu.treasury.services.payments.sibspay.model;
 import java.math.BigDecimal;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
-import org.fenixedu.treasury.services.payments.sibspay.SibsPayService;
+import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.joda.time.DateTime;
 
 public class SibsPayResponseInquiryWrapper implements DigitalPlatformResultBean {
@@ -71,7 +71,7 @@ public class SibsPayResponseInquiryWrapper implements DigitalPlatformResultBean 
 
     @Override
     public boolean isOperationSuccess() {
-        return SibsPayService.isOperationSuccess(this.responseInquiry.getReturnStatus().getStatusCode());
+        return SibsPayAPIService.isOperationSuccess(this.responseInquiry.getReturnStatus().getStatusCode());
     }
 
     public String getOperationStatusCode() {
@@ -88,11 +88,19 @@ public class SibsPayResponseInquiryWrapper implements DigitalPlatformResultBean 
 
     @Override
     public boolean isPaid() {
-        return SibsPayService.isPaid(this.responseInquiry.getPaymentStatus());
+        return SibsPayAPIService.isPaid(this.responseInquiry.getPaymentStatus());
     }
 
     public boolean isPending() {
-        return SibsPayService.isPending(this.responseInquiry.getPaymentStatus());
+        return SibsPayAPIService.isPending(this.responseInquiry.getPaymentStatus());
+    }
+
+    public boolean isDeclined() {
+        return SibsPayAPIService.isDeclined(this.responseInquiry.getPaymentStatus());
+    }
+
+    public boolean isExpired() {
+        return SibsPayAPIService.isExpired(this.responseInquiry.getPaymentStatus());
     }
 
     public String getRequestLog() {

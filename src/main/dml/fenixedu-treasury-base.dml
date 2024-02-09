@@ -1013,6 +1013,17 @@ class payments.PaymentRequest {
 		}
 	}
 	
+	/* It is used by script to annul payment request in the platform */
+	relation PendingAnnuledPaymentRequest {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatformPendingForAnnulment {
+			multiplicity 0..1;
+		}		
+	
+		payments.PaymentRequest playsRole pendingAnnuledPaymentRequests {
+			multiplicity *;
+		}
+	}
+	
 class payments.PaymentTransaction {
 	DateTime creationDate;
 	String responsibleUsername;

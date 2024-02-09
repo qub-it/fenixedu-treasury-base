@@ -94,4 +94,6 @@ public interface ISibsPaymentCodePoolService {
 
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
+    public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest);
+
 }

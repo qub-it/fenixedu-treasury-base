@@ -1,3 +1,5 @@
+- Improvement: Allow annulment of Sibs Pay reference MB in the platform [#qubIT-Fenix-4941]
+
 12.9.0 (05-02-2024)
 - Improvement: Mark products as system, in order to not allow the edition and deletion [#UL-REIT-3078]
 

@@ -1305,4 +1305,10 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
         }
     }
+
+    @Override
+    public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
+        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+        return true;
+    }
 }

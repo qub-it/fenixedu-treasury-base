@@ -73,7 +73,8 @@ public class SibsPayWebhookController {
                         log.saveRequest(jsonBody);
                     });
 
-                    SibsPayWebhookNotification webhookNotificationObj = SibsPayService.deserializeWebhookNotification(jsonBody);
+                    SibsPayWebhookNotification webhookNotificationObj =
+                            SibsPayAPIService.deserializeWebhookNotification(jsonBody);
 
                     if (StringUtils.isNotEmpty(webhookNotificationObj.getNotificationID())) {
                         webhookNotificationWrapperOptional =

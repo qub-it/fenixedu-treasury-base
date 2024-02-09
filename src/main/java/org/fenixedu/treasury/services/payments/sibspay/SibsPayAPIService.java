@@ -21,9 +21,12 @@ import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddress
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayAddress;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayAmount;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationRequest;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCustomer;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCustomerInfo;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayMerchant;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayOriginalTransaction;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayPaymentReference;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayRequestCheckout;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayResponseInquiry;
@@ -45,7 +48,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.google.common.base.Splitter;
 
-public class SibsPayService {
+public class SibsPayAPIService {
 
     private static final String STATUS_CODE_SUCCESS = "000";
 
@@ -54,7 +57,7 @@ public class SibsPayService {
     private static final String PAYMENT_RESULT_CODE_EXPIRED = "Expired";
     private static final String PAYMENT_RESULT_CODE_DECLINED = "Declined";
 
-    private static final Logger logger = LoggerFactory.getLogger(SibsPayService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SibsPayAPIService.class);
 
     private String sibsEndpoint;
     private String sibsAssetsEndpoint;
@@ -66,8 +69,8 @@ public class SibsPayService {
     private Client client;
     private WebTarget webTarget;
 
-    public SibsPayService(String sibsEndpoint, String sibsAssetsEndpoint, String clientId, String bearerToken, Integer terminalId,
-            String sibsEntityCode) {
+    public SibsPayAPIService(String sibsEndpoint, String sibsAssetsEndpoint, String clientId, String bearerToken,
+            Integer terminalId, String sibsEntityCode) {
         this.sibsEndpoint = sibsEndpoint;
         this.sibsAssetsEndpoint = sibsAssetsEndpoint;
         this.clientId = clientId;
@@ -358,6 +361,72 @@ public class SibsPayService {
 
             return new SibsPayResponseInquiryWrapper(responseInquiry, requestLog, responseLog);
 
+        } catch (WebApplicationException var23) {
+            responseLog = var23.getResponse().readEntity(String.class);
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+        } catch (JsonProcessingException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        } catch (IOException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        }
+    }
+
+    public SibsPayCancellationResponse cancelTransaction(String merchantTransactionId, String originalTransactionId,
+            BigDecimal amount) throws OnlinePaymentsGatewayCommunicationException {
+
+        String requestLog = "{}";
+        String responseLog = null;
+        try {
+
+            ObjectMapper objectMapper = createObjectMapper();
+
+            WebTarget checkoutWebTarget = this.webTarget.path("payments").path(originalTransactionId).path("cancellation");
+
+            Builder builder = checkoutWebTarget.request(MediaType.APPLICATION_JSON);
+
+            builder.header("Authorization", this.bearerToken);
+            builder.header("X-IBM-Client-Id", this.clientId);
+
+            SibsPayCancellationRequest cancellationRequest = new SibsPayCancellationRequest();
+
+            cancellationRequest.setMerchant(new SibsPayMerchant());
+            cancellationRequest.getMerchant().setTerminalId(this.terminalId);
+            cancellationRequest.getMerchant().setChannel("web");
+            cancellationRequest.getMerchant().setMerchantTransactionId(merchantTransactionId);
+
+            cancellationRequest.setTransaction(new SibsPayTransaction());
+            cancellationRequest.getTransaction().setTransactionTimestamp(new DateTime());
+            cancellationRequest.getTransaction().setPaymentMethod(null);
+            cancellationRequest.getTransaction().setAmount(new SibsPayAmount());
+            cancellationRequest.getTransaction().getAmount().setValue(amount);
+            cancellationRequest.getTransaction().getAmount().setCurrency("EUR");
+
+            cancellationRequest.setOriginalTransaction(new SibsPayOriginalTransaction());
+
+            cancellationRequest.getOriginalTransaction().setId(originalTransactionId);
+            cancellationRequest.getOriginalTransaction().setDatetime(new DateTime().toString("yyyy-MM-dd'T'HH:mm:ss.SSSZZ"));
+
+            requestLog = objectMapper.writeValueAsString(cancellationRequest);
+
+            logger.debug(requestLog);
+
+            Response response = builder.post(Entity.entity(requestLog, MediaType.APPLICATION_JSON));
+
+            responseLog = response.readEntity(String.class);
+            logger.debug(responseLog);
+
+            if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
+                throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog,
+                        "unsuccessful generateSibsPaymentRequestTransaction");
+            }
+
+            SibsPayCancellationResponse cancellationResponse =
+                    objectMapper.readValue(responseLog, SibsPayCancellationResponse.class);
+
+            cancellationResponse.setRequestLog(requestLog);
+            cancellationResponse.setResponseLog(responseLog);
+
+            return cancellationResponse;
         } catch (WebApplicationException var23) {
             responseLog = var23.getResponse().readEntity(String.class);
             throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
