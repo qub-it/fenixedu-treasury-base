@@ -73,12 +73,9 @@ import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentBean;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.logging.LoggingFeature.Verbosity;
 import org.joda.time.DateTime;
-import org.joda.time.Hours;
-import org.joda.time.format.DateTimeFormat;
+import org.joda.time.Days;
 import org.joda.time.format.ISODateTimeFormat;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.datatype.joda.ser.DateTimeSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -98,9 +95,13 @@ public class MeoWalletService {
     private static final String CHECKOUT_PATH = "checkout";
     private static final String OPERATION_PATH = "operations";
 
+    private static final String DELETE_MB_REF_PATH = "mb/reference";
+
     private Feature feature;
     private Client client;
     private WebTarget webTargetBase;
+
+    private String endpointUrl;
     private String token;
 
     public MeoWalletService(String endpointUrl, String token) {
@@ -110,6 +111,8 @@ public class MeoWalletService {
         if (endpointUrl != null) {
             this.webTargetBase = this.client.target(endpointUrl);
         }
+
+        this.endpointUrl = endpointUrl;
         this.token = token;
     }
 
@@ -140,8 +143,9 @@ public class MeoWalletService {
     public MeoWalletPaymentBean generateMBPaymentReference(MeoWalletPaymentBean payment)
             throws OnlinePaymentsGatewayCommunicationException, IOException {
 
-        if (payment.getExpires() != null && Hours.hoursBetween(payment.getExpires(), DateTime.now()).getHours() < 32) {
-            payment.setExpires(payment.getExpires().plusDays(1));
+        int days = Days.daysBetween(DateTime.now(), payment.getExpires()).getDays();
+        if (payment.getExpires() != null && days < 2) {
+            payment.setExpires(payment.getExpires().plusDays(2 - days));
         }
 
         // TODO: Put this in the getGson()
@@ -155,6 +159,29 @@ public class MeoWalletService {
             MeoWalletPaymentBean result = getGson().fromJson(responseLog, MeoWalletPaymentBean.class);
             result.setRequestLog(requestLog);
             result.setResponseLog(responseLog);
+            return result;
+        } catch (WebApplicationException var23) {
+            responseLog = var23.getResponse().readEntity(String.class);
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+        }
+    }
+
+    public MeoWalletPaymentBean deleteMBPaymentReference(String entityCode, String referenceCode)
+            throws OnlinePaymentsGatewayCommunicationException, IOException {
+        String requestLog = String.format("{ \"entity\": \"%s\", \"reference\": \"%s\" }", entityCode, referenceCode);
+
+        String responseLog = processDelete(DELETE_MB_REF_PATH, requestLog);
+
+        try {
+            // Ensure the response is "OK"
+            String operationStatus = getGson().fromJson(responseLog, String.class);
+            boolean operationSuccess = "OK".equals(operationStatus);
+
+            MeoWalletPaymentBean result =
+                    new MeoWalletPaymentBean(entityCode, referenceCode, operationSuccess ? "COMPLETED" : "FAIL");
+            result.setRequestLog(requestLog);
+            result.setResponseLog(responseLog);
+
             return result;
         } catch (WebApplicationException var23) {
             responseLog = var23.getResponse().readEntity(String.class);
@@ -282,6 +309,27 @@ public class MeoWalletService {
 
         String responseLog = builder.header(WS_ACCESS_TOKEN_HEADER, WS_ACCESS_TOKEN_VALUE_PREFIX + token)
                 .post(Entity.json(requestLog)).readEntity(String.class);
+
+        return responseLog;
+    }
+
+    private String processDelete(String path, String requestLog) {
+        /*
+         * ANIL 2024-02-20 : JAXRS does not allow invoke DELETE method with body
+         * 
+         * To workaround, pass the suppressHttpComplianceValidation property
+         */
+
+        Client client = ClientBuilder.newBuilder() //
+                .property("jersey.config.client.suppressHttpComplianceValidation", true) //
+                .register(this.feature).build();
+
+        WebTarget target = client.target(this.endpointUrl).path(path);
+
+        Builder builder = target.request(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
+
+        String responseLog = builder.header(WS_ACCESS_TOKEN_HEADER, WS_ACCESS_TOKEN_VALUE_PREFIX + token)
+                .build("DELETE", Entity.json(requestLog)).invoke(String.class);
 
         return responseLog;
     }

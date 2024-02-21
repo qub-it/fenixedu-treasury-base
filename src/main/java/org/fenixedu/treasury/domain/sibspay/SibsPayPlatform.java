@@ -931,8 +931,17 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean) {
-        // TODO Auto-generated method stub
+        log.setStatusCode(bean.getPaymentResultCode());
+        log.setStatusMessage(bean.getPaymentResultDescription());
+        log.setInternalMerchantTransactionId(bean.getMerchantTransactionId());
+        log.setExternalTransactionId(bean.getTransactionId());
+        log.setOperationSuccess(bean.isOperationSuccess());
+        log.setTransactionWithPayment(bean.isPaid());
 
+        if (bean instanceof SibsPayResponseInquiryWrapper) {
+            log.saveRequest(((SibsPayResponseInquiryWrapper) bean).getRequestLog());
+            log.saveResponse(((SibsPayResponseInquiryWrapper) bean).getResponseLog());
+        }
     }
 
     public void rejectRequest(PaymentRequest paymentRequest, PaymentRequestLog log,
@@ -969,32 +978,40 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
             if (responseInquiryWrapper.isDeclined()) {
                 // Just remove from the pending for annulment
-                FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
-
-                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "DECLINED_REMOVE_FROM_PENDING",
-                        "declined, remove from pending", "", "");
+                FenixFramework.atomic(() -> {
+                    sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "DECLINED_REMOVE_FROM_PENDING",
+                            "declined, remove from pending", "", "").setOperationSuccess(true);
+                });
 
                 return true;
             } else if (responseInquiryWrapper.isExpired()) {
                 // Just remove from the pending for annulment
-                FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+                FenixFramework.atomic(() -> {
+                    sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
+                            "expired, remove from pending", "", "").setOperationSuccess(true);
+                });
 
-                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
-                        "expired, remove from pending", "", "");
                 return true;
             } else if (responseInquiryWrapper.isPaid()) {
                 if (!sibsPaymentRequest.getPaymentTransactionsSet().isEmpty()) {
                     // The payment is processed, just remove from the pending for annulment
-                    FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+                    FenixFramework.atomic(() -> {
+                        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
 
-                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
-                            "paid, remove from pending", "", "");
+                        log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
+                                "paid, remove from pending", "", "").setOperationSuccess(true);
+                    });
 
                     return true;
                 } else {
                     // Do not remove and report that it was not processed
 
-                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_CHECK", "paid, check pending payment", "", "");
+                    FenixFramework.atomic(() -> {
+                        log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_CHECK", "paid, check pending payment", "",
+                                "").setOperationSuccess(false);
+                    });
 
                     return false;
                 }
@@ -1012,12 +1029,25 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 String statusMessage = cancellationResponse.getReturnStatus() != null ? cancellationResponse.getReturnStatus()
                         .getStatusDescription() : "";
 
-                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", statusCode, statusMessage,
-                        cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog());
+                FenixFramework.atomic(() -> {
+                    sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", statusCode, statusMessage,
+                            cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog())
+                                    .setOperationSuccess(true);
 
-                FenixFramework.atomic(() -> sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null));
+                });
 
                 return true;
+            } else {
+                // Unknown state
+
+                FenixFramework.atomic(() -> {
+                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "UNKNOWN_STATE",
+                            "unknown payment result code, please check: " + responseInquiryWrapper.getPaymentResultCode(), "", "")
+                                    .setOperationSuccess(false);
+                });
+
+                return false;
             }
 
         } catch (final Exception e) {
@@ -1036,8 +1066,6 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
             throw new TreasuryDomainException(e, "error.SibsPayPlatform.annulPaymentRequestInPlatform");
         }
-
-        return false;
     }
 
     @Atomic(mode = TxMode.WRITE)

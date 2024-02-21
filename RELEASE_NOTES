@@ -1,4 +1,6 @@
 - Improvement: Allow annulment of Sibs Pay reference MB in the platform [#qubIT-Fenix-4941]
+- Improvement: Allow annulment of mb reference code in MeoWallet [#qubIT-Fenix-4941]
+- Bug Fix: Fix expiry date sent to MeoWallet. The expiry date must be at least two days in future since now [#ISCTE-FENIXEDU-266]
 
 12.9.0 (05-02-2024)
 - Improvement: Mark products as system, in order to not allow the edition and deletion [#UL-REIT-3078]

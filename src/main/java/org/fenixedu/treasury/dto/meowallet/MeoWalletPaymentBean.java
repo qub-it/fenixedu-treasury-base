@@ -70,7 +70,7 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
     private String currency;
 
     private DateTime date;
-    
+
     private DateTime expires;
 
     private String ext_invoiceid;
@@ -100,6 +100,16 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
     private String requestLog;
 
     private String responseLog;
+
+    // This constructor is used for the response of a DELETE MB ref
+    public MeoWalletPaymentBean(String entityCode, String referenceCode, String status) {
+        this.mb = new MeoWalletMbBean();
+
+        this.mb.setEntity(entityCode);
+        this.mb.setRef(referenceCode);
+
+        this.status = status;
+    }
 
     public MeoWalletPaymentBean(BigDecimal payableAmount, String customerName, List<MeoWalletPaymentItemBean> items) {
         this.amount = payableAmount;
@@ -149,11 +159,11 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
     public void setDate(DateTime date) {
         this.date = date;
     }
-    
+
     public DateTime getExpires() {
         return expires;
     }
-    
+
     public void setExpires(DateTime expires) {
         this.expires = expires;
     }
@@ -334,7 +344,19 @@ public class MeoWalletPaymentBean implements DigitalPlatformResultBean {
     public boolean isPaid() {
         return MeoWallet.STATUS_COMPLETED.equals(getStatus());
     }
-    
+
+    public boolean isPending() {
+        return MeoWallet.STATUS_PENDING.equals(getStatus());
+    }
+
+    public boolean isVoided() {
+        return MeoWallet.STATUS_VOIDED.equals(getStatus());
+    }
+
+    public boolean isFailed() {
+        return MeoWallet.STATUS_FAIL.equals(getStatus());
+    }
+
     @Override
     public boolean isOperationSuccess() {
         return !MeoWallet.STATUS_FAIL.equals(getStatus());

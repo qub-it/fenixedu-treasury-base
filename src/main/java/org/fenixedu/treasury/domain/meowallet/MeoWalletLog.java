@@ -84,6 +84,7 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         this();
         setPaymentRequest(paymentRequest);
         setStatusCode(statusCode);
+        setStatusMessage(statusCode);
         setStateDescription(stateDescription);
     }
 
@@ -122,6 +123,7 @@ public class MeoWalletLog extends MeoWalletLog_Base {
         setPaymentMethod(method);
         setAmount(amount);
         setStatusCode(status);
+        setStatusMessage(status);
         setOperationSuccess(operationSucess);
     }
 

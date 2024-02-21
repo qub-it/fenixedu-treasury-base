@@ -117,6 +117,7 @@ public class MeoWallet extends MeoWallet_Base
     public static final String STATUS_FAIL = "FAIL";
     public static final String STATUS_COMPLETED = "COMPLETED";
     public static final String STATUS_VOIDED = "VOIDED";
+    public static final String STATUS_PENDING = "PENDING";
 
     public MeoWallet() {
         super();
@@ -458,7 +459,7 @@ public class MeoWallet extends MeoWallet_Base
             }
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
     }
 
     @Override
@@ -482,7 +483,7 @@ public class MeoWallet extends MeoWallet_Base
             }
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
     }
 
     @Override
@@ -524,7 +525,7 @@ public class MeoWallet extends MeoWallet_Base
 
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount,
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount,
                 settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate());
     }
 
@@ -552,10 +553,10 @@ public class MeoWallet extends MeoWallet_Base
             }
         }
 
-        return createPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
+        return createSibsPaymentRequest(debtAccount, debitEntries, installments, validTo, payableAmount, false);
     }
 
-    private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
+    private SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount,
             boolean limitSibsPaymentRequestToValidTo) {
 
@@ -1194,8 +1195,82 @@ public class MeoWallet extends MeoWallet_Base
 
     @Override
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
-        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
-        return true;
-    }
+        try {
 
+            // 1. First check the state of the sibsPaymentRequest in the platform and infer if the request is paid
+            List<? extends DigitalPlatformResultBean> paymentTransactionsReportListByMerchantId =
+                    getPaymentTransactionsReportListByMerchantId(sibsPaymentRequest.getMerchantTransactionId());
+
+            for (DigitalPlatformResultBean digitalPlatformResultBean : paymentTransactionsReportListByMerchantId) {
+                MeoWalletPaymentBean paymentBean = (MeoWalletPaymentBean) digitalPlatformResultBean;
+
+                if (digitalPlatformResultBean.isPaid()) {
+                    if (!sibsPaymentRequest.getPaymentTransactionsSet().isEmpty()) {
+                        // The payment is processed, just remove from the pending for annulment
+                        FenixFramework.atomic(() -> {
+                            sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                            log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
+                                    "paid, remove from pending", "", "").setOperationSuccess(true);
+                        });
+
+                        return true;
+                    } else {
+                        // Do not remove and report that it was not processed
+
+                        FenixFramework.atomic(() -> log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_CHECK",
+                                "paid, check pending payment", "", "").setOperationSuccess(false));
+
+                        return false;
+                    }
+                } else if (paymentBean.isFailed() || paymentBean.isVoided()) {
+                    // Just remove from the pending for annulment
+                    FenixFramework.atomic(() -> {
+                        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                        log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
+                                "expired, remove from pending", "", "").setOperationSuccess(true);
+                    });
+
+                    return true;
+                } else if (paymentBean.isPending()) {
+                    MeoWalletPaymentBean meoWalletPaymentBean = getMeoWalletService().deleteMBPaymentReference(
+                            sibsPaymentRequest.getEntityReferenceCode(), sibsPaymentRequest.getReferenceCode());
+
+                    if (STATUS_COMPLETED.equals(meoWalletPaymentBean.getStatus())) {
+                        FenixFramework.atomic(() -> {
+                            sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+
+                            log(sibsPaymentRequest, "annulPaymentRequestInPlatform", meoWalletPaymentBean.getStatus(),
+                                    meoWalletPaymentBean.getStatus(), meoWalletPaymentBean.getRequestLog(),
+                                    meoWalletPaymentBean.getResponseLog()).setOperationSuccess(true);
+                        });
+                        return true;
+                    } else {
+                        FenixFramework.atomic(
+                                () -> log(sibsPaymentRequest, "annulPaymentRequestInPlatform", meoWalletPaymentBean.getStatus(),
+                                        meoWalletPaymentBean.getStatus(), meoWalletPaymentBean.getRequestLog(),
+                                        meoWalletPaymentBean.getResponseLog()).setOperationSuccess(false));
+                    }
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(sibsPaymentRequest, e, "processForwardPaymentFromWebhook", "error", "error", requestBody,
+                        responseBody);
+            });
+
+            throw new TreasuryDomainException(e,
+                    "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
+        }
+
+    }
 }
