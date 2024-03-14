@@ -1,3 +1,4 @@
+12.11.0 (14-03-2024)
 - Refactor: Do not check if product of credit entry is the same of debit entry, for migration series of document (LEG) [#qubIT-Fenix-4980]
 - Refactor: Add method factory to create adhoc customers without validation, for importation purposes [#qubIT-Fenix-4980]
 - Refactor: Fix typo in error message set in exception [#qubIT-Fenix-4980]
