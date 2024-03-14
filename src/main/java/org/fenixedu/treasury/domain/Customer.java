@@ -71,7 +71,6 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
-import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
@@ -87,7 +86,7 @@ public abstract class Customer extends Customer_Base {
 
     public static final String DEFAULT_FISCAL_NUMBER = "999999990";
     public static final int MAX_CODE_LENGHT = 20;
-    
+
     public static final int MAX_NAME_LENGTH = 100;
 
     public static final Comparator<Customer> COMPARE_BY_NAME_IGNORE_CASE = (o1, o2) -> {
@@ -169,11 +168,11 @@ public abstract class Customer extends Customer_Base {
         }
 
         if (this.getCode().length() > Customer.MAX_CODE_LENGHT) {
-            throw new TreasuryDomainException("error.Customer.code.maxlenght");
+            throw new TreasuryDomainException("error.Customer.code.maxlength");
         }
-        
-        if(getName().length() > Customer.MAX_NAME_LENGTH) {
-            throw new TreasuryDomainException("error.Customer.name.maxlenght");
+
+        if (getName().length() > Customer.MAX_NAME_LENGTH) {
+            throw new TreasuryDomainException("error.Customer.name.maxlength");
         }
 
         if (Strings.isNullOrEmpty(getFiscalNumber().trim())) {
@@ -302,8 +301,8 @@ public abstract class Customer extends Customer_Base {
         if (!Strings.isNullOrEmpty(getErpCustomerId())) {
             return false;
         }
-        
-        if(isWithFinantialDocumentsCertified()) {
+
+        if (isWithFinantialDocumentsCertified()) {
             return false;
         }
 
@@ -322,14 +321,14 @@ public abstract class Customer extends Customer_Base {
         for (final DebtAccount debtAccount : getDebtAccountsSet()) {
 
             for (final FinantialDocument finantialDocument : debtAccount.getFinantialDocumentsSet()) {
-                if(TreasuryPlataformDependentServicesFactory.implementation().hasCertifiedDocument(finantialDocument)) {
+                if (TreasuryPlataformDependentServicesFactory.implementation().hasCertifiedDocument(finantialDocument)) {
                     return true;
                 }
             }
 
             /* Payor debt account associated invoices */
             for (Invoice invoice : debtAccount.getInvoiceSet()) {
-                if(TreasuryPlataformDependentServicesFactory.implementation().hasCertifiedDocument(invoice)) {
+                if (TreasuryPlataformDependentServicesFactory.implementation().hasCertifiedDocument(invoice)) {
                     return true;
                 }
             }
@@ -364,8 +363,7 @@ public abstract class Customer extends Customer_Base {
                 if (!Strings.isNullOrEmpty(invoice.getErpCertificateDocumentReference())) {
                     return true;
                 }
-                
-                
+
                 for (final ERPExportOperation erpExportOperation : invoice.getErpExportOperationsSet()) {
                     if (erpExportOperation.getSuccess()) {
                         return true;

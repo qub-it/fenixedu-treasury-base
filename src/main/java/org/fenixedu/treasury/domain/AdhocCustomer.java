@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.domain;
 
 import static org.fenixedu.treasury.util.FiscalCodeValidation.isValidFiscalNumber;
-import static org.fenixedu.treasury.util.FiscalCodeValidation.isValidationAppliedToFiscalCountry;
 import static org.fenixedu.treasury.util.TreasuryConstants.isDefaultCountry;
 
 import java.math.BigDecimal;
@@ -67,8 +66,8 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.AdhocCustomerBean;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -398,6 +397,30 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             final List<FinantialInstitution> finantialInstitutions) {
         return new AdhocCustomer(customerType, fiscalNumber, name, address, districtSubdivision, region, zipCode,
                 addressCountryCode, identificationNumber, finantialInstitutions);
+    }
+
+    // ANIL 2024-03-11: Bypass checkrules in order to import customers with duplicated fiscal number
+    public static AdhocCustomer createForImportation(String code, CustomerType customerType, String fiscalNumber, String name,
+            String address, String districtSubdivision, String region, String zipCode, String addressCountryCode,
+            String identificationNumber, List<FinantialInstitution> finantialInstitutions) {
+        AdhocCustomer result = new AdhocCustomer();
+
+        result.setCode(code);
+        result.setCustomerType(customerType);
+        result.setFiscalNumber(fiscalNumber);
+        result.setName(name);
+        result.setAddress(address);
+        result.setRegion(region);
+        result.setDistrictSubdivision(districtSubdivision);
+        result.setZipCode(zipCode);
+
+        result.setAddressCountryCode(addressCountryCode.toUpperCase());
+
+        result.setIdentificationNumber(identificationNumber);
+
+        result.registerFinantialInstitutions(finantialInstitutions);
+
+        return result;
     }
 
     public static Stream<AdhocCustomer> findAll() {

@@ -1,3 +1,7 @@
+- Refactor: Do not check if product of credit entry is the same of debit entry, for migration series of document (LEG) [#qubIT-Fenix-4980]
+- Refactor: Add method factory to create adhoc customers without validation, for importation purposes [#qubIT-Fenix-4980]
+- Refactor: Fix typo in error message set in exception [#qubIT-Fenix-4980]
+
 12.10.0 (21-02-2024)
 - Improvement: Allow annulment of Sibs Pay reference MB in the platform [#qubIT-Fenix-4941]
 - Improvement: Allow annulment of mb reference code in MeoWallet [#qubIT-Fenix-4941]

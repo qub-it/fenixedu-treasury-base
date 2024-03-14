@@ -122,7 +122,9 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         if (getDebitEntry() != null && getDebitEntry().getProduct() != getProduct()) {
-            throw new TreasuryDomainException("error.CreditEntry.product.must.be.the.same.as.debit.entry");
+            if (getFinantialDocument() == null || !getFinantialDocument().getDocumentNumberSeries().getSeries().isLegacy()) {
+                throw new TreasuryDomainException("error.CreditEntry.product.must.be.the.same.as.debit.entry");
+            }
         }
 
         /* If it is from exemption then ensure that there is no credit entries
