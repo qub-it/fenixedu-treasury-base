@@ -117,7 +117,9 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
 
         Currency currency = settlementNoteBean.getDebtAccount().getFinantialInstitution().getCurrency();
 
-        String title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Calculated_interests");
+        String title = interestEntryBean.getInterest().getInterestRateType().getUiVirtualInterestHandlerCalculatedInterestsTitle()
+                .getContent();
+
         List<String> lines = new ArrayList<>();
         for (final InterestInformationDetail detail : interestEntryBean.getInterest().getInterestInformationList()) {
             if (detail.getBegin() != null && detail.getEnd() != null) {
@@ -137,7 +139,8 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         map.put(title, lines);
 
         if (!interestEntryBean.getInterest().getCreatedInterestEntriesList().isEmpty()) {
-            title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Created_interests");
+            title = interestEntryBean.getInterest().getInterestRateType().getUiVirtualInterestHandlerCreatedInterestsTitle()
+                    .getContent();
 
             lines = new ArrayList<>();
             for (final CreatedInterestEntry entry : interestEntryBean.getInterest().getCreatedInterestEntriesList()) {

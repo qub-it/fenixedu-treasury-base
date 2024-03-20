@@ -86,6 +86,16 @@ public abstract class InterestRateType extends InterestRateType_Base {
         return getPresentationName(getClass());
     }
 
+    // Used with VirtualInterestHandler
+    public LocalizedString getUiVirtualInterestHandlerCreatedInterestsTitle() {
+        return TreasuryConstants.treasuryBundleI18N("label.VirtualInterestHandler.Created_interests");
+    }
+
+    // Used with VirtualInterestHandler
+    public LocalizedString getUiVirtualInterestHandlerCalculatedInterestsTitle() {
+        return TreasuryConstants.treasuryBundleI18N("label.VirtualInterestHandler.Calculated_interests");
+    }
+
     public void activate() {
         TreasurySettings.getInstance().getAvailableInterestRateTypesSet().add(this);
     }
