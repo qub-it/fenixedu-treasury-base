@@ -117,8 +117,14 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
 
         Currency currency = settlementNoteBean.getDebtAccount().getFinantialInstitution().getCurrency();
 
-        String title = interestEntryBean.getInterest().getInterestRateType().getUiVirtualInterestHandlerCalculatedInterestsTitle()
-                .getContent();
+        String title = "";
+
+        if (interestEntryBean.getInterest().getInterestRateType() != null) {
+            title = interestEntryBean.getInterest().getInterestRateType().getUiVirtualInterestHandlerCalculatedInterestsTitle()
+                    .getContent();
+        } else {
+            title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Calculated_interests");
+        }
 
         List<String> lines = new ArrayList<>();
         for (final InterestInformationDetail detail : interestEntryBean.getInterest().getInterestInformationList()) {
@@ -139,8 +145,15 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
         map.put(title, lines);
 
         if (!interestEntryBean.getInterest().getCreatedInterestEntriesList().isEmpty()) {
-            title = interestEntryBean.getInterest().getInterestRateType().getUiVirtualInterestHandlerCreatedInterestsTitle()
-                    .getContent();
+
+            title = "";
+
+            if (interestEntryBean.getInterest().getInterestRateType() != null) {
+                title = interestEntryBean.getInterest().getInterestRateType().getUiVirtualInterestHandlerCreatedInterestsTitle()
+                        .getContent();
+            } else {
+                title = TreasuryConstants.treasuryBundle("label.VirtualInterestHandler.Created_interests");
+            }
 
             lines = new ArrayList<>();
             for (final CreatedInterestEntry entry : interestEntryBean.getInterest().getCreatedInterestEntriesList()) {
