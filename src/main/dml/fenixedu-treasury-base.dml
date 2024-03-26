@@ -463,6 +463,8 @@ class document.FinantialDocumentEntry {
 		BigDecimalT netAmount;
 		BigDecimalT amountWithVat;
 		
+		BigDecimalT netExemptedAmount;
+		
 		// With this property set to true, the netAmount, vatAmount, vatRate and
 		// amountWithVat can be overriden
 		//

@@ -498,4 +498,16 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return getOpenAmountWithInterests();
     }
 
+    // TODO ANIL 2024-03-26: Remove as soon as DebitEntry#exemptedAmount is
+    // replaced by InvoiceEntry#netExemptedAmount
+    public BigDecimal getInvoiceEntryNetExemptedAmount() {
+        return super.getNetExemptedAmount();
+    }
+
+    // TODO ANIL 2024-03-26: Remove as soon as DebitEntry#exemptedAmount is
+    // replaced by InvoiceEntry#netExemptedAmount
+    public void setInvoiceEntryNetExemptedAmount(BigDecimal netExemptedAmount) {
+        super.setNetExemptedAmount(netExemptedAmount);
+    }
+
 }

@@ -117,7 +117,7 @@ public class CreditEntry extends CreditEntry_Base {
             throw new TreasuryDomainException("error.CreditEntry.finantialDocument.not.credit.entry.type");
         }
         // If from exemption then ensure debit entry is not null and the product is the same
-        if (getFromExemption() == true && getDebitEntry() == null) {
+        if (getFromExemption() && getDebitEntry() == null) {
             throw new TreasuryDomainException("error.CreditEntry.from.exemption.requires.debit.entry");
         }
 
@@ -131,7 +131,7 @@ public class CreditEntry extends CreditEntry_Base {
          * from exemption created.
          */
 
-        if (getFromExemption() == true && getTreasuryExemption() == null) {
+        if (getFromExemption() && getTreasuryExemption() == null) {
             throw new TreasuryDomainException("error.CreditEntry.from.exemption.at.most.one.per.debit.entry");
         }
 

@@ -827,6 +827,7 @@ public class DebitEntry extends DebitEntry_Base {
     // TODO deprecated - this should be renamed as netExemptedAmount         
     public void setExemptedAmount(BigDecimal exemptedAmount) {
         super.setExemptedAmount(exemptedAmount);
+        super.setNetExemptedAmount(exemptedAmount);
     }
 
     // TODO: Replace exemptedAmount this by this
@@ -837,6 +838,7 @@ public class DebitEntry extends DebitEntry_Base {
     // TODO: Replace exemptedAmount this by this
     public void setNetExemptedAmount(BigDecimal exemptedAmount) {
         super.setExemptedAmount(exemptedAmount);
+        super.setNetExemptedAmount(exemptedAmount);
     }
 
     public boolean isTotallyExempted() {
