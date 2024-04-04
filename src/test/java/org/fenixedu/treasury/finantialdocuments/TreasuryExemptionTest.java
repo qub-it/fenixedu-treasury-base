@@ -295,7 +295,7 @@ public class TreasuryExemptionTest {
         assertEquals("Exemption Exempted amount not equals", new BigDecimal(100), exemption.getNetExemptedAmount());
         assertEquals("Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getNetExemptedAmount().setScale(0));
         assertEquals("Debit Entry Available amount not equals", new BigDecimal(900.00).setScale(2),
-                debitEntry.getAvailableAmountForCredit());
+                debitEntry.getAvailableAmountWithVatForCredit());
         assertEquals("Credit Entry Exempted amount not equals", new BigDecimal(100),
                 exemption.getCreditEntry().getTotalAmount().setScale(0));
 
@@ -306,7 +306,7 @@ public class TreasuryExemptionTest {
         assertEquals("1 Exemption Exempted amount not equals", new BigDecimal(100), exemption1.getNetExemptedAmount());
         assertEquals("1 Debit Entry Exempted amount not equals", BigDecimal.ZERO, debitEntry.getNetExemptedAmount().setScale(0));
         assertEquals("1 Debit Entry Available amount not equals", new BigDecimal(800.00).setScale(2),
-                debitEntry.getAvailableAmountForCredit());
+                debitEntry.getAvailableAmountWithVatForCredit());
         assertEquals("1 Credit Entry Exempted amount not equals", new BigDecimal(100),
                 exemption1.getCreditEntry().getTotalAmount().setScale(0));
 //        assertEquals("1 Credit Entry Exempted state not equals", FinantialDocumentStateType.PREPARING,

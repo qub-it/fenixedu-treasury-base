@@ -307,7 +307,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 final DebitEntry debitEntry = (DebitEntry) objectEntry;
 
                 final BigDecimal openAmount = debitEntry.getOpenAmount();
-                final BigDecimal availableCreditAmount = debitEntry.getAvailableAmountForCredit();
+                final BigDecimal availableCreditAmount = debitEntry.getAvailableAmountWithVatForCredit();
 
                 DebitEntry destinyDebitEntry = null;
                 SettlementEntry destinySettlementEntry = null;

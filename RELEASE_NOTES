@@ -1,3 +1,6 @@
+- Refactor: Remove DebitEntry#exemptedAmount and replace by InvoiceEntry#netExemptedAmount [#qubIT-Fenix-5105]
+- Refactor: Replace DebitEntry#getAvailableAmountForCredit by DebitEntry#getAvailableAmountWithVatForCredit [#qubIT-Fenix-5106]
+
 12.13.0 (26-03-2024)
 - Refactor: Add InvoiceEntry#netExemptedAmount to replace DebitEntry#exemptedAmount in the future [#qubIT-Fenix-5104]
 

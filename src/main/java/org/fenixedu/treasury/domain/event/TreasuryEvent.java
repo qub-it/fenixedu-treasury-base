@@ -501,7 +501,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
             final DebitEntry debitEntry = DebitEntry.findActive(this).map(DebitEntry.class::cast).findFirst().get();
 
             if (debitEntry.isProcessedInClosedDebitNote()
-                    && TreasuryConstants.isEqual(debitEntry.getAvailableAmountForCredit(), BigDecimal.ZERO)) {
+                    && TreasuryConstants.isEqual(debitEntry.getAvailableAmountWithVatForCredit(), BigDecimal.ZERO)) {
                 debitEntry.annulOnEvent();
                 continue;
             }

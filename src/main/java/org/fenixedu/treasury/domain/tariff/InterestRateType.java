@@ -124,14 +124,14 @@ public abstract class InterestRateType extends InterestRateType_Base {
                 continue;
             }
 
-            if (!TreasuryConstants.isPositive(interestDebitEntry.getAvailableAmountForCredit())) {
+            if (!TreasuryConstants.isPositive(interestDebitEntry.getAvailableAmountWithVatForCredit())) {
                 continue;
             }
 
             LocalDate interestEntryDateTime = interestDebitEntry.getEntryDateTime().toLocalDate();
             result.putIfAbsent(interestEntryDateTime, BigDecimal.ZERO);
             result.put(interestEntryDateTime,
-                    result.get(interestEntryDateTime).add(interestDebitEntry.getAvailableAmountForCredit()));
+                    result.get(interestEntryDateTime).add(interestDebitEntry.getAvailableAmountWithVatForCredit()));
         }
 
         return result;

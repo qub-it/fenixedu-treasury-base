@@ -546,8 +546,9 @@ public class DebitNote extends DebitNote_Base {
                     continue;
                 }
 
-                final BigDecimal amountForCreditWithoutVat = interestEntry.getCurrency().getValueWithScale(TreasuryConstants
-                        .divide(interestEntry.getAvailableAmountForCredit(), BigDecimal.ONE.add(rationalVatRate(interestEntry))));
+                final BigDecimal amountForCreditWithoutVat =
+                        Currency.getValueWithScale(TreasuryConstants.divide(interestEntry.getAvailableAmountWithVatForCredit(),
+                                BigDecimal.ONE.add(rationalVatRate(interestEntry))));
 
                 if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !interestEntry.getTreasuryExemptionsSet().isEmpty()) {
                     continue;

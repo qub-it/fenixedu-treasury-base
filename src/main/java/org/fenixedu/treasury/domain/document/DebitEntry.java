@@ -264,7 +264,6 @@ public class DebitEntry extends DebitEntry_Base {
         setTreasuryEvent(treasuryEvent);
         setDueDate(dueDate);
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
-        setNetExemptedAmount(BigDecimal.ZERO);
         setInterestRate(interestRate);
 
         /*
@@ -815,32 +814,6 @@ public class DebitEntry extends DebitEntry_Base {
         return settlementNote.get().getPaymentDate();
     }
 
-    @Override
-    @Deprecated
-    // TODO deprecated - this should be renamed as netExemptedAmount         
-    public BigDecimal getExemptedAmount() {
-        return super.getExemptedAmount();
-    }
-
-    @Override
-    @Deprecated
-    // TODO deprecated - this should be renamed as netExemptedAmount         
-    public void setExemptedAmount(BigDecimal exemptedAmount) {
-        super.setExemptedAmount(exemptedAmount);
-        super.setNetExemptedAmount(exemptedAmount);
-    }
-
-    // TODO: Replace exemptedAmount this by this
-    public BigDecimal getNetExemptedAmount() {
-        return super.getExemptedAmount();
-    }
-
-    // TODO: Replace exemptedAmount this by this
-    public void setNetExemptedAmount(BigDecimal exemptedAmount) {
-        super.setExemptedAmount(exemptedAmount);
-        super.setNetExemptedAmount(exemptedAmount);
-    }
-
     public boolean isTotallyExempted() {
         return TreasuryConstants.isPositive(getNetExemptedAmount()) && !TreasuryConstants.isPositive(getNetAmount());
     }
@@ -986,30 +959,24 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
-    @Deprecated
-    // TODO: Replace by getTotalCreditedAmountWithVat
-    public BigDecimal getTotalCreditedAmount() {
+    public BigDecimal getTotalCreditedAmountWithVat() {
         BigDecimal totalCreditedAmount = BigDecimal.ZERO;
-        for (CreditEntry credits : this.getCreditEntriesSet()) {
-            if (credits.getFinantialDocument() == null || !credits.getFinantialDocument().isAnnulled()) {
-                totalCreditedAmount = totalCreditedAmount.add(credits.getTotalAmount());
+        for (CreditEntry creditEntry : this.getCreditEntriesSet()) {
+            if (creditEntry.getFinantialDocument() == null || !creditEntry.getFinantialDocument().isAnnulled()) {
+                totalCreditedAmount = totalCreditedAmount.add(creditEntry.getTotalAmount());
             }
         }
-        return this.getCurrency().getValueWithScale(totalCreditedAmount);
+        return Currency.getValueWithScale(totalCreditedAmount);
     }
 
-    public BigDecimal getTotalCreditedAmountWithVat() {
-        return getTotalCreditedAmount();
-    }
-
-    @Deprecated
-    // TODO: Replace by getAvailableAmountWithVatForCredit
-    public BigDecimal getAvailableAmountForCredit() {
-        return this.getCurrency().getValueWithScale(this.getTotalAmount().subtract(getTotalCreditedAmount()));
-    }
+//    @Deprecated
+//    // TODO: Replace by getAvailableAmountWithVatForCredit
+//    public BigDecimal getAvailableAmountForCredit() {
+//        return getAvailableAmountWithVatForCredit();
+//    }
 
     public BigDecimal getAvailableAmountWithVatForCredit() {
-        return getAvailableAmountForCredit();
+        return Currency.getValueWithScale(this.getTotalAmount().subtract(getTotalCreditedAmountWithVat()));
     }
 
     public BigDecimal getAvailableNetAmountForCredit() {
@@ -1516,6 +1483,24 @@ public class DebitEntry extends DebitEntry_Base {
                 .filter(request -> request.isInCreatedState() || request.isInRequestedState()) //
                 .filter(request -> request instanceof SibsPaymentRequest)
                 .forEach(request -> ((SibsPaymentRequest) request).anull());
+    }
+
+    @Override
+    public void setNetExemptedAmount(BigDecimal netExemptedAmount) {
+        super.setNetExemptedAmount(netExemptedAmount);
+        super.setExemptedAmount(netExemptedAmount);
+    }
+
+    @Override
+    @Deprecated
+    public BigDecimal getExemptedAmount() {
+        return super.getExemptedAmount();
+    }
+
+    @Override
+    @Deprecated
+    public void setExemptedAmount(BigDecimal exemptedAmount) {
+        super.setExemptedAmount(exemptedAmount);
     }
 
     // @formatter:off

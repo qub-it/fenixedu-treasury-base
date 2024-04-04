@@ -136,7 +136,7 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         if (this.getDebitEntry() != null) {
-            if (TreasuryConstants.isGreaterThan(this.getDebitEntry().getTotalCreditedAmount(),
+            if (TreasuryConstants.isGreaterThan(this.getDebitEntry().getTotalCreditedAmountWithVat(),
                     this.getDebitEntry().getTotalAmount())) {
                 throw new TreasuryDomainException("error.CreditEntry.reated.debit.entry.invalid.total.credited.amount");
             }
