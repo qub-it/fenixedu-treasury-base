@@ -60,13 +60,17 @@ import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
+import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.CreditNote;
@@ -89,11 +93,15 @@ import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
@@ -236,8 +244,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         final DebtAccount payorDebtAccount =
                 creditEntry.getFinantialDocument() != null && ((Invoice) creditEntry.getFinantialDocument())
                         .isForPayorDebtAccount() ? ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() : null;
-        DebitEntry regulationDebitEntry = DebitNote.createBalanceTransferDebit(fromDebtAccount, now, now.toLocalDate(),
-                originNumber, creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), null,
+        DebitEntry regulationDebitEntry = createBalanceTransferDebit(fromDebtAccount, now, now.toLocalDate(), originNumber,
+                creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), null,
                 invoiceEntry.getFinantialEntity());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
@@ -253,7 +261,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
         regulationDebitEntry.getFinantialDocument().closeDocument();
         CreditEntry regulationCreditEntry =
-                CreditNote.createBalanceTransferCredit(this.destinyDebtAccount, now, originNumber, creditEntry.getProduct(),
+                createBalanceTransferCredit(this.destinyDebtAccount, now, originNumber, creditEntry.getProduct(),
                         creditOpenAmount, payorDebtAccount, creditEntry.getDescription(), creditEntry.getFinantialEntity());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
@@ -318,7 +326,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                     final BigDecimal openAmountWithoutVat = debitEntry.getCurrency().getValueWithScale(
                             TreasuryConstants.divide(openAmount, BigDecimal.ONE.add(rationalVatRate(debitEntry))));
                     final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null, null,
-                            openAmountWithoutVat, null, null);
+                            openAmountWithoutVat, null, null, Collections.emptyMap());
 
                     if (newCreditEntry.getFinantialDocument().isPreparing()) {
                         newCreditEntry.getFinantialDocument().closeDocument();
@@ -332,9 +340,9 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
                 } else {
 
-                    final CreditEntry regulationCreditEntry = CreditNote.createBalanceTransferCredit(this.fromDebtAccount, now,
-                            objectDebitNote.getUiDocumentNumber(), debitEntry.getProduct(), openAmount, payorDebtAccount, null,
-                            debitEntry.getFinantialEntity());
+                    final CreditEntry regulationCreditEntry =
+                            createBalanceTransferCredit(this.fromDebtAccount, now, objectDebitNote.getUiDocumentNumber(),
+                                    debitEntry.getProduct(), openAmount, payorDebtAccount, null, debitEntry.getFinantialEntity());
 
                     if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
@@ -357,7 +365,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                             regulationCreditEntry.getDescription(), now, false);
 
                     final DebitEntry regulationDebitEntry =
-                            DebitNote.createBalanceTransferDebit(this.destinyDebtAccount, debitEntry.getEntryDateTime(),
+                            createBalanceTransferDebit(this.destinyDebtAccount, debitEntry.getEntryDateTime(),
                                     debitEntry.getDueDate(), regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(),
                                     debitEntry.getProduct(), openAmount, payorDebtAccount, debitEntry.getDescription(),
                                     debitEntry.getInterestRate(), debitEntry.getFinantialEntity());
@@ -443,6 +451,65 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
     @Override
     public boolean isAutoTransferInSwitchDebtAccountsEnabled() {
         return false;
+    }
+
+    @Deprecated
+    // TODO ANIL 2024-01-17 : This is to be discontinued
+    private static CreditEntry createBalanceTransferCredit(final DebtAccount debtAccount, final DateTime documentDate,
+            final String originNumber, final Product product, final BigDecimal amountWithVat, final DebtAccount payorDebtAccount,
+            String entryDescription, FinantialEntity finantialEntity) {
+
+        final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        final Series regulationSeries = finantialInstitution.getRegulationSeries();
+        final DocumentNumberSeries numberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), regulationSeries);
+        final Vat transferVat = Vat.findActiveUnique(product.getVatType(), finantialInstitution, documentDate).get();
+
+        if (Strings.isNullOrEmpty(entryDescription)) {
+            entryDescription = product.getName().getContent();
+        }
+
+        final CreditNote creditNote = CreditNote.create(debtAccount, numberSeries, documentDate, null, originNumber);
+
+        final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
+                TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
+
+        CreditEntry entry = CreditEntry.create(finantialEntity, creditNote, entryDescription, product, transferVat,
+                amountWithoutVat, documentDate, BigDecimal.ONE);
+
+        creditNote.editPayorDebtAccount(payorDebtAccount);
+
+        if (finantialInstitution.isToCloseCreditNoteWhenCreated()) {
+            creditNote.closeDocument();
+        }
+
+        return entry;
+    }
+
+    @Deprecated
+    // TODO ANIL 2024-01-17 : This is to be discontinued
+    private static DebitEntry createBalanceTransferDebit(final DebtAccount debtAccount, final DateTime entryDate,
+            final LocalDate dueDate, final String originNumber, final Product product, final BigDecimal amountWithVat,
+            final DebtAccount payorDebtAccount, String entryDescription, final InterestRate interestRate,
+            FinantialEntity finantialEntity) {
+        final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        final Series regulationSeries = finantialInstitution.getRegulationSeries();
+        final DocumentNumberSeries numberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), regulationSeries);
+        final Vat transferVat = Vat.findActiveUnique(product.getVatType(), finantialInstitution, entryDate).get();
+
+        if (Strings.isNullOrEmpty(entryDescription)) {
+            entryDescription = product.getName().getContent();
+        }
+
+        final DebitNote debitNote = DebitNote.create(debtAccount, payorDebtAccount, numberSeries, new DateTime(),
+                new DateTime().toLocalDate(), originNumber);
+
+        final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
+                TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
+
+        return DebitEntry.create(finantialEntity, debtAccount, null, transferVat, amountWithoutVat, dueDate, Maps.newHashMap(),
+                product, entryDescription, BigDecimal.ONE, interestRate, entryDate, false, false, debitNote);
     }
 
 }

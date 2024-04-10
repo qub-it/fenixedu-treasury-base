@@ -96,10 +96,12 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.ERPCustomerFieldsBean;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
+import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.PaymentEntry;
 import org.fenixedu.treasury.domain.document.ReimbursementEntry;
+import org.fenixedu.treasury.domain.document.ReimbursementUtils;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
@@ -2139,7 +2141,7 @@ public class SAPExporter implements IERPExporter {
                     .getFinantialDocument();
 
             if (!creditNote.isAdvancePayment()) {
-                creditNote.anullReimbursementCreditNoteAndCopy(
+                anullReimbursementCreditNoteAndCopy(creditNote,
                         treasuryBundle("error.SettlementNote.reimbursement.rejected.reason"));
             }
 
@@ -2281,6 +2283,54 @@ public class SAPExporter implements IERPExporter {
         }
 
         return operation;
+    }
+
+    private static CreditNote anullReimbursementCreditNoteAndCopy(CreditNote creditNoteToAnnul, final String annuledReason) {
+        if (!creditNoteToAnnul.isClosed()) {
+            throw new TreasuryDomainException(
+                    "error.CreditNote.anullReimbursementCreditNoteAndCopy.copy.only.on.closed.credit.note");
+        }
+
+        if (!creditNoteToAnnul.isRelatedToReimbursement()) {
+            throw new TreasuryDomainException("error.CreditNote.creditNote.not.from.reimbursement");
+        }
+
+        if (creditNoteToAnnul.isAdvancePayment()) {
+            throw new TreasuryDomainException("error.CreditNote.annulment.over.advance.payment.not.possible");
+        }
+
+        if (ReimbursementUtils.isCreditNoteSettledWithPayment(creditNoteToAnnul)) {
+            throw new TreasuryDomainException("error.CreditNote.annulment.over.credit.with.payments.not.possible");
+        }
+
+        creditNoteToAnnul.setState(FinantialDocumentStateType.ANNULED);
+        creditNoteToAnnul.setAnnulledReason(annuledReason);
+        creditNoteToAnnul.setAnnullmentDate(new DateTime());
+
+        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        creditNoteToAnnul.setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
+
+        final CreditNote result =
+                CreditNote.create(creditNoteToAnnul.getDebtAccount(), creditNoteToAnnul.getDocumentNumberSeries(), new DateTime(),
+                        creditNoteToAnnul.getDebitNote(), creditNoteToAnnul.getOriginDocumentNumber());
+
+        for (final CreditEntry creditEntry : creditNoteToAnnul.getCreditEntriesSet()) {
+            if (creditEntry.isFromExemption()) {
+                CreditEntry.createFromExemption(creditEntry.getTreasuryExemption(), result, creditEntry.getDescription(),
+                        creditEntry.getAmount(), new DateTime(), creditEntry.getQuantity());
+            } else if (creditEntry.getDebitEntry() != null) {
+                CreditEntry.create(result, creditEntry.getDescription(), creditEntry.getProduct(), creditEntry.getVat(),
+                        creditEntry.getAmount(), new DateTime(), creditEntry.getDebitEntry(), creditEntry.getQuantity(),
+                        creditEntry.getCreditedExemptionsMap());
+            } else {
+                CreditEntry.create(creditEntry.getFinantialEntity(), result, creditEntry.getDescription(),
+                        creditEntry.getProduct(), creditEntry.getVat(), creditEntry.getAmount(), new DateTime(),
+                        creditEntry.getQuantity());
+            }
+
+        }
+
+        return result;
     }
 
 }

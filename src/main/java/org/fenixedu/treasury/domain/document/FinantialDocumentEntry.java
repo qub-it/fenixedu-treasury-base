@@ -242,7 +242,6 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
 
         return invoiceEntrySet.stream().filter(document -> document.getCode() != null)
                 .filter(document -> document.getCode().equals(code));
-//        return Stream.empty();
     }
 
     public static Optional<FinantialDocumentEntry> findUniqueByCode(DebtAccount debtAccount, String code) {

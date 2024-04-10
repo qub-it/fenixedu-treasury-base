@@ -1,3 +1,5 @@
+- New Feature: Support credit over exemptions [#qubIT-Fenix-5102]
+
 12.13.1 (04-04-2024)
 - Refactor: Remove DebitEntry#exemptedAmount and replace by InvoiceEntry#netExemptedAmount [#qubIT-Fenix-5105]
 - Refactor: Replace DebitEntry#getAvailableAmountForCredit by DebitEntry#getAvailableAmountWithVatForCredit [#qubIT-Fenix-5106]

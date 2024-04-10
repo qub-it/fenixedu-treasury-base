@@ -53,6 +53,8 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
@@ -62,6 +64,7 @@ import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.exemption.CreditTreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
@@ -76,9 +79,10 @@ public class CreditEntry extends CreditEntry_Base {
 
     protected CreditEntry(FinantialEntity finantialEntity, final FinantialDocument finantialDocument, final Product product,
             final Vat vat, final BigDecimal unitAmount, String description, BigDecimal quantity, final DateTime entryDateTime,
-            final DebitEntry debitEntry, final TreasuryExemption treasuryExemption) {
+            final DebitEntry debitEntry, final TreasuryExemption treasuryExemption,
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         init(finantialEntity, finantialDocument, product, vat, unitAmount, description, quantity, entryDateTime, debitEntry,
-                treasuryExemption);
+                treasuryExemption, creditExemptionsMap);
     }
 
     @Override
@@ -95,7 +99,7 @@ public class CreditEntry extends CreditEntry_Base {
 
     protected void init(FinantialEntity finantialEntity, FinantialDocument finantialDocument, Product product, final Vat vat,
             BigDecimal unitAmount, String description, BigDecimal quantity, DateTime entryDateTime, DebitEntry debitEntry,
-            TreasuryExemption treasuryExemption) {
+            TreasuryExemption treasuryExemption, Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat,
                 unitAmount, description, quantity, entryDateTime);
 
@@ -103,6 +107,15 @@ public class CreditEntry extends CreditEntry_Base {
         this.setDebitEntry(debitEntry);
         this.setFromExemption(treasuryExemption != null);
         this.setTreasuryExemption(treasuryExemption);
+
+        if (creditExemptionsMap != null) {
+            BigDecimal netExemptedAmount = creditExemptionsMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            creditExemptionsMap.forEach((exemptionToCredit, creditedNetExemptedAmount) -> CreditTreasuryExemption.create(this,
+                    exemptionToCredit, creditedNetExemptedAmount));
+
+            super.setNetExemptedAmount(netExemptedAmount);
+        }
 
         recalculateAmountValues();
 
@@ -116,6 +129,7 @@ public class CreditEntry extends CreditEntry_Base {
         if (getFinantialDocument() != null && !(getFinantialDocument() instanceof CreditNote)) {
             throw new TreasuryDomainException("error.CreditEntry.finantialDocument.not.credit.entry.type");
         }
+
         // If from exemption then ensure debit entry is not null and the product is the same
         if (getFromExemption() && getDebitEntry() == null) {
             throw new TreasuryDomainException("error.CreditEntry.from.exemption.requires.debit.entry");
@@ -144,6 +158,19 @@ public class CreditEntry extends CreditEntry_Base {
 
         if (Strings.isNullOrEmpty(getDescription())) {
             throw new TreasuryDomainException("error.CreditEntry.description.required");
+        }
+
+        if (getDebitEntry() != null) {
+            if (!TreasuryConstants.isEqual(getNetExemptedAmount(),
+                    getCreditedExemptionsMap().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add))) {
+                throw new TreasuryDomainException(
+                        "error.CreditEntry.creditExemptionsTotalAmount.mismatch.with.netExemptedAmount");
+            }
+        }
+
+        if (getTreasuryExemption() != null && TreasuryConstants.isPositive(getNetExemptedAmount())) {
+            throw new TreasuryDomainException(
+                    "error.CreditEntry.netExemptedAmount.not.supported.with.creditEntry.with.exemption");
         }
     }
 
@@ -202,7 +229,8 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
-            BigDecimal unitAmount, DateTime entryDateTime, DebitEntry debitEntry, BigDecimal quantity) {
+            BigDecimal unitAmount, DateTime entryDateTime, DebitEntry debitEntry, BigDecimal quantity,
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
@@ -212,20 +240,21 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, product, vat, unitAmount,
-                description, quantity, entryDateTime, debitEntry, null);
+                description, quantity, entryDateTime, debitEntry, null, creditExemptionsMap);
         return cr;
     }
 
     public static CreditEntry create(FinantialEntity finantialEntity, FinantialDocument finantialDocument, String description,
             Product product, Vat vat, BigDecimal unitAmount, DateTime entryDateTime, BigDecimal quantity) {
         CreditEntry cr = new CreditEntry(finantialEntity, finantialDocument, product, vat, unitAmount, description, quantity,
-                entryDateTime, null, null);
+                entryDateTime, null, null, null);
 
         return cr;
     }
 
-    static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption, final FinantialDocument finantialDocument,
-            final String description, final BigDecimal unitAmount, final DateTime entryDateTime, BigDecimal quantity) {
+    public static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
+            final FinantialDocument finantialDocument, final String description, final BigDecimal unitAmount,
+            final DateTime entryDateTime, BigDecimal quantity) {
         DebitEntry debitEntry = treasuryExemption.getDebitEntry();
 
         if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
@@ -237,7 +266,7 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         final CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, debitEntry.getProduct(),
-                debitEntry.getVat(), unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption);
+                debitEntry.getVat(), unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption, null);
 
         return cr;
     }
@@ -284,13 +313,33 @@ public class CreditEntry extends CreditEntry_Base {
                 TreasuryConstants.divide(getOpenAmount(), BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))),
                 getQuantity());
 
-        setAmount(openUnitAmountOfThisCreditEntry.subtract(unitAmountOfNewCreditEntry));
+        BigDecimal newOpenUnitAmountOfThisCreditEntry = openUnitAmountOfThisCreditEntry.subtract(unitAmountOfNewCreditEntry);
+        BigDecimal ratioBetweenOldAndNewAmounts =
+                TreasuryConstants.divide(newOpenUnitAmountOfThisCreditEntry, openUnitAmountOfThisCreditEntry);
+
+        Map<TreasuryExemption, BigDecimal> exemptionsMapForCurrentCreditEntry =
+                getCreditedExemptionsMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> Currency
+                        .getValueWithScale(TreasuryConstants.defaultScale(e.getValue()).multiply(ratioBetweenOldAndNewAmounts))));
+
+        Map<TreasuryExemption, BigDecimal> exemptionsMapForNewCreditEntry =
+                getCreditedExemptionsMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey(),
+                        e -> e.getValue().subtract(exemptionsMapForCurrentCreditEntry.get(e.getKey()))));
+
+        setAmount(newOpenUnitAmountOfThisCreditEntry);
+        setNetExemptedAmount(exemptionsMapForCurrentCreditEntry.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+        resetCreditedNetExemptionAmounts(exemptionsMapForCurrentCreditEntry);
+
         recalculateAmountValues();
 
-        CreditEntry newCreditEntry = getDebitEntry() != null ? create(newCreditNote, getDescription(), getProduct(), getVat(),
-                unitAmountOfNewCreditEntry, getEntryDateTime(), getDebitEntry(), getQuantity()) : create(getFinantialEntity(),
-                        newCreditNote, getDescription(), getProduct(), getVat(), unitAmountOfNewCreditEntry, getEntryDateTime(),
-                        getQuantity());
+        CreditEntry newCreditEntry = null;
+
+        if (getDebitEntry() != null) {
+            newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(), unitAmountOfNewCreditEntry,
+                    getEntryDateTime(), getDebitEntry(), getQuantity(), exemptionsMapForNewCreditEntry);
+        } else {
+            newCreditEntry = create(getFinantialEntity(), newCreditNote, getDescription(), getProduct(), getVat(),
+                    unitAmountOfNewCreditEntry, getEntryDateTime(), getQuantity());
+        }
 
         newCreditEntry.setFromExemption(isFromExemption());
 
@@ -311,6 +360,12 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         return newCreditEntry;
+    }
+
+    private void resetCreditedNetExemptionAmounts(Map<TreasuryExemption, BigDecimal> exemptionsMap) {
+        exemptionsMap.forEach((exemption, netExemptedAmount) -> getCreditTreasuryExemptionsSet().stream()
+                .filter(e -> e.getTreasuryExemption() == exemption).findFirst()
+                .ifPresent(cte -> cte.editCreditedNetExemptedAmount(netExemptedAmount)));
     }
 
     @Override
@@ -360,5 +415,10 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         return super.getDebitEntry() != null ? super.getDebitEntry().getTreasuryEvent() : null;
+    }
+
+    public Map<TreasuryExemption, BigDecimal> getCreditedExemptionsMap() {
+        return getCreditTreasuryExemptionsSet().stream().collect(Collectors.toMap(CreditTreasuryExemption::getTreasuryExemption,
+                CreditTreasuryExemption::getCreditedNetExemptedAmount));
     }
 }

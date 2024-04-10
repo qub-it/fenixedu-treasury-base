@@ -382,7 +382,7 @@ public class TreasuryBootstrapper {
 
     private static FinantialInstitution initializeFinantialInstituition(String institutionName, String institutionInitials,
             String countryCode) {
-        FiscalCountryRegion fiscalCountryRegion = findByRegionCode(countryCode);;
+        FiscalCountryRegion fiscalCountryRegion = findByRegionCode(countryCode);
         Currency currency = Currency.findByCode(EURO_CODE);
         String code = institutionInitials;
         String fiscalNumber = Customer.DEFAULT_FISCAL_NUMBER;
@@ -401,6 +401,7 @@ public class TreasuryBootstrapper {
 
         institution.setSplitCreditEntriesWithSettledAmount(true);
         institution.setSplitDebitEntriesWithSettledAmount(false);
+        institution.setSupportCreditTreasuryExemptions(false);
 
         return institution;
     }

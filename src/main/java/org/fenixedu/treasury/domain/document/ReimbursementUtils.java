@@ -57,6 +57,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Vat;
@@ -177,9 +178,10 @@ public class ReimbursementUtils {
 
         final CreditNote creditNoteToReimburse = CreditNote.create(debtAccount, creditNumberSeries, now, compensationDebitNote,
                 originalCreditNote.getUiDocumentNumber());
-        final CreditEntry creditEntryToReimburse = compensationDebitEntry.createCreditEntry(now,
-                originalCreditEntry.getDescription(), originalCreditNote.getDocumentObservations(),
-                originalCreditNote.getDocumentTermsAndConditions(), amountToReimburseWithoutVat, null, creditNoteToReimburse);
+        final CreditEntry creditEntryToReimburse =
+                compensationDebitEntry.createCreditEntry(now, originalCreditEntry.getDescription(),
+                        originalCreditNote.getDocumentObservations(), originalCreditNote.getDocumentTermsAndConditions(),
+                        amountToReimburseWithoutVat, null, creditNoteToReimburse, Collections.emptyMap());
 
         return creditEntryToReimburse;
     }

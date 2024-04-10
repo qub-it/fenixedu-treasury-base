@@ -181,6 +181,8 @@ class FinantialInstitution {
 	Boolean splitDebitEntriesWithSettledAmount;
 	
 	String balanceTransferServiceImplementationClass;
+	
+	Boolean supportCreditTreasuryExemptions;
 }
 
 class FinantialEntity {
@@ -690,6 +692,40 @@ class exemption.TreasuryExemption {
 		
 		exemption.TreasuryExemption playsRole treasuryExemption {
 			multiplicity 0..1;
+		}
+	}
+	
+class exemption.CreditTreasuryExemption {
+	BigDecimalT creditedNetExemptedAmount;
+}
+
+	relation CreditTreasuryExemptionDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		exemption.CreditTreasuryExemption playsRole creditTreasuryExemptions {
+			multiplicity *;
+		}
+	}
+	
+	relation CreditTreasuryExemptionCreditEntry {
+		document.CreditEntry playsRole creditEntry {
+			multiplicity 1..1;
+		}
+		
+		exemption.CreditTreasuryExemption playsRole creditTreasuryExemptions {
+			multiplicity *;
+		}
+	}
+	
+	relation CreditTreasuryExemptionTreasuryExemption {
+		exemption.TreasuryExemption playsRole treasuryExemption {
+			multiplicity 1..1;
+		}
+		
+		exemption.CreditTreasuryExemption playsRole creditTreasuryExemptions {
+			multiplicity *;
 		}
 	}
 	

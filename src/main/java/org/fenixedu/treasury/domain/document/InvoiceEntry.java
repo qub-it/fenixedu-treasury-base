@@ -241,23 +241,33 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
             throw new TreasuryDomainException("error.InvoiceEntry.invalidDebtAccount");
         }
 
+        if (TreasuryConstants.isNegative(getNetAmount())) {
+            throw new TreasuryDomainException("error.FinantialDocumentEntry.netAmount.less.than.zero");
+        }
+
+        if (TreasuryConstants.isNegative(getNetExemptedAmount())) {
+            throw new TreasuryDomainException("error.FinantialDocumentEntry.netExemptedAmount.less.than.zero");
+        }
+
         if (checkAmountValues() == false) {
             throw new TreasuryDomainException("error.InvoiceEntry.amount.invalid.consistency");
         }
     }
 
-    protected boolean checkAmountValues() {
+    private boolean checkAmountValues() {
         if (getNetAmount() != null && getVatAmount() != null && getAmountWithVat() != null) {
             BigDecimal netAmount = calculateNetAmount();
-            BigDecimal vatAmount = getCurrency().getValueWithScale(getNetAmount().multiply(rationalVatRate(this)));
+            BigDecimal vatAmount = Currency.getValueWithScale(getNetAmount().multiply(rationalVatRate(this)));
             BigDecimal amountWithVat =
-                    getCurrency().getValueWithScale(getNetAmount().multiply(BigDecimal.ONE.add(rationalVatRate(this))));
+                    Currency.getValueWithScale(getNetAmount().multiply(BigDecimal.ONE.add(rationalVatRate(this))));
 
             //Compare the re-calculated values with the original ones
             return netAmount.compareTo(getNetAmount()) == 0 && vatAmount.compareTo(getVatAmount()) == 0
                     && amountWithVat.compareTo(getTotalAmount()) == 0;
         }
-        return true;
+
+        return TreasuryConstants.isLessOrEqualThan(getNetExemptedAmount(),
+                Currency.getValueWithScale(getQuantity().multiply(getAmount())));
     }
 
     protected void recalculateAmountValues() {
@@ -311,8 +321,10 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
      * 
      * @return
      */
-    protected BigDecimal calculateNetAmount() {
+    private BigDecimal calculateNetAmount() {
         BigDecimal netAmount = Currency.getValueWithScale(getQuantity().multiply(getAmount()));
+        netAmount = netAmount.subtract(getNetExemptedAmount());
+
         return netAmount;
     }
 

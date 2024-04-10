@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.document;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
@@ -63,18 +62,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.treasury.domain.Currency;
-import org.fenixedu.treasury.domain.FinantialEntity;
-import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.Product;
-import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -84,7 +77,6 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -496,7 +488,7 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
-    public void createEquivalentCreditNote(final DateTime documentDate, final String documentObservations,
+    private void createEquivalentCreditNote(final DateTime documentDate, final String documentObservations,
             final String documentTermsAndConditions, final boolean createForInterestRateEntries) {
 
         boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
@@ -512,19 +504,17 @@ public class DebitNote extends DebitNote_Base {
 
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             //Get the amount for credit without tax, and considering the credit quantity FOR ONE
-            BigDecimal amountForCreditWithoutVat = Currency.getValueWithScale(TreasuryConstants
-                    .divide(entry.getAvailableAmountWithVatForCredit(), BigDecimal.ONE.add(rationalVatRate(entry))));
+            BigDecimal amountForCreditWithoutVat = entry.getAvailableNetAmountForCredit();
 
             if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
                 continue;
             }
 
-            if (Boolean.TRUE.equals(entry.getCalculatedAmountsOverriden())) {
-                amountForCreditWithoutVat = entry.getAvailableNetAmountForCredit();
-            }
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
+                    entry.calculateDefaultNetExemptedAmountsToCreditMap(amountForCreditWithoutVat);
 
             final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(), documentObservations,
-                    documentTermsAndConditions, amountForCreditWithoutVat, null, creditNote);
+                    documentTermsAndConditions, amountForCreditWithoutVat, null, creditNote, creditExemptionsMap);
 
             if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && isExportedInLegacyERP()) {
                 creditEntry.getFinantialDocument().setExportedInLegacyERP(true);
@@ -546,16 +536,18 @@ public class DebitNote extends DebitNote_Base {
                     continue;
                 }
 
-                final BigDecimal amountForCreditWithoutVat =
-                        Currency.getValueWithScale(TreasuryConstants.divide(interestEntry.getAvailableAmountWithVatForCredit(),
-                                BigDecimal.ONE.add(rationalVatRate(interestEntry))));
+                final BigDecimal amountForCreditWithoutVat = interestEntry.getAvailableNetAmountForCredit();
 
                 if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !interestEntry.getTreasuryExemptionsSet().isEmpty()) {
                     continue;
                 }
 
-                CreditEntry interestsCreditEntry = interestEntry.createCreditEntry(documentDate, interestEntry.getDescription(),
-                        documentObservations, documentTermsAndConditions, amountForCreditWithoutVat, null, null);
+                Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
+                        interestEntry.calculateDefaultNetExemptedAmountsToCreditMap(amountForCreditWithoutVat);
+
+                CreditEntry interestsCreditEntry =
+                        interestEntry.createCreditEntry(documentDate, interestEntry.getDescription(), documentObservations,
+                                documentTermsAndConditions, amountForCreditWithoutVat, null, null, creditExemptionsMap);
 
                 if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                         && interestEntry.getFinantialDocument() != null
@@ -566,6 +558,71 @@ public class DebitNote extends DebitNote_Base {
                 }
             }
         }
+    }
+
+    public void createCreditNote(String reason, Map<DebitEntry, BigDecimal> creditDebitEntriesMap,
+            Map<TreasuryExemption, BigDecimal> creditTreasuryExemptionsMap) {
+        DateTime now = new DateTime();
+
+        DocumentNumberSeries documentNumberSeries = inferCreditNoteDocumentNumberSeries();
+        CreditNote creditNoteWithCreditedNetAmountOnDebitEntries =
+                CreditNote.create(this.getDebtAccount(), documentNumberSeries, now, this, getUiDocumentNumber());
+
+        CreditNote creditNoteWithOnlyCreditedNetExemptedAmountOnTreasuryExemptions =
+                CreditNote.create(this.getDebtAccount(), documentNumberSeries, now, this, getUiDocumentNumber());
+
+        creditDebitEntriesMap.forEach((debitEntry, creditNetAmount) -> {
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
+                    creditTreasuryExemptionsMap.entrySet().stream().filter(e -> e.getKey().getDebitEntry() == debitEntry)
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+            CreditNote creditNoteToAggregate = null;
+            if (TreasuryConstants.isPositive(creditNetAmount)) {
+                creditNoteToAggregate = creditNoteWithCreditedNetAmountOnDebitEntries;
+            } else {
+                creditNoteToAggregate = creditNoteWithOnlyCreditedNetExemptedAmountOnTreasuryExemptions;
+            }
+
+            debitEntry.createCreditEntry(now, debitEntry.getDescription(), reason, null, creditNetAmount, null,
+                    creditNoteToAggregate, creditExemptionsMap);
+        });
+
+        boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
+        boolean isInvoiceRegistrationByTreasuryCertification =
+                getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
+
+        if (!creditNoteWithCreditedNetAmountOnDebitEntries.isDocumentEmpty() && isInvoiceRegistrationByTreasuryCertification
+                && isToCloseCreditNoteWhenCreated) {
+            creditNoteWithCreditedNetAmountOnDebitEntries.closeDocument();
+        }
+
+        creditDebitEntriesMap.keySet().forEach(debitEntry -> {
+
+            if (debitEntry.getTreasuryEvent() != null) {
+                if (!TreasuryConstants.isPositive(debitEntry.getAvailableNetAmountForCredit())
+                        && !TreasuryConstants.isPositive(debitEntry.getEffectiveNetExemptedAmount())) {
+                    debitEntry.annulOnEvent();
+                }
+            }
+
+            for (SibsPaymentRequest paymentCode : debitEntry.getSibsPaymentRequestsSet()) {
+                if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                    paymentCode.anull();
+                }
+            }
+
+            debitEntry.getCreditEntriesSet().stream().filter(c -> !c.isAnnulled())
+                    .forEach(c -> debitEntry.closeCreditEntryIfPossible(reason, now, c));
+        });
+
+        if (creditNoteWithCreditedNetAmountOnDebitEntries.isDocumentEmpty()) {
+            creditNoteWithCreditedNetAmountOnDebitEntries.delete(false);
+        }
+
+        if (creditNoteWithOnlyCreditedNetExemptedAmountOnTreasuryExemptions.isDocumentEmpty()) {
+            creditNoteWithOnlyCreditedNetExemptedAmountOnTreasuryExemptions.delete(false);
+        }
+
     }
 
     /**
@@ -767,8 +824,9 @@ public class DebitNote extends DebitNote_Base {
                 continue;
             }
 
-            entry.createCreditEntry(documentDate, entry.getDescription(), null, null, amountForCreditWithoutVat, null,
-                    creditNote);
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap = entry.calculateDefaultNetExemptedAmountsToCreditMap();
+            entry.createCreditEntry(documentDate, entry.getDescription(), null, null, amountForCreditWithoutVat, null, creditNote,
+                    creditExemptionsMap);
         }
     }
 
@@ -777,30 +835,10 @@ public class DebitNote extends DebitNote_Base {
                 BigDecimal::add);
     }
 
-    @Deprecated
-    // TODO ANIL 2024-01-17 : This is to be discontinued
-    public static DebitEntry createBalanceTransferDebit(final DebtAccount debtAccount, final DateTime entryDate,
-            final LocalDate dueDate, final String originNumber, final Product product, final BigDecimal amountWithVat,
-            final DebtAccount payorDebtAccount, String entryDescription, final InterestRate interestRate,
-            FinantialEntity finantialEntity) {
-        final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
-        final Series regulationSeries = finantialInstitution.getRegulationSeries();
-        final DocumentNumberSeries numberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), regulationSeries);
-        final Vat transferVat = Vat.findActiveUnique(product.getVatType(), finantialInstitution, entryDate).get();
-
-        if (Strings.isNullOrEmpty(entryDescription)) {
-            entryDescription = product.getName().getContent();
-        }
-
-        final DebitNote debitNote = DebitNote.create(debtAccount, payorDebtAccount, numberSeries, new DateTime(),
-                new DateTime().toLocalDate(), originNumber);
-
-        final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
-                TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
-
-        return DebitEntry.create(finantialEntity, debtAccount, null, transferVat, amountWithoutVat, dueDate, Maps.newHashMap(),
-                product, entryDescription, BigDecimal.ONE, interestRate, entryDate, false, false, debitNote);
+    public BigDecimal getAvailableNetExemptedAmountForCredit() {
+        return getDebitEntriesSet().stream().flatMap(de -> de.getTreasuryExemptionsSet().stream())
+                .filter(te -> te.getCreditEntry() == null).map(te -> te.getAvailableNetExemptedAmountForCredit())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 }

@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.domain.exemption;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -73,6 +74,10 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 public class TreasuryExemption extends TreasuryExemption_Base {
+
+    public static Comparator<TreasuryExemption> COMPARE_BY_TYPE =
+            Comparator.comparing(TreasuryExemption::getTreasuryExemptionType, TreasuryExemptionType.COMPARE_BY_NAME)
+                    .thenComparing(TreasuryExemption::getExternalId);
 
     public TreasuryExemption() {
         super();
@@ -230,6 +235,22 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         // This is to avoid calling delete directly
         super.setDebitEntry(null);
         delete();
+    }
+
+    public BigDecimal getTotalCreditedNetExemptedAmount() {
+        return getCreditTreasuryExemptionsSet().stream() //
+                .filter(c -> !c.getCreditEntry().isAnnulled()) //
+                .map(c -> c.getCreditedNetExemptedAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getAvailableNetExemptedAmountForCredit() {
+        if (getCreditEntry() != null) {
+            // Is exempted with credit entry, return zero
+            return BigDecimal.ZERO;
+        }
+
+        return getNetExemptedAmount().subtract(getTotalCreditedNetExemptedAmount());
     }
 
     @Override

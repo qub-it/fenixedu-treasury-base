@@ -309,6 +309,10 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         setTreasuryCertificationActive(false);
     }
 
+    public boolean isSupportForCreditExemptionsActive() {
+        return Boolean.TRUE.equals(getSupportCreditTreasuryExemptions());
+    }
+
     // ********
     // SERVICES
     // ********

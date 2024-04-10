@@ -48,7 +48,6 @@ import org.junit.runner.RunWith;
 import pt.ist.fenixframework.FenixFramework;
 
 @RunWith(FenixFrameworkRunner.class)
-
 public class TreasuryExemptionTest {
     public static final String DEBT_PRODUCT = "PAGAMENTO";
     private DebitEntry debitEntry;

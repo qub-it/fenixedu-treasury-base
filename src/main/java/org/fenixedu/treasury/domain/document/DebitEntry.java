@@ -279,14 +279,6 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
-    @Override
-    protected BigDecimal calculateNetAmount() {
-        BigDecimal netAmount = Currency.getValueWithScale(getQuantity().multiply(getAmount()));
-        netAmount = netAmount.subtract(getNetExemptedAmount());
-
-        return netAmount;
-    }
-
     public List<InterestRateBean> calculateAllInterestValue(final LocalDate whenToCalculate) {
         if (this.getInterestRate() == null) {
             return Collections.emptyList();
@@ -512,8 +504,8 @@ public class DebitEntry extends DebitEntry_Base {
             String reason = TreasuryConstants.treasuryBundle("label.TreasuryExemption.credit.entry.exemption.description",
                     getDescription(), treasuryExemption.getTreasuryExemptionType().getName().getContent());
 
-            final CreditEntry creditEntryFromExemption =
-                    createCreditEntry(now, getDescription(), null, null, netExemptedAmount, treasuryExemption, null);
+            final CreditEntry creditEntryFromExemption = createCreditEntry(now, getDescription(), null, null, netExemptedAmount,
+                    treasuryExemption, null, Collections.emptyMap());
 
             closeCreditEntryIfPossible(reason, now, creditEntryFromExemption);
 
@@ -561,7 +553,9 @@ public class DebitEntry extends DebitEntry_Base {
     // with the correct decimal scale
     public CreditEntry createCreditEntry(DateTime documentDate, String description, String documentObservations,
             String documentTermsAndConditions, BigDecimal netAmountForCredit, TreasuryExemption treasuryExemption,
-            CreditNote creditNote) {
+            CreditNote creditNote, Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
+        FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
+
         boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
         boolean isInvoiceRegistrationByTreasuryCertification =
                 getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
@@ -601,8 +595,15 @@ public class DebitEntry extends DebitEntry_Base {
             creditNote.setDocumentTermsAndConditions(documentTermsAndConditions);
         }
 
-        if (!TreasuryConstants.isPositive(netAmountForCredit)) {
-            throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.amountForCredit.not.positive");
+        if (finantialInstitution.isSupportForCreditExemptionsActive()) {
+            if (!TreasuryConstants.isPositive(netAmountForCredit) && !TreasuryConstants
+                    .isPositive(creditExemptionsMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add))) {
+                throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.amountForCredit.not.positive");
+            }
+        } else {
+            if (!TreasuryConstants.isPositive(netAmountForCredit)) {
+                throw new TreasuryDomainException("error.DebitEntry.createCreditEntry.amountForCredit.not.positive");
+            }
         }
 
         CreditEntry creditEntry = null;
@@ -610,8 +611,14 @@ public class DebitEntry extends DebitEntry_Base {
             creditEntry = CreditEntry.createFromExemption(treasuryExemption, creditNote, description, netAmountForCredit,
                     new DateTime(), BigDecimal.ONE);
         } else {
-            creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), netAmountForCredit, documentDate,
-                    this, BigDecimal.ONE);
+            if (finantialInstitution.isSupportForCreditExemptionsActive()) {
+                creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(),
+                        netAmountForCredit.add(creditExemptionsMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add)),
+                        documentDate, this, BigDecimal.ONE, creditExemptionsMap);
+            } else {
+                creditEntry = CreditEntry.create(creditNote, description, getProduct(), getVat(), netAmountForCredit,
+                        documentDate, this, BigDecimal.ONE, Collections.emptyMap());
+            }
 
             if (Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
                 // Create a credit entry with the exact amounts as this debit entry
@@ -969,23 +976,21 @@ public class DebitEntry extends DebitEntry_Base {
         return Currency.getValueWithScale(totalCreditedAmount);
     }
 
-//    @Deprecated
-//    // TODO: Replace by getAvailableAmountWithVatForCredit
-//    public BigDecimal getAvailableAmountForCredit() {
-//        return getAvailableAmountWithVatForCredit();
-//    }
-
     public BigDecimal getAvailableAmountWithVatForCredit() {
         return Currency.getValueWithScale(this.getTotalAmount().subtract(getTotalCreditedAmountWithVat()));
     }
 
-    public BigDecimal getAvailableNetAmountForCredit() {
-        BigDecimal creditedNetAmount = getCreditEntriesSet().stream()
-                .filter(c -> c.getFinantialDocument() == null || !c.getFinantialDocument().isAnnulled())
-                .map(CreditEntry::getNetAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+    public BigDecimal getTotalCreditedNetAmount() {
+        BigDecimal creditedNetAmount = getCreditEntriesSet().stream() //
+                .filter(c -> !c.isAnnulled()) //
+                .map(CreditEntry::getNetAmount) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Scale should not be necessary. Assume the netAmount is scaled to Currency scale
-        return this.getNetAmount().subtract(creditedNetAmount);
+        return creditedNetAmount;
+    }
+
+    public BigDecimal getAvailableNetAmountForCredit() {
+        return this.getNetAmount().subtract(getTotalCreditedNetAmount());
     }
 
     @Override
@@ -1115,7 +1120,9 @@ public class DebitEntry extends DebitEntry_Base {
                 removeFromDocument();
                 annulDebitEntry(reason);
             } else {
-                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false);
+                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false,
+                        calculateDefaultNetExemptedAmountsToCreditMap());
+
                 annulOnEvent();
             }
         } else {
@@ -1123,9 +1130,42 @@ public class DebitEntry extends DebitEntry_Base {
         }
     }
 
-    @Atomic
-    public void creditDebitEntry(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote) {
+    public Map<TreasuryExemption, BigDecimal> calculateDefaultNetExemptedAmountsToCreditMap() {
+        return calculateDefaultNetExemptedAmountsToCreditMap(getAvailableNetAmountForCredit());
+    }
 
+    public Map<TreasuryExemption, BigDecimal> calculateDefaultNetExemptedAmountsToCreditMap(BigDecimal netAmountToCredit) {
+        if (!TreasuryConstants.isPositive(netAmountToCredit)) {
+            return Collections.emptyMap();
+        }
+
+        if (!TreasuryConstants.isLessOrEqualThan(netAmountToCredit, getAvailableNetAmountForCredit())) {
+            throw new IllegalArgumentException("netAmountToCredit is less than availableNetAmountForCredit");
+        }
+
+        BigDecimal ratio = TreasuryConstants.divide(netAmountToCredit, getAvailableNetAmountForCredit());
+
+        Map<TreasuryExemption, BigDecimal> result = getTreasuryExemptionsSet().stream() //
+                .filter(te -> te.getCreditEntry() == null) //
+                .filter(te -> TreasuryConstants.isPositive(te.getAvailableNetExemptedAmountForCredit())) //
+                .collect(Collectors.toMap(te -> te,
+                        te -> Currency.getValueWithScale(te.getAvailableNetExemptedAmountForCredit().multiply(ratio))));
+
+        return result;
+    }
+
+    public BigDecimal getCreditedNetExemptedAmount() {
+        return getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled()).map(CreditEntry::getNetExemptedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getEffectiveNetExemptedAmount() {
+        return getNetExemptedAmount().subtract(getCreditedNetExemptedAmount());
+    }
+
+    @Atomic
+    public void creditDebitEntry(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote,
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         if (isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.credit.is.already.annuled");
         }
@@ -1142,8 +1182,10 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 
-        if (!TreasuryConstants.isPositive(netAmountForCredit)) {
-            throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.amountToCreditWithVat.must.be.positive");
+        if (!getDebtAccount().getFinantialInstitution().isSupportForCreditExemptionsActive()) {
+            if (!TreasuryConstants.isPositive(netAmountForCredit)) {
+                throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.amountToCreditWithVat.must.be.positive");
+            }
         }
 
         if (!TreasuryConstants.isLessOrEqualThan(netAmountForCredit, getAvailableNetAmountForCredit())) {
@@ -1152,7 +1194,8 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         final DateTime now = new DateTime();
-        final CreditEntry creditEntry = createCreditEntry(now, getDescription(), null, null, netAmountForCredit, null, null);
+        final CreditEntry creditEntry =
+                createCreditEntry(now, getDescription(), null, null, netAmountForCredit, null, null, creditExemptionsMap);
 
         // Close creditEntry with debitEntry if it is possible
         closeCreditEntryIfPossible(reason, now, creditEntry);
@@ -1182,40 +1225,6 @@ public class DebitEntry extends DebitEntry_Base {
 
                 openDebitEntry.closeCreditEntryIfPossible(reason, now, openCreditEntry);
             }
-        }
-    }
-
-    public void annulOrReduceOrCredit(BigDecimal netAmountToCredit, String reason) {
-        if (isAnnulled()) {
-            throw new TreasuryDomainException("error.DebitEntry.cannot.credit.is.already.annuled");
-        }
-
-        if (Strings.isNullOrEmpty(reason)) {
-            throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.requires.reason");
-        }
-
-        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(this)) {
-            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
-        }
-
-        if (!TreasuryConstants.isPositive(netAmountToCredit)) {
-            throw new TreasuryDomainException("error.DebitEntry.credit.debit.entry.amountToCreditWithVat.must.be.positive");
-        }
-
-        if (!TreasuryConstants.isLessOrEqualThan(netAmountToCredit, getAvailableNetAmountForCredit())) {
-            throw new TreasuryDomainException(
-                    "error.DebitEntry.credit.debit.entry.amountToCreditWithVat.must.be.less.or.equal.than.amountAvailableForCredit");
-        }
-
-        if (TreasuryConstants.isEqual(getAvailableNetAmountForCredit(), netAmountToCredit)) {
-            annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason);
-        } else if (getFinantialDocument() == null || getFinantialDocument().isPreparing()) {
-            BigDecimal newNetAmount = getNetAmount().subtract(netAmountToCredit);
-            BigDecimal newUnitAmount = TreasuryConstants.divide(newNetAmount.add(getNetExemptedAmount()), getQuantity());
-
-            editAmounts(newUnitAmount, getQuantity(), reason);
-        } else {
-            creditDebitEntry(netAmountToCredit, reason, false);
         }
     }
 
