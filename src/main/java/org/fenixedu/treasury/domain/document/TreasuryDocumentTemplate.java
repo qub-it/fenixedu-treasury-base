@@ -56,16 +56,11 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.joda.time.DateTime;
-
-import com.qubit.terra.docs.core.IDocumentTemplate;
-import com.qubit.terra.docs.core.IDocumentTemplateVersion;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
-public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base implements IDocumentTemplate {
+public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base {
 
     protected TreasuryDocumentTemplate() {
         super();
@@ -98,7 +93,6 @@ public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base impl
     public void edit(final FinantialDocumentType finantialDocumentTypes, final FinantialEntity finantialEntity) {
         setFinantialDocumentType(finantialDocumentTypes);
         setFinantialEntity(finantialEntity);
-
         checkRules();
     }
 
@@ -172,43 +166,6 @@ public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base impl
     public static Stream<TreasuryDocumentTemplate> findByFinantialDocumentTypeAndFinantialEntity(
             final FinantialDocumentType finantialDocumentType, final FinantialEntity finantialEntity) {
         return findByFinantialDocumentType(finantialDocumentType).filter(i -> finantialEntity.equals(i.getFinantialEntity()));
-    }
-
-    @Override
-    public void activateDocument() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void deactivateDocument() {
-
-    }
-
-    @Override
-    public DateTime getCreationDate() {
-        return getAtiveDocumentTemplateFile().getCreationDate();
-    }
-
-    @Override
-    public IDocumentTemplateVersion getCurrentVersion() {
-        return new IDocumentTemplateVersion() {
-
-            @Override
-            public byte[] getContent() {
-                return getAtiveDocumentTemplateFile().getContent();
-            }
-        };
-    }
-
-    @Override
-    public DateTime getUpdateDate() {
-        return TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(this);
-    }
-
-    @Override
-    public boolean isActive() {
-        return getAtiveDocumentTemplateFile() != null;
     }
 
 }
