@@ -14,6 +14,9 @@
 	<packaging>jar</packaging>
 
 	<name>Treasury</name>
+	<properties>
+		<poi.version>3.11</poi.version>
+	</properties>
 
 	<dependencyManagement>
 		<dependencies>
@@ -62,13 +65,15 @@
 			<version>1.7.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.qubit.terra</groupId>
-			<artifactId>qub-docs</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
-			<version>3.11</version>
+			<version>${poi.version}</version>
+		</dependency>
+		<!-- Added due to the usage of SXSSFWorkbook -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${poi.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
