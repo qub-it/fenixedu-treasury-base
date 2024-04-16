@@ -90,7 +90,7 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
-import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanSettings;
+import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
@@ -187,7 +187,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
             destinyPaymentPlan.setCreationDate(objectPaymentPlan.getCreationDate());
             destinyPaymentPlan.setDebtAccount(destinyDebtAccount);
             destinyPaymentPlan.setReason(objectPaymentPlan.getReason());
-            destinyPaymentPlan.setPaymentPlanId(PaymentPlanSettings.getActiveInstance().getNumberGenerators().generateNumber());
+            destinyPaymentPlan.setPaymentPlanId(
+                    PaymentPlanConfigurator.findActives().iterator().next().getNumberGenerators().generateNumber());
             destinyPaymentPlan.setState(PaymentPlanStateType.OPEN);
             destinyPaymentPlan.getPaymentPlanValidatorsSet().addAll(objectPaymentPlan.getPaymentPlanValidatorsSet());
             destinyPaymentPlan.setEmolument(conversionMap.get(objectPaymentPlan.getEmolument()));

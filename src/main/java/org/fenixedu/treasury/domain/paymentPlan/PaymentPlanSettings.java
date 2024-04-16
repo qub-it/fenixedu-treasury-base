@@ -62,6 +62,7 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
+@Deprecated
 public class PaymentPlanSettings extends PaymentPlanSettings_Base {
 
     public PaymentPlanSettings() {

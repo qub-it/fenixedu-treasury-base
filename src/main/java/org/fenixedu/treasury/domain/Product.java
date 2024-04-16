@@ -204,7 +204,7 @@ public class Product extends Product_Base {
                 getAdvancePaymentTreasurySettings() == null && //
                 getTreasurySettings() == null && //
                 getTariffSet().isEmpty() && //
-                getPaymentPlanSettings() == null && //
+                getPaymentPlanConfiguratorsSet().isEmpty() && //
                 getPaymentPlanConfiguratorsSet().isEmpty() && //
                 !Boolean.TRUE.equals(getSystemProduct()) && //
                 (IS_DELETABLE_PRODUCT_PREDICATES_LIST == null || IS_DELETABLE_PRODUCT_PREDICATES_LIST.isEmpty()
