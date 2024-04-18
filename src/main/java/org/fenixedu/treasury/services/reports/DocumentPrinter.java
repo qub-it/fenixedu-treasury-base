@@ -53,6 +53,8 @@
 package org.fenixedu.treasury.services.reports;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitNote;
@@ -69,28 +71,20 @@ public class DocumentPrinter {
     public static final String PDF = "application/pdf";
     public static final String ODT = "application/vnd.oasis.opendocument.text";
 
+    private static <T extends Object> T apply(Function<DocumentPrinterInterface, T> function) {
+        return Optional.ofNullable(SINGLETON).map(function).orElseThrow(() -> new RuntimeException("Feature not available"));
+    }
+
     public static byte[] printDebtAccountPaymentPlan(DebtAccount debtAccount, String outputMimeType) {
-        if (SINGLETON != null) {
-            return SINGLETON.printDebtAccountPaymentPlan(debtAccount, outputMimeType);
-        } else {
-            throw new RuntimeException("Feature not available");
-        }
+        return apply(dp -> dp.printDebtAccountPaymentPlan(debtAccount,outputMimeType));
     }
 
     public static byte[] printDebitNotesPaymentPlan(DebtAccount debtAccount, List<DebitNote> documents, String outputMimeType) {
-        if (SINGLETON != null) {
-            return SINGLETON.printDebitNotesPaymentPlan(debtAccount, documents, outputMimeType);
-        } else {
-            throw new RuntimeException("Feature not available");
-        }
+        return apply(dp -> dp.printDebitNotesPaymentPlan(debtAccount, documents, outputMimeType));
     }
 
     //https://github.com/qub-it/fenixedu-qubdocs-reports/blob/master/src/main/java/org/fenixedu/academic/util/report/DocumentPrinter.java
     public static byte[] printFinantialDocument(FinantialDocument document, String outputMimeType) {
-        if (SINGLETON != null) {
-            return SINGLETON.printFinantialDocument(document, outputMimeType);
-        } else {
-            throw new RuntimeException("Feature not available");
-        }
+        return apply(dp -> dp.printFinantialDocument(document, outputMimeType));
     }
 }

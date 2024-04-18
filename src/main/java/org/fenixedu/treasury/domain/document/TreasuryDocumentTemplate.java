@@ -168,4 +168,7 @@ public class TreasuryDocumentTemplate extends TreasuryDocumentTemplate_Base {
         return findByFinantialDocumentType(finantialDocumentType).filter(i -> finantialEntity.equals(i.getFinantialEntity()));
     }
 
+    public boolean isActive() {
+        return getAtiveDocumentTemplateFile() != null;
+    }
 }
