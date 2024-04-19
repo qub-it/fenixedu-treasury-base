@@ -114,7 +114,6 @@ public class TreasuryBootstrapper {
 
         // On create of finantialInstitution will be called TreasuryBootstrap.bootstrapFinantialInstitution(FinantialInstitution finantialInstitution)
         initializeFinantialInstituition(institutionName, institutionInitials, countryCode);
-
     }
 
     private static void initializeFiscalYear(FinantialInstitution finantialInstitution) {

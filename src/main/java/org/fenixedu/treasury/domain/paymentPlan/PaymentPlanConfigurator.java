@@ -66,7 +66,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
@@ -617,8 +616,9 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
     }
 
     private static int compareDebitEntryDueDate(DebitEntry debitEntry1, DebitEntry debitEntry2) {
-        return new ComparatorChain((d1, d2) -> debitEntry1.getDueDate().compareTo(debitEntry2.getDueDate()))
-                .thenComparing((d1, d2) -> debitEntry1.getExternalId().compareTo(debitEntry2.getExternalId()))
+        return Comparator
+                .comparing((DebitEntry debitEntry) -> debitEntry.getDueDate())
+                .thenComparing((DebitEntry debitEntry) -> debitEntry.getExternalId())
                 .compare(debitEntry1, debitEntry2);
     }
 }

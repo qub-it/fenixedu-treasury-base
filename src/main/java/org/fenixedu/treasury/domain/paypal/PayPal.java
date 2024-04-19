@@ -10,6 +10,9 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
@@ -54,7 +57,6 @@ import com.paypal.orders.OrdersCreateRequest;
 import com.paypal.orders.OrdersGetRequest;
 import com.paypal.orders.PurchaseUnitRequest;
 
-import fr.opensagres.xdocreport.document.json.JSONObject;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
@@ -62,6 +64,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
     public static final String STATUS_PAID = "COMPLETED";
     public static final String STATUS_FAIL = "VOIDED";
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public PayPal() {
         super();
@@ -180,8 +183,11 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                 forwardPayment.setRedirectUrl(links);
             });
             DateTime requestReceiveDate = new DateTime();
-            String requestLog = new JSONObject(new Json().serialize(orderRequest)).toString(4);
-            String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
+            JsonObject requestObject = GSON.toJsonTree(new Json().serialize(orderRequest)).getAsJsonObject();
+            String requestLog = GSON.toJson(requestObject);
+
+            JsonObject responseObject = GSON.toJsonTree(new Json().serialize(response.result())).getAsJsonObject();
+            String responseLog = GSON.toJson(responseObject);
 
             final ForwardPaymentStateType stateType = translateForwardPaymentStateType(order.status());
             final ForwardPaymentStatusBean result =
@@ -282,7 +288,8 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
             final ForwardPaymentStateType stateType = translateForwardPaymentStateType(order.status());
             String requestLog = paymentRequest.getCheckoutId();
-            String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
+            JsonObject responseObject = GSON.toJsonTree(new Json().serialize(response.result())).getAsJsonObject();
+            String responseLog = GSON.toJson(responseObject);
 
             final ForwardPaymentStatusBean result =
                     new ForwardPaymentStatusBean(true, stateType, order.status(), order.status(), requestLog, responseLog);
@@ -339,7 +346,8 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             HttpResponse<Order> response = getClient().execute(request);
             Order order = response.result();
             String requestLog = forwardPayment.getCheckoutId();
-            String responseLog = new JSONObject(new Json().serialize(response.result())).toString(4);
+            JsonObject responseObject = GSON.toJsonTree(new Json().serialize(response.result())).getAsJsonObject();
+            String responseLog = GSON.toJson(responseObject);
 
             Order resultOrder = order;
             if ("APPROVED".equals(order.status())) {
