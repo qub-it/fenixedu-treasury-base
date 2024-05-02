@@ -382,6 +382,7 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     // Used in screens to display negative amounts for credit entries
+    @Override
     public BigDecimal getUiTotalAmount() {
         if (Boolean.TRUE.equals(TreasurySettings.getInstance().getDisplayNegativeAmountsForCreditEntries())) {
             return super.getUiTotalAmount().negate();
@@ -391,6 +392,7 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     // Used in screens to display negative amounts for credit entries
+    @Override
     public BigDecimal getUiOpenAmount() {
         if (Boolean.TRUE.equals(TreasurySettings.getInstance().getDisplayNegativeAmountsForCreditEntries())) {
             return super.getUiOpenAmount().negate();
@@ -400,12 +402,22 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     // Used in screens to display negative amounts for credit entries
+    @Override
     public BigDecimal getUiOpenAmountWithInterests() {
         if (Boolean.TRUE.equals(TreasurySettings.getInstance().getDisplayNegativeAmountsForCreditEntries())) {
             return super.getUiOpenAmountWithInterests().negate();
         }
 
         return super.getUiOpenAmountWithInterests();
+    }
+
+    @Override
+    public BigDecimal getUiNetExemptedAmount() {
+        if (Boolean.TRUE.equals(TreasurySettings.getInstance().getDisplayNegativeAmountsForCreditEntries())) {
+            return super.getUiNetExemptedAmount().negate();
+        }
+
+        return super.getUiNetExemptedAmount();
     }
 
     @Override

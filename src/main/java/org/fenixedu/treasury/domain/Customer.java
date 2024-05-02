@@ -521,4 +521,19 @@ public abstract class Customer extends Customer_Base {
         setFinantialDocumentEntryCounter(number);
         return number;
     }
+
+    // @formatter:off
+    /* ********
+     * SERVICES
+     * ********
+     */
+    // @formatter:on
+
+    public static boolean isConsumidorFinal(Customer customer) {
+        return isConsumidorFinal(customer.getAddressCountryCode(), customer.getFiscalNumber());
+    }
+
+    public static boolean isConsumidorFinal(String fiscalAddressCountryCode, String fiscalNumber) {
+        return TreasuryConstants.isDefaultCountry(fiscalAddressCountryCode) && DEFAULT_FISCAL_NUMBER.equals(fiscalNumber);
+    }
 }

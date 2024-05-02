@@ -188,8 +188,11 @@ public class SettlementInterestEntryBean implements ISettlementInvoiceEntryBean,
 
     @Override
     public LocalDate getDueDate() {
-        return debitEntry.getFinantialDocument() != null ? debitEntry.getFinantialDocument().getDocumentDueDate() : debitEntry
-                .getDueDate();
+        if (this.interest != null && this.interest.getInterestDebitEntryDateTime() != null) {
+            return this.interest.getInterestDebitEntryDateTime().toLocalDate();
+        }
+
+        return new LocalDate();
     }
 
     @Override

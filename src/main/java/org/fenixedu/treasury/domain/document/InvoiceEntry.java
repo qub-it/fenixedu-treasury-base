@@ -511,4 +511,9 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return getOpenAmountWithInterests();
     }
 
+    // used in screens to display negative amounts for credit entries
+    public BigDecimal getUiNetExemptedAmount() {
+        return getNetExemptedAmount();
+    }
+
 }

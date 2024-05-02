@@ -640,6 +640,8 @@ public class DebitEntry extends DebitEntry_Base {
     // method and use it. The visibility is important to not be called by other method
 
     void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
+        FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
+
         DocumentNumberSeries documentNumberSeriesSettlementNote = DocumentNumberSeries.find(
                 FinantialDocumentType.findForSettlementNote(), this.getFinantialDocument().getDocumentNumberSeries().getSeries());
 
@@ -698,14 +700,19 @@ public class DebitEntry extends DebitEntry_Base {
 
         final SettlementNote settlementNote = SettlementNote.create(getFinantialEntity(), this.getDebtAccount(),
                 documentNumberSeriesSettlementNote, now, now, "", null);
-        settlementNote
-                .setDocumentObservations(reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
 
-        SettlementEntry.create(creditEntry, settlementNote, minimumOpenAmount,
+        if (!finantialInstitution.isInvoiceRegistrationByTreasuryCertification()) {
+            settlementNote.setDocumentObservations(
+                    reason + " - [" + loggedUsername + "] " + new DateTime().toString("YYYY-MM-dd HH:mm"));
+        }
+
+        SettlementEntry creditSettlementEntry = SettlementEntry.create(creditEntry, settlementNote, minimumOpenAmount,
                 reasonDescription + ": " + creditEntry.getDescription(), now, false);
+        creditSettlementEntry.setInternalComments(reason);
 
         SettlementEntry debitSettlementEntry = SettlementEntry.create(this, settlementNote, minimumOpenAmount,
                 reasonDescription + ": " + getDescription(), now, false);
+        debitSettlementEntry.setInternalComments(reason);
 
         InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
 
@@ -1196,6 +1203,8 @@ public class DebitEntry extends DebitEntry_Base {
         final DateTime now = new DateTime();
         final CreditEntry creditEntry =
                 createCreditEntry(now, getDescription(), null, null, netAmountForCredit, null, null, creditExemptionsMap);
+
+        creditEntry.setInternalComments(reason);
 
         // Close creditEntry with debitEntry if it is possible
         closeCreditEntryIfPossible(reason, now, creditEntry);

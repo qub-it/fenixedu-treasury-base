@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes.pool;
 
-
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Comparator;
@@ -62,16 +61,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.commons.i18n.I18N;
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
-import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCode;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
-import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.services.payments.paymentscodegenerator.IPaymentCodeGenerator;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
 import org.joda.time.LocalDate;
@@ -86,19 +81,19 @@ public class PaymentCodePool extends PaymentCodePool_Base {
 
     public static Comparator<PaymentCodePool> COMPARATOR_BY_FINANTIAL_INSTITUTION_AND_NAME = (o1, o2) -> {
         int c = FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
-        if(c != 0) {
+        if (c != 0) {
             return c;
         }
-        
+
         c = o1.getName().compareTo(o2.getName());
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     public static Comparator<PaymentCodePool> COMPARATOR_BY_NAME = (o1, o2) -> {
         int c = o1.getName().compareTo(o2.getName());
         return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     protected PaymentCodePool() {
         super();
     }
@@ -134,7 +129,7 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         setPaymentMethod(paymentMethod);
         setDocumentSeriesForPayments(seriesToUseInPayments);
         setPaymentCodeGeneratorInstance(paymentCodeGeneratorInstance);
-        
+
         checkRules();
     }
 
@@ -210,7 +205,7 @@ public class PaymentCodePool extends PaymentCodePool_Base {
                     "error.PaymentCodePool.documentNumberSeriesForPayments.invalid.finantialInstitution");
         }
 
-        if(getPaymentCodeGeneratorInstance() == null) {
+        if (getPaymentCodeGeneratorInstance() == null) {
             throw new TreasuryDomainException(
                     "error.PaymentCodePool.documentNumberSeriesForPayments.invalid.paymentCodeGeneratorInstance");
         }
@@ -240,8 +235,8 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.PaymentCodePool.cannot.delete");
         }
-        
-        if(getSibsOnlinePaymentsGateway() != null) {
+
+        if (getSibsOnlinePaymentsGateway() != null) {
             throw new TreasuryDomainException("error.PaymentCodePool.remove.sibs.oppwa.configuration.first");
         }
 
@@ -251,11 +246,11 @@ public class PaymentCodePool extends PaymentCodePool_Base {
 
         deleteDomainObject();
     }
-    
+
     public IPaymentCodeGenerator getPaymentCodeGenerator() {
         return getPaymentCodeGeneratorInstance().getPaymentCodeGenerator(this);
     }
-    
+
     @Atomic
     public static PaymentCodePool create(final String name, final String entityReferenceCode, final Long minReferenceCode,
             final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount, final LocalDate validFrom,
@@ -269,7 +264,8 @@ public class PaymentCodePool extends PaymentCodePool_Base {
                     "error.administration.payments.sibs.managepaymentcodepool.invalid.entity.reference.code.from.finantial.institution");
         }
         return new PaymentCodePool(name, entityReferenceCode, minReferenceCode, maxReferenceCode, minAmount, maxAmount, validFrom,
-                validTo, active, useCheckDigit, finantialInstitution, seriesToUseInPayments, paymentMethod, paymentCodeGeneratorInstance);
+                validTo, active, useCheckDigit, finantialInstitution, seriesToUseInPayments, paymentMethod,
+                paymentCodeGeneratorInstance);
 
     }
 
@@ -390,9 +386,9 @@ public class PaymentCodePool extends PaymentCodePool_Base {
     @Atomic
     @Deprecated
     public void update(final FinantialInstitution finantialInstitution, final String name, final String entityReferenceCode,
-            final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount, final LocalDate validFrom,
-            final LocalDate validTo, final Boolean active, final Boolean useCheckDigit, final DocumentNumberSeries seriesToUseInPayments,
-            final PaymentMethod paymentMethod) {
+            final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount,
+            final LocalDate validFrom, final LocalDate validTo, final Boolean active, final Boolean useCheckDigit,
+            final DocumentNumberSeries seriesToUseInPayments, final PaymentMethod paymentMethod) {
 
         edit(name, active, seriesToUseInPayments, paymentMethod);
         setNewValidPeriod(validFrom, validTo);
@@ -401,17 +397,16 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         changeReferenceCode(entityReferenceCode, minReferenceCode, maxReferenceCode);
         changeAmount(minAmount, maxAmount);
     }
-    
-    public void update(final String name,
-            final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount, final BigDecimal maxAmount, final LocalDate validFrom,
-            final LocalDate validTo, final Boolean active) {
+
+    public void update(final String name, final Long minReferenceCode, final Long maxReferenceCode, final BigDecimal minAmount,
+            final BigDecimal maxAmount, final LocalDate validFrom, final LocalDate validTo, final Boolean active) {
 
         edit(name, active, getDocumentSeriesForPayments(), getPaymentMethod());
         setNewValidPeriod(validFrom, validTo);
         changeReferenceCode(getEntityReferenceCode(), minReferenceCode, maxReferenceCode);
         changeAmount(minAmount, maxAmount);
     }
-    
+
     public static Stream<PaymentCodePool> findByEntityCode(String entityCode) {
         return findAll().filter(x -> x.getEntityReferenceCode().equals(entityCode));
     }
@@ -420,9 +415,7 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         if (this.getUseCheckDigit()) {
             return Collections.EMPTY_LIST;
         } else {
-            return this.getPaymentReferenceCodesSet().stream()
-                    .filter(x -> !x.isProcessed())
-                    .filter(x -> !x.isAnnulled())
+            return this.getPaymentReferenceCodesSet().stream().filter(x -> !x.isProcessed()).filter(x -> !x.isAnnulled())
                     .filter(x -> !x.getEndDate().isBefore(localDate)).collect(Collectors.toList());
         }
     }
@@ -455,8 +448,4 @@ public class PaymentCodePool extends PaymentCodePool_Base {
         return !this.getUseCheckDigit();
     }
 
-    public static boolean isReferenceCodesActiveForStudentPortal(FinantialInstitution finantialInstitution) {
-        return SibsPaymentCodePool.findForSibsPaymentCodeServiceByActive(finantialInstitution, true).findFirst().isPresent()
-                && ("502488603".equals(finantialInstitution.getCode()) || "FMV".equals(finantialInstitution.getCode()));
-    }
 }

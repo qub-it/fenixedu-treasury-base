@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
@@ -419,7 +420,7 @@ public class DebitNote extends DebitNote_Base {
             //7. fechar settlement note
 
             // No final podem sobrar itens de acerto com valor pendente de utilizacao, que representam os valores ja pagos nos itens de dividas correspondentes
-            createEquivalentCreditNote(now, reason, null, anullGeneratedInterests);
+            createEquivalentCreditNote(now, reason, anullGeneratedInterests);
 
             //Clear the InterestRate for DebitEntry
             for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
@@ -488,8 +489,9 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
-    private void createEquivalentCreditNote(final DateTime documentDate, final String documentObservations,
-            final String documentTermsAndConditions, final boolean createForInterestRateEntries) {
+    private void createEquivalentCreditNote(final DateTime documentDate, final String reason,
+            final boolean createForInterestRateEntries) {
+        FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
 
         boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
         boolean isInvoiceRegistrationByTreasuryCertification =
@@ -513,8 +515,11 @@ public class DebitNote extends DebitNote_Base {
             Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
                     entry.calculateDefaultNetExemptedAmountsToCreditMap(amountForCreditWithoutVat);
 
-            final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(), documentObservations,
-                    documentTermsAndConditions, amountForCreditWithoutVat, null, creditNote, creditExemptionsMap);
+            final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(),
+                    finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null,
+                    amountForCreditWithoutVat, null, creditNote, creditExemptionsMap);
+
+            creditEntry.setInternalComments(reason);
 
             if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && isExportedInLegacyERP()) {
                 creditEntry.getFinantialDocument().setExportedInLegacyERP(true);
@@ -545,9 +550,11 @@ public class DebitNote extends DebitNote_Base {
                 Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
                         interestEntry.calculateDefaultNetExemptedAmountsToCreditMap(amountForCreditWithoutVat);
 
-                CreditEntry interestsCreditEntry =
-                        interestEntry.createCreditEntry(documentDate, interestEntry.getDescription(), documentObservations,
-                                documentTermsAndConditions, amountForCreditWithoutVat, null, null, creditExemptionsMap);
+                CreditEntry interestsCreditEntry = interestEntry.createCreditEntry(documentDate, interestEntry.getDescription(),
+                        finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null,
+                        amountForCreditWithoutVat, null, null, creditExemptionsMap);
+
+                interestsCreditEntry.setInternalComments(reason);
 
                 if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
                         && interestEntry.getFinantialDocument() != null
@@ -562,6 +569,8 @@ public class DebitNote extends DebitNote_Base {
 
     public void createCreditNote(String reason, Map<DebitEntry, BigDecimal> creditDebitEntriesMap,
             Map<TreasuryExemption, BigDecimal> creditTreasuryExemptionsMap) {
+        FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
+
         DateTime now = new DateTime();
 
         DocumentNumberSeries documentNumberSeries = inferCreditNoteDocumentNumberSeries();
@@ -583,8 +592,11 @@ public class DebitNote extends DebitNote_Base {
                 creditNoteToAggregate = creditNoteWithOnlyCreditedNetExemptedAmountOnTreasuryExemptions;
             }
 
-            debitEntry.createCreditEntry(now, debitEntry.getDescription(), reason, null, creditNetAmount, null,
-                    creditNoteToAggregate, creditExemptionsMap);
+            CreditEntry creditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(),
+                    finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null, creditNetAmount,
+                    null, creditNoteToAggregate, creditExemptionsMap);
+            creditEntry.setInternalComments(reason);
+
         });
 
         boolean isToCloseCreditNoteWhenCreated = getDebtAccount().getFinantialInstitution().isToCloseCreditNoteWhenCreated();
