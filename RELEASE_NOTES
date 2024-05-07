@@ -1,3 +1,4 @@
+12.17.0 (07-05-2024)
 - Refactor: Add platform dependent methods, to set and remove current application user [#qubIT-Fenix-5228]
 - Bug Fix: Mock with system user in sibs pay webhook, in order to associate user with certified documents [#qubIT-Fenix-5228]
 - Refactor: Add default system user configuration in digital payment platform [#qubIT-Fenix-5228]
