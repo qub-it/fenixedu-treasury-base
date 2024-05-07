@@ -163,9 +163,14 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
 
         super.setDomainRoot(null);
         super.setFinantialInstitution(null);
+        super.setFinantialEntity(null);
 
         while (!getDigitalPaymentPlatformPaymentModesSet().isEmpty()) {
             getDigitalPaymentPlatformPaymentModesSet().iterator().next().delete();
+        }
+
+        if (getSibsPaymentExpiryStrategy() != null) {
+            getSibsPaymentExpiryStrategy().delete();
         }
     }
 

@@ -127,6 +127,10 @@ public interface ITreasuryPlatformDependentServices {
 
     String getCustomerEmail(Customer customer);
 
+    void setCurrentApplicationUser(String username);
+
+    void removeCurrentApplicationUser();
+
     /* Locales */
 
     // TODO: provide the default locale of the platform

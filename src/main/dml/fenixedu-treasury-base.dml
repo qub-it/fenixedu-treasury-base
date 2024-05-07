@@ -847,6 +847,9 @@ class payments.integration.DigitalPaymentPlatform {
 	Boolean overrideFinantialInstitutionInfoHeader;
 	// Save data in rich text
 	LocalizedStringT finantialInstitutionInfoHeader;
+	
+	// Username to mock in automatic payments
+	String applicationUsernameForAutomaticOperations;
 }
 
 	relation DigitalPaymentPlatformDomainRoot {

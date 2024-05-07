@@ -1,3 +1,7 @@
+- Refactor: Add platform dependent methods, to set and remove current application user [#qubIT-Fenix-5228]
+- Bug Fix: Mock with system user in sibs pay webhook, in order to associate user with certified documents [#qubIT-Fenix-5228]
+- Refactor: Add default system user configuration in digital payment platform [#qubIT-Fenix-5228]
+
 12.16.0 (02-05-2024)
 - Improvement: In invoice certification mode, do not save debits annulment reason in the observations of credit note [#qubIT-Fenix-5207]
 - Refactor: Move the method PaymentCodePool::isReferenceCodesActiveForStudentPortal to a controller of module fenixedu-academic-treasury-ui [#UL-ISCSP-1764]

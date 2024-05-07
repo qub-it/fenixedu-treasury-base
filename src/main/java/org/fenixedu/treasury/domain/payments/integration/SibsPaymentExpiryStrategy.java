@@ -33,4 +33,11 @@ public abstract class SibsPaymentExpiryStrategy extends SibsPaymentExpiryStrateg
     public abstract LocalDate calculateSibsPaymentRequestExpiryDate(Set<DebitEntry> debitEntries, Set<Installment> installments,
             boolean limitSibsPaymentRequestToCustomDueDate, LocalDate customSibsPaymentRequestDueDate);
 
+    public void delete() {
+        super.setDomainRoot(null);
+        super.setDigitalPaymentPlatform(null);
+
+        super.deleteDomainObject();
+    }
+
 }

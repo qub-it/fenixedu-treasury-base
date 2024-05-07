@@ -32,6 +32,8 @@ import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.sibspay.SibsPayPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotification;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
@@ -54,6 +56,7 @@ public class SibsPayWebhookController {
     @Consumes(MediaType.TEXT_PLAIN)
     public Response notification(String encryptedBody, @Context HttpServletRequest httpRequest,
             @Context HttpServletResponse response) {
+
         final PaymentRequestLog log = createLog();
 
         String iv = httpRequest.getHeader("X-Initialization-Vector");
@@ -65,6 +68,7 @@ public class SibsPayWebhookController {
         Optional<SibsPayPlatform> configurationToUseOptional = Optional.empty();
         Optional<SibsPayWebhookNotificationWrapper> webhookNotificationWrapperOptional = Optional.empty();
 
+        boolean mockedUser = false;
         try {
             for (SibsPayPlatform configuration : SibsPayPlatform.findAllActive().collect(Collectors.toList())) {
                 try {
@@ -96,6 +100,19 @@ public class SibsPayWebhookController {
 
             SibsPayPlatform configurationToUse = configurationToUseOptional.get();
             SibsPayWebhookNotificationWrapper webhookNotificationWrapper = webhookNotificationWrapperOptional.get();
+
+            ITreasuryPlatformDependentServices treasuryServices = TreasuryPlataformDependentServicesFactory.implementation();
+
+            boolean needToMockUser =
+                    StringUtils.isEmpty(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername())
+                            && StringUtils.isNotEmpty(configurationToUse.getApplicationUsernameForAutomaticOperations());
+
+            if (needToMockUser) {
+                treasuryServices.setCurrentApplicationUser(configurationToUse.getApplicationUsernameForAutomaticOperations());
+                mockedUser = true;
+
+                logger.debug("Mocked user with " + configurationToUse.getApplicationUsernameForAutomaticOperations());
+            }
 
             FenixFramework.atomic(() -> {
                 log.setExternalTransactionId(webhookNotificationWrapper.getTransactionId());
@@ -171,6 +188,12 @@ public class SibsPayWebhookController {
             }
 
             return Response.serverError().build();
+        } finally {
+            if (mockedUser) {
+                TreasuryPlataformDependentServicesFactory.implementation().removeCurrentApplicationUser();
+
+                logger.debug("Unmocked user");
+            }
         }
 
     }
