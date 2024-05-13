@@ -162,8 +162,10 @@ public class ReimbursementUtils {
         final BigDecimal amountToReimburseWithoutVat =
                 divide(amountToReimburseWithVat, BigDecimal.ONE.add(rationalVatRate(originalCreditEntry)));
 
-        final DebitNote compensationDebitNote = DebitNote.create(debtAccount, payorDebtAccount, debitNumberSeries, now,
-                new LocalDate(), originalCreditNote.getUiDocumentNumber());
+        final DebitNote compensationDebitNote =
+                DebitNote.create(originalCreditEntry.getFinantialEntity(), debtAccount, payorDebtAccount, debitNumberSeries, now,
+                        new LocalDate(), originalCreditNote.getUiDocumentNumber(), Collections.emptyMap(), null, null);
+
         final DebitEntry compensationDebitEntry =
                 DebitEntry.create(originalCreditEntry.getFinantialEntity(), debtAccount, null, vat, amountToReimburseWithoutVat,
                         new LocalDate(), Maps.newHashMap(), originalCreditEntry.getProduct(),
@@ -176,8 +178,8 @@ public class ReimbursementUtils {
         settlementCompensation(originalCreditEntry, amountToReimburseWithVat, now, debtAccount, settlementNumberSeries,
                 compensationDebitEntry);
 
-        final CreditNote creditNoteToReimburse = CreditNote.create(debtAccount, creditNumberSeries, now, compensationDebitNote,
-                originalCreditNote.getUiDocumentNumber());
+        final CreditNote creditNoteToReimburse =
+                CreditNote.create(compensationDebitNote, creditNumberSeries, now, originalCreditNote.getUiDocumentNumber());
         final CreditEntry creditEntryToReimburse =
                 compensationDebitEntry.createCreditEntry(now, originalCreditEntry.getDescription(),
                         originalCreditNote.getDocumentObservations(), originalCreditNote.getDocumentTermsAndConditions(),

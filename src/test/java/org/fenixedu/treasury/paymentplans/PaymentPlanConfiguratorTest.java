@@ -3,9 +3,11 @@ package org.fenixedu.treasury.paymentplans;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
@@ -917,10 +919,13 @@ public class PaymentPlanConfiguratorTest {
                 PaymentPlanTestsUtilities.createPaymentPlanBean(methodName, BLOCKING_CONFIGURATOR_INT_DIVIDED_NO_TAX, 3,
                         new LocalDate(2021, 5, 1), new LocalDate(2021, 6, 1), new LocalDate(2022, 6, 1));
 
-        DebitNote debtNote = DebitNote.create(PaymentPlanTestsUtilities.getDebtAccount(),
-                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                        Series.findByCode(PaymentPlanTestsUtilities.getFinatialInstitution(), "INT")),
-                new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay());
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
+                Series.findByCode(PaymentPlanTestsUtilities.getFinatialInstitution(), "INT"));
+        DebitNote debtNote = DebitNote.create(finantialEntity, PaymentPlanTestsUtilities.getDebtAccount(), null,
+                documentNumberSeries, new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay(), new LocalDate(2021, 5, 1), null,
+                Collections.emptyMap(), null, null);
 
         DebitEntry debitEntry =
                 PaymentPlanTestsUtilities.createDebitEntry(new BigDecimal("99.99"), new LocalDate(2021, 2, 28), true);

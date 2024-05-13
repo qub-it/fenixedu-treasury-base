@@ -77,6 +77,7 @@ import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
+import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
@@ -92,10 +93,11 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         super();
     }
 
-    protected PaymentPenaltyTaxTreasuryEvent(Product product, LocalizedString description, DebitEntry debitEntry) {
+    protected PaymentPenaltyTaxTreasuryEvent(FinantialEntity finantialEntity, Product product, LocalizedString description,
+            DebitEntry debitEntry) {
         this();
 
-        super.init(product, description);
+        super.init(finantialEntity, product, description);
 
         super.setDebtAccount(debitEntry.getDebtAccount());
         super.setOriginDebitEntry(debitEntry);
@@ -238,8 +240,8 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         if (paymentPenaltyTaxTreasuryEvent == null) {
             // There is none, create new treasury event
             LocalizedString emolumentDescription = settings.buildEmolumentDescription(originDebitEntry);
-            paymentPenaltyTaxTreasuryEvent =
-                    new PaymentPenaltyTaxTreasuryEvent(settings.getPenaltyProduct(), emolumentDescription, originDebitEntry);
+            paymentPenaltyTaxTreasuryEvent = new PaymentPenaltyTaxTreasuryEvent(settings.getFinantialEntity(),
+                    settings.getPenaltyProduct(), emolumentDescription, originDebitEntry);
         }
 
         Tariff tariff = null;
@@ -274,7 +276,9 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             DocumentNumberSeries documentNumberSeries =
                     DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
 
-            debitNote = DebitNote.create(debtAccount, documentNumberSeries, whenDebtCreationDate.toDateTimeAtStartOfDay());
+            debitNote = DebitNote.create(settings.getFinantialEntity(), debtAccount, null, documentNumberSeries,
+                    whenDebtCreationDate.toDateTimeAtStartOfDay(), whenDebtCreationDate, null, Collections.emptyMap(), null,
+                    null);
         }
 
         BigDecimal totalAmount = tariff.amountToPay();
@@ -305,7 +309,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
                         .collect(Collectors.toSet()));
             }
 
-            finantialInstitution.getDefaultDigitalPaymentPlatform().castToSibsPaymentCodePoolService()
+            ISibsPaymentCodePoolService.getDefaultDigitalPaymentPlatform(tariff.getFinantialEntity())
                     .createSibsPaymentRequest(debtAccount, debitEntriesSet, Collections.emptySet());
         }
 

@@ -223,7 +223,7 @@ public class SettlementDebitEntryBean implements ISettlementInvoiceEntryBean, IT
 
     @Override
     public boolean isForFinantialEntity(FinantialEntity finantialEntity) {
-        return getInvoiceEntry().getFinantialEntity() == finantialEntity;
+        return this.debitEntry.getFinantialEntity() == null || this.debitEntry.getFinantialEntity() == finantialEntity;
     }
 
     @Override

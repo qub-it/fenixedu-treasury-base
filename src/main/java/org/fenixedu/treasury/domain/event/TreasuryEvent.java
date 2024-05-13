@@ -55,6 +55,7 @@ package org.fenixedu.treasury.domain.event;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -107,7 +108,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         setCode(UUID.randomUUID().toString());
     }
 
-    protected void init(final Product product, final LocalizedString description) {
+    protected void init(FinantialEntity finantialEntity, Product product, LocalizedString description) {
+        setFinantialEntity(finantialEntity);
         setProduct(product);
         setDescription(description);
     }
@@ -510,11 +512,12 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 continue;
             }
 
+            DocumentNumberSeries defaultDocumentNumberSeries =
+                    DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
+                            debitEntry.getDebtAccount().getFinantialInstitution()).get();
             if (!debitEntry.isProcessedInDebitNote()) {
-                final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(),
-                        DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                                debitEntry.getDebtAccount().getFinantialInstitution()).get(),
-                        new DateTime());
+                final DebitNote debitNote = DebitNote.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(), null,
+                        defaultDocumentNumberSeries, new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
 
                 debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
             }
@@ -531,12 +534,10 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                     }
 
                     if (!interestDebitEntry.isProcessedInDebitNote()) {
-                        final DebitNote debitNoteForUnprocessedEntries =
-                                DebitNote
-                                        .create(debitEntry.getDebtAccount(),
-                                                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                                                        debitEntry.getDebtAccount().getFinantialInstitution()).get(),
-                                                new DateTime());
+                        final DebitNote debitNoteForUnprocessedEntries = DebitNote.create(debitEntry.getFinantialEntity(),
+                                debitEntry.getDebtAccount(), null, defaultDocumentNumberSeries, new DateTime(), new LocalDate(),
+                                null, Collections.emptyMap(), null, null);
+
                         interestDebitEntry.setFinantialDocument(debitNoteForUnprocessedEntries);
                     }
 
@@ -610,7 +611,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     // @formatter: on
 
     public FinantialEntity getAssociatedFinantialEntity() {
-        return null;
+        return super.getFinantialEntity();
     }
 
     // @formatter: off

@@ -2276,6 +2276,16 @@ relation TreasuryEventProduct {
 	}
 }
 
+relation TreasuryEventFinantialEntity {
+	FinantialEntity playsRole finantialEntity {
+		multiplicity 0..1;
+	}
+	
+	event.TreasuryEvent playsRole treasuryEvents {
+		multiplicity *;
+	}
+}
+
 // TODO: Evaluate if this relation is necessary. If not then remove 
 relation TreasuryEventDebtAccount {
 	
@@ -3369,6 +3379,16 @@ class paymentPlan.PaymentPlan{
 		}
 		
 		paymentPlan.PaymentPlan playsRole paymentPlanRevisions {
+			multiplicity *;
+		}
+	}
+	
+	relation PaymentPlanFinantialEntity {
+		FinantialEntity playsRole finantialEntity {
+			multiplicity 0..1;
+		}
+		
+		paymentPlan.PaymentPlan playsRole paymentPlans {
 			multiplicity *;
 		}
 	}

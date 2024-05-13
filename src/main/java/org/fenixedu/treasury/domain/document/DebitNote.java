@@ -55,6 +55,7 @@ package org.fenixedu.treasury.domain.document;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -83,17 +85,13 @@ import pt.ist.fenixframework.Atomic;
 
 public class DebitNote extends DebitNote_Base {
 
-    protected DebitNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate) {
-        super();
-        this.init(debtAccount, documentNumberSeries, documentDate);
-    }
-
-    protected DebitNote(final DebtAccount debtAccount, final DebtAccount payorDebtAccount,
-            final DocumentNumberSeries documentNumberSeries, final DateTime documentDate) {
+    protected DebitNote(FinantialEntity finantialEntity, DebtAccount debtAccount, DebtAccount payorDebtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate) {
         super();
 
-        this.init(debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
+        setFinantialDocumentType(FinantialDocumentType.findForDebitNote());
+
+        super.init(finantialEntity, debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
     }
 
     @Override
@@ -246,38 +244,14 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
-    public static DebitNote create(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate) {
-        DebitNote note = new DebitNote(debtAccount, documentNumberSeries, documentDate);
-        note.setFinantialDocumentType(FinantialDocumentType.findForDebitNote());
-        note.setOriginDocumentNumber("");
-        note.setDocumentDueDate(documentDate.toLocalDate());
-
-        note.checkRules();
-        return note;
-    }
-
-    @Atomic
-    public static DebitNote create(final DebtAccount debtAccount, final DebtAccount payorDebtAccount,
-            final DocumentNumberSeries documentNumberSeries, final DateTime documentDate, final LocalDate documentDueDate,
-            final String originNumber) {
-
-        DebitNote note = new DebitNote(debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
-        note.setFinantialDocumentType(FinantialDocumentType.findForDebitNote());
-        note.setOriginDocumentNumber(originNumber);
-        note.setDocumentDueDate(documentDueDate);
-
-        note.checkRules();
-
-        return note;
-    }
-
-    @Atomic
-    public static DebitNote create(DebtAccount debtAccount, DebtAccount payorDebtAccount,
+    public static DebitNote create(FinantialEntity finantialEntity, DebtAccount debtAccount, DebtAccount payorDebtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate, String originNumber,
             Map<String, String> propertiesMap, String documentObservations, String documentTermsAndConditions) {
 
-        DebitNote note = create(debtAccount, payorDebtAccount, documentNumberSeries, documentDate, documentDueDate, originNumber);
+        DebitNote note = new DebitNote(finantialEntity, debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
+
+        note.setOriginDocumentNumber(originNumber);
+        note.setDocumentDueDate(documentDueDate);
 
         note.setDocumentObservations(documentObservations);
         note.setDocumentTermsAndConditions(documentTermsAndConditions);
@@ -297,10 +271,9 @@ public class DebitNote extends DebitNote_Base {
                     "error.DebitNote.createDebitNoteForDebitEntry.debitEntry.already.is.attached.to.finantialDocument");
         }
 
-        final DebitNote debitNote = DebitNote.create(debitEntry.getDebtAccount(), payorDebtAccount, documentNumberSeries,
-                documentDate, documentDueDate, originDocumentNumber);
-        debitNote.setDocumentObservations(documentObservations);
-        debitNote.setDocumentTermsAndConditions(documentTermsAndConditions);
+        final DebitNote debitNote = DebitNote.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(),
+                payorDebtAccount, documentNumberSeries, documentDate, documentDueDate, originDocumentNumber,
+                Collections.emptyMap(), null, null);
 
         debitEntry.setFinantialDocument(debitNote);
 
@@ -500,8 +473,7 @@ public class DebitNote extends DebitNote_Base {
 
         if (isInvoiceRegistrationByTreasuryCertification) {
             DocumentNumberSeries documentNumberSeries = inferCreditNoteDocumentNumberSeries();
-            creditNote =
-                    CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this, getUiDocumentNumber());
+            creditNote = CreditNote.create(this, documentNumberSeries, documentDate, getUiDocumentNumber());
         }
 
         for (DebitEntry entry : this.getDebitEntriesSet()) {
@@ -575,10 +547,10 @@ public class DebitNote extends DebitNote_Base {
 
         DocumentNumberSeries documentNumberSeries = inferCreditNoteDocumentNumberSeries();
         CreditNote creditNoteWithCreditedNetAmountOnDebitEntries =
-                CreditNote.create(this.getDebtAccount(), documentNumberSeries, now, this, getUiDocumentNumber());
+                CreditNote.create(this, documentNumberSeries, now, getUiDocumentNumber());
 
         CreditNote creditNoteWithOnlyCreditedNetExemptedAmountOnTreasuryExemptions =
-                CreditNote.create(this.getDebtAccount(), documentNumberSeries, now, this, getUiDocumentNumber());
+                CreditNote.create(this, documentNumberSeries, now, getUiDocumentNumber());
 
         creditDebitEntriesMap.forEach((debitEntry, creditNetAmount) -> {
             Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
@@ -762,7 +734,8 @@ public class DebitNote extends DebitNote_Base {
             throw new TreasuryDomainException("error.DebitNote.anullAndCopyDebitNote.copy.only.on.closed.debit.note");
         }
 
-        final DebitNote newDebitNote = DebitNote.create(getDebtAccount(), getDocumentNumberSeries(), new DateTime());
+        final DebitNote newDebitNote = DebitNote.create(getFinantialEntity(), getDebtAccount(), null, getDocumentNumberSeries(),
+                new DateTime(), new LocalDate(), getOriginDocumentNumber(), Collections.emptyMap(), null, null);
 
         newDebitNote.setOriginDocumentNumber(getOriginDocumentNumber());
         for (final FinantialDocumentEntry finantialDocumentEntry : getFinantialDocumentEntriesSet()) {
@@ -825,8 +798,7 @@ public class DebitNote extends DebitNote_Base {
                 DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
 
         DateTime documentDate = new DateTime();
-        CreditNote creditNote =
-                CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, this, getUiDocumentNumber());
+        CreditNote creditNote = CreditNote.create(this, documentNumberSeries, documentDate, getUiDocumentNumber());
 
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             // Get the amount for credit without tax, and considering the credit quantity FOR ONE

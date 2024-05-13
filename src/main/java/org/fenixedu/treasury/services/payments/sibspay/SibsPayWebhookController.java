@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,6 +47,8 @@ import pt.ist.fenixframework.FenixFramework;
 
 @Path("/sibspaywebhook")
 public class SibsPayWebhookController {
+
+    private static final String PROVIDER_NAME = "SunJCE";
 
     private static final Logger logger = LoggerFactory.getLogger(SibsPayWebhookController.class);
 
@@ -222,7 +225,7 @@ public class SibsPayWebhookController {
             SecretKeySpec keySpec = new SecretKeySpec(key, 0, 32, "AES");
             Cipher cipher;
 
-            cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher = Cipher.getInstance("AES/GCM/NoPadding", PROVIDER_NAME);
             cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(iv));
 
             // Decrypt
@@ -231,7 +234,7 @@ public class SibsPayWebhookController {
             // Return
             return new String(bytes, "UTF-8");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException
-                | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e) {
+                | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | NoSuchProviderException e) {
             throw new UnableToDecryptException(e);
         }
 

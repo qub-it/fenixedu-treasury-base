@@ -294,8 +294,7 @@ public class CreditEntry extends CreditEntry_Base {
         BigDecimal oldNetAmount = getNetAmount();
         BigDecimal oldAmountWithVat = getAmountWithVat();
 
-        CreditNote newCreditNote = CreditNote.create(this.getDebtAccount(), getCreditNote().getDocumentNumberSeries(),
-                getCreditNote().getDocumentDate(), getCreditNote().getDebitNote(), getCreditNote().getOriginDocumentNumber());
+        CreditNote newCreditNote = createCreditNoteForSplitCreditEntry();
 
         newCreditNote.setDocumentObservations(getCreditNote().getDocumentObservations());
         newCreditNote.setDocumentTermsAndConditions(getCreditNote().getDocumentTermsAndConditions());
@@ -360,6 +359,19 @@ public class CreditEntry extends CreditEntry_Base {
         }
 
         return newCreditEntry;
+    }
+
+    private CreditNote createCreditNoteForSplitCreditEntry() {
+        if (getCreditNote().getDebitNote() != null) {
+            return CreditNote.create(getCreditNote().getDebitNote(), getCreditNote().getDocumentNumberSeries(),
+                    getCreditNote().getDocumentDate(), getCreditNote().getOriginDocumentNumber());
+        } else {
+            CreditNote creditNote = CreditNote.create(getCreditNote().getFinantialEntity(), this.getDebtAccount(),
+                    getCreditNote().getDocumentNumberSeries(), getCreditNote().getPayorDebtAccount(),
+                    getCreditNote().getDocumentDate(), getCreditNote().getOriginDocumentNumber());
+
+            return creditNote;
+        }
     }
 
     private void resetCreditedNetExemptionAmounts(Map<TreasuryExemption, BigDecimal> exemptionsMap) {

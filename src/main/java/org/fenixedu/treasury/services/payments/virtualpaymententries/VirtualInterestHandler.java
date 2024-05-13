@@ -56,6 +56,7 @@ import static java.lang.String.format;
 import static org.fenixedu.treasury.util.TreasuryConstants.DATE_FORMAT_YYYY_MM_DD;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,7 @@ import org.fenixedu.treasury.dto.SettlementInterestEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
     @Override
@@ -176,15 +178,16 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
 
         SettlementInterestEntryBean interestEntryBean = (SettlementInterestEntryBean) invoiceEntryBean;
 
-        DebitNote interestDebitNote = DebitNote.create(settlementNoteBean.getDebtAccount(), debitNoteSeries, new DateTime());
-
+        DebtAccount payorDebtAccount = null;
         if (settlementNoteBean.getReferencedCustomers().size() == 1 && settlementNoteBean.getReferencedCustomers().iterator()
                 .next() != settlementNoteBean.getDebtAccount().getCustomer()) {
             Customer payorCustomer = settlementNoteBean.getReferencedCustomers().iterator().next();
-            DebtAccount payorDebtAccount =
-                    payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
-            interestDebitNote.setPayorDebtAccount(payorDebtAccount);
+            payorDebtAccount = payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
         }
+
+        DebitNote interestDebitNote =
+                DebitNote.create(settlementNoteBean.getFinantialEntity(), settlementNoteBean.getDebtAccount(), payorDebtAccount,
+                        debitNoteSeries, new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
 
         DateTime whenInterestDebitEntryDateTime =
                 interestEntryBean.getInterest().getInterestDebitEntryDateTime() != null ? interestEntryBean.getInterest()

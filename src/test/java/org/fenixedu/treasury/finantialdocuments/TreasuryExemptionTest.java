@@ -3,6 +3,7 @@ package org.fenixedu.treasury.finantialdocuments;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -107,8 +108,11 @@ public class TreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DebitNote debitNote = DebitNote.create(getDebtAccount(), DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), Series.findByCode(getFinatialInstitution(), "INT")), date);
+        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
+                Series.findByCode(getFinatialInstitution(), "INT"));
+        DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
+                date.toLocalDate(), null, Collections.emptyMap(), null, null);
+
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
 
         this.debitEntry = DebitEntry.create(finantialEntity, getDebtAccount(), null, vat, new BigDecimal(1000), dueDate, null,
@@ -119,7 +123,6 @@ public class TreasuryExemptionTest {
                 .checkAndCreatePaymentPenaltyTax(this.debitEntry, dueDate.plusDays(15), null).getTreasuryEvent();
 
         this.debitEntry.setTreasuryEvent(this.treasuryEvent);
-
     }
 
     @Test

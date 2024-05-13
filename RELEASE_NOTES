@@ -1,3 +1,14 @@
+- Refactor: Associate FinantialEntity to TreasuryEvent [#qubIT-Fenix-4587]
+- Refactor: Associate FinantialEntity to PaymentPlan [#qubIT-Fenix-4587]
+- Refactor: FinantialDocument receive FinantialEntity in initialization [#qubIT-Fenix-4587]
+- Refactor: Debit note and credit note receive finantial entity and payor debt account [#qubIT-Fenix-4587]
+- Refactor: Define ISibsPaymentCodePoolService#getDefaultDigitalPaymentPlatform method, to get default payment code pool for finantial entity [#qubIT-Fenix-4587]
+- Refactor: Associate PaymentPenaltyTaxTreasuryEvent with FinantialEntity [#qubIT-Fenix-4587]
+- Bug Fix: Create sibs payment request for PaymentPenaltyTaxTreasuryEvent, by finantial entity [#qubIT-Fenix-4587]
+- Bug Fix: Assign each interest debit entry with each debit note, when requested to generate debit note per interest debit entry [#qubIT-Fenix-5260]
+- Refactor: Add FinantialEntity#findWithFrontOfficeAccessFor which returns the finantial entities that a user has access for in front office [#qubIT-Fenix-4587]
+- Refactor: Explicit define crypto provider as "SunJCE" [#qubIT-Fenix-5259]
+
 12.17.0 (07-05-2024)
 - Refactor: Add platform dependent methods, to set and remove current application user [#qubIT-Fenix-5228]
 - Bug Fix: Mock with system user in sibs pay webhook, in order to associate user with certified documents [#qubIT-Fenix-5228]

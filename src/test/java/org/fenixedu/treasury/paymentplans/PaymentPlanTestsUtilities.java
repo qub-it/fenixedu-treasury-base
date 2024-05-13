@@ -218,7 +218,8 @@ public class PaymentPlanTestsUtilities {
 
     public static PaymentPlanBean createPaymentPlanBean(String planID, String configurator, int nbInstallments,
             LocalDate requestDate, LocalDate StartDate, LocalDate EndDate) {
-        PaymentPlanBean paymentPlanBean = new PaymentPlanBean(getDebtAccount(), requestDate);
+        FinantialEntity next = FinantialEntity.findAll().iterator().next();
+        PaymentPlanBean paymentPlanBean = new PaymentPlanBean(next, getDebtAccount(), requestDate);
         paymentPlanBean.setNbInstallments(nbInstallments);
         paymentPlanBean.setStartDate(StartDate);
         paymentPlanBean.setEndDate(EndDate);

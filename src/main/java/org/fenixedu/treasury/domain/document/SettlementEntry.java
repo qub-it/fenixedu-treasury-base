@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -69,6 +70,7 @@ import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainS
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
@@ -148,10 +150,9 @@ public class SettlementEntry extends SettlementEntry_Base {
                                         debitEntry.getDebtAccount().getFinantialInstitution())
                                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
 
-                        DebitNote interestDebitNote =
-                                DebitNote.create(debitEntry.getDebtAccount(), debitNoteSeries, new DateTime());
-
-                        interestDebitNote.setPayorDebtAccount(debitEntry.getDebitNote().getPayorDebtAccount());
+                        DebitNote interestDebitNote = DebitNote.create(debitEntry.getFinantialEntity(),
+                                debitEntry.getDebtAccount(), debitEntry.getDebitNote().getPayorDebtAccount(), debitNoteSeries,
+                                new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
 
                         debitEntry.createInterestRateDebitEntry(undebitedInterestValue, whenInterestDebitEntryDateTime,
                                 interestDebitNote);

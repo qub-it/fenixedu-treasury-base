@@ -56,6 +56,8 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.FinantialEntity;
+import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
@@ -95,5 +97,23 @@ public interface ISibsPaymentCodePoolService {
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest);
+
+    public static ISibsPaymentCodePoolService getDefaultDigitalPaymentPlatform(FinantialEntity finantialEntity) {
+        FinantialInstitution finantialInstitution = finantialEntity.getFinantialInstitution();
+
+        if (Boolean.TRUE.equals(finantialInstitution.getLimitPaymentRequestsByFinantialEntity())) {
+            if (finantialEntity.getDefaultDigitalPaymentPlatform() == null) {
+                return null;
+            }
+
+            return finantialEntity.getDefaultDigitalPaymentPlatform().castToSibsPaymentCodePoolService();
+        }
+
+        if (finantialInstitution.getDefaultDigitalPaymentPlatform() == null) {
+            return null;
+        }
+
+        return finantialInstitution.getDefaultDigitalPaymentPlatform().castToSibsPaymentCodePoolService();
+    }
 
 }

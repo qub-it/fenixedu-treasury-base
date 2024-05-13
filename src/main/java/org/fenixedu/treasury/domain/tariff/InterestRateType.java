@@ -5,6 +5,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -281,8 +282,11 @@ public abstract class InterestRateType extends InterestRateType_Base {
         Set<DebitNote> result = new HashSet<>();
 
         DebtAccount debtAccount = debitNote.getDebtAccount();
-        DebitNote interestDebitNoteForAllInterests = createDebitNoteForEachInterestDebitEntry ? null : DebitNote
-                .create(debtAccount, documentNumberSeries, documentDate);
+        DebitNote interestDebitNoteForAllInterests =
+                createDebitNoteForEachInterestDebitEntry ? null : DebitNote.create(debitNote.getFinantialEntity(), debtAccount,
+                        debitNote.getPayorDebtAccount(), documentNumberSeries, documentDate, documentDate.toLocalDate(), null,
+                        Collections.emptyMap(), null, null);
+
         for (DebitEntry entry : debitNote.getDebitEntriesSet()) {
 
             if (entry.getInterestRate() == null || entry.getInterestRate().getInterestRateType() == null) {
@@ -292,10 +296,18 @@ public abstract class InterestRateType extends InterestRateType_Base {
             InterestRateType interestRateType = entry.getInterestRate().getInterestRateType();
 
             if (createDebitNoteForEachInterestDebitEntry) {
-                DebitNote d = DebitNote.create(debtAccount, documentNumberSeries, documentDate);
-                result.add(d);
+                Set<DebitEntry> createInterestDebitEntriesForOriginDebitEntry =
+                        interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate, null);
 
-                interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate, d);
+                for (DebitEntry interestDebitEntry : createInterestDebitEntriesForOriginDebitEntry) {
+                    DebitNote d = DebitNote.create(debitNote.getFinantialEntity(), debtAccount, debitNote.getPayorDebtAccount(),
+                            documentNumberSeries, documentDate, documentDate.toLocalDate(), null, Collections.emptyMap(), null,
+                            null);
+
+                    result.add(d);
+
+                    interestDebitEntry.addToFinantialDocument(d);
+                }
             } else {
                 result.add(interestDebitNoteForAllInterests);
                 interestRateType.createInterestDebitEntriesForOriginDebitEntry(entry, documentDate, paymentDate,

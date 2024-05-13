@@ -75,8 +75,8 @@ import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxTreasuryEvent;
-import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
@@ -103,7 +103,19 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     private PaymentPlan(PaymentPlanBean paymentPlanBean) {
         this();
+
         DebtAccount debtAccount = paymentPlanBean.getDebtAccount();
+
+        setFinantialEntity(paymentPlanBean.getFinantialEntity());
+
+        if (getFinantialEntity() == null) {
+            if (FinantialEntity.find(debtAccount.getFinantialInstitution()).count() != 1) {
+                throw new RuntimeException("not supported for more than one finantial entity by finantial institution");
+            }
+
+            setFinantialEntity(FinantialEntity.find(debtAccount.getFinantialInstitution()).iterator().next());
+        }
+
         setCreationDate(paymentPlanBean.getCreationDate());
         setReason(paymentPlanBean.getReason());
         setDebtAccount(debtAccount);
@@ -231,10 +243,13 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
-        return DebitNote.create(paymentPlanBean.getDebtAccount(),
+        DocumentNumberSeries defaultDocumentNumberSeries =
                 DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                        paymentPlanBean.getDebtAccount().getFinantialInstitution()).get(),
-                result.getCreationDate().toDateTimeAtStartOfDay());
+                        paymentPlanBean.getDebtAccount().getFinantialInstitution()).get();
+
+        return DebitNote.create(paymentPlanBean.getFinantialEntity(), paymentPlanBean.getDebtAccount(), null,
+                defaultDocumentNumberSeries, result.getCreationDate().toDateTimeAtStartOfDay(), result.getCreationDate(), null,
+                Collections.emptyMap(), null, null);
     }
 
     private static DebitEntry createDebitEntry(FinantialEntity finantialEntity, DebtAccount debtAccount, String description,
@@ -255,12 +270,6 @@ public class PaymentPlan extends PaymentPlan_Base {
                     result.put(debitEntryBean, (DebitEntry) debitEntryBean.getInvoiceEntry());
                 });
 
-        if (FinantialEntity.find(debtAccount.getFinantialInstitution()).count() != 1) {
-            throw new RuntimeException("not supported for more than one finantial entity by finantial institution");
-        }
-
-        FinantialEntity finantialEntity = FinantialEntity.find(debtAccount.getFinantialInstitution()).findAny().get();
-
         //PendingDebitEntries (Emolument)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPendingDebitEntry())
                 .forEach(bean -> {
@@ -271,7 +280,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
 
-                    DebitEntry debitEntry = createDebitEntry(finantialEntity, debtAccount, debitEntryBean.getDescription(),
+                    DebitEntry debitEntry = createDebitEntry(getFinantialEntity(), debtAccount, debitEntryBean.getDescription(),
                             debitEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
 
                     result.put(bean, debitEntry);
@@ -287,8 +296,9 @@ public class PaymentPlan extends PaymentPlan_Base {
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
 
-                    DebitEntry debitEntry = createDebitEntry(finantialEntity, debtAccount, interestEntryBean.getDescription(),
-                            interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
+                    DebitEntry debitEntry =
+                            createDebitEntry(getFinantialEntity(), debtAccount, interestEntryBean.getDescription(),
+                                    interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
 
                     interestEntryBean.getDebitEntry().addInterestDebitEntries(debitEntry);
                     result.put(bean, debitEntry);
@@ -319,7 +329,8 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     public void createPaymentReferenceCode() {
-        DigitalPaymentPlatform paymentCodePool = getDebtAccount().getFinantialInstitution().getDefaultDigitalPaymentPlatform();
+        ISibsPaymentCodePoolService paymentCodePool =
+                ISibsPaymentCodePoolService.getDefaultDigitalPaymentPlatform(getFinantialEntity());
 
         if (paymentCodePool == null) {
             throw new IllegalArgumentException(TreasuryConstants.treasuryBundle("error.paymentPlan.paymentCodePool.required"));
@@ -328,8 +339,7 @@ public class PaymentPlan extends PaymentPlan_Base {
         for (Installment installment : getInstallmentsSet()) {
             if (installment.getPaymentRequestsSet().stream().filter(request -> request instanceof SibsPaymentRequest)
                     .count() == 0) {
-                paymentCodePool.castToSibsPaymentCodePoolService().createSibsPaymentRequest(getDebtAccount(),
-                        Collections.emptySet(), Set.of(installment));
+                paymentCodePool.createSibsPaymentRequest(getDebtAccount(), Collections.emptySet(), Set.of(installment));
             }
         }
     }

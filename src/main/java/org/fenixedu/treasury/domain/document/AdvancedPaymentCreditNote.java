@@ -73,19 +73,12 @@ import pt.ist.fenixframework.Atomic;
 
 public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
 
-    protected AdvancedPaymentCreditNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate) {
+    protected AdvancedPaymentCreditNote(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            final DebtAccount payorDebtAccount, final DocumentNumberSeries documentNumberSeries, final DateTime documentDate) {
         super();
 
-        super.init(debtAccount, documentNumberSeries, documentDate);
-        checkRules();
-    }
+        super.init(finantialEntity, debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
 
-    protected AdvancedPaymentCreditNote(final DebtAccount debtAccount, final DebtAccount payorDebtAccount,
-            final DocumentNumberSeries documentNumberSeries, final DateTime documentDate) {
-        super();
-
-        super.init(debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
         checkRules();
     }
 
@@ -157,50 +150,49 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
      ************/
     // @formatter: on
 
-    private static AdvancedPaymentCreditNote create(final DebtAccount debtAccount, final DebtAccount payorDebtAccount,
-            final DocumentNumberSeries documentNumberSeries, final DateTime documentDate) {
+    private static AdvancedPaymentCreditNote create(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DebtAccount payorDebtAccount, DocumentNumberSeries documentNumberSeries, DateTime documentDate) {
         AdvancedPaymentCreditNote note =
-                new AdvancedPaymentCreditNote(debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
+                new AdvancedPaymentCreditNote(finantialEntity, debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
 
         note.checkRules();
 
         return note;
     }
 
-    public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(DocumentNumberSeries documentNumberSeries,
-            DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description,
-            String originDocumentNumber, final DebtAccount payorDebtAccount) {
-        return _create(documentNumberSeries, debtAccount, availableAmount, documentDate, description, originDocumentNumber,
-                payorDebtAccount, null);
+    public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(FinantialEntity finantialEntity,
+            DocumentNumberSeries documentNumberSeries, DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate,
+            String description, String originDocumentNumber, DebtAccount payorDebtAccount) {
+        return _create(finantialEntity, documentNumberSeries, debtAccount, availableAmount, documentDate, description,
+                originDocumentNumber, payorDebtAccount);
     }
 
-    public static AdvancedPaymentCreditNote createCreditNoteForAdvancedPayment(DocumentNumberSeries documentNumberSeries,
+    private static AdvancedPaymentCreditNote _create(FinantialEntity finantialEntity, DocumentNumberSeries documentNumberSeries,
             DebtAccount debtAccount, BigDecimal availableAmount, DateTime documentDate, String description,
-            String originDocumentNumber, DebtAccount payorDebtAccount, FinantialEntity finantialEntity) {
-        return _create(documentNumberSeries, debtAccount, availableAmount, documentDate, description, originDocumentNumber,
-                payorDebtAccount, finantialEntity);
-    }
-
-    private static AdvancedPaymentCreditNote _create(DocumentNumberSeries documentNumberSeries, DebtAccount debtAccount,
-            BigDecimal availableAmount, DateTime documentDate, String description, String originDocumentNumber,
-            DebtAccount payorDebtAccount, FinantialEntity finantialEntity) {
-        AdvancedPaymentCreditNote note = create(debtAccount, payorDebtAccount != debtAccount ? payorDebtAccount : null,
-                documentNumberSeries, documentDate);
+            String originDocumentNumber, DebtAccount payorDebtAccount) {
+        AdvancedPaymentCreditNote note = create(finantialEntity, debtAccount,
+                payorDebtAccount != debtAccount ? payorDebtAccount : null, documentNumberSeries, documentDate);
 
         note.setOriginDocumentNumber(originDocumentNumber);
+
         Product advancedPaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
+
         if (advancedPaymentProduct == null) {
             throw new TreasuryDomainException("error.AdvancedPaymentCreditNote.invalid.product.for.advanced.payment");
         }
+
         Vat vat = Vat.findActiveUnique(advancedPaymentProduct.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                 .orElse(null);
+
         if (vat == null) {
             throw new TreasuryDomainException("error.AdvancedPaymentCreditNote.invalid.vat.type.for.advanced.payment");
         }
+
         String lineDescription = treasuryBundleI18N("label.AdvancedPaymentCreditNote.advanced.payment.description")
                 .getContent(TreasuryConstants.DEFAULT_LANGUAGE) + description;
-        CreditEntry entry = CreditEntry.create(finantialEntity, note, lineDescription, advancedPaymentProduct, vat,
-                availableAmount, documentDate, BigDecimal.ONE);
+
+        CreditEntry.create(finantialEntity, note, lineDescription, advancedPaymentProduct, vat, availableAmount, documentDate,
+                BigDecimal.ONE);
 
         return note;
     }

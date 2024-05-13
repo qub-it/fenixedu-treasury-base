@@ -544,7 +544,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
 
                 if (TreasuryConstants.isPositive(interestEntryAmout)) {
                     InterestRateBean interestRateBean = new InterestRateBean();
-                    
+
                     // TODO ANIL 2023-07-25: Remove the following code line, as the GlobalInterestRateType set
                     // the description. Remove and test
                     interestRateBean.setDescription(TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
@@ -616,9 +616,7 @@ public class PaymentPlanConfigurator extends PaymentPlanConfigurator_Base {
     }
 
     private static int compareDebitEntryDueDate(DebitEntry debitEntry1, DebitEntry debitEntry2) {
-        return Comparator
-                .comparing((DebitEntry debitEntry) -> debitEntry.getDueDate())
-                .thenComparing((DebitEntry debitEntry) -> debitEntry.getExternalId())
-                .compare(debitEntry1, debitEntry2);
+        return Comparator.comparing((DebitEntry debitEntry) -> debitEntry.getDueDate())
+                .thenComparing((DebitEntry debitEntry) -> debitEntry.getExternalId()).compare(debitEntry1, debitEntry2);
     }
 }

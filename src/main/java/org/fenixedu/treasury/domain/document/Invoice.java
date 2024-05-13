@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -96,18 +97,18 @@ public abstract class Invoice extends Invoice_Base {
     }
 
     @Override
-    protected void init(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate) {
+    protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate) {
         if (debtAccount.getClosed()) {
             throw new TreasuryDomainException("error.Invoice.debtAccount.closed");
         }
 
-        super.init(debtAccount, documentNumberSeries, documentDate);
+        super.init(finantialEntity, debtAccount, documentNumberSeries, documentDate);
     }
 
-    protected void init(final DebtAccount debtAccount, final DebtAccount payorDebtAccount,
-            final DocumentNumberSeries documentNumberSeries, final DateTime documentDate) {
-        this.init(debtAccount, documentNumberSeries, documentDate);
+    protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, DebtAccount payorDebtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate) {
+        this.init(finantialEntity, debtAccount, documentNumberSeries, documentDate);
 
         if (debtAccount == payorDebtAccount) {
             throw new TreasuryDomainException("error.Invoice.payor.same.as.debt.account");

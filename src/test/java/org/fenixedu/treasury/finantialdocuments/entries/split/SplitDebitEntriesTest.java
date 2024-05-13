@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
@@ -89,9 +90,13 @@ public class SplitDebitEntriesTest {
 
         DebtAccount debtAccount = debitEntry.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
-        DebitNote debitNote = DebitNote.create(debtAccount,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
-                new DateTime());
+
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        DocumentNumberSeries defaultDocumentNumberSeries =
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+        DebitNote debitNote = DebitNote.create(finantialEntity, debtAccount, null, defaultDocumentNumberSeries, new DateTime(),
+                new LocalDate(), null, Collections.emptyMap(), null, null);
 
         debitNote.addDebitNoteEntries(List.of(debitEntry));
         debitNote.closeDocument();
@@ -128,9 +133,12 @@ public class SplitDebitEntriesTest {
 
         DebtAccount debtAccount = debitEntry.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
-        DebitNote debitNote = DebitNote.create(debtAccount,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
-                new DateTime());
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        DocumentNumberSeries defaultDocumentNumberSeries =
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+        DebitNote debitNote = DebitNote.create(finantialEntity, debtAccount, null, defaultDocumentNumberSeries, new DateTime(),
+                new LocalDate(), null, Collections.emptyMap(), null, null);
 
         debitNote.addDebitNoteEntries(List.of(debitEntry));
 
@@ -201,13 +209,15 @@ public class SplitDebitEntriesTest {
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
         TreasuryEvent treasuryEvent = null;
+
         DebitEntry debitEntry = DebitEntry.create(finantialEntity, debtAccount, treasuryEvent, vat, new BigDecimal("50.00"),
                 new LocalDate(), null, Product.findUniqueByCode("PAGAMENTO").get(), "debt 1", new BigDecimal("2"), null,
                 new DateTime(), false, false, null);
 
-        DebitNote debitNote = DebitNote.create(debtAccount,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
-                new DateTime());
+        DocumentNumberSeries defaultDocumentNumberSeries =
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+        DebitNote debitNote = DebitNote.create(finantialEntity, debtAccount, null, defaultDocumentNumberSeries, new DateTime(),
+                new LocalDate(), null, Collections.emptyMap(), null, null);
 
         debitNote.addDebitNoteEntries(List.of(debitEntry));
 

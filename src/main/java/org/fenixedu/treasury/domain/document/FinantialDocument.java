@@ -58,17 +58,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.domain.integration.ERPImportOperation;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.ERPExporterManager;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -119,9 +118,10 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setState(FinantialDocumentStateType.PREPARING);
     }
 
-    protected void init(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate) {
+    protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate) {
 
+        setFinantialEntity(finantialEntity);
         setDebtAccount(debtAccount);
         setFinantialDocumentType(documentNumberSeries.getFinantialDocumentType());
         setDocumentNumberSeries(documentNumberSeries);
@@ -212,7 +212,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         }
 
-	// TODO: Apply when all finantial documents have code
+        // TODO: Apply when all finantial documents have code
 //        if (FinantialDocument.findByCode(getDebtAccount(), getCode()).count() > 1) {
 //            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
 //        }
@@ -292,24 +292,24 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
     public void editPropertiesMap(final Map<String, String> propertiesMap) {
         setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
     }
-    
+
     @Atomic
     public final void closeDocument() {
         closeDocument(true);
     }
-    
+
     public abstract Comparator<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderComparator();
-    
+
     public abstract List<? extends FinantialDocumentEntry> getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
 
     @Atomic
     public void closeDocument(boolean markDocumentToExport) {
         if (this.isPreparing()) {
             this.setDocumentNumber("" + this.getDocumentNumberSeries().getSequenceNumberAndIncrement());
-            
+
             orderInvoiceEntries();
             setState(FinantialDocumentStateType.CLOSED);
-            
+
             this.setAddress(this.getDebtAccount().getCustomer().getAddress() + this.getDebtAccount().getCustomer().getZipCode());
             if (markDocumentToExport) {
                 this.markDocumentToExport();
@@ -333,12 +333,13 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
     }
 
     public void orderInvoiceEntries() {
-        if(!this.isPreparing()) {
+        if (!this.isPreparing()) {
             throw new TreasuryDomainException("error.FinantialDocument.orderInvoiceEntries.document.not.preparing");
         }
-        
-        final List<? extends FinantialDocumentEntry> orderedEntries = getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
-        
+
+        final List<? extends FinantialDocumentEntry> orderedEntries =
+                getFinantialDocumentEntriesOrderedByTuitionInstallmentOrderAndDescription();
+
         int order = 1;
         for (final FinantialDocumentEntry entry : orderedEntries) {
             entry.setEntryOrder(Integer.valueOf(order));
@@ -362,14 +363,15 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
     public void clearDocumentToExport(final String reason) {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
-            
+
             String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
             final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
-            super.setClearDocumentToExportReason(String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
+            super.setClearDocumentToExportReason(
+                    String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
             super.setClearDocumentToExportDate(now);
-            
+
         }
     }
 
@@ -383,7 +385,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
-            super.setClearDocumentToExportReason(String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
+            super.setClearDocumentToExportReason(
+                    String.format("%s - [%s] %s", reason, username, now.toString("YYYY-MM-dd HH:mm:ss")));
             super.setClearDocumentToExportDate(now);
 
             this.editERPCertificationData(erpCertificationDate, erpCertificateDocumentReference);
@@ -523,16 +526,16 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             final String[] lines = lastERPExportOperation.get().getErrorLog()
                     .replaceAll("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z", "").split("\n");
 
-            if(lines.length > 0) {
+            if (lines.length > 0) {
                 return lines[0].trim();
             }
-            
+
             return "";
         } catch (Exception e) {
             return "";
         }
     }
-    
+
     public void updateOverrideCertificationDateWithCloseDate(boolean overrideCertificationDateWithCloseDate, DateTime closeDate) {
         super.setOverrideCertificationDateWithCloseDate(overrideCertificationDateWithCloseDate);
         super.setCloseDate(closeDate);
@@ -631,8 +634,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
     @Override
     public void setCode(String code) {
         super.setCode(code);
-	
-	// TODO: apply when all finantial documents have code filled
+
+        // TODO: apply when all finantial documents have code filled
 //        if (FinantialDocument.findByCode(getDebtAccount(), code).count() > 1) {
 //            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
 //        }
@@ -647,11 +650,9 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         return findByCode(code).findFirst();
     }
 
-
     public static Stream<FinantialDocument> findByCode(DebtAccount debtAccount, String code) {
-        return debtAccount.getFinantialDocumentsSet().stream()
-		.filter(document -> document.getCode() != null)
-		.filter(document -> document.getCode().equals(code));
+        return debtAccount.getFinantialDocumentsSet().stream().filter(document -> document.getCode() != null)
+                .filter(document -> document.getCode().equals(code));
     }
 
     public static Optional<FinantialDocument> findUniqueByCode(DebtAccount debtAccount, String code) {

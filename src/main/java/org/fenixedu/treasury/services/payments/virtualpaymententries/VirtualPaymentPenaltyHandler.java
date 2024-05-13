@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.services.payments.virtualpaymententries;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,8 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
         DocumentNumberSeries documentNumberSeries =
                 DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
         LocalDate whenDebtCreationDate = settlementNoteBean.getDate().toLocalDate();
-        DebitNote debitNote = DebitNote.create(debtAccount, documentNumberSeries, whenDebtCreationDate.toDateTimeAtStartOfDay());
+        DebitNote debitNote = DebitNote.create(settlementNoteBean.getFinantialEntity(), debtAccount, null, documentNumberSeries,
+                whenDebtCreationDate.toDateTimeAtStartOfDay(), whenDebtCreationDate, null, Collections.emptyMap(), null, null);
 
         if (settlementNoteBean.getReferencedCustomers().size() == 1
                 && settlementNoteBean.getReferencedCustomers().iterator().next() != debtAccount.getCustomer()) {

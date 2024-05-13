@@ -55,12 +55,14 @@ public class SplitCreditEntriesTest {
         Set<InvoiceEntry> existingInvoiceEntriesFromOtherTests = new HashSet<>(debtAccount.getInvoiceEntrySet());
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
         DocumentNumberSeries creditNoteNumberSeries = DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForCreditNote(), debtAccount.getFinantialInstitution()).get();
-        CreditNote creditNote = CreditNote.create(debtAccount, creditNoteNumberSeries, new DateTime(), null, null);
+
+        CreditNote creditNote =
+                CreditNote.create(finantialEntity, debtAccount, creditNoteNumberSeries, null, new DateTime(), null);
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
-        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
         CreditEntry creditEntry = CreditEntry.create(finantialEntity, creditNote, "Credit note",
                 Product.findUniqueByCode("PAGAMENTO").get(), vat, new BigDecimal("100.00"), new DateTime(), BigDecimal.ONE);
@@ -99,16 +101,17 @@ public class SplitCreditEntriesTest {
     @Test
     public void testSplitCreditEntryWithDocumentClosedWhenPayment() {
         DebtAccount debtAccount = InterestRateTestsUtilities.getDebtAccount();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
         Set<InvoiceEntry> existingInvoiceEntriesFromOtherTests = new HashSet<>(debtAccount.getInvoiceEntrySet());
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
         DocumentNumberSeries creditNoteNumberSeries = DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForCreditNote(), debtAccount.getFinantialInstitution()).get();
-        CreditNote creditNote = CreditNote.create(debtAccount, creditNoteNumberSeries, new DateTime(), null, null);
+        CreditNote creditNote =
+                CreditNote.create(finantialEntity, debtAccount, creditNoteNumberSeries, null, new DateTime(), null);
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
-        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
         CreditEntry creditEntry = CreditEntry.create(finantialEntity, creditNote, "Credit note",
                 Product.findUniqueByCode("PAGAMENTO").get(), vat, new BigDecimal("100.00"), new DateTime(), BigDecimal.ONE);
@@ -151,12 +154,14 @@ public class SplitCreditEntriesTest {
         Set<InvoiceEntry> existingInvoiceEntriesFromOtherTests = new HashSet<>(debtAccount.getInvoiceEntrySet());
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
         DocumentNumberSeries creditNoteNumberSeries = DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForCreditNote(), debtAccount.getFinantialInstitution()).get();
-        CreditNote creditNote = CreditNote.create(debtAccount, creditNoteNumberSeries, new DateTime(), null, null);
+
+        CreditNote creditNote =
+                CreditNote.create(finantialEntity, debtAccount, creditNoteNumberSeries, null, new DateTime(), null);
 
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), finantialInstitution, new DateTime()).get();
-        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
         CreditEntry creditEntry = CreditEntry.create(finantialEntity, creditNote, "Credit note",
                 Product.findUniqueByCode("PAGAMENTO").get(), vat, new BigDecimal("100.00"), new DateTime(), BigDecimal.ONE);

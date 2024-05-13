@@ -2310,9 +2310,7 @@ public class SAPExporter implements IERPExporter {
         final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
         creditNoteToAnnul.setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
-        final CreditNote result =
-                CreditNote.create(creditNoteToAnnul.getDebtAccount(), creditNoteToAnnul.getDocumentNumberSeries(), new DateTime(),
-                        creditNoteToAnnul.getDebitNote(), creditNoteToAnnul.getOriginDocumentNumber());
+        final CreditNote result = createCreditNote(creditNoteToAnnul);
 
         for (final CreditEntry creditEntry : creditNoteToAnnul.getCreditEntriesSet()) {
             if (creditEntry.isFromExemption()) {
@@ -2331,6 +2329,18 @@ public class SAPExporter implements IERPExporter {
         }
 
         return result;
+    }
+
+    private static CreditNote createCreditNote(CreditNote creditNoteToAnnul) {
+        if (creditNoteToAnnul.getDebitNote() != null) {
+            return CreditNote.create(creditNoteToAnnul.getDebitNote(), creditNoteToAnnul.getDocumentNumberSeries(),
+                    new DateTime(), creditNoteToAnnul.getOriginDocumentNumber());
+        } else {
+            return CreditNote.create(creditNoteToAnnul.getFinantialEntity(), creditNoteToAnnul.getDebtAccount(),
+                    creditNoteToAnnul.getDocumentNumberSeries(), creditNoteToAnnul.getPayorDebtAccount(), new DateTime(),
+                    creditNoteToAnnul.getOriginDocumentNumber());
+
+        }
     }
 
 }

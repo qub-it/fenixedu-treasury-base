@@ -67,6 +67,7 @@ import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -84,6 +85,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPayment;
+import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
@@ -573,8 +575,7 @@ public class DebitEntry extends DebitEntry_Base {
         if (creditNote == null) {
             DocumentNumberSeries documentNumberSeries = debitNote.inferCreditNoteDocumentNumberSeries();
 
-            creditNote = CreditNote.create(this.getDebtAccount(), documentNumberSeries, documentDate, debitNote,
-                    debitNote.getUiDocumentNumber());
+            creditNote = CreditNote.create(debitNote, documentNumberSeries, documentDate, debitNote.getUiDocumentNumber());
         }
 
         if (treasuryExemption != null && Boolean.TRUE.equals(getCalculatedAmountsOverriden())) {
@@ -1099,9 +1100,10 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 
-        final DebitNote debitNote = DebitNote.create(getDebtAccount(), DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForDebitNote(), getDebtAccount().getFinantialInstitution()).get(),
-                new DateTime());
+        DocumentNumberSeries defaultDocumentNumberSeries = DocumentNumberSeries
+                .findUniqueDefault(FinantialDocumentType.findForDebitNote(), getDebtAccount().getFinantialInstitution()).get();
+        final DebitNote debitNote = DebitNote.create(getFinantialEntity(), getDebtAccount(), null, defaultDocumentNumberSeries,
+                new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
 
         setFinantialDocument(debitNote);
 
@@ -1360,7 +1362,7 @@ public class DebitEntry extends DebitEntry_Base {
                     "error.DebitEntry.splitDebitEntry.not.supported.for.finantialDocument.exportedInLegacyERP");
         }
 
-        BigDecimal totalAmount = getTotalAmount();
+        final BigDecimal totalAmount = getTotalAmount();
 
         DebitEntryChangeAmountsLog.log(this, "splitDebitEntry", splitDebitEntryReason);
 
@@ -1428,13 +1430,12 @@ public class DebitEntry extends DebitEntry_Base {
         DebitNote oldDebitNote = getDebitNote();
 
         if (getDebitNote() != null) {
-            DebitNote newDebitNote = DebitNote.create(this.getDebtAccount(), getDebitNote().getPayorDebtAccount(),
-                    getDebitNote().getDocumentNumberSeries(), getDebitNote().getDocumentDate(),
-                    getDebitNote().getDocumentDueDate(), getDebitNote().getOriginDocumentNumber());
+            DebitNote newDebitNote = DebitNote.create(getDebitNote().getFinantialEntity(), this.getDebtAccount(),
+                    getDebitNote().getPayorDebtAccount(), getDebitNote().getDocumentNumberSeries(),
+                    getDebitNote().getDocumentDate(), getDebitNote().getDocumentDueDate(),
+                    getDebitNote().getOriginDocumentNumber(), getDebitNote().getPropertiesMap(),
+                    getFinantialDocument().getDocumentObservations(), getFinantialDocument().getDocumentTermsAndConditions());
 
-            newDebitNote.setDocumentObservations(getFinantialDocument().getDocumentObservations());
-            newDebitNote.setDocumentTermsAndConditions(getFinantialDocument().getDocumentTermsAndConditions());
-            newDebitNote.editPropertiesMap(getDebitNote().getPropertiesMap());
             newDebitNote.setCloseDate(getDebitNote().getCloseDate());
             newDebitNote.setLegacyERPCertificateDocumentReference(getDebitNote().getLegacyERPCertificateDocumentReference());
 
@@ -1487,6 +1488,41 @@ public class DebitEntry extends DebitEntry_Base {
         if (totalAmount.compareTo(getAmountWithVat().add(newDebitEntry.getAmountWithVat())) != 0) {
             throw new IllegalStateException("error.DebitEntry.splitDebitEntry.amountWithVat.before.after.not.equal");
         }
+
+        Collector<InstallmentEntry, ?, Map<PaymentPlan, Set<InstallmentEntry>>> collector =
+                Collectors.toMap(ie -> ie.getInstallment().getPaymentPlan(), (InstallmentEntry ie) -> Set.of(ie), (l1, l2) -> {
+                    HashSet<InstallmentEntry> s1 = new HashSet<>(l1);
+                    s1.addAll(l2);
+                    return s1;
+                });
+
+        final Map<PaymentPlan, Set<InstallmentEntry>> installmentsMap = getInstallmentEntrySet().stream().collect(collector);
+
+        Comparator<InstallmentEntry> installmentEntryComparator =
+                ((Comparator<InstallmentEntry>) (ie1, ie2) -> Installment.COMPARE_BY_DUEDATE.compare(ie1.getInstallment(),
+                        ie2.getInstallment())).thenComparing(InstallmentEntry::getExternalId);
+
+        installmentsMap.keySet().forEach(paymentPlan -> {
+            List<InstallmentEntry> installmentEntriesList =
+                    installmentsMap.get(paymentPlan).stream().sorted(installmentEntryComparator).collect(Collectors.toList());
+
+            BigDecimal currentTotalAmount = getTotalAmount();
+            for (InstallmentEntry installmentEntry : installmentEntriesList) {
+
+                if (TreasuryConstants.isLessOrEqualThan(installmentEntry.getAmount(), currentTotalAmount)) {
+                    currentTotalAmount = currentTotalAmount.subtract(installmentEntry.getAmount());
+                } else if (TreasuryConstants.isPositive(currentTotalAmount)) {
+                    BigDecimal diffForNewDebitEntry = installmentEntry.getAmount().subtract(currentTotalAmount);
+
+                    installmentEntry.setAmount(currentTotalAmount);
+                    InstallmentEntry.create(newDebitEntry, diffForNewDebitEntry, installmentEntry.getInstallment());
+
+                    currentTotalAmount = BigDecimal.ZERO;
+                } else {
+                    installmentEntry.setDebitEntry(newDebitEntry);
+                }
+            }
+        });
 
         return newDebitEntry;
     }

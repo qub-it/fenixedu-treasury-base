@@ -135,15 +135,17 @@ public class SettlementNote extends SettlementNote_Base {
 
     protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
             DateTime documentDate, DateTime paymentDate, String originDocumentNumber, String finantialTransactionReference) {
-        setFinantialEntity(finantialEntity);
+
         setFinantialTransactionReference(finantialTransactionReference);
         setOriginDocumentNumber(originDocumentNumber);
+
         if (paymentDate == null) {
             setPaymentDate(documentDate);
         } else {
             setPaymentDate(paymentDate);
         }
-        super.init(debtAccount, documentNumberSeries, documentDate);
+
+        super.init(finantialEntity, debtAccount, documentNumberSeries, documentDate);
 
         checkRules();
     }
@@ -566,7 +568,9 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         if (untiedDebitEntries.size() != 0) {
-            DebitNote debitNote = DebitNote.create(bean.getDebtAccount(), debitNoteSeries, bean.getDate());
+            DebitNote debitNote = DebitNote.create(bean.getFinantialEntity(), bean.getDebtAccount(), null, debitNoteSeries,
+                    bean.getDate(), bean.getDate().toLocalDate(), null, Collections.emptyMap(), null, null);
+
             debitNote.addDebitNoteEntries(untiedDebitEntries);
             debitNote.closeDocument();
         }
@@ -861,8 +865,8 @@ public class SettlementNote extends SettlementNote_Base {
         DocumentNumberSeries documentNumberSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), this.getDocumentNumberSeries().getSeries());
         DateTime now = new DateTime();
-        DebitNote debitNote = DebitNote.create(getDebtAccount(), payorDebtAccount, documentNumberSeries, now, now.toLocalDate(),
-                originDocumentNumber);
+        DebitNote debitNote = DebitNote.create(getFinantialEntity(), getDebtAccount(), payorDebtAccount, documentNumberSeries,
+                now, now.toLocalDate(), originDocumentNumber, Collections.emptyMap(), null, null);
 
         Product advancePaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
         Vat vat = Vat.findActiveUnique(advancePaymentProduct.getVatType(), finantialInstitution, now).get();
@@ -901,9 +905,9 @@ public class SettlementNote extends SettlementNote_Base {
             }
         }
 
-        AdvancedPaymentCreditNote creditNote = AdvancedPaymentCreditNote.createCreditNoteForAdvancedPayment(documentNumberSeries,
-                this.getDebtAccount(), availableAmount, this.getDocumentDate(), comments, originDocumentNumber, payorDebtAccount,
-                getFinantialEntity());
+        AdvancedPaymentCreditNote creditNote = AdvancedPaymentCreditNote.createCreditNoteForAdvancedPayment(getFinantialEntity(),
+                documentNumberSeries, this.getDebtAccount(), availableAmount, this.getDocumentDate(), comments,
+                originDocumentNumber, payorDebtAccount);
 
         this.setAdvancedPaymentCreditNote(creditNote);
     }

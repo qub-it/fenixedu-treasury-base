@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
@@ -78,17 +79,17 @@ public class CreditNote extends CreditNote_Base {
         super();
     }
 
-    protected CreditNote(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate, DebitNote debitNote) {
+    protected CreditNote(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate, DebitNote debitNote) {
         super();
 
-        init(debtAccount, documentNumberSeries, documentDate, debitNote);
+        init(finantialEntity, debtAccount, documentNumberSeries, documentDate, debitNote);
         checkRules();
     }
 
-    protected void init(DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries, DateTime documentDate,
-            DebitNote debitNote) {
-        super.init(debtAccount, documentNumberSeries, documentDate);
+    protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
+            DateTime documentDate, DebitNote debitNote) {
+        super.init(finantialEntity, debtAccount, documentNumberSeries, documentDate);
 
         this.setDebitNote(debitNote);
 
@@ -169,6 +170,7 @@ public class CreditNote extends CreditNote_Base {
             throw new TreasuryDomainException("error.CreditNote.cannot.delete");
         }
 
+        setFinantialEntity(null);
         setDebitNote(null);
 
         super.delete(deleteEntries);
@@ -415,23 +417,42 @@ public class CreditNote extends CreditNote_Base {
     }
 
     @Atomic
-    public static CreditNote create(final DebtAccount debtAccount, final DocumentNumberSeries documentNumberSeries,
-            final DateTime documentDate, DebitNote debitNote, String originNumber) {
-        if (debitNote != null && !debitNote.isClosed()) {
+    public static CreditNote create(DebitNote debitNote, DocumentNumberSeries documentNumberSeries, DateTime documentDate,
+            String originNumber) {
+        if (!debitNote.isClosed()) {
             throw new TreasuryDomainException("error.CreditNote.debitnote.not.closed");
         }
 
-        CreditNote note = new CreditNote(debtAccount, documentNumberSeries, documentDate, debitNote);
+        DebtAccount debtAccount = debitNote.getDebtAccount();
+
+        CreditNote note =
+                new CreditNote(debitNote.getFinantialEntity(), debtAccount, documentNumberSeries, documentDate, debitNote);
         note.setOriginDocumentNumber(originNumber);
         note.checkRules();
+
         return note;
     }
 
-    public static CreditNote createForImportation(DebtAccount debtAccount, DocumentNumberSeries documentNumberSeries,
-            DateTime documentDate, DebitNote debitNote, String originNumber) {
-        CreditNote note = new CreditNote(debtAccount, documentNumberSeries, documentDate, debitNote);
+    @Atomic
+    public static CreditNote create(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DocumentNumberSeries documentNumberSeries, DebtAccount payorDebtAccount, DateTime documentDate, String originNumber) {
+        CreditNote note = new CreditNote(finantialEntity, debtAccount, documentNumberSeries, documentDate, null);
+
+        note.setPayorDebtAccount(payorDebtAccount);
+        note.setOriginDocumentNumber(originNumber);
+
+        note.checkRules();
+
+        return note;
+    }
+
+    public static CreditNote createForImportation(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate, DebitNote debitNote, String originNumber) {
+        CreditNote note = new CreditNote(finantialEntity, debtAccount, documentNumberSeries, documentDate, debitNote);
+
         note.setOriginDocumentNumber(originNumber);
         note.checkRules();
+
         return note;
     }
 

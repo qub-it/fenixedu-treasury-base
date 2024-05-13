@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
@@ -69,6 +70,7 @@ import org.joda.time.LocalDate;
 
 public class PaymentPlanBean {
 
+    private FinantialEntity finantialEntity;
     private DebtAccount debtAccount;
     private String paymentPlanId;
     private LocalDate creationDate;
@@ -87,8 +89,9 @@ public class PaymentPlanBean {
     private boolean isChanged;
     private boolean withInitialValues;
 
-    public PaymentPlanBean(DebtAccount debtAccount, LocalDate creationDate) {
+    public PaymentPlanBean(FinantialEntity finantialEntity, DebtAccount debtAccount, LocalDate creationDate) {
         super();
+        this.finantialEntity = finantialEntity;
         this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
         this.emolumentAmount = BigDecimal.ZERO;
         this.debtAccount = debtAccount;
@@ -96,12 +99,33 @@ public class PaymentPlanBean {
         this.isChanged = false;
         this.withInitialValues = true;
 
-        allDebits = debtAccount.getPendingInvoiceEntriesSet().stream()
+        updateDebits();
+    }
+
+    public void updateFinantialEntity(FinantialEntity finantialEntity) {
+        if (this.finantialEntity != finantialEntity) {
+            this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
+
+            setFinantialEntity(finantialEntity);
+
+            updateDebits();
+            this.installmentsBean = null;
+            this.isChanged = true;
+        }
+    }
+
+    private void updateDebits() {
+        this.allDebits = this.debtAccount.getPendingInvoiceEntriesSet().stream()
                 .filter(f -> f.isDebitNoteEntry() && !((DebitEntry) f).isInOpenPaymentPlan()).map((debitEntry) -> {
                     SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean((DebitEntry) debitEntry);
-                    debitEntryBean.setSettledAmount(((DebitEntry) debitEntry).getOpenAmountWithInterestsAtDate(creationDate));
+                    debitEntryBean
+                            .setSettledAmount(((DebitEntry) debitEntry).getOpenAmountWithInterestsAtDate(this.creationDate));
                     return debitEntryBean;
-                }).collect(Collectors.toList());
+                }) //
+                .filter(f -> this.finantialEntity == null || !f.isForDebitEntry()
+                        || f.getInvoiceEntry().getFinantialEntity() == null
+                        || f.getInvoiceEntry().getFinantialEntity() == this.finantialEntity) //
+                .collect(Collectors.toList());
     }
 
     public void updateDebitEntriesSettleAmountInPaymentPlan() {
@@ -191,6 +215,14 @@ public class PaymentPlanBean {
     public BigDecimal getTotalInstallments() {
         return getInstallmentsBean().stream().map(i -> i.getInstallmentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public FinantialEntity getFinantialEntity() {
+        return finantialEntity;
+    }
+
+    public void setFinantialEntity(FinantialEntity finantialEntity) {
+        this.finantialEntity = finantialEntity;
     }
 
     public DebtAccount getDebtAccount() {

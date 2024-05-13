@@ -74,10 +74,12 @@ public class FinantialEntity extends FinantialEntity_Base {
 
         @Override
         public int compare(FinantialEntity o1, FinantialEntity o2) {
-            if(FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution()) != 0) {
-                return FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(), o2.getFinantialInstitution());
+            if (FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(),
+                    o2.getFinantialInstitution()) != 0) {
+                return FinantialInstitution.COMPARATOR_BY_NAME.compare(o1.getFinantialInstitution(),
+                        o2.getFinantialInstitution());
             }
-            
+
             int c = o1.getName().getContent().compareTo(o2.getName().getContent());
 
             return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
@@ -156,9 +158,24 @@ public class FinantialEntity extends FinantialEntity_Base {
                 return documentTemplate;
             }
         }
-        
+
         return null;
     }
+
+    @Atomic
+    public static FinantialEntity create(final FinantialInstitution finantialInstitution, final String code,
+            final LocalizedString name) {
+        return new FinantialEntity(finantialInstitution, code, name);
+    }
+
+    public Set<FixedTariff> getFixedTariffSet() {
+        return this.getTariffSet().stream().filter(x -> x instanceof FixedTariff).map(FixedTariff.class::cast)
+                .collect(Collectors.toSet());
+    }
+
+    /*
+     * SERVICES
+     */
 
     public static Stream<FinantialEntity> findAll() {
         return FenixFramework.getDomainRoot().getFinantialEntitiesSet().stream();
@@ -177,19 +194,12 @@ public class FinantialEntity extends FinantialEntity_Base {
         return findAll().filter(fe -> LocalizedStringUtil.isEqualToAnyLocaleIgnoreCase(fe.getName(), name));
     }
 
-    public static Stream<FinantialEntity> findWithBackOfficeAccessFor(final String username) {
+    public static Stream<FinantialEntity> findWithFrontOfficeAccessFor(String username) {
+        return findAll().filter(e -> TreasuryAccessControlAPI.isFrontOfficeMember(username, e));
+    }
+
+    public static Stream<FinantialEntity> findWithBackOfficeAccessFor(String username) {
         return findAll().filter(l -> TreasuryAccessControlAPI.isBackOfficeMember(username, l));
-    }
-
-    @Atomic
-    public static FinantialEntity create(final FinantialInstitution finantialInstitution, final String code,
-            final LocalizedString name) {
-        return new FinantialEntity(finantialInstitution, code, name);
-    }
-
-    public Set<FixedTariff> getFixedTariffSet() {
-        return this.getTariffSet().stream().filter(x -> x instanceof FixedTariff).map(FixedTariff.class::cast)
-                .collect(Collectors.toSet());
     }
 
 }
