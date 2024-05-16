@@ -1,3 +1,7 @@
+- Refactor: Add utility method to get FinantialDocumentEntry::finantialDocument DML property [#qubIT-Fenix-4587]
+- Refactor: Add utility method in InvoiceEntry to get not annuled settlement entries [#qubIT-Fenix-5276]
+- Bug Fix: Specify the Bouncy Castle crypto provider, to decipher messsages from SIBS Pay [#qubIT-Fenix-5275]
+
 12.18.0 (13-05-2024)
 - Refactor: Associate FinantialEntity to TreasuryEvent [#qubIT-Fenix-4587]
 - Refactor: Associate FinantialEntity to PaymentPlan [#qubIT-Fenix-4587]

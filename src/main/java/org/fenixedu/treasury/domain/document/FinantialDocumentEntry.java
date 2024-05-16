@@ -61,6 +61,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -221,6 +222,10 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
             return getFinantialDocument().getDebtAccount();
         }
         return null;
+    }
+
+    public FinantialEntity getRegisteredFinantialEntity() {
+        return super.getFinantialEntity();
     }
 
     public static Stream<FinantialDocumentEntry> findByCode(String code) {

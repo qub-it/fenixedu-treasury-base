@@ -48,7 +48,7 @@ import pt.ist.fenixframework.FenixFramework;
 @Path("/sibspaywebhook")
 public class SibsPayWebhookController {
 
-    private static final String PROVIDER_NAME = "SunJCE";
+    private static final String PROVIDER_NAME = "BC";
 
     private static final Logger logger = LoggerFactory.getLogger(SibsPayWebhookController.class);
 
@@ -235,6 +235,8 @@ public class SibsPayWebhookController {
             return new String(bytes, "UTF-8");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException
                 | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | NoSuchProviderException e) {
+            logger.error(e.getMessage());
+
             throw new UnableToDecryptException(e);
         }
 

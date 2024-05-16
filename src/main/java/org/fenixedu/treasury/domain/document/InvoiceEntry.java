@@ -59,6 +59,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
@@ -514,6 +515,10 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     // used in screens to display negative amounts for credit entries
     public BigDecimal getUiNetExemptedAmount() {
         return getNetExemptedAmount();
+    }
+
+    public Set<SettlementEntry> getNotAnnuledSettlementEntries() {
+        return getSettlementEntriesSet().stream().filter(se -> !se.getSettlementNote().isAnnulled()).collect(Collectors.toSet());
     }
 
 }
