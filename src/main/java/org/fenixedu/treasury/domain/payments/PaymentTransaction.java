@@ -130,6 +130,14 @@ public class PaymentTransaction extends PaymentTransaction_Base {
         super.deleteDomainObject();
     }
 
+    // ANIL 2024-05-17
+    //
+    // This method exists to apply different logic in
+    // SibsPaymentCodeTransaction
+    public boolean isSameTransactionId(String transactionId) {
+        return transactionId.equalsIgnoreCase(getTransactionId());
+    }
+
     // @formatter:off
     /*
      * ********
@@ -147,7 +155,7 @@ public class PaymentTransaction extends PaymentTransaction_Base {
     }
 
     public static boolean isTransactionDuplicate(String transactionId) {
-        return findByTransactionId(transactionId).findAny().isPresent();
+        return findAll().filter(t -> t.isSameTransactionId(transactionId)).findAny().isPresent();
     }
 
     public static PaymentTransaction create(PaymentRequest paymentRequest, String transactionId, DateTime paymentDate,

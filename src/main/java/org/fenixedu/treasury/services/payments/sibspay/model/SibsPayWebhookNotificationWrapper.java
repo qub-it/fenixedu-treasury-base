@@ -21,6 +21,10 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     @Override
     public String getMerchantTransactionId() {
+        if (this.webhookNotification.getMerchant() != null) {
+            return this.webhookNotification.getMerchant().getTransactionId();
+        }
+
         return null;
     }
 

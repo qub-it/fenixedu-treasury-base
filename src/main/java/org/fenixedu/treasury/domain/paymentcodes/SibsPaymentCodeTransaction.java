@@ -59,7 +59,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.sibspaymentsgateway.integration.SibsPaymentsGateway;
+import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -78,7 +78,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     }
 
     protected SibsPaymentCodeTransaction(SibsReportFile reportFile, SibsPaymentRequest sibsPaymentRequest, DateTime paymentDate,
-            BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, String sibsImportationFilename, 
+            BigDecimal paidAmount, String sibsTransactionId, DateTime sibsProcessingDate, String sibsImportationFilename,
             Set<SettlementNote> settlementNotes) {
         this();
 
@@ -136,13 +136,18 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
                     getPaymentDate().toString(TreasuryConstants.DATE_TIME_FORMAT_YYYY_MM_DD));
         }
 
-        if (getPaymentRequest().getDigitalPaymentPlatform() instanceof SibsPaymentsGateway) {
+        if (!(getPaymentRequest().getDigitalPaymentPlatform() instanceof SibsPaymentCodePool)) {
             if (!StringUtils.isEmpty(getSibsTransactionId())
                     && findBySibsGatewayTransactionId(getSibsTransactionId()).count() > 1) {
                 throw new TreasuryDomainException("error.SibsPaymentCodeTransaction.sibsTransactionId.duplicate",
                         getSibsTransactionId());
             }
         }
+    }
+
+    @Override
+    public boolean isSameTransactionId(String transactionId) {
+        return super.isSameTransactionId(transactionId) || transactionId.equalsIgnoreCase(getSibsTransactionId());
     }
 
     // @formatter:off
@@ -173,8 +178,12 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         return findAll().filter(i -> sibsTransactionId.equalsIgnoreCase(i.getSibsTransactionId()));
     }
 
+    // TODO ANIL 2024-05-17 
+    //
+    // Replace this by PaymentTransaction#isTransactionDuplicate and test it very well
+    @Deprecated
     public static boolean isSibsGatewayReferenceProcessingDuplicate(String sibsTransactionId) {
-        return findBySibsGatewayTransactionId(sibsTransactionId).count() > 0;
+        return findAll().filter(i -> i.isSameTransactionId(sibsTransactionId)).count() > 0;
     }
 
     public static SibsPaymentCodeTransaction create(SibsReportFile reportFile, SibsPaymentRequest sibsPaymentRequest,

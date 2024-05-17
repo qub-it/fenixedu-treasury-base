@@ -31,6 +31,7 @@ import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
+import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.sibspay.SibsPayPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
@@ -145,6 +146,16 @@ public class SibsPayWebhookController {
                 log.setStateCode(paymentRequest.getCurrentState().getCode());
                 log.setStateDescription(paymentRequest.getCurrentState().getLocalizedName());
             });
+
+            // Check if notification is already processed as transaction
+            if (webhookNotificationWrapper.isPaid()) {
+                if (PaymentTransaction.isTransactionDuplicate(webhookNotificationWrapper.getTransactionId())) {
+                    // Mark this notification as duplicate and skip processing
+                    FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
+
+                    return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
+                }
+            }
 
             if (!paymentRequest.isInCreatedState() && !paymentRequest.isInRequestedState()) {
                 return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();

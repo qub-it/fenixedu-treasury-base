@@ -1,3 +1,6 @@
+- Improvement: In SIBS Pay webhook controller, check if a paid notification is already registered with a transaction [#qubIT-Fenix-5279]
+- Refactor: Change the check made by PaymentTransaction#isTransactionDuplicate , to take into account the duality of SibsPaymentCodeTransaction [#qubIT-Fenix-5279]
+
 12.18.1 (16-05-2024)
 - Refactor: Add utility method to get FinantialDocumentEntry::finantialDocument DML property [#qubIT-Fenix-4587]
 - Refactor: Add utility method in InvoiceEntry to get not annuled settlement entries [#qubIT-Fenix-5276]
