@@ -1,0 +1,215 @@
+package org.fenixedu.treasury.domain;
+
+
+/* **************
+ * ACCESS CONTROL
+ * **************
+ */
+ 
+class accesscontrol.PersistentTreasuryFrontOfficeGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
+}
+
+class accesscontrol.PersistentTreasuryBackOfficeGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
+}
+
+class accesscontrol.PersistentTreasuryManagersGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup {
+}
+
+	relation PersistentTreasuryFrontOfficeGroupBennu {
+	    accesscontrol.PersistentTreasuryFrontOfficeGroup playsRole persistentTreasuryFrontOfficeGroup {
+	        multiplicity 0..1;
+	    }
+	    
+		.pt.ist.fenixframework.DomainRoot playsRole domainRootForPersistentTreasuryFrontOfficeGroup {
+	        multiplicity 0..1;
+	    }
+	}
+
+	relation PersistentTreasuryBackOfficeGroupBennu {
+	    accesscontrol.PersistentTreasuryBackOfficeGroup playsRole persistentTreasuryBackOfficeGroup {
+	        multiplicity 0..1;
+	    }
+	    
+		.pt.ist.fenixframework.DomainRoot playsRole domainRootForPersistentTreasuryBackOfficeGroup {
+	        multiplicity 0..1;
+	    }
+	}
+	
+	relation PersistentTreasuryManagersGroupBennu {
+	    accesscontrol.PersistentTreasuryManagersGroup playsRole persistentTreasuryManagersGroup {
+	        multiplicity 0..1;
+	    }
+	    
+		.pt.ist.fenixframework.DomainRoot playsRole domainRootForPersistentTreasuryManagersGroup {
+	        multiplicity 0..1;
+	    }
+	}
+
+
+/****************
+ * GENERIC FILES
+ ****************/
+class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+}
+	
+	/*
+	relation TreasuryFileBennu {
+	    .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+	        multiplicity 1..1;
+	    }
+	    
+	    TreasuryFile playsRole treasuryFiles {
+	        multiplicity *;
+	    }
+	}
+	*/
+
+	/* --- DocumentTemplateFile--- */
+
+	/* This is a replacement for existings treasury files. It should not be used */
+	class document.TreasuryFileForTreasuryDocumentTemplateFile extends TreasuryFile {
+	}
+	
+ 	relation TreasuryDocumentTemplateFileTreasuryFile {
+		
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+	    document.TreasuryDocumentTemplateFile playsRole {
+	        multiplicity *;
+	    }
+ 	}
+ 	
+ 	/* --- SibsReportFileDomainObject ---*/
+
+	/* This is a replacement for existings treasury files. It should not be used */
+	class paymentcodes.TreasuryFileForSibsReportFile extends TreasuryFile {
+	}
+
+ 	relation SibsReportFileTreasuryFile {
+ 		
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+ 		paymentcodes.SibsReportFile playsRole {
+ 			multiplicity 0..1;
+ 		}
+ 	}
+ 	 	
+ 	/* --- SibsInputFileDomainObject --- */
+
+	/* This is a replacement for existings treasury files. It should not be used */
+	class paymentcodes.TreasuryFileForSibsInputFile extends TreasuryFile {
+	}
+
+ 	relation SibsInputFileTreasuryFile {
+ 	
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+ 		paymentcodes.SibsInputFile playsRole {
+ 			multiplicity *;
+ 		}
+ 	}
+
+	/* --- SibsOutputFileDomainObject --- */
+ 	
+	/* This is a replacement for existings treasury files. It should not be used */
+	class paymentcodes.TreasuryFileForSibsOutputFile extends TreasuryFile {
+	}
+	
+ 	relation SibsOutputFileTreasuryFile {
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+		paymentcodes.SibsOutputFile playsRole {
+			multiplicity *;
+		}
+ 	}
+ 		
+	/* --- ForwardPaymentConfigurationFileDomainObject --- */
+
+	/* This is a replacement for existings treasury files. It should not be used */
+	class forwardpayments.TreasuryFileForForwardPaymentConfigurationFile extends TreasuryFile {
+	}
+	
+ 	relation ForwardPaymentConfigurationFileTreasuryFile {
+
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+		 	
+       forwardpayments.ForwardPaymentConfigurationFile playsRole {
+           multiplicity *;
+       }
+ 	}
+ 
+ 
+ 	/* ---  OperationFileDomainObject --- */
+ 	
+	/* This is a replacement for existings treasury files. It should not be used */
+	class integration.TreasuryFileForOperationFile extends TreasuryFile {
+	}
+	
+ 	relation OperationFileTreasuryFile {
+ 		
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+		integration.OperationFile playsRole {
+			multiplicity *;
+		}
+ 	}
+
+
+ 	/* --- ForwardPaymentLogFileDomainObject --- */
+ 	
+	/* This is a replacement for existings treasury files. It should not be used */
+	class forwardpayments.TreasuryFileForForwardPaymentLogFile extends TreasuryFile {
+	} 
+		
+ 	relation ForwardPaymentLogFileTreasuryFile {
+ 	
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+		forwardpayments.ForwardPaymentLogFile playsRole {
+			multiplicity *;
+		}
+ 	}
+ 	 	
+ 	/* --- PostForwardPaymentsReportFileDomainObject --- */
+ 	
+	/* This is a replacement for existings treasury files. It should not be used */
+	class forwardpayments.TreasuryFileForPostForwardPaymentsReportFile extends TreasuryFile {
+	}
+	
+ 	relation PostForwardPaymentsReportFileTreasuryFile {
+ 		
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 1..1;
+		}
+ 		
+		forwardpayments.PostForwardPaymentsReportFile playsRole {
+			multiplicity *;
+		}
+ 	}
+ 	
+	/* --- PaymentRequestLogFile --- */
+	
+	relation TreasuryFilePaymentRequestLogFile {
+		
+		TreasuryFile playsRole treasuryFile {
+			multiplicity 0..1;
+		}
+ 		
+		.org.fenixedu.treasury.domain.payments.PaymentRequestLogFile playsRole {
+			multiplicity *;
+		} 
+	}

@@ -55,6 +55,18 @@
 			<artifactId>bennu-core</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.qubit.solution.fenixedu</groupId>
+			<artifactId>bennu-webservices-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.fenixedu</groupId>
+			<artifactId>bennu-renderers</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.fenixedu</groupId>
+			<artifactId>bennu-scheduler</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
