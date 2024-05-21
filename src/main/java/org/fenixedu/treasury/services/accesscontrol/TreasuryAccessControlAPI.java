@@ -128,6 +128,10 @@ public class TreasuryAccessControlAPI {
         return TreasuryAccessControl.getInstance().isManager(username);
     }
 
+    public static boolean hasPermission(String username, String permissionCode, FinantialEntity finantialEntity) {
+        return TreasuryAccessControl.getInstance().hasPermission(username, permissionCode, finantialEntity);
+    }
+
     public static java.util.Set<String> getFrontOfficeMemberUsernames() {
         return TreasuryAccessControl.getInstance().getFrontOfficeMemberUsernames();
     }

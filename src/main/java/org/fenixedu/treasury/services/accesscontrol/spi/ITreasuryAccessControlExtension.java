@@ -112,6 +112,10 @@ public interface ITreasuryAccessControlExtension<T> {
         return false;
     }
 
+    default public boolean hasPermission(String username, String permissionCode, FinantialEntity finantialEntity) {
+        return false;
+    }
+
     default public boolean isContextObjectApplied(final Object context) {
         final TypeToken<T> typeToken = new TypeToken<T>(getClass()) {
         };

@@ -135,19 +135,25 @@ public class AdhocCustomer extends AdhocCustomer_Base {
                     String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
         }
 
-        if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
-            final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber()) //
-                    .filter(c -> c.isAdhocCustomer()) //
-                    .filter(c -> c.isActive()) //
-                    .collect(Collectors.<Customer> toSet());
+        // ANIL 2024-05-21
+        //
+        // Validate only of the customer is active
+        if (isActive()) {
+            if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode())
+                    || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
+                final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber()) //
+                        .filter(c -> c.isAdhocCustomer()) //
+                        .filter(c -> c.isActive()) //
+                        .collect(Collectors.<Customer> toSet());
 
-            if (customers.size() > 1) {
-                final Customer self = this;
-                final Set<String> otherCustomers =
-                        customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
+                if (customers.size() > 1) {
+                    final Customer self = this;
+                    final Set<String> otherCustomers =
+                            customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
 
-                throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists",
-                        Joiner.on(", ").join(otherCustomers));
+                    throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists",
+                            Joiner.on(", ").join(otherCustomers));
+                }
             }
         }
 

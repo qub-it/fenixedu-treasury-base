@@ -1,3 +1,6 @@
+- Bug Fix: Validate if there active customers with same fiscal number, only for active customers in Customer#checkRules [#qubIT-Fenix-5307]
+- Refactor: Declare the service function TreasuryAccessControlAPI#hasPermission, to check if user has permission by code in some FinantialEntity [#qubIT-Fenix-5305]
+
 12.18.2 (17-05-2024)
 - Improvement: In SIBS Pay webhook controller, check if a paid notification is already registered with a transaction [#qubIT-Fenix-5279]
 - Refactor: Change the check made by PaymentTransaction#isTransactionDuplicate , to take into account the duality of SibsPaymentCodeTransaction [#qubIT-Fenix-5279]

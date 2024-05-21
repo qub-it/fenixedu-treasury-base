@@ -259,6 +259,16 @@ public class TreasuryAccessControl {
         return false;
     }
 
+    public boolean hasPermission(String username, String permissionCode, FinantialEntity finantialEntity) {
+        for (ITreasuryAccessControlExtension<?> ext : extensions) {
+            if (ext.hasPermission(username, permissionCode, finantialEntity)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public java.util.Set<String> getFrontOfficeMemberUsernames() {
         final java.util.Set<String> result = Sets.newHashSet();
 
