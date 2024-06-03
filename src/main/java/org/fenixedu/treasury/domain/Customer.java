@@ -303,6 +303,17 @@ public abstract class Customer extends Customer_Base {
         return FiscalCodeValidation.isValidationAppliedToFiscalCountry(getAddressCountryCode());
     }
 
+    public static final String PORTUGUESE_COUNTRY_CODE = "PT";
+
+    public boolean isPortugueseCustomerWithInvalidFiscalNumber() {
+        return isPortugueseCustomerWithInvalidFiscalNumber(getAddressCountryCode(), getFiscalNumber());
+    }
+
+    public static boolean isPortugueseCustomerWithInvalidFiscalNumber(String addressCountryCode, String fiscalNumber) {
+        return TreasuryConstants.isSameCountryCode(PORTUGUESE_COUNTRY_CODE, addressCountryCode)
+                && !FiscalCodeValidation.isValidFiscalNumber(addressCountryCode, fiscalNumber);
+    }
+
     public boolean isAbleToChangeFiscalNumber() {
         if (!Strings.isNullOrEmpty(getErpCustomerId())) {
             return false;
@@ -542,4 +553,5 @@ public abstract class Customer extends Customer_Base {
     public static boolean isConsumidorFinal(String fiscalAddressCountryCode, String fiscalNumber) {
         return TreasuryConstants.isDefaultCountry(fiscalAddressCountryCode) && DEFAULT_FISCAL_NUMBER.equals(fiscalNumber);
     }
+
 }

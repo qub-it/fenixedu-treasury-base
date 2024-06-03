@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.PaymentMethodReference;
@@ -83,6 +84,7 @@ import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -124,6 +126,43 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         if (getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
+
+        // ANIL 2024-06-03
+        //
+        // Check if the debts are blocking for backoffice
+        debitEntries.forEach(de -> {
+
+            if (TreasuryDebtProcessMainService.isBlockingPaymentInBackoffice(de)) {
+                if (!TreasuryDebtProcessMainService.getBlockingPaymentReasonsForBackoffice(de).isEmpty()) {
+                    LocalizedString reason =
+                            TreasuryDebtProcessMainService.getBlockingPaymentReasonsForBackoffice(de).iterator().next();
+
+                    throw new RuntimeException(reason.getContent());
+                } else {
+                    throw new TreasuryDomainException("error.PaymentRequest.not.possible.to.create.payment.request");
+                }
+            }
+
+        });
+
+        installments.forEach(installment -> {
+
+            installment.getInstallmentEntriesSet().stream().map(de -> de.getDebitEntry()).forEach(de -> {
+
+                if (TreasuryDebtProcessMainService.isBlockingPaymentInBackoffice(de)) {
+                    if (!TreasuryDebtProcessMainService.getBlockingPaymentReasonsForBackoffice(de).isEmpty()) {
+                        LocalizedString reason =
+                                TreasuryDebtProcessMainService.getBlockingPaymentReasonsForBackoffice(de).iterator().next();
+
+                        throw new RuntimeException(reason.getContent());
+                    } else {
+                        throw new TreasuryDomainException("error.PaymentRequest.not.possible.to.create.payment.request");
+                    }
+                }
+
+            });
+
+        });
 
         setDigitalPaymentPlatform(platform);
         setFinantialEntity(platform.getFinantialEntity());
