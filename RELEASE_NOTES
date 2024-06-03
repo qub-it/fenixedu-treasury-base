@@ -1,3 +1,5 @@
+- Refactor: Adds treasury classes for all web apps from treasury ui parent [#qubIT-Omnis-5870]
+
 12.19.0 (21-05-2024)
 - Bug Fix: Validate if there active customers with same fiscal number, only for active customers in Customer#checkRules [#qubIT-Fenix-5307]
 - Refactor: Declare the service function TreasuryAccessControlAPI#hasPermission, to check if user has permission by code in some FinantialEntity [#qubIT-Fenix-5305]

@@ -51,6 +51,22 @@
 			<artifactId>standards</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.fenixedu</groupId>
+			<artifactId>bennu-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.qubit.solution.fenixedu</groupId>
+			<artifactId>bennu-webservices-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.fenixedu</groupId>
+			<artifactId>bennu-renderers</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.fenixedu</groupId>
+			<artifactId>bennu-scheduler</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
@@ -305,6 +321,29 @@
 							</wsdlFiles>
 							<wsdlLocation>
 								/wsdl/zulws_faturacaoclientes_blk_2017_01_17.xml
+							</wsdlLocation>
+							<extension>true</extension>
+							<protocol>Xsoap1.2</protocol>
+							<vmArgs>
+								<vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
+							</vmArgs>
+						</configuration>
+					</execution>
+					<execution>
+						<id>PAYLINE</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+						<configuration>
+							<packageName>org.fenixedu.treasury.services.integration.forwardpayments.payline</packageName>
+							<wsdlFiles>
+								<wsdlFile>
+									${basedir}/src/main/resources/wsdl/forwardpayments/payline/WebPaymentAPI_V4.wsdl
+								</wsdlFile>
+							</wsdlFiles>
+							<wsdlLocation>
+								/wsdl/forwardpayments/payline/WebPaymentAPI_V4.wsdl
 							</wsdlLocation>
 							<extension>true</extension>
 							<protocol>Xsoap1.2</protocol>
