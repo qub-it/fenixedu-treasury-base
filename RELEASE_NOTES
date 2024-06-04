@@ -1,3 +1,4 @@
+12.20.1 (04-06-2024)
 - Refactor: Check debt process blocking payment in backoffice, to check if it is possible to create payment request [#qubIT-Fenix-5130]
 
 12.20.0 (03-06-2024)
