@@ -71,6 +71,8 @@ import org.fenixedu.treasury.domain.meowallet.MeoWalletLog;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
+import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,6 +115,7 @@ public class MeoWalletWebhooksController {
             log.setTransactionWithPayment(MeoWallet.STATUS_COMPLETED.equals(bean.getOperation_status()));
         });
 
+        boolean mockedUser = false;
         try {
 
             Optional<SibsPaymentRequest> referenceCodeOptional = Optional.ofNullable(null);
@@ -128,6 +131,8 @@ public class MeoWalletWebhooksController {
 
             if (referenceCodeOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) referenceCodeOptional.get().getDigitalPaymentPlatform();
+
+                mockedUser = mockUserIfNeeded(digitalPaymentPlatform);
 
                 if (!digitalPaymentPlatform.isActive()) {
                     throw new Exception("MeoWallet not active, payment will not be processed");
@@ -147,6 +152,8 @@ public class MeoWalletWebhooksController {
             } else if (mbwayPaymentRequestOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) mbwayPaymentRequestOptional.get().getDigitalPaymentPlatform();
 
+                mockedUser = mockUserIfNeeded(digitalPaymentPlatform);
+
                 if (!digitalPaymentPlatform.isActive()) {
                     throw new Exception("MeoWallet not active, payment will not be processed");
                 }
@@ -163,6 +170,8 @@ public class MeoWalletWebhooksController {
                 digitalPaymentPlatform.processMbwayTransaction(log, bean);
             } else if (forwardPaymentRequesteOptional.isPresent()) {
                 MeoWallet digitalPaymentPlatform = (MeoWallet) forwardPaymentRequesteOptional.get().getDigitalPaymentPlatform();
+
+                mockedUser = mockUserIfNeeded(digitalPaymentPlatform);
 
                 if (!digitalPaymentPlatform.isActive()) {
                     throw new Exception("MeoWallet not active, payment will not be processed");
@@ -204,7 +213,30 @@ public class MeoWalletWebhooksController {
             }
 
             return Response.serverError().build();
+
+        } finally {
+            if (mockedUser) {
+                TreasuryPlataformDependentServicesFactory.implementation().removeCurrentApplicationUser();
+
+                logger.debug("Unmocked user");
+            }
         }
+    }
+
+    private boolean mockUserIfNeeded(MeoWallet digitalPaymentPlatform) {
+        ITreasuryPlatformDependentServices treasuryServices = TreasuryPlataformDependentServicesFactory.implementation();
+        boolean needToMockUser =
+                StringUtils.isEmpty(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername())
+                        && StringUtils.isNotEmpty(digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
+
+        if (needToMockUser) {
+            treasuryServices.setCurrentApplicationUser(digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
+            logger.debug("Mocked user with " + digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
+
+            return true;
+        }
+
+        return false;
     }
 
     @Atomic(mode = TxMode.WRITE)

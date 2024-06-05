@@ -131,6 +131,19 @@ public class DebtAccount extends DebtAccount_Base {
         return getFinantialInstitution().getCurrency().getValueWithScale(amount);
     }
 
+    public BigDecimal getDueInDebt() {
+        return getDueInDebt(new LocalDate());
+    }
+
+    public BigDecimal getDueInDebt(LocalDate when) {
+        return this.getPendingInvoiceEntriesSet().stream() //
+                .filter(de -> de.isDebitNoteEntry()) //
+                .map(DebitEntry.class::cast) //
+                .filter(de -> de.isDueDateExpired(when)) //
+                .map(de -> de.getOpenAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     public BigDecimal getTotalInDebtForAllDebtAccountsOfSameFinantialInstitution() {
         BigDecimal result = BigDecimal.ZERO;
         for (final Customer customer : getCustomer().getAllCustomers()) {
