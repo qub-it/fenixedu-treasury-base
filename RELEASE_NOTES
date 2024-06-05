@@ -1,3 +1,5 @@
+- Improvement: Add property methods to InvoiceEntry, to be used in reports, to get payment information [#qubIT-Fenix-5276]
+
 12.20.1 (04-06-2024)
 - Refactor: Check debt process blocking payment in backoffice, to check if it is possible to create payment request [#qubIT-Fenix-5130]
 

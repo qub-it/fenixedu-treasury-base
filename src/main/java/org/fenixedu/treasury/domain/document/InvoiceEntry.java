@@ -58,6 +58,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -519,6 +520,31 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
     public Set<SettlementEntry> getNotAnnuledSettlementEntries() {
         return getSettlementEntriesSet().stream().filter(se -> !se.getSettlementNote().isAnnulled()).collect(Collectors.toSet());
+    }
+
+    public Set<SettlementNote> getNotAnnuledSettlementNotes() {
+        return getNotAnnuledSettlementEntries().stream().map(se -> se.getSettlementNote()).collect(Collectors.toSet());
+    }
+
+    // ANIL 2024-06-04
+    //
+    // It is not being possible in reporting tool, to descent at third level
+    // of relations
+    //
+    // Declare to present the payment entry method and paid amount
+    // 
+    // Also for reimbursement entries
+
+    public List<PaymentEntry> getPaymentEntries() {
+        return getNotAnnuledSettlementEntries().stream().map(se -> se.getSettlementNote())
+                .flatMap(s -> s.getPaymentEntriesSet().stream()).sorted(Comparator.comparing(PaymentEntry::getExternalId))
+                .collect(Collectors.toList());
+    }
+
+    public List<ReimbursementEntry> getReimbursementEntries() {
+        return getNotAnnuledSettlementEntries().stream().map(se -> se.getSettlementNote())
+                .flatMap(s -> s.getReimbursementEntriesSet().stream())
+                .sorted(Comparator.comparing(ReimbursementEntry::getExternalId)).collect(Collectors.toList());
     }
 
 }
