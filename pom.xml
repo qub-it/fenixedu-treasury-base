@@ -14,9 +14,6 @@
 	<packaging>jar</packaging>
 
 	<name>Treasury</name>
-	<properties>
-		<poi.version>3.11</poi.version>
-	</properties>
 
 	<dependencyManagement>
 		<dependencies>
@@ -46,6 +43,11 @@
 
 
 	<dependencies>
+		<dependency>
+			<groupId>com.qubit.terra</groupId>
+			<artifactId>qub-foundation-core-api</artifactId>
+			<version>6.10.0</version>
+		</dependency>
 		<dependency>
 			<groupId>pt.ist</groupId>
 			<artifactId>standards</artifactId>
@@ -81,17 +83,6 @@
 			<version>1.7.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi</artifactId>
-			<version>${poi.version}</version>
-		</dependency>
-		<!-- Added due to the usage of SXSSFWorkbook -->
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>${poi.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.7</version>
@@ -123,6 +114,13 @@
 			<groupId>com.paypal.sdk</groupId>
 			<artifactId>checkout-sdk</artifactId>
 			<version>1.0.5</version>
+		</dependency>
+		<!-- Needed because it started to receive jackson 2.14.2 version from core api but other jackson core version
+		from online payments gateway-->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.14.2</version>
 		</dependency>
 	</dependencies>
 

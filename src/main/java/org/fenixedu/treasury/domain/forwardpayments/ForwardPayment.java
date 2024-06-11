@@ -634,24 +634,24 @@ public class ForwardPayment extends ForwardPayment_Base {
         public void writeCellValues(final Row row, final IErrorsLog errorsLog) {
             int i = 0;
 
-            STRING_CELL.createCellWithValue(row, i++, executionDate);
-            STRING_CELL.createCellWithValue(row, i++, forwardPaymentExternalId);
-            STRING_CELL.createCellWithValue(row, i++, forwardPaymentOrderNumber);
-            STRING_CELL.createCellWithValue(row, i++, forwardPaymentWhenOccured);
-            STRING_CELL.createCellWithValue(row, i++, customerCode);
-            STRING_CELL.createCellWithValue(row, i++, customerName);
-            STRING_CELL.createCellWithValue(row, i++, previousStateDescription);
-            STRING_CELL.createCellWithValue(row, i++, nextStateDescription);
-            STRING_CELL.createCellWithValue(row, i++, treasuryBundle("label." + paymentRegisteredWithSuccess));
-            STRING_CELL.createCellWithValue(row, i++, settlementNote);
-            STRING_CELL.createCellWithValue(row, i++, advancedPaymentCreditNote);
-            STRING_CELL.createCellWithValue(row, i++, paymentDate);
-            STRING_CELL.createCellWithValue(row, i++, paidAmount);
-            STRING_CELL.createCellWithValue(row, i++, advancedCreditAmount != null ? advancedCreditAmount.toString() : "");
-            STRING_CELL.createCellWithValue(row, i++, transactionId);
-            STRING_CELL.createCellWithValue(row, i++, statusCode);
-            STRING_CELL.createCellWithValue(row, i++, statusMessage);
-            STRING_CELL.createCellWithValue(row, i++, remarks);
+            createTextCellWithValue(row, i++, executionDate);
+            createTextCellWithValue(row, i++, forwardPaymentExternalId);
+            createTextCellWithValue(row, i++, forwardPaymentOrderNumber);
+            createTextCellWithValue(row, i++, forwardPaymentWhenOccured);
+            createTextCellWithValue(row, i++, customerCode);
+            createTextCellWithValue(row, i++, customerName);
+            createTextCellWithValue(row, i++, previousStateDescription);
+            createTextCellWithValue(row, i++, nextStateDescription);
+            createTextCellWithValue(row, i++, treasuryBundle("label." + paymentRegisteredWithSuccess));
+            createTextCellWithValue(row, i++, settlementNote);
+            createTextCellWithValue(row, i++, advancedPaymentCreditNote);
+            createTextCellWithValue(row, i++, paymentDate);
+            createTextCellWithValue(row, i++, paidAmount);
+            createTextCellWithValue(row, i++, advancedCreditAmount != null ? advancedCreditAmount.toString() : "");
+            createTextCellWithValue(row, i++, transactionId);
+            createTextCellWithValue(row, i++, statusCode);
+            createTextCellWithValue(row, i++, statusMessage);
+            createTextCellWithValue(row, i++, remarks);
         }
 
     }
