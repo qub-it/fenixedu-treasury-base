@@ -1,3 +1,6 @@
+- Improvement: Declare property methods in Customer to get the global due in debt amount [#qubIT-Fenix-5352]
+- Improvement: Declare InvoiceEntry#getTreasuryEvent method, to use in reports [#qubIT-Fenix-5276]
+
 12.20.2 (05-06-2024)
 - Improvement: Add property methods to InvoiceEntry, to be used in reports, to get payment information [#qubIT-Fenix-5276]
 - Improvement Add property method to calculate the debt account total debt in due [#qubIT-Fenix-5353]

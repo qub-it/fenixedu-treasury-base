@@ -67,6 +67,7 @@ import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
+import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.MbwayPaymentRequest;
@@ -546,5 +547,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
                 .flatMap(s -> s.getReimbursementEntriesSet().stream())
                 .sorted(Comparator.comparing(ReimbursementEntry::getExternalId)).collect(Collectors.toList());
     }
+
+    public abstract TreasuryEvent getTreasuryEvent();
 
 }

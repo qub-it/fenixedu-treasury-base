@@ -122,6 +122,8 @@ public abstract class Customer extends Customer_Base {
 
     public abstract BigDecimal getGlobalBalance();
 
+    public abstract BigDecimal getGlobalDueInDebt();
+
     public abstract String getUsername();
 
     public abstract Set<Customer> getAllCustomers();

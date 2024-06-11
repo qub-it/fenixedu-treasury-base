@@ -341,6 +341,15 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         return globalBalance;
     }
 
+    public BigDecimal getGlobalDueInDebt() {
+        BigDecimal globalDueInDebt = BigDecimal.ZERO;
+        for (final DebtAccount debtAccount : getDebtAccountsSet()) {
+            globalDueInDebt = globalDueInDebt.add(debtAccount.getDueInDebt());
+        }
+
+        return globalDueInDebt;
+    }
+
     @Override
     public String getUsername() {
         return null;
