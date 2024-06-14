@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultBean {
 
@@ -35,7 +36,45 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     @Override
     public DateTime getPaymentDate() {
-        return this.webhookNotification.getTransactionDateTime();
+        // ANIL 2024-06-14 #UCP-FENIXEDU-93
+        //
+        // The transactionDateTime, if present, is in UTC, which is fine when
+        // the timezone for Lisbon in winter.
+        // But in the summer, the Lisbon timezone is UTC+1, which becomes
+        // a issue when converting DateTime to LocalDate .
+        //
+        // For example, when timezone is UTC+1 and the dateTime is in UTC like
+        // '2024-06-12 23:15:00Z', the dateTime in UTC+1 is 
+        // '2024-06-13 00:15:00.000+0001'
+        //
+        // But with this example in UTC, getting DateTime#toLocalDate()
+        // returns '2024-06-12', instead of '2024-06-13'
+        // 
+        // This conversion has issues, when calculating the interests amount
+        // which is dependent in the payment date
+
+        // To workaround this, if the transactionDateTime is different than null
+        // calculate the offset between the server timezone and the timezone
+        // returned by transactionDateTime, which with SIBS Pay is in UTC timezone
+
+        // This workaround was given by https://duckduckgo.com/aichat using GPT-3.5
+
+        if (this.webhookNotification.getTransactionDateTime() == null) {
+            // Return null
+            return this.webhookNotification.getTransactionDateTime();
+        }
+
+        DateTime transactionDateTimeWithSibsPayTimezone = this.webhookNotification.getTransactionDateTime();
+
+        DateTimeZone serverTimezone = DateTimeZone.getDefault();
+
+        int serverOffsetMillis = serverTimezone.getOffset(transactionDateTimeWithSibsPayTimezone);
+
+        // Convert the DateTime to the server's timezone dynamically
+        DateTime dateTimeServerTimezone =
+                transactionDateTimeWithSibsPayTimezone.withZone(DateTimeZone.forOffsetMillis(serverOffsetMillis));
+
+        return dateTimeServerTimezone;
     }
 
     @Override

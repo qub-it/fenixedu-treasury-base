@@ -170,8 +170,19 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
 
     private static Stream<SibsPaymentCodeTransaction> find(String entityReferenceCode, String referenceCode,
             DateTime paymentDate) {
-        return findAll().filter(x -> entityReferenceCode.equals(x.getSibsEntityReferenceCode())
-                && referenceCode.equals(x.getSibsPaymentReferenceCode()) && paymentDate.equals(x.getPaymentDate()));
+        return findAll().filter(x -> {
+            // ANIL 2024-06-14
+            // 
+            // The paymentDate cannot be compared with milliseconds, which must be discarded
+            // Also we must use DateTime#compareTo() instead of DateTime#equals() due to
+            // the timezones
+
+            boolean paymentDatesAreSame =
+                    paymentDate.withMillisOfSecond(0).compareTo(x.getPaymentDate().withMillisOfSecond(0)) == 0;
+
+            return entityReferenceCode.equals(x.getSibsEntityReferenceCode())
+                    && referenceCode.equals(x.getSibsPaymentReferenceCode()) && paymentDatesAreSame;
+        });
     }
 
     public static Stream<SibsPaymentCodeTransaction> findBySibsGatewayTransactionId(String sibsTransactionId) {
