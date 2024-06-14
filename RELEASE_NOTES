@@ -1,3 +1,4 @@
+12.20.4 (14-06-2024)
 - Bug Fix: Fix the comparision with payment dates of SIBS MB transactions, in which the milliseconds must be discarded [#UCP-FENIXEDU-92]
 - Bug Fix: Also the comparision must be with DateTime#compareTo instead of DateTime#equals, to due differences in the timezones [#UCP-FENIXEDU-92]
 - Bug Fix: In SIBS Pay SPG integration, convert transactionDate from UTC to the server timezone, in order to get the correct local date [#UCP-FENIXEDU-92]
