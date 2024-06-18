@@ -1,3 +1,4 @@
+12.22.0 (18-06-2024)
 - Bug Fix: Disable the italian fiscal validation due to an error related with Log4J [#qubIT-Fenix-5424]
 - Refactor: Declare TreasuryEvent#isPaid to check if the event is paid, or a specific product is paid [#qubIT-Fenix-5272]
 - Bug Fix: Fix TreasuryEvent#getRemainingAmountToPay(Product), which didn't take into account the product [#qubIT-Fenix-5272]
