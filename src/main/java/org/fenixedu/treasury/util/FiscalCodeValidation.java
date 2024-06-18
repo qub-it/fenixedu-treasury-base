@@ -64,15 +64,20 @@ import eu.europa.ec.taxud.tin.algorithm.TINValid;
 
 public class FiscalCodeValidation {
 
-    private static final List<String> VALIDATED_COUNTRIES = Lists.newArrayList(
-            "PT", "AT", "BE", "BG", "CY", "DE", "DK", "EE", "ES", "FI", 
-            "FR", "HR", "HU", "IE", "IT", "LT", "LU", "NL", "PL", "SE",
-            "SI", "GB");
-    
+    // TODO ANIL 2024-06-18
+    //
+    // removed the "IT" country code, because is throwing 
+    // java.lang.NoClassDefFoundError: org/apache/log4j/Logger
+    //
+    // when the issue is resolved, add again the "IT" country code
+
+    private static final List<String> VALIDATED_COUNTRIES = Lists.newArrayList("PT", "AT", "BE", "BG", "CY", "DE", "DK", "EE",
+            "ES", "FI", "FR", "HR", "HU", "IE", "LT", "LU", "NL", "PL", "SE", "SI", "GB");
+
     public static boolean isValidationAppliedToFiscalCountry(final String countryCode) {
         return VALIDATED_COUNTRIES.contains(countryCode.toUpperCase());
     }
-    
+
     public static boolean isValidFiscalNumber(final String countryCode, final String fiscalNumber) {
         if (Strings.isNullOrEmpty(countryCode)) {
             return false;
@@ -85,15 +90,14 @@ public class FiscalCodeValidation {
         if (!TreasuryConstants.isDefaultCountry(countryCode) && Customer.DEFAULT_FISCAL_NUMBER.equals(fiscalNumber)) {
             return false;
         }
-        
-        if(VALIDATED_COUNTRIES.contains(countryCode.toUpperCase())) {
-            if(customValidation(countryCode, fiscalNumber)) {
+
+        if (VALIDATED_COUNTRIES.contains(countryCode.toUpperCase())) {
+            if (customValidation(countryCode, fiscalNumber)) {
                 return true;
             }
-            
-            
+
             int checkTIN = TINValid.checkTIN(translateCountry(countryCode.toUpperCase()), fiscalNumber);
-            
+
             return checkTIN == 0 || checkTIN == 2;
         }
 
@@ -118,26 +122,26 @@ public class FiscalCodeValidation {
          * For example in Germany the TIN fiscal number has 11 digits, while
          * VAT fiscal number has 9 digits
          */
-        
+
         // TODO: Evaluate usage of VIES webservice
         // For now apply custom validation for well known cases
-        
-        if("DE".equals(countryCode.toUpperCase())) {
+
+        if ("DE".equals(countryCode.toUpperCase())) {
             // Return true if the fiscalNumber has 9 digits
-            if(Pattern.matches("\\d{9}", fiscalNumber)) {
+            if (Pattern.matches("\\d{9}", fiscalNumber)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     private static String translateCountry(String countryCode) {
-        if("GB".equals(countryCode)) {
+        if ("GB".equals(countryCode)) {
             return "UK";
         }
-        
+
         return countryCode;
     }
-    
+
 }
