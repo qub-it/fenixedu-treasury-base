@@ -52,12 +52,11 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
+import static com.qubit.terra.framework.tools.excel.ExcelUtil.createCellWithValue;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-import static com.qubit.qubEdu.module.base.util.XLSxUtil.*;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.fenixedu.treasury.services.payments.sibs.SIBSImportationLineDTO;
-import org.fenixedu.treasury.util.TreasuryConstants;
 import org.fenixedu.treasury.util.streaming.spreadsheet.IErrorsLog;
 import org.fenixedu.treasury.util.streaming.spreadsheet.SpreadsheetRow;
 
@@ -95,23 +94,23 @@ public class SibsSpreadsheetRowReportBean implements SpreadsheetRow {
         int i = 0;
         
         try {
-            createTextCellWithValue(row, i++, line.getWhenProcessedBySibs().toString("yyyy-MM-dd HH:mm:ss"));
-            createTextCellWithValue(row, i++, line.getFilename());
-            createTextCellWithValue(row, i++, line.getTransactionsTotalAmount().toPlainString());
-            createTextCellWithValue(row, i++, line.getTotalCost().toPlainString());
-            createNumberCellWithValue(row, i++, line.getFileVersion());
-            createTextCellWithValue(row, i++, line.getSibsTransactionId());
-            createTextCellWithValue(row, i++, line.getTransactionTotalAmount().toPlainString());
-            createTextCellWithValue(row, i++, line.getCode());
-            createTextCellWithValue(row, i++, line.getTransactionWhenRegistered().toString("yyyy-MM-dd HH:mm:ss"));
-            createTextCellWithValue(row, i++, line.getStudentNumber());
-            createTextCellWithValue(row, i++, line.getPersonName());
-            createTextCellWithValue(row, i++, line.getDescription());
+            createCellWithValue(row, i++, line.getWhenProcessedBySibs().toString("yyyy-MM-dd HH:mm:ss"));
+            createCellWithValue(row, i++, line.getFilename());
+            createCellWithValue(row, i++, line.getTransactionsTotalAmount().toPlainString());
+            createCellWithValue(row, i++, line.getTotalCost().toPlainString());
+            createCellWithValue(row, i++, line.getFileVersion());
+            createCellWithValue(row, i++, line.getSibsTransactionId());
+            createCellWithValue(row, i++, line.getTransactionTotalAmount().toPlainString());
+            createCellWithValue(row, i++, line.getCode());
+            createCellWithValue(row, i++, line.getTransactionWhenRegistered().toString("yyyy-MM-dd HH:mm:ss"));
+            createCellWithValue(row, i++, line.getStudentNumber());
+            createCellWithValue(row, i++, line.getPersonName());
+            createCellWithValue(row, i++, line.getDescription());
             
             return;
         } catch (final Exception e) {
             e.printStackTrace();
-            createTextCellWithValue(row, i++, treasuryBundle("error.SibsSpreadsheetRowReportBean.report.generation.verify.line"));
+            createCellWithValue(row, i++, treasuryBundle("error.SibsSpreadsheetRowReportBean.report.generation.verify.line"));
         }
         
     }

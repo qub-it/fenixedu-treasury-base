@@ -52,12 +52,11 @@
  */
 package org.fenixedu.treasury.domain.forwardpayments;
 
+import static com.qubit.terra.framework.tools.excel.ExcelUtil.createCellWithValue;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-import static com.qubit.qubEdu.module.base.util.XLSxUtil.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -634,24 +633,24 @@ public class ForwardPayment extends ForwardPayment_Base {
         public void writeCellValues(final Row row, final IErrorsLog errorsLog) {
             int i = 0;
 
-            createTextCellWithValue(row, i++, executionDate);
-            createTextCellWithValue(row, i++, forwardPaymentExternalId);
-            createTextCellWithValue(row, i++, forwardPaymentOrderNumber);
-            createTextCellWithValue(row, i++, forwardPaymentWhenOccured);
-            createTextCellWithValue(row, i++, customerCode);
-            createTextCellWithValue(row, i++, customerName);
-            createTextCellWithValue(row, i++, previousStateDescription);
-            createTextCellWithValue(row, i++, nextStateDescription);
-            createTextCellWithValue(row, i++, treasuryBundle("label." + paymentRegisteredWithSuccess));
-            createTextCellWithValue(row, i++, settlementNote);
-            createTextCellWithValue(row, i++, advancedPaymentCreditNote);
-            createTextCellWithValue(row, i++, paymentDate);
-            createTextCellWithValue(row, i++, paidAmount);
-            createTextCellWithValue(row, i++, advancedCreditAmount != null ? advancedCreditAmount.toString() : "");
-            createTextCellWithValue(row, i++, transactionId);
-            createTextCellWithValue(row, i++, statusCode);
-            createTextCellWithValue(row, i++, statusMessage);
-            createTextCellWithValue(row, i++, remarks);
+            createCellWithValue(row, i++, executionDate);
+            createCellWithValue(row, i++, forwardPaymentExternalId);
+            createCellWithValue(row, i++, forwardPaymentOrderNumber);
+            createCellWithValue(row, i++, forwardPaymentWhenOccured);
+            createCellWithValue(row, i++, customerCode);
+            createCellWithValue(row, i++, customerName);
+            createCellWithValue(row, i++, previousStateDescription);
+            createCellWithValue(row, i++, nextStateDescription);
+            createCellWithValue(row, i++, treasuryBundle("label." + paymentRegisteredWithSuccess));
+            createCellWithValue(row, i++, settlementNote);
+            createCellWithValue(row, i++, advancedPaymentCreditNote);
+            createCellWithValue(row, i++, paymentDate);
+            createCellWithValue(row, i++, paidAmount);
+            createCellWithValue(row, i++, advancedCreditAmount != null ? advancedCreditAmount.toString() : "");
+            createCellWithValue(row, i++, transactionId);
+            createCellWithValue(row, i++, statusCode);
+            createCellWithValue(row, i++, statusMessage);
+            createCellWithValue(row, i++, remarks);
         }
 
     }
