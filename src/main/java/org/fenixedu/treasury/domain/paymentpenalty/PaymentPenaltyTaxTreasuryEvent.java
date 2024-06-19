@@ -78,6 +78,7 @@ import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
 import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
+import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.domain.tariff.Tariff;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
@@ -283,12 +284,19 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
         BigDecimal totalAmount = tariff.amountToPay();
         LocalDate dueDate = tariff.dueDate(lastPaymentDate);
-        Vat vat = Vat.findActiveUnique(settings.getPenaltyProduct().getVatType(), finantialInstitution, new DateTime()).get();
+
+        var effectiveWhen = lastPaymentDate;
+        if (DueDateCalculationType.FIXED_DATE == tariff.getDueDateCalculationType() && dueDate.isBefore(lastPaymentDate)) {
+            effectiveWhen = dueDate;
+        }
+
+        Vat vat = Vat.findActiveUnique(settings.getPenaltyProduct().getVatType(), finantialInstitution,
+                effectiveWhen.toDateTimeAtStartOfDay()).get();
 
         DebitEntry penaltyDebitEntry = DebitEntry.create(tariff.getFinantialEntity(), debtAccount, paymentPenaltyTaxTreasuryEvent,
                 vat, totalAmount, dueDate, Collections.emptyMap(), settings.getPenaltyProduct(),
                 paymentPenaltyTaxTreasuryEvent.getDescription().getContent(TreasuryConstants.DEFAULT_LANGUAGE), BigDecimal.ONE,
-                tariff.getInterestRate(), lastPaymentDate.toDateTimeAtStartOfDay(), false, false, debitNote);
+                tariff.getInterestRate(), effectiveWhen.toDateTimeAtStartOfDay(), false, false, debitNote);
 
         {
             Map<String, String> map = penaltyDebitEntry.getPropertiesMap();

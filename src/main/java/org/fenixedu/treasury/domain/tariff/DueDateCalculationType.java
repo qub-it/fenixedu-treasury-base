@@ -52,16 +52,12 @@
  */
 package org.fenixedu.treasury.domain.tariff;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
-
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 
 public enum DueDateCalculationType {
-    @Deprecated NO_DUE_DATE, 
-    @Deprecated FIXED_DATE, 
-    DAYS_AFTER_CREATION, 
-    BEST_OF_FIXED_DATE_AND_DAYS_AFTER_CREATION;
+    @Deprecated
+    NO_DUE_DATE, FIXED_DATE, DAYS_AFTER_CREATION, BEST_OF_FIXED_DATE_AND_DAYS_AFTER_CREATION;
 
     public boolean isFixedDate() {
         return this == FIXED_DATE;
@@ -74,7 +70,7 @@ public enum DueDateCalculationType {
     public boolean isDaysAfterCreation() {
         return this == DAYS_AFTER_CREATION;
     }
-    
+
     public boolean isBestOfFixedDateAndDaysAfterCreation() {
         return this == BEST_OF_FIXED_DATE_AND_DAYS_AFTER_CREATION;
     }
