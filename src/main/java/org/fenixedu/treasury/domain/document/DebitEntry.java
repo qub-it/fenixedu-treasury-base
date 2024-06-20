@@ -1557,6 +1557,30 @@ public class DebitEntry extends DebitEntry_Base {
         super.setExemptedAmount(exemptedAmount);
     }
 
+    public Set<DebitEntry> getAllSplittedDebitEntriesSet() {
+        final Set<DebitEntry> result = new HashSet<>();
+        // To collect all splitted debit entries that are part of this debit entry
+
+        // 1. Reach to the root debit entry
+
+        DebitEntry root = this;
+        while (root.getSplittingOriginDebitEntry() != null) {
+            root = root.getSplittingOriginDebitEntry();
+        }
+
+        result.add(root);
+
+        // 2. From root navigate to each descendent and add to the set
+        final BiConsumer<DebitEntry, BiConsumer> func = (debitEntry, consumer) -> {
+            result.add(debitEntry);
+            debitEntry.getSplittedDebitEntriesSet().stream().forEach(child -> consumer.accept(child, consumer));
+        };
+
+        func.accept(root, func);
+
+        return result;
+    }
+
     // @formatter:off
     /* ********
      * SERVICES

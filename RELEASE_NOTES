@@ -1,3 +1,5 @@
+- Refactor: Add DebitEntry#getAllSplittedDebitEntriesSet to retrieve all splitted related debit entries [#qubIT-Fenix-5420]
+
 12.23.0 (19-06-2024)
 - Improvement: Support fixed due date calculation in tariffs [#qubIT-Fenix-5421]
 

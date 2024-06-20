@@ -1,6 +1,7 @@
 package org.fenixedu.treasury.finantialdocuments.entries.split;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
@@ -249,6 +250,47 @@ public class SplitDebitEntriesTest {
         assertEquals("Splitted debit entry maintains quantity of 2", new BigDecimal("2"), splittedDebitEntry.getQuantity());
 
         assertEquals("Splitted debit entry unit amount is 37.5", new BigDecimal("37.5000"), splittedDebitEntry.getAmount());
+    }
+
+    @Test
+    public void testSplitDebitEntryFiveTimesAndCheckTheAllSplittedDebitEntries() {
+        DebitEntry debitEntry =
+                InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), false);
+
+        DebtAccount debtAccount = debitEntry.getDebtAccount();
+        FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        DocumentNumberSeries defaultDocumentNumberSeries =
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+        DebitNote debitNote = DebitNote.create(finantialEntity, debtAccount, null, defaultDocumentNumberSeries, new DateTime(),
+                new LocalDate(), null, Collections.emptyMap(), null, null);
+
+        debitNote.addDebitNoteEntries(List.of(debitEntry));
+
+        finantialInstitution.setSplitCreditEntriesWithSettledAmount(false);
+        finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
+
+        DebitEntry debitEntry_1 = debitEntry.splitDebitEntry(new BigDecimal("25.55"), "teste");
+
+        DebitEntry debitEntry_1_1 = debitEntry_1.splitDebitEntry(new BigDecimal("0.55"), "teste");
+
+        DebitEntry debitEntry_2 = debitEntry.splitDebitEntry(new BigDecimal("49.66"), "teste");
+
+        DebitEntry debitEntry_2_1 = debitEntry_2.splitDebitEntry(new BigDecimal("20"), "teste");
+
+        DebitEntry debitEntry_2_2 = debitEntry_2.splitDebitEntry(new BigDecimal("15.44"), "teste");
+
+        DebitEntry debitEntry_2_2_1 = debitEntry_2_1.splitDebitEntry(new BigDecimal("9.98"), "teste");
+
+        assertEquals(7, debitEntry.getAllSplittedDebitEntriesSet().size());
+        assertEquals(7, debitEntry_1.getAllSplittedDebitEntriesSet().size());
+        assertEquals(7, debitEntry_1_1.getAllSplittedDebitEntriesSet().size());
+        assertEquals(7, debitEntry_2.getAllSplittedDebitEntriesSet().size());
+        assertEquals(7, debitEntry_2_1.getAllSplittedDebitEntriesSet().size());
+        assertEquals(7, debitEntry_2_2.getAllSplittedDebitEntriesSet().size());
+        assertEquals(7, debitEntry_2_2_1.getAllSplittedDebitEntriesSet().size());
+
     }
 
 }
