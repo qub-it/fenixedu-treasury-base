@@ -132,9 +132,7 @@ public class TPAVirtualImplementationPlatform extends TPAVirtualImplementationPl
     }
 
     protected TPAVirtualImplementationPlatform(FinantialInstitution finantialInstitution, String name) {
-        this();
-
-        super.init(finantialInstitution, name, false);
+        throw new RuntimeException("deprecated");
     }
 
     @Override

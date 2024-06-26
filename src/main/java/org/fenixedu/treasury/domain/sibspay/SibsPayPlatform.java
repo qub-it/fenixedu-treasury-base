@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -65,13 +66,13 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         new StandardSibsPaymentExpiryStrategy(this);
     }
 
-    public SibsPayPlatform(FinantialInstitution finantialInstitution, String name, boolean active, String clientId,
-            String bearerToken, Integer terminalId, String entityReferenceCode, String endpoint, String assetsEndpointUrl) {
+    public SibsPayPlatform(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String clientId, String bearerToken, Integer terminalId, String entityReferenceCode, String endpoint,
+            String assetsEndpointUrl) {
         this();
 
-        super.setFinantialInstitution(finantialInstitution);
-        super.setName(name);
-        super.setActive(active);
+        super.init(finantialInstitution, finantialEntity, name, active);
+
         super.setClientId(clientId);
         super.setTerminalId(terminalId);
         super.setBearerToken(bearerToken);
@@ -82,6 +83,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getCreditCardPaymentMethod());
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getMbPaymentMethod());
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getMbWayPaymentMethod());
+
+        checkRules();
     }
 
     @Override
@@ -1082,10 +1085,11 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         return "SIBS Pay (SPG)";
     }
 
-    public static SibsPayPlatform create(FinantialInstitution finantialInstitution, String name, boolean active, String clientId,
-            String bearerToken, Integer terminalId, String entityReferenceCode, String endpointUrl, String assetsEndpointUrl) {
-        return new SibsPayPlatform(finantialInstitution, name, active, clientId, bearerToken, terminalId, entityReferenceCode,
-                endpointUrl, assetsEndpointUrl);
+    public static SibsPayPlatform create(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String clientId, String bearerToken, Integer terminalId, String entityReferenceCode,
+            String endpointUrl, String assetsEndpointUrl) {
+        return new SibsPayPlatform(finantialInstitution, finantialEntity, name, active, clientId, bearerToken, terminalId,
+                entityReferenceCode, endpointUrl, assetsEndpointUrl);
     }
 
     public static Stream<SibsPayPlatform> findAllActive() {

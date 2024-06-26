@@ -77,6 +77,7 @@ import org.fenixedu.onlinepaymentsgateway.api.SIBSOnlinePaymentsGatewayService;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.onlinepaymentsgateway.sibs.sdk.SibsEnvironmentMode;
 import org.fenixedu.onlinepaymentsgateway.sibs.sdk.SibsResultCodeType;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -130,11 +131,12 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         super();
     }
 
-    public SibsPaymentsGateway(FinantialInstitution finantialInstitution, String name, boolean active, String entityReferenceCode,
-            String sibsEntityId, String sibsEndpointUrl, String bearerToken, String aesKey) {
+    public SibsPaymentsGateway(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String entityReferenceCode, String sibsEntityId, String sibsEndpointUrl, String bearerToken,
+            String aesKey) {
         this();
 
-        this.init(finantialInstitution, name, active);
+        this.init(finantialInstitution, finantialEntity, name, active);
 
         setEntityReferenceCode(entityReferenceCode);
         setSibsEntityId(sibsEntityId);
@@ -147,9 +149,6 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getMbWayPaymentMethod());
 
         checkRules();
-    }
-
-    private void checkRules() {
     }
 
     public boolean isSendBillingDataInOnlinePayment() {
@@ -833,10 +832,11 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         return find(finantialInstitution).filter(p -> p.isActive()).findAny();
     }
 
-    public static SibsPaymentsGateway create(FinantialInstitution finantialInstitution, String name, boolean active,
-            String entityReferenceCode, String sibsEntityId, String sibsEndpointUrl, String bearerToken, String aesKey) {
-        return new SibsPaymentsGateway(finantialInstitution, name, active, entityReferenceCode, sibsEntityId, sibsEndpointUrl,
-                bearerToken, aesKey);
+    public static SibsPaymentsGateway create(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity,
+            String name, boolean active, String entityReferenceCode, String sibsEntityId, String sibsEndpointUrl,
+            String bearerToken, String aesKey) {
+        return new SibsPaymentsGateway(finantialInstitution, finantialEntity, name, active, entityReferenceCode, sibsEntityId,
+                sibsEndpointUrl, bearerToken, aesKey);
     }
 
     @Atomic(mode = TxMode.WRITE)

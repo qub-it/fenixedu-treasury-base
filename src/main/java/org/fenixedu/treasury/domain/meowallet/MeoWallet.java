@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -125,11 +126,11 @@ public class MeoWallet extends MeoWallet_Base
         new StandardSibsPaymentExpiryStrategy(this);
     }
 
-    public MeoWallet(FinantialInstitution finantialInstitution, String name, boolean active, String endpointUrl,
-            String authorizationAPIToken) {
+    public MeoWallet(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name, boolean active,
+            String endpointUrl, String authorizationAPIToken) {
         this();
 
-        this.init(finantialInstitution, name, active);
+        this.init(finantialInstitution, finantialEntity, name, active);
 
         setEndpointUrl(endpointUrl);
         setAuthorizationAPIToken(authorizationAPIToken);
@@ -141,12 +142,9 @@ public class MeoWallet extends MeoWallet_Base
         checkRules();
     }
 
-    public static MeoWallet create(FinantialInstitution finantialInstitution, String name, boolean active, String endpointUrl,
-            String authorizationAPIToken) {
-        return new MeoWallet(finantialInstitution, name, active, endpointUrl, authorizationAPIToken);
-    }
-
-    private void checkRules() {
+    public static MeoWallet create(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String endpointUrl, String authorizationAPIToken) {
+        return new MeoWallet(finantialInstitution, finantialEntity, name, active, endpointUrl, authorizationAPIToken);
     }
 
     @Override

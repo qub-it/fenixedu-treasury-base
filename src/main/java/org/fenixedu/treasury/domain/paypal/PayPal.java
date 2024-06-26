@@ -10,13 +10,11 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -40,6 +38,9 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.paypal.core.PayPalEnvironment;
 import com.paypal.core.PayPalHttpClient;
 import com.paypal.http.HttpClient;
@@ -70,11 +71,12 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
         super();
     }
 
-    private PayPal(FinantialInstitution finantialInstitution, String name, boolean active, String accountId, String secret,
-            String mode) {
+    private PayPal(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name, boolean active,
+            String accountId, String secret, String mode) {
 
         this();
-        this.init(finantialInstitution, name, active);
+        this.init(finantialInstitution, finantialEntity, name, active);
+
         setAccountId(accountId);
         setSecret(secret);
         setMode(mode);
@@ -84,12 +86,9 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
         checkRules();
     }
 
-    private void checkRules() {
-    }
-
-    public static PayPal create(FinantialInstitution finantialInstitution, String name, boolean active, String accountId,
-            String secret, String mode) {
-        return new PayPal(finantialInstitution, name, active, accountId, secret, mode);
+    public static PayPal create(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String accountId, String secret, String mode) {
+        return new PayPal(finantialInstitution, finantialEntity, name, active, accountId, secret, mode);
     }
 
     public static String getPresentationName() {

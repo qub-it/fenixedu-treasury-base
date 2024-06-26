@@ -64,6 +64,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -95,13 +96,13 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         super();
     }
 
-    protected SibsPaymentCodePool(FinantialInstitution finantialInstitution, String name, boolean active,
-            String entityReferenceCode, long minReferenceCode, long maxReferenceCode, BigDecimal minAmount, BigDecimal maxAmount,
-            LocalDate validFrom, LocalDate validTo, boolean useCheckDigit, boolean generateReferenceCodeOnDemand,
-            String sourceInstitutionId, String destinationInstitutionId) {
+    protected SibsPaymentCodePool(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String entityReferenceCode, long minReferenceCode, long maxReferenceCode, BigDecimal minAmount,
+            BigDecimal maxAmount, LocalDate validFrom, LocalDate validTo, boolean useCheckDigit,
+            boolean generateReferenceCodeOnDemand, String sourceInstitutionId, String destinationInstitutionId) {
         this();
 
-        super.init(finantialInstitution, name, active);
+        super.init(finantialInstitution, finantialEntity, name, active);
 
         setEntityReferenceCode(entityReferenceCode);
         setMinReferenceCode(minReferenceCode);
@@ -127,7 +128,10 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         checkRules();
     }
 
-    private void checkRules() {
+    @Override
+    protected void checkRules() {
+        super.checkRules();
+
         if (StringUtils.isEmpty(getName())) {
             throw new TreasuryDomainException("error.PaymentCodePool.name.required");
         }
@@ -501,11 +505,11 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         return findAll().filter(d -> d.getEntityReferenceCode().equals(entityReferenceCode));
     }
 
-    public static SibsPaymentCodePool create(FinantialInstitution finantialInstitution, String name, boolean active,
-            String entityReferenceCode, long minReferenceCode, long maxReferenceCode, BigDecimal minAmount, BigDecimal maxAmount,
-            LocalDate validFrom, LocalDate validTo, boolean useCheckDigit, boolean generateReferenceCodeOnDemand,
-            String sourceInstitutionId, String destinationInstitutionId) {
-        return new SibsPaymentCodePool(finantialInstitution, name, active, entityReferenceCode, minReferenceCode,
+    public static SibsPaymentCodePool create(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity,
+            String name, boolean active, String entityReferenceCode, long minReferenceCode, long maxReferenceCode,
+            BigDecimal minAmount, BigDecimal maxAmount, LocalDate validFrom, LocalDate validTo, boolean useCheckDigit,
+            boolean generateReferenceCodeOnDemand, String sourceInstitutionId, String destinationInstitutionId) {
+        return new SibsPaymentCodePool(finantialInstitution, finantialEntity, name, active, entityReferenceCode, minReferenceCode,
                 maxReferenceCode, minAmount, maxAmount, validFrom, validTo, useCheckDigit, generateReferenceCodeOnDemand,
                 sourceInstitutionId, destinationInstitutionId);
     }

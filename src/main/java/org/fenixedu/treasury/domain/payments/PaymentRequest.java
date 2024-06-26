@@ -207,6 +207,10 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             }
         }
 
+        if (getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.PaymentRequest.finantialEntity.required");
+        }
+
         SettlementNote.checkMixingOfInvoiceEntriesExportedInLegacyERP(getDebitEntriesSet());
     }
 

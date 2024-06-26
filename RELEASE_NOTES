@@ -1,3 +1,5 @@
+- Refactor: Require finantial entity for digital payment platforms and payment requests [#qubIT-Fenix-5262]
+
 12.24.0 (20-06-2024)
 - Refactor: Add DebitEntry#getAllSplittedDebitEntriesSet to retrieve all splitted related debit entries [#qubIT-Fenix-5420]
 

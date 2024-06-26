@@ -62,6 +62,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -88,21 +89,24 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected void init(FinantialInstitution finantialInstitution, String name, boolean active) {
+    protected void init(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name, boolean active) {
         setFinantialInstitution(finantialInstitution);
+        setFinantialEntity(finantialEntity);
         setName(name);
         setActive(active);
-
-        checkRules();
     }
 
-    private void checkRules() {
+    protected void checkRules() {
         if (getDomainRoot() == null) {
             throw new TreasuryDomainException("error.DigitalPaymentPlatform.domainRoot.required");
         }
 
         if (getFinantialInstitution() == null) {
             throw new TreasuryDomainException("error.DigitalPaymentPlatform.finantialInstitution.required");
+        }
+
+        if (getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.DigitalPaymentPlatform.finantialEntity.required");
         }
 
         if (StringUtils.isEmpty(getName())) {

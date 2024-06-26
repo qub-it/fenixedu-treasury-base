@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpSession;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -96,11 +97,12 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         super();
     }
 
-    protected PaylineConfiguration(FinantialInstitution finantialInstitution, String name, boolean active, String paymentURL,
-            String paylineMerchantId, String paylineMerchantAccessKey, String paylineContractNumber) {
+    protected PaylineConfiguration(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String name,
+            boolean active, String paymentURL, String paylineMerchantId, String paylineMerchantAccessKey,
+            String paylineContractNumber) {
         this();
 
-        this.init(finantialInstitution, name, active);
+        this.init(finantialInstitution, finantialEntity, name, active);
 
         setPaymentURL(paymentURL);
         setPaylineMerchantId(paylineMerchantId);
@@ -110,9 +112,6 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getCreditCardPaymentMethod());
 
         checkRules();
-    }
-
-    private void checkRules() {
     }
 
     @Override
@@ -389,9 +388,10 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
      */
     // @formatter:on
 
-    public static PaylineConfiguration create(FinantialInstitution finantialInstitution, String name, boolean active,
-            String paymentURL, String paylineMerchantId, String paylineMerchantAccessKey, String paylineContractNumber) {
-        return new PaylineConfiguration(finantialInstitution, name, active, paymentURL, paylineMerchantId,
+    public static PaylineConfiguration create(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity,
+            String name, boolean active, String paymentURL, String paylineMerchantId, String paylineMerchantAccessKey,
+            String paylineContractNumber) {
+        return new PaylineConfiguration(finantialInstitution, finantialEntity, name, active, paymentURL, paylineMerchantId,
                 paylineMerchantAccessKey, paylineContractNumber);
     }
 
