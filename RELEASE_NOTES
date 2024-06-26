@@ -1,3 +1,4 @@
+- Refactor: Require finantial entity for treasury events and payment plans [#qubIT-Fenix-5262]
 - Refactor: Declare methods to extract information to be used in reports [#qubIT-Fenix-5550]
 
 12.29.0 (23-07-2024)
