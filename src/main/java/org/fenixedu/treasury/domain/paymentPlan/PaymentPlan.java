@@ -224,6 +224,10 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .anyMatch(e -> e.getDebitEntry().getDebtAccount() != getDebtAccount())) {
             throw new TreasuryDomainException("error.PaymentPlan.some.debitEntries.not.from.debtAccount");
         }
+
+        if (getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.PaymentPlan.finantialEntity.required");
+        }
     }
 
     private boolean hasDebitEntriesExportedInLegacyERP() {

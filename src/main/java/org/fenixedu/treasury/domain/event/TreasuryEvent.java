@@ -118,6 +118,10 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         if (getDomainRoot() == null) {
             throw new TreasuryDomainException("error.TreasuryEvent.bennu.required");
         }
+
+        if (getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.TreasuryEvent.finantialEntity.required");
+        }
     }
 
     /* -----------------------------

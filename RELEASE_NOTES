@@ -1,3 +1,5 @@
+- Refactor: Require finantial entity for treasury events and payment plans [#qubIT-Fenix-5262]
+
 12.27.0 (03-07-2024)
 - Improvement: Refactors code due to poi upgrade [#qubIT-Omnis-6199]
 
