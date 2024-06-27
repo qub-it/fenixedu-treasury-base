@@ -312,7 +312,6 @@ class document.Series {
 	LocalizedStringT name (REQUIRED);
 	boolean active;
 	boolean externSeries;
-	boolean certificated;
 	boolean legacy;
 	boolean defaultSeries;
 	boolean selectable;
@@ -327,7 +326,7 @@ class document.Series {
 			multiplicity 0..1;
 		}
 	}
-
+	
 class document.DocumentNumberSeries {
 	int counter;
 	boolean replacePrefix;
@@ -2236,6 +2235,16 @@ relation SeriesBennu {
 relation SeriesFinantialInstitution {
 	FinantialInstitution playsRole finantialInstitution {
 		multiplicity 1..1;
+	}
+	
+	document.Series playsRole series {
+		multiplicity *;
+	}
+}
+
+relation SeriesFinantialEntity {
+	FinantialEntity playsRole finantialEntity {
+		multiplicity 0..1;
 	}
 	
 	document.Series playsRole series {

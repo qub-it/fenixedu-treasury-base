@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.LocalizedStringUtil;
@@ -96,12 +97,14 @@ public class Series extends Series_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected Series(final FinantialInstitution finantialInstitution, final String code, final LocalizedString name,
-            final boolean externSeries, final boolean certificated, final boolean legacy, final boolean defaultSeries,
-            final boolean selectable) {
+    protected Series(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String code,
+            LocalizedString name, boolean externSeries, boolean certificated, boolean legacy, boolean defaultSeries,
+            boolean selectable) {
         this();
+
         setActive(true);
         setFinantialInstitution(finantialInstitution);
+        setFinantialEntity(finantialEntity);
         setCode(code);
         setName(name);
         setExternSeries(externSeries);
@@ -210,13 +213,6 @@ public class Series extends Series_Base {
         return super.getExternSeries();
     }
 
-    @Deprecated
-    // TODO ANIL 2023-11-30: This property does not have any meaning
-    // Remove in the future
-    public boolean isCertificated() {
-        return super.getCertificated();
-    }
-
     public boolean isLegacy() {
         return super.getLegacy();
     }
@@ -232,7 +228,9 @@ public class Series extends Series_Base {
             removeDocumentNumberSeries(ser);
             ser.delete();
         }
+
         setFinantialInstitution(null);
+        setFinantialEntity(null);
 
         deleteDomainObject();
     }
@@ -243,6 +241,10 @@ public class Series extends Series_Base {
 
     public static Set<Series> find(final FinantialInstitution finantialInstitution) {
         return finantialInstitution.getSeriesSet();
+    }
+
+    public static Set<Series> find(FinantialEntity finantialEntity) {
+        return finantialEntity.getSeriesSet();
     }
 
     public static Series findByCode(final FinantialInstitution finantialInstitution, final String code) {
@@ -279,18 +281,34 @@ public class Series extends Series_Base {
     }
 
     protected static Stream<Series> findDefault(final FinantialInstitution finantialInstitution) {
-        return find(finantialInstitution).stream().filter(s -> s.isDefaultSeries());
+        return find(finantialInstitution).stream() //
+                .filter(s -> s.isDefaultSeries()) //
+                .filter(s -> s.getFinantialEntity() == null);
+    }
+
+    protected static Stream<Series> findDefault(FinantialEntity finantialEntity) {
+        return find(finantialEntity).stream().filter(s -> s.isDefaultSeries());
     }
 
     public static Optional<Series> findUniqueDefault(final FinantialInstitution finantialInstitution) {
-        return findDefault(finantialInstitution).findFirst();
+        return findDefault(finantialInstitution).filter(s -> s.getFinantialEntity() == null).findFirst();
+    }
+
+    public static Optional<Series> findUniqueDefault(FinantialEntity finantialEntity) {
+        return findDefault(finantialEntity).findFirst();
     }
 
     @Atomic
-    public static Series create(final FinantialInstitution finantialInstitution, final String code, final LocalizedString name,
-            final boolean externSeries, final boolean certificated, final boolean legacy, final boolean defaultSeries,
-            final boolean selectable) {
-        return new Series(finantialInstitution, code, name, externSeries, certificated, legacy, defaultSeries, selectable);
+    public static Series create(FinantialInstitution finantialInstitution, String code, LocalizedString name,
+            boolean externSeries, boolean certificated, boolean legacy, boolean defaultSeries, boolean selectable) {
+        return new Series(finantialInstitution, null, code, name, externSeries, certificated, legacy, defaultSeries, selectable);
+    }
+
+    @Atomic
+    public static Series create(FinantialEntity finantialEntity, String code, LocalizedString name, boolean externSeries,
+            boolean certificated, boolean legacy, boolean defaultSeries, boolean selectable) {
+        return new Series(finantialEntity.getFinantialInstitution(), finantialEntity, code, name, externSeries, certificated,
+                legacy, defaultSeries, selectable);
     }
 
 }

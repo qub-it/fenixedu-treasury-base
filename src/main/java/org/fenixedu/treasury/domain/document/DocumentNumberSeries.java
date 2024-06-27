@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 
@@ -144,10 +145,10 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     public void editReplacingPrefix(final boolean replacePrefix, final String replacingPrefix) {
-        if(!getFinantialDocumentsSet().isEmpty()) {
+        if (!getFinantialDocumentsSet().isEmpty()) {
             throw new RuntimeException("edit replacing prefix not possible. documentNumberSeries with finantial documents");
         }
-        
+
         setReplacePrefix(replacePrefix);
         if (isReplacePrefix()) {
             setReplacingPrefix(replacingPrefix);
@@ -191,13 +192,22 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
                 .filter(x -> x.getSeries().getFinantialInstitution().getCode().equals(finantialInstitution.getCode()));
     }
 
-    public static Optional<DocumentNumberSeries> findUniqueDefault(final FinantialDocumentType finantialDocumentType,
-            final FinantialInstitution finantialInstitution) {
+    public static Optional<DocumentNumberSeries> findUniqueDefault(FinantialDocumentType finantialDocumentType,
+            FinantialInstitution finantialInstitution) {
         if (!Series.findUniqueDefault(finantialInstitution).isPresent()) {
             return Optional.<DocumentNumberSeries> empty();
         }
 
         return Optional.of(find(finantialDocumentType, Series.findUniqueDefault(finantialInstitution).get()));
+    }
+
+    public static Optional<DocumentNumberSeries> findUniqueDefault(FinantialDocumentType finantialDocumentType,
+            FinantialEntity finantialEntity) {
+        if (!Series.findUniqueDefault(finantialEntity).isPresent()) {
+            return Optional.<DocumentNumberSeries> empty();
+        }
+
+        return Optional.of(find(finantialDocumentType, Series.findUniqueDefault(finantialEntity).get()));
     }
 
     @Atomic
@@ -218,7 +228,6 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     public static Stream<DocumentNumberSeries> applyActiveSelectableAndDefaultSorting(Stream<DocumentNumberSeries> stream) {
-
         return stream.filter(x -> x.getSeries().getActive()).filter(d -> d.getSeries().isSelectable())
                 .sorted(COMPARE_BY_DEFAULT.thenComparing(COMPARE_BY_NAME));
     }
