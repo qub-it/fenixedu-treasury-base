@@ -1,4 +1,4 @@
-- Refactor: Uses createCell method from XlsxUtil [#qubIT-Omnis-5961]
+- Refactor: Uses createCell method from ExcelUtil [#qubIT-Omnis-5961]
 
 12.25.0 (26-06-2024)
 - Refactor: Require finantial entity for digital payment platforms and payment requests [#qubIT-Fenix-5262]
