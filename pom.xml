@@ -20,7 +20,7 @@
 			<dependency>
 				<groupId>com.qubit.solution.fenixedu</groupId>
 				<artifactId>fenixedu-oss-dependency-management</artifactId>
-				<version>212</version>
+				<version>213</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -46,7 +46,6 @@
 		<dependency>
 			<groupId>com.qubit.terra</groupId>
 			<artifactId>qub-foundation-core-api</artifactId>
-			<version>6.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>pt.ist</groupId>
@@ -114,13 +113,6 @@
 			<groupId>com.paypal.sdk</groupId>
 			<artifactId>checkout-sdk</artifactId>
 			<version>1.0.5</version>
-		</dependency>
-		<!-- Needed because it started to receive jackson 2.14.2 version from core api but other jackson core version
-		from online payments gateway-->
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
-			<version>2.14.2</version>
 		</dependency>
 	</dependencies>
 
