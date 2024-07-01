@@ -1,3 +1,4 @@
+12.26.0 (01-07-2024)
 - Refactor: Uses createCell method from ExcelUtil [#qubIT-Omnis-5961]
 
 12.25.0 (26-06-2024)
