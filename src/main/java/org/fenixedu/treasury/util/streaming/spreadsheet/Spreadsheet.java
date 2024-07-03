@@ -59,11 +59,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.qubit.terra.framework.tools.excel.ExcelUtil;
 import org.apache.commons.io.IOUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 public interface Spreadsheet {
@@ -91,7 +89,7 @@ public interface Spreadsheet {
 
     public static void buildSpreadsheetContent(final Spreadsheet spreadsheet, final IErrorsLog errorsLog,
             OutputStream outputStream) {
-        final SXSSFWorkbook wb = new SXSSFWorkbook(ROWS_IN_MEMORY);
+        final Workbook wb = ExcelUtil.createLargeWorkbook(ROWS_IN_MEMORY);
 
         for (ExcelSheet sheet : spreadsheet.getSheets()) {
             final Sheet sh = wb.createSheet(sheet.getName());
@@ -109,7 +107,7 @@ public interface Spreadsheet {
             final String[] headers = sheet.getHeaders();
             for (int i = 0; i < headers.length; i++) {
                 final Cell cell = row.createCell(i);
-                cell.setCellType(Cell.CELL_TYPE_STRING);
+                cell.setCellType(CellType.STRING);
                 cell.setCellValue(headers[i]);
             }
 
