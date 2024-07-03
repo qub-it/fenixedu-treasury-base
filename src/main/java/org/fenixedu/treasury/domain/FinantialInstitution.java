@@ -89,6 +89,8 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setInvoiceRegistrationMode(InvoiceRegistrationMode.ERP_INTEGRATION);
+        setSupportCreditTreasuryExemptions(false);
+        setSeriesByFinantialEntity(false);
     }
 
     protected FinantialInstitution(final FiscalCountryRegion fiscalCountryRegion, final Currency currency, final String code,

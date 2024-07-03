@@ -194,6 +194,7 @@ class FinantialInstitution {
 	String balanceTransferServiceImplementationClass;
 	
 	Boolean supportCreditTreasuryExemptions;
+	Boolean seriesByFinantialEntity;
 }
 
 class FinantialEntity {

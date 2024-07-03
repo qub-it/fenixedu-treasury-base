@@ -59,6 +59,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.Collections;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -137,9 +138,9 @@ public class ReimbursementUtils {
             final BigDecimal amountToReimburseWithVat) {
         final DateTime now = new DateTime();
         final DebtAccount debtAccount = originalCreditEntry.getDebtAccount();
-        final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = originalCreditEntry.getFinantialEntity();
         final CreditNote originalCreditNote = (CreditNote) originalCreditEntry.getFinantialDocument();
-        final Series series = Series.findUniqueDefault(finantialInstitution).get();
+        final Series series = Series.findUniqueDefaultSeries(finantialEntity);
 
         final DebtAccount payorDebtAccount = originalCreditNote.getPayorDebtAccount();
 

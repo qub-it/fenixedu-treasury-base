@@ -56,8 +56,8 @@ public class SplitCreditEntriesTest {
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
         FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
-        DocumentNumberSeries creditNoteNumberSeries = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForCreditNote(), debtAccount.getFinantialInstitution()).get();
+        DocumentNumberSeries creditNoteNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), finantialEntity);
 
         CreditNote creditNote =
                 CreditNote.create(finantialEntity, debtAccount, creditNoteNumberSeries, null, new DateTime(), null);
@@ -73,8 +73,8 @@ public class SplitCreditEntriesTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, true, false);
 
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForReimbursementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForReimbursementNote(), finantialEntity));
         bean.setDate(new DateTime());
 
         bean.getCreditEntries().stream().filter(de -> de.getInvoiceEntry() == creditEntry).forEach(de -> {
@@ -107,8 +107,8 @@ public class SplitCreditEntriesTest {
         Set<InvoiceEntry> existingInvoiceEntriesFromOtherTests = new HashSet<>(debtAccount.getInvoiceEntrySet());
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
-        DocumentNumberSeries creditNoteNumberSeries = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForCreditNote(), debtAccount.getFinantialInstitution()).get();
+        DocumentNumberSeries creditNoteNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), finantialEntity);
         CreditNote creditNote =
                 CreditNote.create(finantialEntity, debtAccount, creditNoteNumberSeries, null, new DateTime(), null);
 
@@ -125,8 +125,8 @@ public class SplitCreditEntriesTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, true, false);
 
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForReimbursementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForReimbursementNote(), finantialEntity));
         bean.setDate(new DateTime());
 
         bean.getCreditEntries().stream().filter(de -> de.getInvoiceEntry() == creditEntry).forEach(de -> {
@@ -157,8 +157,8 @@ public class SplitCreditEntriesTest {
 
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
         FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
-        DocumentNumberSeries creditNoteNumberSeries = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForCreditNote(), debtAccount.getFinantialInstitution()).get();
+        DocumentNumberSeries creditNoteNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), finantialEntity);
 
         CreditNote creditNote =
                 CreditNote.create(finantialEntity, debtAccount, creditNoteNumberSeries, null, new DateTime(), null);
@@ -174,8 +174,8 @@ public class SplitCreditEntriesTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, true, false);
 
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForReimbursementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForReimbursementNote(), finantialEntity));
         bean.setDate(new DateTime());
 
         bean.getCreditEntries().stream().filter(de -> de.getInvoiceEntry() == creditEntry).forEach(de -> {

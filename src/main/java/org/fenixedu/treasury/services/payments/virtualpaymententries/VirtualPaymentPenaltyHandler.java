@@ -59,7 +59,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DebitNote;
@@ -123,11 +123,11 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
         }
 
         PaymentPenaltyEntryBean paymentPenaltyEntryBean = (PaymentPenaltyEntryBean) invoiceEntryBean;
+        FinantialEntity finantialEntity = paymentPenaltyEntryBean.getDebitEntry().getFinantialEntity();
 
         DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
-        FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
         DocumentNumberSeries documentNumberSeries =
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         LocalDate whenDebtCreationDate = settlementNoteBean.getDate().toLocalDate();
         DebitNote debitNote = DebitNote.create(settlementNoteBean.getFinantialEntity(), debtAccount, null, documentNumberSeries,
                 whenDebtCreationDate.toDateTimeAtStartOfDay(), whenDebtCreationDate, null, Collections.emptyMap(), null, null);

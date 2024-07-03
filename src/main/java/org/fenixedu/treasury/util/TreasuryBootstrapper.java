@@ -448,14 +448,14 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeSeries(FinantialInstitution finantialInstitution) {
-        Series.create(finantialInstitution, "INT", TreasuryConstants.treasuryBundleI18N("label.internal.serie"), false, true,
-                false, true, true);
-        Series.create(finantialInstitution, "LEG", TreasuryConstants.treasuryBundleI18N("label.legacy.serie"), false, true, true,
-                false, true);
-        Series.create(finantialInstitution, "REG", TreasuryConstants.treasuryBundleI18N("label.reg.serie"), true, true, false,
+        Series.create(finantialInstitution, "INT", TreasuryConstants.treasuryBundleI18N("label.internal.serie"), true, false,
+                true, true);
+        Series.create(finantialInstitution, "LEG", TreasuryConstants.treasuryBundleI18N("label.legacy.serie"), true, true, false,
+                true);
+        Series.create(finantialInstitution, "REG", TreasuryConstants.treasuryBundleI18N("label.reg.serie"), true, false, false,
+                false);
+        Series.create(finantialInstitution, "EXT", TreasuryConstants.treasuryBundleI18N("label.external.serie"), true, false,
                 false, false);
-        Series.create(finantialInstitution, "EXT", TreasuryConstants.treasuryBundleI18N("label.external.serie"), true, true,
-                false, false, false);
     }
 
     private static void initializeProducts() {

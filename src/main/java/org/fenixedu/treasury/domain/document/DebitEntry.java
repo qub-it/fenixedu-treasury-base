@@ -643,6 +643,7 @@ public class DebitEntry extends DebitEntry_Base {
 
     void closeCreditEntryIfPossible(final String reason, final DateTime now, final CreditEntry creditEntry) {
         FinantialInstitution finantialInstitution = getDebtAccount().getFinantialInstitution();
+        FinantialEntity finantialEntity = creditEntry.getFinantialEntity();
 
         DocumentNumberSeries documentNumberSeriesSettlementNote = DocumentNumberSeries.find(
                 FinantialDocumentType.findForSettlementNote(), this.getFinantialDocument().getDocumentNumberSeries().getSeries());
@@ -663,7 +664,7 @@ public class DebitEntry extends DebitEntry_Base {
         if (isInvoiceRegistrationByTreasuryCertification
                 && this.getFinantialDocument().getDocumentNumberSeries().getSeries().isLegacy()) {
             documentNumberSeriesSettlementNote = DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
-                    Series.findUniqueDefault(this.getDebtAccount().getFinantialInstitution()).get());
+                    Series.findUniqueDefaultSeries(finantialEntity));
         }
 
         if (creditEntry.getFinantialDocument().isAnnulled()) {
@@ -1106,8 +1107,8 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
         }
 
-        DocumentNumberSeries defaultDocumentNumberSeries = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForDebitNote(), getDebtAccount().getFinantialInstitution()).get();
+        DocumentNumberSeries defaultDocumentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), getFinantialEntity());
         final DebitNote debitNote = DebitNote.create(getFinantialEntity(), getDebtAccount(), null, defaultDocumentNumberSeries,
                 new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
 

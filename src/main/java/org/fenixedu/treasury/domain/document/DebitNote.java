@@ -636,8 +636,7 @@ public class DebitNote extends DebitNote_Base {
             // Avoid using the same document number series for documents from other
             // software applications, documents issued manually or recovered documents
 
-            return DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                    Series.findUniqueDefault(getDebtAccount().getFinantialInstitution()).get());
+            return DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), getFinantialEntity());
         } else {
             return DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
         }

@@ -53,7 +53,6 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -192,22 +191,13 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
                 .filter(x -> x.getSeries().getFinantialInstitution().getCode().equals(finantialInstitution.getCode()));
     }
 
-    public static Optional<DocumentNumberSeries> findUniqueDefault(FinantialDocumentType finantialDocumentType,
-            FinantialInstitution finantialInstitution) {
-        if (!Series.findUniqueDefault(finantialInstitution).isPresent()) {
-            return Optional.<DocumentNumberSeries> empty();
-        }
-
-        return Optional.of(find(finantialDocumentType, Series.findUniqueDefault(finantialInstitution).get()));
-    }
-
-    public static Optional<DocumentNumberSeries> findUniqueDefault(FinantialDocumentType finantialDocumentType,
+    public static DocumentNumberSeries findUniqueDefaultSeries(FinantialDocumentType finantialDocumentType,
             FinantialEntity finantialEntity) {
-        if (!Series.findUniqueDefault(finantialEntity).isPresent()) {
-            return Optional.<DocumentNumberSeries> empty();
+        if (Series.findUniqueDefaultSeries(finantialEntity) == null) {
+            return null;
         }
 
-        return Optional.of(find(finantialDocumentType, Series.findUniqueDefault(finantialEntity).get()));
+        return find(finantialDocumentType, Series.findUniqueDefaultSeries(finantialEntity));
     }
 
     @Atomic

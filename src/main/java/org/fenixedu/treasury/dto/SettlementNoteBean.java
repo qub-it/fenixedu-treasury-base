@@ -193,9 +193,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.finantialEntity = paymentRequest.getFinantialEntity();
         this.reimbursementNote = false;
 
-        this.docNumSeries = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
-                .get();
+        this.docNumSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), this.finantialEntity);
 
         Comparator<InvoiceEntry> COMPARE_BY_DUE_DATE_AND_AMOUNT = (o1, o2) -> {
             int c = o1.getDueDate().compareTo(o2.getDueDate());

@@ -531,9 +531,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 continue;
             }
 
-            DocumentNumberSeries defaultDocumentNumberSeries =
-                    DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                            debitEntry.getDebtAccount().getFinantialInstitution()).get();
+            DocumentNumberSeries defaultDocumentNumberSeries = DocumentNumberSeries
+                    .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntry.getFinantialEntity());
             if (!debitEntry.isProcessedInDebitNote()) {
                 final DebitNote debitNote = DebitNote.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(), null,
                         defaultDocumentNumberSeries, new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
