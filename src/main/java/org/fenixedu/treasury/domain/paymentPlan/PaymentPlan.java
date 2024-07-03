@@ -247,9 +247,8 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
-        DocumentNumberSeries defaultDocumentNumberSeries =
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(),
-                        paymentPlanBean.getDebtAccount().getFinantialInstitution()).get();
+        DocumentNumberSeries defaultDocumentNumberSeries = DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), paymentPlanBean.getFinantialEntity());
 
         return DebitNote.create(paymentPlanBean.getFinantialEntity(), paymentPlanBean.getDebtAccount(), null,
                 defaultDocumentNumberSeries, result.getCreationDate().toDateTimeAtStartOfDay(), result.getCreationDate(), null,

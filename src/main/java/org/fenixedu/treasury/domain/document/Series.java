@@ -98,8 +98,7 @@ public class Series extends Series_Base {
     }
 
     protected Series(FinantialInstitution finantialInstitution, FinantialEntity finantialEntity, String code,
-            LocalizedString name, boolean externSeries, boolean certificated, boolean legacy, boolean defaultSeries,
-            boolean selectable) {
+            LocalizedString name, boolean externSeries, boolean legacy, boolean defaultSeries, boolean selectable) {
         this();
 
         setActive(true);
@@ -108,7 +107,6 @@ public class Series extends Series_Base {
         setCode(code);
         setName(name);
         setExternSeries(externSeries);
-        setCertificated(certificated);
         setLegacy(legacy);
         setDefaultSeries(defaultSeries);
         setSelectable(selectable);
@@ -162,12 +160,6 @@ public class Series extends Series_Base {
                 throw new TreasuryDomainException("error.Series.invalid.series.type.in.used.series");
             }
             setExternSeries(externSeries);
-        }
-        if (certificated != getCertificated()) {
-            if (this.isSeriesUsedForAnyDocument()) {
-                throw new TreasuryDomainException("error.Series.invalid.series.type.in.used.series");
-            }
-            setCertificated(certificated);
         }
 
         if (legacy != getLegacy()) {
@@ -280,35 +272,45 @@ public class Series extends Series_Base {
         return result;
     }
 
-    protected static Stream<Series> findDefault(final FinantialInstitution finantialInstitution) {
+    private static Stream<Series> findDefault(final FinantialInstitution finantialInstitution) {
         return find(finantialInstitution).stream() //
                 .filter(s -> s.isDefaultSeries()) //
                 .filter(s -> s.getFinantialEntity() == null);
     }
 
-    protected static Stream<Series> findDefault(FinantialEntity finantialEntity) {
+    private static Stream<Series> findDefault(FinantialEntity finantialEntity) {
         return find(finantialEntity).stream().filter(s -> s.isDefaultSeries());
     }
 
-    public static Optional<Series> findUniqueDefault(final FinantialInstitution finantialInstitution) {
+    private static Optional<Series> findUniqueDefault(final FinantialInstitution finantialInstitution) {
         return findDefault(finantialInstitution).filter(s -> s.getFinantialEntity() == null).findFirst();
     }
 
-    public static Optional<Series> findUniqueDefault(FinantialEntity finantialEntity) {
+    private static Optional<Series> findUniqueDefault(FinantialEntity finantialEntity) {
         return findDefault(finantialEntity).findFirst();
+    }
+
+    public static Series findUniqueDefaultSeries(FinantialEntity finantialEntity) {
+        FinantialInstitution finantialInstitution = finantialEntity.getFinantialInstitution();
+
+        if (finantialInstitution.getSeriesByFinantialEntity()) {
+            return findUniqueDefault(finantialEntity).orElse(null);
+        } else {
+            return findUniqueDefault(finantialInstitution).orElse(null);
+        }
     }
 
     @Atomic
     public static Series create(FinantialInstitution finantialInstitution, String code, LocalizedString name,
-            boolean externSeries, boolean certificated, boolean legacy, boolean defaultSeries, boolean selectable) {
-        return new Series(finantialInstitution, null, code, name, externSeries, certificated, legacy, defaultSeries, selectable);
+            boolean externSeries, boolean legacy, boolean defaultSeries, boolean selectable) {
+        return new Series(finantialInstitution, null, code, name, externSeries, legacy, defaultSeries, selectable);
     }
 
     @Atomic
     public static Series create(FinantialEntity finantialEntity, String code, LocalizedString name, boolean externSeries,
-            boolean certificated, boolean legacy, boolean defaultSeries, boolean selectable) {
-        return new Series(finantialEntity.getFinantialInstitution(), finantialEntity, code, name, externSeries, certificated,
-                legacy, defaultSeries, selectable);
+            boolean legacy, boolean defaultSeries, boolean selectable) {
+        return new Series(finantialEntity.getFinantialInstitution(), finantialEntity, code, name, externSeries, legacy,
+                defaultSeries, selectable);
     }
 
 }

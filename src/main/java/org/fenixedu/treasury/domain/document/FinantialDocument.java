@@ -176,22 +176,6 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             throw new TreasuryDomainException("error.FinantialDocument.closed.but.empty.entries");
         }
 
-        if (isClosed() && getDocumentNumberSeries().getSeries().getCertificated()) {
-            // 2017-02-03: Document order check is taking too much time. The close date will be the certification
-            // date for documents
-//            final Stream<? extends FinantialDocument> stream =
-//                    findClosedUntilDocumentNumberExclusive(getDocumentNumberSeries(), getDocumentNumber());
-//
-//            final FinantialDocument previousFinantialDocument =
-//                    stream.sorted(COMPARE_BY_DOCUMENT_NUMBER).findFirst().orElse(null);
-//
-//            if (previousFinantialDocument != null && !(previousFinantialDocument.getDocumentDate().toLocalDate()
-//                    .compareTo(getDocumentDate().toLocalDate()) <= 0)) {
-//                throw new TreasuryDomainException("error.FinantialDocument.documentDate.is.not.after.than.previous.document");
-//            }
-//
-        }
-
         if (getDocumentDate().isAfterNow()) {
             throw new TreasuryDomainException("error.FinantialDocument.documentDate.cannot.be.after.now");
         }
@@ -211,11 +195,6 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
                 throw new TreasuryDomainException("error.FinantialDocument.entries.belongs.different.debt.account");
             }
         }
-
-        // TODO: Apply when all finantial documents have code
-//        if (FinantialDocument.findByCode(getDebtAccount(), getCode()).count() > 1) {
-//            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
-//        }
     }
 
     protected boolean isDocumentEmpty() {

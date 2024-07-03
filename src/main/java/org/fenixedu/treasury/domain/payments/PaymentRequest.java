@@ -314,9 +314,8 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         //6. Create a SibsTransactionDetail
         BigDecimal availableAmount = amount;
 
-        DocumentNumberSeries docNumberSeriesForPayments = DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), getDebtAccount().getFinantialInstitution())
-                .get();
+        DocumentNumberSeries docNumberSeriesForPayments =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), getFinantialEntity());
 
         final SettlementNote settlementNote = SettlementNote.create(getFinantialEntity(), getDebtAccount(),
                 docNumberSeriesForPayments, new DateTime(), paymentDate, originDocumentNumber, null);

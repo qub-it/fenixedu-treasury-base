@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -63,14 +64,15 @@ public class SplitDebitEntriesWithNetExemptedAmountTests {
 
         DebtAccount debtAccount = debitEntry.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = debitEntry.getFinantialEntity();
 
         finantialInstitution.setSplitCreditEntriesWithSettledAmount(true);
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity));
         bean.setDate(new DateTime());
 
         bean.getDebitEntries().stream().filter(de -> de.getInvoiceEntry() == debitEntry).forEach(de -> {
