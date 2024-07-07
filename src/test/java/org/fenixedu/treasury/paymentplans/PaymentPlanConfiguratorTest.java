@@ -921,8 +921,8 @@ public class PaymentPlanConfiguratorTest {
 
         FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(PaymentPlanTestsUtilities.getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debtNote = DebitNote.create(finantialEntity, PaymentPlanTestsUtilities.getDebtAccount(), null,
                 documentNumberSeries, new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay(), new LocalDate(2021, 5, 1), null,
                 Collections.emptyMap(), null, null);
@@ -931,9 +931,8 @@ public class PaymentPlanConfiguratorTest {
                 PaymentPlanTestsUtilities.createDebitEntry(new BigDecimal("99.99"), new LocalDate(2021, 2, 28), true);
         debtNote.addDebitNoteEntries(List.of(debitEntry));
 
-        SettlementNote settlementNote = SettlementNote.create(finantialEntity, paymentPlanBean.getDebtAccount(),
-                DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
-                        Series.findByCode(PaymentPlanTestsUtilities.getFinatialInstitution(), "INT")),
+        SettlementNote settlementNote = SettlementNote.create(null, paymentPlanBean.getDebtAccount(),
+                DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), Series.findByCode("INT")),
                 new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay(), new LocalDate(2021, 5, 1).toDateTimeAtStartOfDay(), null,
                 null);
 

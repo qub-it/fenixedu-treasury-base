@@ -314,7 +314,12 @@ class document.Series {
 	boolean active;
 	boolean externSeries;
 	boolean legacy;
+	
+	// TODO ANIL 2024-07-07 
+	// 
+	// Default should be marked as a relation with FinantialInstitution or FinantialEntity
 	boolean defaultSeries;
+	
 	boolean selectable;
 }
 

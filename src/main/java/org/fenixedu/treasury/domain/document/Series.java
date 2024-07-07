@@ -103,7 +103,11 @@ public class Series extends Series_Base {
 
         setActive(true);
         setFinantialInstitution(finantialInstitution);
-        setFinantialEntity(finantialEntity);
+
+        if (Boolean.TRUE.equals(finantialInstitution.getSeriesByFinantialEntity())) {
+            setFinantialEntity(finantialEntity);
+        }
+
         setCode(code);
         setName(name);
         setExternSeries(externSeries);
@@ -127,8 +131,8 @@ public class Series extends Series_Base {
             throw new TreasuryDomainException("error.Series.name.required");
         }
 
-        findByCode(getFinantialInstitution(), getCode());
-        getName().getLocales().stream().forEach(l -> findByName(getFinantialInstitution(), getName().getContent(l)));
+        findByCode(getCode());
+        getName().getLocales().stream().forEach(l -> findByName(getName().getContent(l)));
 
         //Check if the Series exists for All DocumentNumberSeries
         FinantialDocumentType.findAll().forEach(x -> {
@@ -139,22 +143,30 @@ public class Series extends Series_Base {
             }
         });
 
-        if (findDefault(getFinantialInstitution()).count() > 1) {
-            throw new TreasuryDomainException("error.Series.default.not.unique");
+        if (Boolean.TRUE.equals(getFinantialInstitution().getSeriesByFinantialEntity())) {
+            if (getFinantialEntity() != null && findDefault(getFinantialEntity()).count() > 1) {
+                throw new TreasuryDomainException("error.Series.default.not.unique");
+            }
+        } else {
+            if (findDefault(getFinantialInstitution()).count() > 1) {
+                throw new TreasuryDomainException("error.Series.default.not.unique");
+            }
         }
     }
 
     @Atomic
-    public void edit(final String code, final LocalizedString name, final boolean externSeries, final boolean certificated,
-            final boolean legacy, final boolean active, final boolean selectable) {
+    public void edit(final String code, final LocalizedString name, final boolean externSeries, final boolean legacy,
+            final boolean active, final boolean selectable) {
         setName(name);
         setActive(active);
+
         if (!code.equalsIgnoreCase(getCode())) {
             if (this.isSeriesUsedForAnyDocument()) {
                 throw new TreasuryDomainException("error.Series.invalid.series.type.in.used.series");
             }
             setCode(code);
         }
+
         if (externSeries != getExternSeries()) {
             if (this.isSeriesUsedForAnyDocument()) {
                 throw new TreasuryDomainException("error.Series.invalid.series.type.in.used.series");
@@ -239,13 +251,17 @@ public class Series extends Series_Base {
         return finantialEntity.getSeriesSet();
     }
 
-    public static Series findByCode(final FinantialInstitution finantialInstitution, final String code) {
+    // ANIL 2024-07-05 
+    //
+    // Code should be unique regardless the finantial institution or other entity aggregator
+    public static Series findByCode(final String code) {
         Series result = null;
 
-        for (final Series it : find(finantialInstitution)) {
+        for (final Series it : findAll()) {
             if (!it.getCode().equalsIgnoreCase(code)) {
                 continue;
             }
+
             if (result != null) {
                 throw new TreasuryDomainException("error.Series.duplicated.code");
             }
@@ -256,12 +272,17 @@ public class Series extends Series_Base {
         return result;
     }
 
-    public static Series findByName(final FinantialInstitution finantialInstitution, final String name) {
+    // ANIL 2024-07-05 
+    //
+    // Like the code, the series name should be unique regardless the finantial institution or other entity aggregator
+    public static Series findByName(String name) {
         Series result = null;
-        for (final Series it : find(finantialInstitution)) {
+
+        for (final Series it : findAll()) {
             if (!LocalizedStringUtil.isEqualToAnyLocaleIgnoreCase(it.getName(), name)) {
                 continue;
             }
+
             if (result != null) {
                 throw new TreasuryDomainException("error.Series.duplicated.name");
             }
@@ -293,7 +314,7 @@ public class Series extends Series_Base {
     public static Series findUniqueDefaultSeries(FinantialEntity finantialEntity) {
         FinantialInstitution finantialInstitution = finantialEntity.getFinantialInstitution();
 
-        if (finantialInstitution.getSeriesByFinantialEntity()) {
+        if (Boolean.TRUE.equals(finantialInstitution.getSeriesByFinantialEntity())) {
             return findUniqueDefault(finantialEntity).orElse(null);
         } else {
             return findUniqueDefault(finantialInstitution).orElse(null);
@@ -303,12 +324,20 @@ public class Series extends Series_Base {
     @Atomic
     public static Series create(FinantialInstitution finantialInstitution, String code, LocalizedString name,
             boolean externSeries, boolean legacy, boolean defaultSeries, boolean selectable) {
+        if (Boolean.TRUE.equals(finantialInstitution.getSeriesByFinantialEntity())) {
+            throw new IllegalArgumentException("series are by finantial entity. this constructor should not be called");
+        }
+
         return new Series(finantialInstitution, null, code, name, externSeries, legacy, defaultSeries, selectable);
     }
 
     @Atomic
     public static Series create(FinantialEntity finantialEntity, String code, LocalizedString name, boolean externSeries,
             boolean legacy, boolean defaultSeries, boolean selectable) {
+        if (!Boolean.TRUE.equals(finantialEntity.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            throw new IllegalArgumentException("series are by finantial institution. this constructor should not be called");
+        }
+
         return new Series(finantialEntity.getFinantialInstitution(), finantialEntity, code, name, externSeries, legacy,
                 defaultSeries, selectable);
     }

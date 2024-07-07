@@ -109,8 +109,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -134,8 +134,8 @@ public class CreditTreasuryExemptionTest {
 
         debitNote.closeDocument();
 
-        CreditNote creditNote = CreditNote.create(debitNote, DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                Series.findByCode(getFinatialInstitution(), "INT")), date, null);
+        CreditNote creditNote = CreditNote.create(debitNote,
+                DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), Series.findByCode("INT")), date, null);
 
         CreditEntry creditEntry = CreditEntry.create(creditNote, debitEntry.getDescription(), product, vat,
                 new BigDecimal("1000"), date, debitEntry, BigDecimal.ONE, Map.of(treasuryExemption, new BigDecimal("999.98")));
@@ -161,8 +161,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -179,8 +179,8 @@ public class CreditTreasuryExemptionTest {
 
         debitNote.closeDocument();
 
-        CreditNote creditNote = CreditNote.create(debitNote, DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                Series.findByCode(getFinatialInstitution(), "INT")), date, null);
+        CreditNote creditNote = CreditNote.create(debitNote,
+                DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), Series.findByCode("INT")), date, null);
 
         CreditEntry.create(creditNote, debitEntry.getDescription(), product, vat, new BigDecimal("1000"), date, debitEntry,
                 BigDecimal.ONE, Map.of(treasuryExemption, new BigDecimal("999.98")));
@@ -204,8 +204,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -224,9 +224,8 @@ public class CreditTreasuryExemptionTest {
 
         {
 
-            CreditNote creditNote =
-                    CreditNote.create(debitNote, DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                            Series.findByCode(getFinatialInstitution(), "INT")), date, null);
+            CreditNote creditNote = CreditNote.create(debitNote,
+                    DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), Series.findByCode("INT")), date, null);
 
             CreditEntry.create(creditNote, debitEntry.getDescription(), product, vat, new BigDecimal("999.98"), date, debitEntry,
                     BigDecimal.ONE, Map.of(treasuryExemption, new BigDecimal("999.96")));
@@ -239,9 +238,8 @@ public class CreditTreasuryExemptionTest {
         }
 
         {
-            CreditNote creditNote =
-                    CreditNote.create(debitNote, DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                            Series.findByCode(getFinatialInstitution(), "INT")), date, null);
+            CreditNote creditNote = CreditNote.create(debitNote,
+                    DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), Series.findByCode("INT")), date, null);
 
             CreditEntry.create(creditNote, debitEntry.getDescription(), product, vat, new BigDecimal("0.02"), date, debitEntry,
                     BigDecimal.ONE, Map.of(treasuryExemption, new BigDecimal("0.02")));
@@ -255,9 +253,9 @@ public class CreditTreasuryExemptionTest {
 
         {
             try {
-                CreditNote creditNote =
-                        CreditNote.create(debitNote, DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                                Series.findByCode(getFinatialInstitution(), "INT")), date, null);
+                CreditNote creditNote = CreditNote.create(debitNote,
+                        DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), Series.findByCode("INT")), date,
+                        null);
 
                 CreditEntry.create(creditNote, debitEntry.getDescription(), product, vat, new BigDecimal("0.01"), date,
                         debitEntry, BigDecimal.ONE, Collections.emptyMap());
@@ -280,8 +278,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -318,8 +316,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -356,8 +354,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -410,8 +408,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -458,8 +456,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
@@ -613,8 +611,8 @@ public class CreditTreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
