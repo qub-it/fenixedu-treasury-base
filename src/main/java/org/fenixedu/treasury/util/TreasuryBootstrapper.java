@@ -405,8 +405,8 @@ public class TreasuryBootstrapper {
         return institution;
     }
 
-    private static void initializeFinantialEntity(FinantialInstitution finantialInstitution) {
-        FinantialEntity.create(finantialInstitution, finantialInstitution.getCode() + "_" + "ACADEMIC",
+    private static FinantialEntity initializeFinantialEntity(FinantialInstitution finantialInstitution) {
+        return FinantialEntity.create(finantialInstitution, finantialInstitution.getCode() + "_" + "ACADEMIC",
                 TreasuryConstants.treasuryBundleI18N("label.finantialEntity.name", finantialInstitution.getCode()));
     }
 
@@ -450,10 +450,13 @@ public class TreasuryBootstrapper {
     private static void initializeSeries(FinantialInstitution finantialInstitution) {
         Series.create(finantialInstitution, "INT", TreasuryConstants.treasuryBundleI18N("label.internal.serie"), true, false,
                 true, true);
+
         Series.create(finantialInstitution, "LEG", TreasuryConstants.treasuryBundleI18N("label.legacy.serie"), true, true, false,
                 true);
+
         Series.create(finantialInstitution, "REG", TreasuryConstants.treasuryBundleI18N("label.reg.serie"), true, false, false,
                 false);
+
         Series.create(finantialInstitution, "EXT", TreasuryConstants.treasuryBundleI18N("label.external.serie"), true, false,
                 false, false);
     }
@@ -500,7 +503,12 @@ public class TreasuryBootstrapper {
     }
 
     private static void initializeRegulationDocumentNumberSeries(final FinantialInstitution finantialInstitution) {
-        final Series regulationSeries = Series.findByCode(finantialInstitution, "REG");
+        final Series regulationSeries = Series.findByCode("REG");
+
+        // Ensure it is for the same finantial institution
+        if (regulationSeries.getFinantialInstitution() != finantialInstitution) {
+            throw new IllegalStateException("finantial institution of series differ");
+        }
 
         finantialInstitution.setRegulationSeries(regulationSeries);
 

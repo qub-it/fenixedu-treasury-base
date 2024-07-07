@@ -108,8 +108,8 @@ public class TreasuryExemptionTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), Series.findByCode("INT"));
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
