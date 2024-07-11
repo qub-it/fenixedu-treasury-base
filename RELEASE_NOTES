@@ -1,3 +1,4 @@
+12.27.1 (11-07-2024)
 - Improvement: In creating penalty tax debt, add argument to prevent the creation of sibs payment request [#qubIT-Fenix-5495]
 
 12.27.0 (03-07-2024)
