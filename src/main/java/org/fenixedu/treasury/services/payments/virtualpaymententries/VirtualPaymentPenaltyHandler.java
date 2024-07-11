@@ -140,7 +140,7 @@ public class VirtualPaymentPenaltyHandler implements IVirtualPaymentEntryHandler
         }
 
         DebitEntry paymentPenaltyEntry = PaymentPenaltyTaxTreasuryEvent
-                .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), whenDebtCreationDate, debitNote);
+                .checkAndCreatePaymentPenaltyTax(paymentPenaltyEntryBean.getDebitEntry(), whenDebtCreationDate, debitNote, false);
 
         SettlementDebitEntryBean settlementDebitEntryBean = new SettlementDebitEntryBean(paymentPenaltyEntry);
         settlementDebitEntryBean.setIncluded(true);

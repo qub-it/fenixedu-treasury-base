@@ -309,7 +309,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                     PaymentPenaltyEntryBean penaltyBean = (PaymentPenaltyEntryBean) bean;
 
                     DebitEntry debitEntry = PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(
-                            penaltyBean.getDebitEntry(), penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), null);
+                            penaltyBean.getDebitEntry(), penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), null, true);
                     result.put(bean, debitEntry);
                 });
 

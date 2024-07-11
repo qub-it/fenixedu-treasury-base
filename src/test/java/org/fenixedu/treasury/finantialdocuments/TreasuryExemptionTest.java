@@ -120,7 +120,7 @@ public class TreasuryExemptionTest {
                 debitNote);
 
         this.treasuryEvent = PaymentPenaltyTaxTreasuryEvent
-                .checkAndCreatePaymentPenaltyTax(this.debitEntry, dueDate.plusDays(15), null).getTreasuryEvent();
+                .checkAndCreatePaymentPenaltyTax(this.debitEntry, dueDate.plusDays(15), null, false).getTreasuryEvent();
 
         this.debitEntry.setTreasuryEvent(this.treasuryEvent);
     }

@@ -220,12 +220,13 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
     }
 
     public static DebitEntry checkAndCreatePaymentPenaltyTax(DebitEntry originDebitEntry, LocalDate lastPaymentDate,
-            DebitNote debitNote) {
-        return checkAndCreatePaymentPenaltyTax(originDebitEntry, lastPaymentDate, new LocalDate(), debitNote);
+            DebitNote debitNote, boolean preventSibsPaymentRequest) {
+        return checkAndCreatePaymentPenaltyTax(originDebitEntry, lastPaymentDate, new LocalDate(), debitNote,
+                preventSibsPaymentRequest);
     }
 
     public static DebitEntry checkAndCreatePaymentPenaltyTax(DebitEntry originDebitEntry, LocalDate lastPaymentDate,
-            LocalDate whenDebtCreationDate, DebitNote debitNote) {
+            LocalDate whenDebtCreationDate, DebitNote debitNote, boolean preventSibsPaymentRequest) {
 
         if (!shouldPenaltyBeCreatedForDebitEntry(originDebitEntry, lastPaymentDate)) {
             return null;
@@ -308,7 +309,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
             penaltyDebitEntry.editPropertiesMap(map);
         }
 
-        if (Boolean.TRUE.equals(settings.getCreatePaymentCode())) {
+        if (!preventSibsPaymentRequest && Boolean.TRUE.equals(settings.getCreatePaymentCode())) {
             Set<DebitEntry> debitEntriesSet = new HashSet<>();
             debitEntriesSet.add(penaltyDebitEntry);
 
@@ -400,7 +401,7 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
                 continue;
             }
 
-            DebitEntry penaltyDebitEntry = checkAndCreatePaymentPenaltyTax(d, lastPaymentDate.toLocalDate(), now, null);
+            DebitEntry penaltyDebitEntry = checkAndCreatePaymentPenaltyTax(d, lastPaymentDate.toLocalDate(), now, null, false);
             if (penaltyDebitEntry == null) {
                 result.add(penaltyDebitEntry);
             }
