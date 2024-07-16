@@ -3730,6 +3730,7 @@ class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatfor
 	String entityReferenceCode;
 	String endpointUrl;
 	String assetsEndpointUrl;
+	Integer referenceMinimumValidityInHours;
 }
 
 /*************************

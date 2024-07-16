@@ -51,6 +51,7 @@ import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayReturnChecko
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.Atomic;
@@ -709,7 +710,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         DateTime sibsValidFrom = new DateTime();
 
         // Set validTo to 23:59:59
-        DateTime sibsValidTo = validTo.plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
+        DateTime sibsValidTo = calculateSibsValidTo(sibsValidFrom, validTo);
 
         List<PaymentRequestLog> logsList = new ArrayList<>();
 
@@ -844,6 +845,27 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             }
         }
 
+    }
+
+    private DateTime calculateSibsValidTo(DateTime sibsValidFrom, LocalDate validTo) {
+        DateTime sibsValidTo = validTo.plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
+
+        // ANIL 2024-07-16
+        //
+        // If the period between sibsValidFrom and sibsValidTo, is only one hour, 
+        // give a little more time to not return  error from SIBS
+
+        if (getReferenceMinimumValidityInHours() != null && getReferenceMinimumValidityInHours() > 0) {
+            Duration duration = new Duration(sibsValidFrom, sibsValidTo);
+
+            if (duration.getStandardHours() < getReferenceMinimumValidityInHours()) {
+                int incrementHours = ((int) getReferenceMinimumValidityInHours()) - (int) duration.getStandardHours();
+
+                sibsValidTo = sibsValidTo.plusHours(incrementHours);
+            }
+        }
+
+        return sibsValidTo;
     }
 
     @Atomic(mode = TxMode.WRITE)
