@@ -1,3 +1,4 @@
+- Refactor: Removes bouncy castle dependency [#qubIT-Omnis-6271]
 - Improvement: Removes TPAInvocationUtil [#qubIT-Omnis-6296]
 
 12.28.0 (16-07-2024)
