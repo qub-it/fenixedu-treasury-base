@@ -236,7 +236,7 @@ public class SibsPayWebhookController {
             SecretKeySpec keySpec = new SecretKeySpec(key, 0, 32, "AES");
             Cipher cipher;
 
-            cipher = Cipher.getInstance("AES/GCM/NoPadding", PROVIDER_NAME);
+            cipher = getCipherInstance();
             cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(iv));
 
             // Decrypt
@@ -251,6 +251,10 @@ public class SibsPayWebhookController {
             throw new UnableToDecryptException(e);
         }
 
+    }
+
+    protected static Cipher getCipherInstance() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
+        return Cipher.getInstance("AES/GCM/NoPadding", PROVIDER_NAME);
     }
 
     @Atomic(mode = TxMode.WRITE)
