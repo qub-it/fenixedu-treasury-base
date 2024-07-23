@@ -53,6 +53,7 @@
 package org.fenixedu.treasury.domain.forwardpayments.implementations;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -155,9 +156,7 @@ public class TPAVirtualImplementationPlatform extends TPAVirtualImplementationPl
     }
 
     public Map<String, String> mapAuthenticationRequest(final ForwardPaymentRequest forwardPayment) {
-        // TODO: just to compile
-        final TPAInvocationUtil tpa = null; // new TPAInvocationUtil(forwardPayment);
-        return tpa.mapAuthenticationRequest();
+        return new HashMap<>();
     }
 
     private BigDecimal payedAmount(Map<String, String> responseMap) {

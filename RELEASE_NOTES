@@ -1,3 +1,5 @@
+- Improvement: Removes TPAInvocationUtil [#qubIT-Omnis-6296]
+
 12.28.0 (16-07-2024)
 - Improvement: Sibs Pay: if the reference code expiry interval in less than period in hours, add more hours in order to not give error in SIBS [#qubIT-Fenix-5513]
 
