@@ -1581,6 +1581,21 @@ public class DebitEntry extends DebitEntry_Base {
         return result;
     }
 
+    @Override
+    public Set<TreasuryExemption> getAssociatedTreasuryExemptions() {
+        return getTreasuryExemptionsSet();
+    }
+
+    public DateTime getLastAmountsChangeDate() {
+        return getDebitEntryChangeAmountsLogsSet().stream().sorted(DebitEntryChangeAmountsLog.COMPARE_BY_CHANGE_DATE.reversed())
+                .findFirst().map(DebitEntryChangeAmountsLog::getChangeDate).orElse(null);
+    }
+
+    public String getLastAmountsChangeResponsible() {
+        return getDebitEntryChangeAmountsLogsSet().stream().sorted(DebitEntryChangeAmountsLog.COMPARE_BY_CHANGE_DATE.reversed())
+                .findFirst().map(DebitEntryChangeAmountsLog::getResponsible).orElse(null);
+    }
+
     // @formatter:off
     /* ********
      * SERVICES

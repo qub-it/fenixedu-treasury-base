@@ -79,6 +79,13 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             Comparator.comparing(TreasuryExemption::getTreasuryExemptionType, TreasuryExemptionType.COMPARE_BY_NAME)
                     .thenComparing(TreasuryExemption::getExternalId);
 
+    public static Comparator<TreasuryExemption> COMPARE_BY_CREATION_DATE = (o1, o2) -> {
+        int c = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o1)
+                .compareTo(TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o2));
+
+        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
+    };
+
     public TreasuryExemption() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());

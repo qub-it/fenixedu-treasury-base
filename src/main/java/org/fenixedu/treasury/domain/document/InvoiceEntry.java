@@ -69,8 +69,10 @@ import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.MbwayPaymentRequest;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -549,5 +551,36 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     }
 
     public abstract TreasuryEvent getTreasuryEvent();
+
+    public abstract Set<TreasuryExemption> getAssociatedTreasuryExemptions();
+
+    /* This is used in reports */
+    public DateTime getUiLastDateThatExemptOrChangeAmountsToZero() {
+        DateTime result = null;
+
+        if (TreasuryPlataformDependentServicesFactory.implementation().getCertifiedDocumentDate(getFinantialDocument()) != null) {
+            result = TreasuryPlataformDependentServicesFactory.implementation().getCertifiedDocumentDate(getFinantialDocument())
+                    .toDateTimeAtStartOfDay();
+        }
+
+        if (result == null && !getAssociatedTreasuryExemptions().isEmpty()) {
+            // If exempted totally, fetch the last registered exemption and return the responsible
+            TreasuryExemption t = getAssociatedTreasuryExemptions().stream()
+                    .sorted(TreasuryExemption.COMPARE_BY_CREATION_DATE.reversed()).findFirst().get();
+
+            result = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(t);
+        }
+
+        if (result == null && isDebitNoteEntry()) {
+            result = ((DebitEntry) this).getLastAmountsChangeDate() != null ? ((DebitEntry) this)
+                    .getLastAmountsChangeDate() : null;
+        }
+
+        if (result == null) {
+            result = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(this);
+        }
+
+        return result;
+    }
 
 }

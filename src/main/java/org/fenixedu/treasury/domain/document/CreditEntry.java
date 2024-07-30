@@ -54,6 +54,7 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -192,83 +193,6 @@ public class CreditEntry extends CreditEntry_Base {
         this.setDescription(description);
 
         this.checkRules();
-    }
-
-    public static Stream<CreditEntry> findAll() {
-        return FinantialDocumentEntry.findAll().filter(f -> f instanceof CreditEntry).map(CreditEntry.class::cast);
-    }
-
-    @Override
-    public LocalDate getDueDate() {
-        return getEntryDateTime().toLocalDate();
-    }
-
-    public static Stream<? extends CreditEntry> find(final CreditNote creditNote) {
-        return creditNote.getFinantialDocumentEntriesSet().stream().filter(f -> f instanceof CreditEntry)
-                .map(CreditEntry.class::cast);
-    }
-
-    public static Stream<? extends CreditEntry> find(final TreasuryEvent treasuryEvent) {
-        return Stream.concat(DebitEntry.find(treasuryEvent).flatMap(d -> d.getCreditEntriesSet().stream()),
-                treasuryEvent.getCreditEntriesSet().stream());
-    }
-
-    public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent) {
-        return Stream.concat(
-                DebitEntry.findActive(treasuryEvent)
-                        .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
-                treasuryEvent.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled()));
-    }
-
-    public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent, final Product product) {
-        return Stream.concat(
-                DebitEntry.findActive(treasuryEvent, product)
-                        .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
-                treasuryEvent.getCreditEntriesSet().stream().filter(ce -> ce.getProduct() == product)
-                        .filter(ce -> !ce.isAnnulled()));
-    }
-
-    public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
-            BigDecimal unitAmount, DateTime entryDateTime, DebitEntry debitEntry, BigDecimal quantity,
-            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
-        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
-            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
-        }
-
-        if (debitEntry == null) {
-            throw new TreasuryDomainException("error.CreditEntry.debitEntry.required");
-        }
-
-        CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, product, vat, unitAmount,
-                description, quantity, entryDateTime, debitEntry, null, creditExemptionsMap);
-        return cr;
-    }
-
-    public static CreditEntry create(FinantialEntity finantialEntity, FinantialDocument finantialDocument, String description,
-            Product product, Vat vat, BigDecimal unitAmount, DateTime entryDateTime, BigDecimal quantity) {
-        CreditEntry cr = new CreditEntry(finantialEntity, finantialDocument, product, vat, unitAmount, description, quantity,
-                entryDateTime, null, null, null);
-
-        return cr;
-    }
-
-    public static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
-            final FinantialDocument finantialDocument, final String description, final BigDecimal unitAmount,
-            final DateTime entryDateTime, BigDecimal quantity) {
-        DebitEntry debitEntry = treasuryExemption.getDebitEntry();
-
-        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
-            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
-        }
-
-        if (treasuryExemption == null) {
-            throw new TreasuryDomainException("error.CreditEntry.createFromExemption.requires.treasuryExemption");
-        }
-
-        final CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, debitEntry.getProduct(),
-                debitEntry.getVat(), unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption, null);
-
-        return cr;
     }
 
     @Override
@@ -445,4 +369,94 @@ public class CreditEntry extends CreditEntry_Base {
         return getCreditTreasuryExemptionsSet().stream().collect(Collectors.toMap(CreditTreasuryExemption::getTreasuryExemption,
                 CreditTreasuryExemption::getCreditedNetExemptedAmount));
     }
+
+    @Override
+    public Set<TreasuryExemption> getAssociatedTreasuryExemptions() {
+        return getCreditTreasuryExemptionsSet().stream().map(cte -> cte.getTreasuryExemption()).collect(Collectors.toSet());
+    }
+
+    // @formatter:off
+    /* ********
+     * SERVICES
+     * ********
+     */
+    // @formatter:on
+
+    public static Stream<CreditEntry> findAll() {
+        return FinantialDocumentEntry.findAll().filter(f -> f instanceof CreditEntry).map(CreditEntry.class::cast);
+    }
+
+    @Override
+    public LocalDate getDueDate() {
+        return getEntryDateTime().toLocalDate();
+    }
+
+    public static Stream<? extends CreditEntry> find(final CreditNote creditNote) {
+        return creditNote.getFinantialDocumentEntriesSet().stream().filter(f -> f instanceof CreditEntry)
+                .map(CreditEntry.class::cast);
+    }
+
+    public static Stream<? extends CreditEntry> find(final TreasuryEvent treasuryEvent) {
+        return Stream.concat(DebitEntry.find(treasuryEvent).flatMap(d -> d.getCreditEntriesSet().stream()),
+                treasuryEvent.getCreditEntriesSet().stream());
+    }
+
+    public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent) {
+        return Stream.concat(
+                DebitEntry.findActive(treasuryEvent)
+                        .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
+                treasuryEvent.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled()));
+    }
+
+    public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent, final Product product) {
+        return Stream.concat(
+                DebitEntry.findActive(treasuryEvent, product)
+                        .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
+                treasuryEvent.getCreditEntriesSet().stream().filter(ce -> ce.getProduct() == product)
+                        .filter(ce -> !ce.isAnnulled()));
+    }
+
+    public static CreditEntry create(FinantialDocument finantialDocument, String description, Product product, Vat vat,
+            BigDecimal unitAmount, DateTime entryDateTime, DebitEntry debitEntry, BigDecimal quantity,
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
+        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
+
+        if (debitEntry == null) {
+            throw new TreasuryDomainException("error.CreditEntry.debitEntry.required");
+        }
+
+        CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, product, vat, unitAmount,
+                description, quantity, entryDateTime, debitEntry, null, creditExemptionsMap);
+        return cr;
+    }
+
+    public static CreditEntry create(FinantialEntity finantialEntity, FinantialDocument finantialDocument, String description,
+            Product product, Vat vat, BigDecimal unitAmount, DateTime entryDateTime, BigDecimal quantity) {
+        CreditEntry cr = new CreditEntry(finantialEntity, finantialDocument, product, vat, unitAmount, description, quantity,
+                entryDateTime, null, null, null);
+
+        return cr;
+    }
+
+    public static CreditEntry createFromExemption(final TreasuryExemption treasuryExemption,
+            final FinantialDocument finantialDocument, final String description, final BigDecimal unitAmount,
+            final DateTime entryDateTime, BigDecimal quantity) {
+        DebitEntry debitEntry = treasuryExemption.getDebitEntry();
+
+        if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(debitEntry)) {
+            throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
+        }
+
+        if (treasuryExemption == null) {
+            throw new TreasuryDomainException("error.CreditEntry.createFromExemption.requires.treasuryExemption");
+        }
+
+        final CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, debitEntry.getProduct(),
+                debitEntry.getVat(), unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption, null);
+
+        return cr;
+    }
+
 }

@@ -1,3 +1,5 @@
+- Refactor: Declare methods to extract information to be used in reports [#qubIT-Fenix-5550]
+
 12.29.0 (23-07-2024)
 - Improvement: Removes TPAInvocationUtil [#qubIT-Omnis-6296]
 - Improvement: Adds test cases for cipher [#qubIT-Omnis-6262]

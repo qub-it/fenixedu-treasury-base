@@ -1,5 +1,7 @@
 package org.fenixedu.treasury.domain.document.log;
 
+import java.util.Comparator;
+
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -8,6 +10,9 @@ import org.joda.time.DateTime;
 import pt.ist.fenixframework.FenixFramework;
 
 public class DebitEntryChangeAmountsLog extends DebitEntryChangeAmountsLog_Base {
+
+    public static Comparator<DebitEntryChangeAmountsLog> COMPARE_BY_CHANGE_DATE = Comparator
+            .comparing(DebitEntryChangeAmountsLog::getChangeDate).thenComparing(DebitEntryChangeAmountsLog::getExternalId);
 
     public DebitEntryChangeAmountsLog() {
         super();
