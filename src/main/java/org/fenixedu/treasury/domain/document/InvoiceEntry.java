@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -187,15 +188,15 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     }
 
     @Override
-    protected void init(DebtAccount debtAccount, FinantialDocument finantialDocument, FinantialEntryType finantialEntryType,
-            BigDecimal amount, String description, DateTime entryDateTime) {
+    protected void init(FinantialEntity finantialEntity, DebtAccount debtAccount, FinantialDocument finantialDocument,
+            FinantialEntryType finantialEntryType, BigDecimal amount, String description, DateTime entryDateTime) {
         throw new RuntimeException("error.InvoiceEntry.use.init.with.product");
     }
 
-    protected void init(final FinantialDocument finantialDocument, final DebtAccount debtAccount, final Product product,
-            final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal unitAmount, String description,
-            BigDecimal quantity, DateTime entryDateTime) {
-        super.init(debtAccount, finantialDocument, finantialEntryType, unitAmount, description, entryDateTime);
+    protected void init(FinantialEntity finantialEntity, final FinantialDocument finantialDocument, final DebtAccount debtAccount,
+            final Product product, final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal unitAmount,
+            String description, BigDecimal quantity, DateTime entryDateTime) {
+        super.init(finantialEntity, debtAccount, finantialDocument, finantialEntryType, unitAmount, description, entryDateTime);
 
         if (debtAccount.getClosed()) {
             throw new TreasuryDomainException("error.InvoiceEntry.debtAccount.closed");

@@ -162,6 +162,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getCurrency() == null) {
             throw new TreasuryDomainException("error.FinantialDocument.currency.required");
         }
+
+        if (getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.FinantialDocument.finantialEntity.required");
+        }
+
         if (!getDocumentNumberSeries().getSeries().getFinantialInstitution().equals(getDebtAccount().getFinantialInstitution())) {
             throw new TreasuryDomainException("error.FinantialDocument.finantialinstitution.mismatch");
         }
@@ -174,22 +179,6 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
 
         if (isClosed() && isDocumentEmpty()) {
             throw new TreasuryDomainException("error.FinantialDocument.closed.but.empty.entries");
-        }
-
-        if (isClosed() && getDocumentNumberSeries().getSeries().getCertificated()) {
-            // 2017-02-03: Document order check is taking too much time. The close date will be the certification
-            // date for documents
-//            final Stream<? extends FinantialDocument> stream =
-//                    findClosedUntilDocumentNumberExclusive(getDocumentNumberSeries(), getDocumentNumber());
-//
-//            final FinantialDocument previousFinantialDocument =
-//                    stream.sorted(COMPARE_BY_DOCUMENT_NUMBER).findFirst().orElse(null);
-//
-//            if (previousFinantialDocument != null && !(previousFinantialDocument.getDocumentDate().toLocalDate()
-//                    .compareTo(getDocumentDate().toLocalDate()) <= 0)) {
-//                throw new TreasuryDomainException("error.FinantialDocument.documentDate.is.not.after.than.previous.document");
-//            }
-//
         }
 
         if (getDocumentDate().isAfterNow()) {

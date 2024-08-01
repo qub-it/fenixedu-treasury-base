@@ -92,19 +92,18 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     @Override
-    protected void init(final FinantialDocument finantialDocument, final DebtAccount debtAccount, final Product product,
-            final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal amount, String description,
-            BigDecimal quantity, final DateTime entryDateTime) {
+    protected void init(FinantialEntity finantialEntity, final FinantialDocument finantialDocument, final DebtAccount debtAccount,
+            final Product product, final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal amount,
+            String description, BigDecimal quantity, final DateTime entryDateTime) {
         throw new RuntimeException("error.CreditEntry.use.init.without.finantialEntryType");
     }
 
     protected void init(FinantialEntity finantialEntity, FinantialDocument finantialDocument, Product product, final Vat vat,
             BigDecimal unitAmount, String description, BigDecimal quantity, DateTime entryDateTime, DebitEntry debitEntry,
             TreasuryExemption treasuryExemption, Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
-        super.init(finantialDocument, finantialDocument.getDebtAccount(), product, FinantialEntryType.CREDIT_ENTRY, vat,
-                unitAmount, description, quantity, entryDateTime);
+        super.init(finantialEntity, finantialDocument, finantialDocument.getDebtAccount(), product,
+                FinantialEntryType.CREDIT_ENTRY, vat, unitAmount, description, quantity, entryDateTime);
 
-        super.setFinantialEntity(finantialEntity);
         this.setDebitEntry(debitEntry);
         this.setFromExemption(treasuryExemption != null);
         this.setTreasuryExemption(treasuryExemption);

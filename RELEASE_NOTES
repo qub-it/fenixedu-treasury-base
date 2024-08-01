@@ -1,3 +1,6 @@
+- Refactor: Apply restriction for requirement of finantial entity for finantial document entries [#qubIT-Fenix-5263]
+- Refactor: Apply restriction for requirement of finantial entity for finantial documents [#qubIT-Fenix-5267]
+
 12.30.0 (30-07-2024)
 - Refactor: Require finantial entity for treasury events and payment plans [#qubIT-Fenix-5262]
 - Refactor: Declare methods to extract information to be used in reports [#qubIT-Fenix-5550]

@@ -6,6 +6,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -99,6 +100,7 @@ public class InterestRateWithPartialPaymentsTest {
         settlementNoteBean.getDebitEntries().stream().filter(d -> d.getInvoiceEntry() == debitEntry).findFirst().get()
                 .setIncluded(true);
         settlementNoteBean.getPaymentEntries().add(new PaymentEntryBean(amount, PaymentMethod.findByCode("NU"), null));
+        settlementNoteBean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         SettlementNote.createSettlementNote(settlementNoteBean);
     }

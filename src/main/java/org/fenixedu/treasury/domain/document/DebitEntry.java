@@ -178,11 +178,11 @@ public class DebitEntry extends DebitEntry_Base {
 
     public static Comparator<DebitEntry> COMPARE_BY_EXTERNAL_ID = (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId());
 
-    protected DebitEntry(final DebtAccount debtAccount, final TreasuryEvent treasuryEvent, final Vat vat, final BigDecimal amount,
-            final LocalDate dueDate, final Map<String, String> propertiesMap, final Product product, final String description,
-            final BigDecimal quantity, final InterestRate interestRate, final DateTime entryDateTime, DebitNote debitNote) {
-        init(debtAccount, treasuryEvent, product, vat, amount, dueDate, propertiesMap, description, quantity, interestRate,
-                entryDateTime, debitNote);
+    protected DebitEntry(FinantialEntity finantialEntity, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
+            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime, DebitNote debitNote) {
+        init(finantialEntity, debtAccount, treasuryEvent, product, vat, amount, dueDate, propertiesMap, description, quantity,
+                interestRate, entryDateTime, debitNote);
 
     }
 
@@ -251,17 +251,18 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     @Override
-    protected void init(final FinantialDocument finantialDocument, final DebtAccount debtAccount, final Product product,
-            final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal amount, String description,
-            BigDecimal quantity, DateTime entryDateTime) {
+    protected void init(FinantialEntity finantialEntity, final FinantialDocument finantialDocument, final DebtAccount debtAccount,
+            final Product product, final FinantialEntryType finantialEntryType, final Vat vat, final BigDecimal amount,
+            String description, BigDecimal quantity, DateTime entryDateTime) {
         throw new RuntimeException("error.CreditEntry.use.init.without.finantialEntryType");
     }
 
-    protected void init(final DebtAccount debtAccount, final TreasuryEvent treasuryEvent, final Product product, final Vat vat,
-            final BigDecimal amount, final LocalDate dueDate, final Map<String, String> propertiesMap, final String description,
-            final BigDecimal quantity, final InterestRate interestRate, final DateTime entryDateTime, final DebitNote debitNote) {
-        super.init(debitNote, debtAccount, product, FinantialEntryType.DEBIT_ENTRY, vat, amount, description, quantity,
-                entryDateTime);
+    protected void init(FinantialEntity finantialEntity, final DebtAccount debtAccount, final TreasuryEvent treasuryEvent,
+            final Product product, final Vat vat, final BigDecimal amount, final LocalDate dueDate,
+            final Map<String, String> propertiesMap, final String description, final BigDecimal quantity,
+            final InterestRate interestRate, final DateTime entryDateTime, final DebitNote debitNote) {
+        super.init(finantialEntity, debitNote, debtAccount, product, FinantialEntryType.DEBIT_ENTRY, vat, amount, description,
+                quantity, entryDateTime);
 
         setTreasuryEvent(treasuryEvent);
         setDueDate(dueDate);
@@ -1715,16 +1716,14 @@ public class DebitEntry extends DebitEntry_Base {
             finantialEntity = treasuryEvent.getAssociatedFinantialEntity();
         }
 
-        final DebitEntry entry = new DebitEntry(debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product,
-                description, quantity, null, entryDateTime, debitNote);
+        final DebitEntry entry = new DebitEntry(finantialEntity, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap,
+                product, description, quantity, null, entryDateTime, debitNote);
 
         if (interestRate != null) {
             InterestRate.createForDebitEntry(entry, interestRate);
         }
 
         entry.edit(description, treasuryEvent, dueDate, academicalActBlockingSuspension, blockAcademicActsOnDebt);
-
-        entry.setFinantialEntity(finantialEntity);
 
         return entry;
     }
