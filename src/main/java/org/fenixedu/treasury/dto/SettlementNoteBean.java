@@ -65,7 +65,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialEntity;
@@ -192,6 +194,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.debtAccount = paymentRequest.getDebtAccount();
         this.finantialEntity = paymentRequest.getFinantialEntity();
         this.reimbursementNote = false;
+
+        // ANIL 2024-08-01
+        //
+        // In automatic payments, isReimbursementNote is always false
+        // It is safe to only consider the finantial document type for settlement note
 
         this.docNumSeries =
                 DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), this.finantialEntity);
@@ -420,7 +427,12 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             debitEntries.add(new InstallmentPaymenPlanBean(installment));
         }
 
-        setDocumentNumberSeries(debtAccount, reimbursementNote);
+        fillDocumentNumberSeriesOptionsList(debtAccount, reimbursementNote);
+
+        if (this.finantialEntity != null) {
+            this.docNumSeries = DocumentNumberSeries.findUniqueDefaultSeries(reimbursementNote ? FinantialDocumentType
+                    .findForReimbursementNote() : FinantialDocumentType.findForSettlementNote(), this.finantialEntity);
+        }
 
         this.settlementNoteStateUrls = Arrays.asList(
                 CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote, CHOOSE_INVOICE_ENTRIES_URL,
@@ -434,9 +446,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public SettlementNoteBean(DebtAccount debtAccount, DigitalPaymentPlatform digitalPaymentPlatform,
             final boolean reimbursementNote, final boolean excludeDebtsForPayorAccount) {
+        this.finantialEntity = digitalPaymentPlatform.getFinantialEntity();
         init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount);
 
-        this.finantialEntity = digitalPaymentPlatform.getFinantialEntity();
         setDigitalPaymentPlatform(digitalPaymentPlatform);
     }
 
@@ -504,28 +516,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             addAllVirtualDebitEntries(handler.createISettlementInvoiceEntryBean(this));
         }
     }
-
-//    @Deprecated
-//    /**
-//     * Replaced by calculateVirtualDebitEntries
-//     */
-//    public void calculateInterestDebitEntries() {
-//        setVirtualDebitEntries(new ArrayList<ISettlementInvoiceEntryBean>());
-//        for (SettlementDebitEntryBean debitEntryBean : getDebitEntriesByType(SettlementDebitEntryBean.class)) {
-//            if (debitEntryBean.isIncluded() && TreasuryConstants.isEqual(debitEntryBean.getDebitEntry().getOpenAmount(),
-//                    debitEntryBean.getDebtAmount())) {
-//
-//                //Calculate interest only if we are making a FullPayment
-//                InterestRateBean debitInterest =
-//                        debitEntryBean.getDebitEntry().calculateUndebitedInterestValue(getDate().toLocalDate());
-//                if (TreasuryConstants.isPositive(debitInterest.getInterestAmount())) {
-//                    SettlementInterestEntryBean interestEntryBean =
-//                            new SettlementInterestEntryBean(debitEntryBean.getDebitEntry(), debitInterest);
-//                    virtualDebitEntries.add(interestEntryBean);
-//                }
-//            }
-//        }
-//    }
 
     public BigDecimal getTotalAmountToPay() {
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -627,15 +617,26 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return years;
     }
 
-    private void setDocumentNumberSeries(DebtAccount debtAccount, boolean reimbursementNote) {
-        FinantialDocumentType finantialDocumentType = (reimbursementNote) ? FinantialDocumentType
-                .findForReimbursementNote() : FinantialDocumentType.findForSettlementNote();
+    private void fillDocumentNumberSeriesOptionsList(DebtAccount debtAccount, boolean reimbursementNote) {
+        if (this.finantialEntity != null) {
+            FinantialDocumentType finantialDocumentType = (reimbursementNote) ? FinantialDocumentType
+                    .findForReimbursementNote() : FinantialDocumentType.findForSettlementNote();
 
-        List<DocumentNumberSeries> availableSeries = DocumentNumberSeries
-                .find(finantialDocumentType, debtAccount.getFinantialInstitution()).collect(Collectors.toList());
+            Stream<DocumentNumberSeries> availableSeries =
+                    DocumentNumberSeries.findActiveAndSelectableSeries(finantialDocumentType, this.finantialEntity)
+                            .sorted(DocumentNumberSeries.COMPARE_BY_DEFAULT.thenComparing(DocumentNumberSeries.COMPARE_BY_NAME));
 
-        this.setDocumentNumberSeries(DocumentNumberSeries.applyActiveSelectableAndDefaultSorting(availableSeries.stream())
-                .collect(Collectors.toList()));
+            Function<? super DocumentNumberSeries, ? extends TreasuryTupleDataSourceBean> createTuple = docNumSeries -> {
+                TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
+
+                tuple.setText(docNumSeries.getSeries().getCode() + " - " + docNumSeries.getSeries().getName().getContent());
+                tuple.setId(docNumSeries.getExternalId());
+
+                return tuple;
+            };
+
+            this.documentNumberSeries = availableSeries.map(createTuple).collect(Collectors.toList());
+        }
     }
 
     public DebtAccount getDebtAccount() {
@@ -822,15 +823,6 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public List<TreasuryTupleDataSourceBean> getDocumentNumberSeries() {
         return documentNumberSeries;
-    }
-
-    public void setDocumentNumberSeries(List<DocumentNumberSeries> documentNumberSeries) {
-        this.documentNumberSeries = documentNumberSeries.stream().map(docNumSeries -> {
-            TreasuryTupleDataSourceBean tuple = new TreasuryTupleDataSourceBean();
-            tuple.setText(docNumSeries.getSeries().getCode() + " - " + docNumSeries.getSeries().getName().getContent());
-            tuple.setId(docNumSeries.getExternalId());
-            return tuple;
-        }).collect(Collectors.toList());
     }
 
     public String getOriginDocumentNumber() {

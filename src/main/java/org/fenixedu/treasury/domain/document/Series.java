@@ -311,6 +311,19 @@ public class Series extends Series_Base {
         return findDefault(finantialEntity).findFirst();
     }
 
+    public static Stream<Series> findActiveAndSelectableSeries(FinantialEntity finantialEntity) {
+        if (Boolean.TRUE.equals(finantialEntity.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            return finantialEntity.getSeriesSet().stream() //
+                    .filter(s -> s.isSelectable()) //
+                    .filter(s -> s.isActive());
+        } else {
+            return finantialEntity.getFinantialInstitution().getSeriesSet().stream() //
+                    .filter(s -> s.getFinantialEntity() == null) //
+                    .filter(s -> s.isSelectable()) //
+                    .filter(s -> s.isActive());
+        }
+    }
+
     public static Series findUniqueDefaultSeries(FinantialEntity finantialEntity) {
         FinantialInstitution finantialInstitution = finantialEntity.getFinantialInstitution();
 

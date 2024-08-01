@@ -200,6 +200,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
                 throw new TreasuryDomainException("error.FinantialDocument.entries.belongs.different.debt.account");
             }
         }
+
     }
 
     protected boolean isDocumentEmpty() {

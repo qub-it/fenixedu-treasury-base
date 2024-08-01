@@ -191,6 +191,12 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
                 .filter(x -> x.getSeries().getFinantialInstitution().getCode().equals(finantialInstitution.getCode()));
     }
 
+    public static Stream<DocumentNumberSeries> findActiveAndSelectableSeries(FinantialDocumentType finantialDocumentType,
+            FinantialEntity finantialEntity) {
+        return Series.findActiveAndSelectableSeries(finantialEntity).flatMap(s -> s.getDocumentNumberSeriesSet().stream())
+                .filter(dns -> dns.getFinantialDocumentType() == finantialDocumentType);
+    }
+
     public static DocumentNumberSeries findUniqueDefaultSeries(FinantialDocumentType finantialDocumentType,
             FinantialEntity finantialEntity) {
         if (Series.findUniqueDefaultSeries(finantialEntity) == null) {
