@@ -167,10 +167,6 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             throw new TreasuryDomainException("error.FinantialDocument.finantialEntity.required");
         }
 
-        if (getDocumentNumberSeries().getSeries().getFinantialInstitution() != getDebtAccount().getFinantialInstitution()) {
-            throw new TreasuryDomainException("error.FinantialDocument.finantialinstitution.mismatch");
-        }
-
         if (getDocumentNumberSeries().getSeries().getLegacy() == false) {
             if (getDocumentDueDate().isBefore(getDocumentDate().toLocalDate())) {
                 throw new TreasuryDomainException("error.FinantialDocument.documentDueDate.invalid");

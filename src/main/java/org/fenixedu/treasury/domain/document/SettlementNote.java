@@ -1024,6 +1024,34 @@ public class SettlementNote extends SettlementNote_Base {
     public static SettlementNote create(FinantialEntity finantialEntity, DebtAccount debtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, DateTime paymentDate, String originDocumentNumber,
             String finantialTransactionReference) {
+
+        if (Boolean.TRUE.equals(debtAccount.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            if (documentNumberSeries.getSeries().getFinantialEntity() != finantialEntity) {
+                throw new TreasuryDomainException("error.SettlementNote.documentNumberSeries.finantialEntity.mismatch");
+            }
+        } else {
+            if (documentNumberSeries.getSeries().getFinantialInstitution() != debtAccount.getFinantialInstitution()) {
+                throw new TreasuryDomainException("error.SettlementNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+
+            if (documentNumberSeries.getSeries().getFinantialEntity() != null) {
+                throw new TreasuryDomainException("error.SettlementNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+        }
+
+        SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,
+                paymentDate, originDocumentNumber, finantialTransactionReference);
+
+        return settlementNote;
+    }
+
+    // ANIL 2024-08-02
+    //
+    // Add this method factory to not validate the document number series against the finantial entity
+    // or finantial institution
+    public static SettlementNote createForImportation(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate, DateTime paymentDate, String originDocumentNumber,
+            String finantialTransactionReference) {
         SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,
                 paymentDate, originDocumentNumber, finantialTransactionReference);
 

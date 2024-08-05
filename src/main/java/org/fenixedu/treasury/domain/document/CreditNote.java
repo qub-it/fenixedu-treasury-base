@@ -425,8 +425,23 @@ public class CreditNote extends CreditNote_Base {
 
         DebtAccount debtAccount = debitNote.getDebtAccount();
 
-        CreditNote note =
-                new CreditNote(debitNote.getFinantialEntity(), debtAccount, documentNumberSeries, documentDate, debitNote);
+        FinantialEntity finantialEntity = debitNote.getFinantialEntity();
+
+        if (Boolean.TRUE.equals(debtAccount.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            if (documentNumberSeries.getSeries().getFinantialEntity() != finantialEntity) {
+                throw new TreasuryDomainException("error.CreditNote.documentNumberSeries.finantialEntity.mismatch");
+            }
+        } else {
+            if (documentNumberSeries.getSeries().getFinantialInstitution() != debtAccount.getFinantialInstitution()) {
+                throw new TreasuryDomainException("error.CreditNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+
+            if (documentNumberSeries.getSeries().getFinantialEntity() != null) {
+                throw new TreasuryDomainException("error.CreditNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+        }
+
+        CreditNote note = new CreditNote(finantialEntity, debtAccount, documentNumberSeries, documentDate, debitNote);
         note.setOriginDocumentNumber(originNumber);
         note.checkRules();
 
@@ -437,6 +452,20 @@ public class CreditNote extends CreditNote_Base {
     public static CreditNote create(FinantialEntity finantialEntity, DebtAccount debtAccount,
             DocumentNumberSeries documentNumberSeries, DebtAccount payorDebtAccount, DateTime documentDate, String originNumber) {
         CreditNote note = new CreditNote(finantialEntity, debtAccount, documentNumberSeries, documentDate, null);
+
+        if (Boolean.TRUE.equals(debtAccount.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            if (documentNumberSeries.getSeries().getFinantialEntity() != finantialEntity) {
+                throw new TreasuryDomainException("error.CreditNote.documentNumberSeries.finantialEntity.mismatch");
+            }
+        } else {
+            if (documentNumberSeries.getSeries().getFinantialInstitution() != debtAccount.getFinantialInstitution()) {
+                throw new TreasuryDomainException("error.CreditNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+
+            if (documentNumberSeries.getSeries().getFinantialEntity() != null) {
+                throw new TreasuryDomainException("error.CreditNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+        }
 
         note.setPayorDebtAccount(payorDebtAccount);
         note.setOriginDocumentNumber(originNumber);

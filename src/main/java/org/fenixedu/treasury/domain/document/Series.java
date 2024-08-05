@@ -324,6 +324,13 @@ public class Series extends Series_Base {
         }
     }
 
+    public static Stream<Series> findActiveAndSelectableSeries(FinantialInstitution finantialInstitution) {
+        return find(finantialInstitution).stream() //
+                .filter(s -> s.isSelectable()) //
+                .filter(s -> s.isActive()) //
+                .filter(s -> s.getFinantialEntity() == null);
+    }
+
     public static Series findUniqueDefaultSeries(FinantialEntity finantialEntity) {
         FinantialInstitution finantialInstitution = finantialEntity.getFinantialInstitution();
 
