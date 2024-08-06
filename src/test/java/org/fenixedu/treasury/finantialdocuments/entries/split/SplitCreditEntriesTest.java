@@ -72,7 +72,6 @@ public class SplitCreditEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, true, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForReimbursementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
@@ -124,7 +123,6 @@ public class SplitCreditEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, true, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForReimbursementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
@@ -173,7 +171,6 @@ public class SplitCreditEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, true, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForReimbursementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());

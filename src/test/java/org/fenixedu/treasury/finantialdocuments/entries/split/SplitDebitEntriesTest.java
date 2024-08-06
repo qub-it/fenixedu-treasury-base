@@ -62,7 +62,6 @@ public class SplitDebitEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
@@ -108,7 +107,6 @@ public class SplitDebitEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
@@ -150,7 +148,6 @@ public class SplitDebitEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
@@ -184,7 +181,6 @@ public class SplitDebitEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
@@ -231,7 +227,6 @@ public class SplitDebitEntriesTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
 
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
         bean.setDate(new DateTime());
