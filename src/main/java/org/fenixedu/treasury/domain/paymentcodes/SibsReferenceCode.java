@@ -279,8 +279,33 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         return new SibsReferenceCode(sibsPaymentCodePool, debtAccount, referenceCode, payableAmount);
     }
 
+    public static boolean isPregeneratedReferenceExists(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount,
+            BigDecimal payableAmount, LocalDate validTo) {
+
+        SibsReferenceCode pregeneratedReferenceCode =
+                findPregeneratedReference(sibsPaymentCodePool, debtAccount, payableAmount, validTo);
+
+        return pregeneratedReferenceCode != null;
+    }
+
     public static SibsReferenceCode findAndUsePregeneratedReference(SibsPaymentCodePool sibsPaymentCodePool,
             DebtAccount debtAccount, BigDecimal payableAmount, LocalDate validTo) {
+        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+
+        SibsReferenceCode pregeneratedReferenceCode =
+                findPregeneratedReference(sibsPaymentCodePool, debtAccount, payableAmount, validTo);
+        if (pregeneratedReferenceCode == null) {
+            return null;
+        }
+
+        pregeneratedReferenceCode.usePregeneratedReference();
+
+        return pregeneratedReferenceCode;
+    }
+
+    private static SibsReferenceCode findPregeneratedReference(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount,
+            BigDecimal payableAmount, LocalDate validTo) {
+
         // ANIL 2024-08-06 (#qubIT-Fenix-5597)
         // 
         // a) First search pre generated reference that is associated with some customer
@@ -297,12 +322,6 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
                 .filter(p -> p.getSibsPaymentRequest() == null) //
                 .filter(p -> p.isInPayableAmountInterval(payableAmount)) //
                 .findFirst().orElse(null);
-
-        if (pregeneratedReferenceCode == null) {
-            return null;
-        }
-
-        pregeneratedReferenceCode.usePregeneratedReference();
 
         return pregeneratedReferenceCode;
     }

@@ -12,6 +12,7 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
+import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
@@ -30,7 +31,7 @@ import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
 @RunWith(FenixFrameworkRunner.class)
-public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNote {
+public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
 
     @BeforeClass
     public static void startUp() {
@@ -52,10 +53,14 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNote {
         DebitEntry debitEntryTwo =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), false);
 
-        debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo));
-
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+                new DateTime(), new LocalDate(), null, null, null);
+
+        debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo));
 
         finantialInstitution.setSplitCreditEntriesWithSettledAmount(true);
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
@@ -95,10 +100,14 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNote {
         DebitEntry debitEntryTwo =
                 InterestRateTestsUtilities.createDebitEntry(new BigDecimal("100.00"), new LocalDate(2020, 1, 5), false);
 
-        debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo));
-
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
+                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+                new DateTime(), new LocalDate(), null, null, null);
+
+        debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo));
 
         finantialInstitution.setSplitCreditEntriesWithSettledAmount(true);
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(false);
@@ -120,13 +129,13 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNote {
 
         // The debit note of debitEntryOne must be different than debitNoteTwo
 
-        assertNotEquals(debitEntryOne.getDebitNote(), debitEntryTwo.getDebitNote());
+        assertEquals(debitEntryOne.getDebitNote(), debitEntryTwo.getDebitNote());
 
-        assertEquals(debitEntryOne.getDebitNote().getDebitEntriesSet().size(), 1);
-        assertEquals(debitEntryTwo.getDebitNote().getDebitEntriesSet().size(), 1);
+        assertEquals(debitEntryOne.getDebitNote().getDebitEntriesSet().size(), 2);
+        assertEquals(debitEntryTwo.getDebitNote().getDebitEntriesSet().size(), 2);
 
         assertEquals(debitEntryOne.getDebitNote().getState(), FinantialDocumentStateType.CLOSED);
-        assertEquals(debitEntryTwo.getDebitNote().getState(), FinantialDocumentStateType.PREPARING);
+        assertEquals(debitEntryTwo.getDebitNote().getState(), FinantialDocumentStateType.CLOSED);
 
     }
 

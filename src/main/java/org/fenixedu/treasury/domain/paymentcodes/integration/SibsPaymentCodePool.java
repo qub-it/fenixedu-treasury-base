@@ -415,6 +415,15 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
                 payableAmount, validTo.isAfter(now) ? validTo : now);
 
         if (pregeneratedReference != null) {
+            // Check that the code pool is the same
+            if (pregeneratedReference.getDigitalPaymentPlatform() != this) {
+                throw new RuntimeException("pregenerated reference digital payment platform mismatch");
+            }
+
+            if (pregeneratedReference.getPregeneratedReferenceDebtAccount() != null) {
+                throw new RuntimeException("pregenerated reference not dissociated from debt account");
+            }
+
             return pregeneratedReference;
         }
 
@@ -467,7 +476,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     private SibsReferenceCode generateCheckDigitPaymentCode(DebtAccount debtAccount, BigDecimal payableAmount,
             LocalDate validTo) {
         if (!isUseCheckDigit()) {
-            throw new RuntimeException("error");
+            throw new RuntimeException("not check digit sibs platform");
         }
 
         // ANIL 2024-08-06 (#qubIT-Fenix-5597)
@@ -477,6 +486,25 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
                 SibsReferenceCode.findAndUsePregeneratedReference(this, debtAccount, payableAmount, validTo);
 
         if (pregeneratedReference != null) {
+            // Check that the code pool is the same
+            if (pregeneratedReference.getDigitalPaymentPlatform() != this) {
+                throw new RuntimeException("pregenerated reference digital payment platform mismatch");
+            }
+
+            // Check that the check digit is the same
+            String sequentialNumberPadded = StringUtils.leftPad(pregeneratedReference.getReferenceCode().substring(0, 7),
+                    NUM_SEQUENTIAL_NUMBERS, CODE_FILLER);
+            final String referenceCodeString = CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(),
+                    sequentialNumberPadded, payableAmount);
+
+            if (!pregeneratedReference.getReferenceCode().equals(referenceCodeString)) {
+                throw new RuntimeException("pregenerated reference check digit mismatch");
+            }
+
+            if (pregeneratedReference.getPregeneratedReferenceDebtAccount() != null) {
+                throw new RuntimeException("pregenerated reference not dissociated from debt account");
+            }
+
             return pregeneratedReference;
         }
 
