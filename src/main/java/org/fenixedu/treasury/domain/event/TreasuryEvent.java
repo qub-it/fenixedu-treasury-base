@@ -509,6 +509,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         setDebtAccount(null);
         setProduct(null);
+        setFinantialEntity(null);
         setDomainRoot(null);
 
         super.deleteDomainObject();

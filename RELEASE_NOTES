@@ -1,3 +1,5 @@
+- Bug Fix: Disconnect FinantialEntity from TreasuryEvent [#qubIT-Fenix-5703]
+
 12.30.0 (30-07-2024)
 - Refactor: Require finantial entity for treasury events and payment plans [#qubIT-Fenix-5262]
 - Refactor: Declare methods to extract information to be used in reports [#qubIT-Fenix-5550]
