@@ -82,6 +82,7 @@ import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.services.payments.paymentscodegenerator.CheckDigitGenerator;
 import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.Atomic;
@@ -363,8 +364,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
         checkMaxActiveSibsPaymentRequests(debitEntries, installments);
 
-        SibsReferenceCode code = isUseCheckDigit() ? generateCheckDigitPaymentCode(payableAmount,
-                validTo) : generateSequentialPaymentCode(payableAmount, validTo);
+        SibsReferenceCode code = isUseCheckDigit() ? generateCheckDigitPaymentCode(debtAccount, payableAmount,
+                validTo) : generateSequentialPaymentCode(debtAccount, payableAmount, validTo);
+
         SibsPaymentRequest paymentRequest =
                 SibsPaymentRequest.create(code, debtAccount, debitEntries, installments, payableAmount);
 
@@ -398,21 +400,33 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         }
     }
 
-    private SibsReferenceCode generateSequentialPaymentCode(BigDecimal payableAmount, LocalDate validTo) {
+    private SibsReferenceCode generateSequentialPaymentCode(DebtAccount debtAccount, BigDecimal payableAmount,
+            LocalDate validTo) {
         if (isUseCheckDigit()) {
             throw new RuntimeException("error");
         }
 
         LocalDate now = new LocalDate();
 
+        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 
+
+        SibsReferenceCode pregeneratedReference = SibsReferenceCode.findAndUsePregeneratedReference(this, debtAccount,
+                payableAmount, validTo.isAfter(now) ? validTo : now);
+
+        if (pregeneratedReference != null) {
+            return pregeneratedReference;
+        }
+
         // First find unused payment code reference
         Optional<SibsReferenceCode> possiblePaymentCode =
                 getSibsReferenceCodesSet().stream().filter(SibsReferenceCode::isInCreatedState)
-                        .filter(p -> !TreasuryConstants.isGreaterThan(payableAmount, p.getMaxAmount()))
-                        .filter(p -> !TreasuryConstants.isLessThan(payableAmount, p.getMinAmount()))
-                        .filter(p -> p.getSibsPaymentRequest() == null)
+                        .filter(p -> !TreasuryConstants.isGreaterThan(payableAmount, p.getMaxAmount())) //
+                        .filter(p -> !TreasuryConstants.isLessThan(payableAmount, p.getMinAmount())) //
+                        .filter(p -> p.getSibsPaymentRequest() == null) //
+                        .filter(p -> p.getPregeneratedReferenceDebtAccount() == null) //
                         .filter(p -> p.getValidInterval()
-                                .contains(validTo.isAfter(now) ? validTo.toDateTimeAtStartOfDay() : now.toDateTimeAtStartOfDay()))
+                                .contains(validTo.isAfter(now) ? validTo.toDateTimeAtStartOfDay() : now.toDateTimeAtStartOfDay())) //
                         .findAny();
 
         if (possiblePaymentCode.isPresent()) {
@@ -450,9 +464,20 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         return SibsReferenceCode.create(this, referenceCodeString, new LocalDate(), validTo, payableAmount, payableAmount);
     }
 
-    private SibsReferenceCode generateCheckDigitPaymentCode(BigDecimal payableAmount, LocalDate validTo) {
+    private SibsReferenceCode generateCheckDigitPaymentCode(DebtAccount debtAccount, BigDecimal payableAmount,
+            LocalDate validTo) {
         if (!isUseCheckDigit()) {
             throw new RuntimeException("error");
+        }
+
+        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 
+
+        SibsReferenceCode pregeneratedReference =
+                SibsReferenceCode.findAndUsePregeneratedReference(this, debtAccount, payableAmount, validTo);
+
+        if (pregeneratedReference != null) {
+            return pregeneratedReference;
         }
 
         long nextReferenceCode = getAndIncrementNextReferenceCode();
@@ -478,6 +503,42 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         }
 
         return SibsReferenceCode.create(this, referenceCodeString, new LocalDate(), getValidTo(), payableAmount, payableAmount);
+    }
+
+    public SibsReferenceCode pregenerateSibsReferenceCode(DebtAccount debtAccount, BigDecimal payableAmount) {
+        if (isUseCheckDigit()) {
+            long nextReferenceCode = getAndIncrementNextReferenceCode();
+            if (nextReferenceCode > getMaxReferenceCode()) {
+                throw new TreasuryDomainException(
+                        "error.SequentialPaymentCodeGenerator.generateNewCodeFor.cannot.generate.new.code");
+            }
+
+            String sequentialNumberPadded =
+                    StringUtils.leftPad(String.valueOf("" + nextReferenceCode), NUM_SEQUENTIAL_NUMBERS, CODE_FILLER);
+            final String referenceCodeString = CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(),
+                    sequentialNumberPadded, payableAmount);
+
+            return SibsReferenceCode.createPregeneratedReference(this, debtAccount, referenceCodeString, payableAmount);
+        } else {
+            // First find unused payment code reference
+            Optional<SibsReferenceCode> possiblePaymentCode =
+                    getSibsReferenceCodesSet().stream().filter(SibsReferenceCode::isInCreatedState)
+                            .filter(p -> !TreasuryConstants.isGreaterThan(payableAmount, p.getMaxAmount())) //
+                            .filter(p -> !TreasuryConstants.isLessThan(payableAmount, p.getMinAmount())) //
+                            .filter(p -> p.getSibsPaymentRequest() == null) //
+                            .filter(p -> p.getPregeneratedReferenceDebtAccount() == null) //
+                            .filter(p -> p.isValidInDateInterval(new DateTime())) //
+                            .findAny();
+
+            if (possiblePaymentCode.isPresent()) {
+                SibsReferenceCode result = possiblePaymentCode.get();
+                result.allocateAsPregeneratedReference(debtAccount);
+
+                return result;
+            }
+
+            return null;
+        }
     }
 
     //@formatter:off

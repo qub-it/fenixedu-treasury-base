@@ -495,6 +495,42 @@ public class SettlementNote extends SettlementNote_Base {
                     && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
                 debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()),
                         "partial payment (system)");
+            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument().isPreparing()) {
+                // ANIL 2024-08-07
+                //
+                // Check if there are other debit entries, which are not being settled 
+                // but need to be separated from this current settled debit note
+                // 
+                // 1) Collect the debit entries not being settled and are not zero in total amount
+                // 2) If the collection is not empty, create an identical debit note
+                // 3) Transfer the not settled debit entries to the new debit note
+
+                Set<DebitEntry> settlingDebitEntriesSet = bean.getDebitEntriesByType(SettlementDebitEntryBean.class).stream() //
+                        .filter(d -> d.isIncluded()) //
+                        .map(d -> d.getDebitEntry()) //
+                        .collect(Collectors.toSet());
+
+                DebitNote settlingDebitNote = debitEntry.getDebitNote();
+
+                List<DebitEntry> notSettlingDebitEntriesSet = settlingDebitNote.getDebitEntriesSet().stream() //
+                        .filter(d -> d != debitEntry) //
+                        .filter(d -> !settlingDebitEntriesSet.contains(d)) //
+                        .filter(d -> TreasuryConstants.isPositive(d.getTotalAmount())) //
+                        .collect(Collectors.toList());
+
+                if (!notSettlingDebitEntriesSet.isEmpty()) {
+                    DebitNote newDebitNote = DebitNote.create(settlingDebitNote.getFinantialEntity(), this.getDebtAccount(),
+                            settlingDebitNote.getPayorDebtAccount(), settlingDebitNote.getDocumentNumberSeries(),
+                            settlingDebitNote.getDocumentDate(), settlingDebitNote.getDocumentDueDate(),
+                            settlingDebitNote.getOriginDocumentNumber(), settlingDebitNote.getPropertiesMap(),
+                            settlingDebitNote.getDocumentObservations(), settlingDebitNote.getDocumentTermsAndConditions());
+
+                    newDebitNote.setCloseDate(settlingDebitNote.getCloseDate());
+                    newDebitNote.setLegacyERPCertificateDocumentReference(
+                            settlingDebitNote.getLegacyERPCertificateDocumentReference());
+
+                    newDebitNote.addDebitNoteEntries(notSettlingDebitEntriesSet);
+                }
             }
 
             if (debitEntry.getFinantialDocument() == null) {

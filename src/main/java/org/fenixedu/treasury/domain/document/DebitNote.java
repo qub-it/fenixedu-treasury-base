@@ -281,6 +281,9 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
+    // TODO ANIL 2024-08-07
+    //
+    // This receive a Set instead of a List
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
         if (!isPreparing()) {
             throw new IllegalStateException("debit note is not in preparing state");
