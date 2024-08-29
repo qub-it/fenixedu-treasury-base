@@ -411,8 +411,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         // ANIL 2024-08-06 (#qubIT-Fenix-5597)
         // 
 
-        SibsReferenceCode pregeneratedReference = SibsReferenceCode.findAndUsePregeneratedReference(this, debtAccount,
-                payableAmount, validTo.isAfter(now) ? validTo : now);
+        SibsReferenceCode pregeneratedReference =
+                findAndUsePregeneratedReference(debtAccount, payableAmount, validTo.isAfter(now) ? validTo : now);
 
         if (pregeneratedReference != null) {
             // Check that the code pool is the same
@@ -482,8 +482,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         // ANIL 2024-08-06 (#qubIT-Fenix-5597)
         // 
 
-        SibsReferenceCode pregeneratedReference =
-                SibsReferenceCode.findAndUsePregeneratedReference(this, debtAccount, payableAmount, validTo);
+        SibsReferenceCode pregeneratedReference = findAndUsePregeneratedReference(debtAccount, payableAmount, validTo);
 
         if (pregeneratedReference != null) {
             // Check that the code pool is the same
@@ -567,6 +566,93 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
             return null;
         }
+    }
+
+    public boolean isPregeneratedReferenceExists(DebtAccount debtAccount, BigDecimal payableAmount, LocalDate validTo) {
+
+        SibsReferenceCode pregeneratedReferenceCode = findPregeneratedReference(debtAccount, payableAmount, validTo);
+
+        return pregeneratedReferenceCode != null;
+    }
+
+    public SibsReferenceCode findAndUsePregeneratedReference(DebtAccount debtAccount, BigDecimal payableAmount,
+            LocalDate validTo) {
+        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+
+        SibsReferenceCode pregeneratedReferenceCode = findPregeneratedReference(debtAccount, payableAmount, validTo);
+        if (pregeneratedReferenceCode == null) {
+            return null;
+        }
+
+        pregeneratedReferenceCode.usePregeneratedReference();
+
+        return pregeneratedReferenceCode;
+    }
+
+    public Set<SibsReferenceCode> getAllPregeneratedReferences(DebtAccount debtAccount, BigDecimal payableAmount,
+            LocalDate validTo) {
+        return getStreamForFindPregeneratedReference(debtAccount, payableAmount, validTo).collect(Collectors.toSet());
+    }
+
+    public Set<SibsReferenceCode> getAllPregeneratedReferences(DebtAccount debtAccount) {
+        return getStreamForFindPregeneratedReference(debtAccount).collect(Collectors.toSet());
+    }
+
+    public static Stream<SibsReferenceCode> getStreamForFindPregeneratedReference(Stream<SibsReferenceCode> stream,
+            BigDecimal payableAmount, LocalDate validTo) {
+
+        // ANIL 2024-08-28 (#qubIT-Fenix-5597)
+        //
+        // This method is an helper to generate the necessary and missing pre references,
+        // in order to not create more than what is necessary
+
+        return stream //
+                .filter(p -> p.isValidInDateInterval(validTo.toDateTimeAtStartOfDay())) //
+                .filter(p -> p.getSibsPaymentRequest() == null) //
+                .filter(p -> p.isInPayableAmountInterval(payableAmount));
+    }
+
+    private SibsReferenceCode findPregeneratedReference(DebtAccount debtAccount, BigDecimal payableAmount, LocalDate validTo) {
+
+        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 
+        // a) First search pre generated reference that is associated with some customer
+        // b) the pregenerated must have the same payable amount and valid date interval for validTo
+        // c) the pregenerated ref mb must not have a payment request associated
+        // d) if the pregenerated ref is found, then dissociate from the customer
+
+        SibsReferenceCode pregeneratedReferenceCode = getStreamForFindPregeneratedReference(debtAccount, payableAmount, validTo) //
+                .findFirst().orElse(null);
+
+        return pregeneratedReferenceCode;
+    }
+
+    private Stream<SibsReferenceCode> getStreamForFindPregeneratedReference(DebtAccount debtAccount, BigDecimal payableAmount,
+            LocalDate validTo) {
+        Stream<SibsReferenceCode> stream = getStreamForFindPregeneratedReference(debtAccount);
+
+        return getStreamForFindPregeneratedReference(stream, payableAmount, validTo);
+    }
+
+    private Stream<SibsReferenceCode> getStreamForFindPregeneratedReference(DebtAccount debtAccount) {
+        return debtAccount.getCustomer().getAllCustomers().stream()
+                .flatMap(c -> c.getDebtAccountsSet().stream()
+                        .filter(d -> d.getFinantialInstitution() == debtAccount.getFinantialInstitution())) //
+                .flatMap(d -> d.getPregeneratedSibsReferenceCodesSet().stream()) //
+                .filter(p -> p.getDigitalPaymentPlatform() == this);
+    }
+
+    public void removePregeneratedReference(SibsReferenceCode sibsReferenceCode) {
+        if (sibsReferenceCode.getPregeneratedReferenceDebtAccount() == null) {
+            throw new RuntimeException("error");
+        }
+
+        if (isUseCheckDigit()) {
+            sibsReferenceCode.delete();
+        } else {
+            sibsReferenceCode.setPregeneratedReferenceDebtAccount(null);
+        }
+
     }
 
     //@formatter:off

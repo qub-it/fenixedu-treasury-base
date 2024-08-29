@@ -181,6 +181,7 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     public Interval getValidInterval() {
         DateTime validFromDateTime = getValidFrom().toDateTimeAtStartOfDay();
         DateTime validToDateTime = getValidTo().plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
+
         return new Interval(validFromDateTime, validToDateTime);
     }
 
@@ -213,6 +214,7 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
 
         super.setDomainRoot(null);
         super.setDigitalPaymentPlatform(null);
+        super.setPregeneratedReferenceDebtAccount(null);
 
         super.deleteDomainObject();
     }
@@ -238,7 +240,7 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         checkRules();
     }
 
-    private void usePregeneratedReference() {
+    public void usePregeneratedReference() {
         if (getSibsPaymentRequest() != null) {
             throw new IllegalStateException("error");
         }
@@ -277,53 +279,6 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     public static SibsReferenceCode createPregeneratedReference(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount,
             String referenceCode, BigDecimal payableAmount) {
         return new SibsReferenceCode(sibsPaymentCodePool, debtAccount, referenceCode, payableAmount);
-    }
-
-    public static boolean isPregeneratedReferenceExists(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount,
-            BigDecimal payableAmount, LocalDate validTo) {
-
-        SibsReferenceCode pregeneratedReferenceCode =
-                findPregeneratedReference(sibsPaymentCodePool, debtAccount, payableAmount, validTo);
-
-        return pregeneratedReferenceCode != null;
-    }
-
-    public static SibsReferenceCode findAndUsePregeneratedReference(SibsPaymentCodePool sibsPaymentCodePool,
-            DebtAccount debtAccount, BigDecimal payableAmount, LocalDate validTo) {
-        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
-
-        SibsReferenceCode pregeneratedReferenceCode =
-                findPregeneratedReference(sibsPaymentCodePool, debtAccount, payableAmount, validTo);
-        if (pregeneratedReferenceCode == null) {
-            return null;
-        }
-
-        pregeneratedReferenceCode.usePregeneratedReference();
-
-        return pregeneratedReferenceCode;
-    }
-
-    private static SibsReferenceCode findPregeneratedReference(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount,
-            BigDecimal payableAmount, LocalDate validTo) {
-
-        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
-        // 
-        // a) First search pre generated reference that is associated with some customer
-        // b) the pregenerated must have the same payable amount and valid date interval for validTo
-        // c) the pregenerated ref mb must not have a payment request associated
-        // d) if the pregenerated ref is found, then dissociate from the customer
-
-        SibsReferenceCode pregeneratedReferenceCode = debtAccount.getCustomer().getAllCustomers().stream()
-                .flatMap(c -> c.getDebtAccountsSet().stream()
-                        .filter(d -> d.getFinantialInstitution() == debtAccount.getFinantialInstitution())) //
-                .flatMap(d -> d.getPregeneratedSibsReferenceCodesSet().stream()) //
-                .filter(p -> p.getDigitalPaymentPlatform() == sibsPaymentCodePool) //
-                .filter(p -> p.isValidInDateInterval(validTo.toDateTimeAtStartOfDay())) //
-                .filter(p -> p.getSibsPaymentRequest() == null) //
-                .filter(p -> p.isInPayableAmountInterval(payableAmount)) //
-                .findFirst().orElse(null);
-
-        return pregeneratedReferenceCode;
     }
 
 }

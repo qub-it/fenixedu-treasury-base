@@ -69,17 +69,27 @@ public class PregeneratedPaymentCodesCheckDigitTest {
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12345", 1000000,
                         2000000, BigDecimal.ZERO, new BigDecimal("99999.99"), validFrom, validTo, true, true, null, null);
 
+        assertEquals(1000000l, sibsPaymentCodePool.getNextReferenceCode());
+
         SibsReferenceCode pregenerateSibsReferenceCode =
                 sibsPaymentCodePool.pregenerateSibsReferenceCode(debtAccount, new BigDecimal("100.00"));
 
+        assertEquals(1000001l, sibsPaymentCodePool.getNextReferenceCode());
+
         assertNotNull(pregenerateSibsReferenceCode);
+
+        assertEquals(debtAccount, pregenerateSibsReferenceCode.getPregeneratedReferenceDebtAccount());
 
         assertEquals(1, sibsPaymentCodePool.getSibsReferenceCodesSet().size());
 
         SibsPaymentRequest sibsPaymentRequestOne =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccount, Set.of(debitEntryOne), Collections.emptySet());
 
+        assertEquals(1000001l, sibsPaymentCodePool.getNextReferenceCode());
+
         assertEquals(pregenerateSibsReferenceCode, sibsPaymentRequestOne.getSibsReferenceCode());
+
+        assertEquals(null, sibsPaymentRequestOne.getSibsReferenceCode().getPregeneratedReferenceDebtAccount());
 
         assertEquals(1, sibsPaymentCodePool.getSibsReferenceCodesSet().size());
 
@@ -87,6 +97,8 @@ public class PregeneratedPaymentCodesCheckDigitTest {
 
         SibsPaymentRequest sibsPaymentRequestTwo =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccount, Set.of(debitEntryOne), Collections.emptySet());
+
+        assertEquals(1000002l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertNotEquals(pregenerateSibsReferenceCode, sibsPaymentRequestTwo.getSibsReferenceCode());
 
@@ -109,15 +121,21 @@ public class PregeneratedPaymentCodesCheckDigitTest {
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12346", 1000000,
                         2000000, BigDecimal.ZERO, new BigDecimal("99999.99"), validFrom, validTo, true, true, null, null);
 
+        assertEquals(1000000l, sibsPaymentCodePool.getNextReferenceCode());
+
         DebtAccount debtAccountTwo = createDebtAccount("two");
 
         SibsReferenceCode pregenerateSibsReferenceCode =
                 sibsPaymentCodePool.pregenerateSibsReferenceCode(debtAccountTwo, new BigDecimal("100.00"));
 
+        assertEquals(1000001l, sibsPaymentCodePool.getNextReferenceCode());
+
         assertEquals(0, debtAccountOne.getPregeneratedSibsReferenceCodesSet().size());
 
         SibsPaymentRequest sibsPaymentRequestOne =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccountOne, Set.of(debitEntryOne), Collections.emptySet());
+
+        assertEquals(1000002l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertNotEquals(pregenerateSibsReferenceCode, sibsPaymentRequestOne.getSibsReferenceCode());
 
@@ -142,13 +160,19 @@ public class PregeneratedPaymentCodesCheckDigitTest {
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12347", 1000000,
                         2000000, BigDecimal.ZERO, new BigDecimal("99999.99"), validFrom, validTo, true, true, null, null);
 
+        assertEquals(1000000l, sibsPaymentCodePool.getNextReferenceCode());
+
         SibsReferenceCode pregenerateSibsReferenceCode =
                 sibsPaymentCodePool.pregenerateSibsReferenceCode(debtAccountOne, new BigDecimal("99.99"));
+
+        assertEquals(1000001l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertEquals(1, debtAccountOne.getPregeneratedSibsReferenceCodesSet().size());
 
         SibsPaymentRequest sibsPaymentRequestOne =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccountOne, Set.of(debitEntryOne), Collections.emptySet());
+
+        assertEquals(1000002l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertNotEquals(pregenerateSibsReferenceCode, sibsPaymentRequestOne.getSibsReferenceCode());
 
@@ -173,8 +197,12 @@ public class PregeneratedPaymentCodesCheckDigitTest {
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12348", 1000000,
                         2000000, BigDecimal.ZERO, new BigDecimal("99999.99"), validFrom, validTo, true, true, null, null);
 
+        assertEquals(1000000l, sibsPaymentCodePool.getNextReferenceCode());
+
         SibsReferenceCode pregenerateSibsReferenceCode =
                 sibsPaymentCodePool.pregenerateSibsReferenceCode(debtAccountOne, new BigDecimal("100.00"));
+
+        assertEquals(1000001l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertEquals(1, debtAccountOne.getPregeneratedSibsReferenceCodesSet().size());
 
@@ -182,6 +210,8 @@ public class PregeneratedPaymentCodesCheckDigitTest {
 
         SibsPaymentRequest sibsPaymentRequestOne =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccountOne, Set.of(debitEntryOne), Collections.emptySet());
+
+        assertEquals(1000002l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertNotEquals(pregenerateSibsReferenceCode, sibsPaymentRequestOne.getSibsReferenceCode());
 
@@ -206,8 +236,12 @@ public class PregeneratedPaymentCodesCheckDigitTest {
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12349", 1000000,
                         2000000, BigDecimal.ZERO, new BigDecimal("99999.99"), validFrom, validTo, true, true, null, null);
 
+        assertEquals(1000000l, sibsPaymentCodePool.getNextReferenceCode());
+
         SibsReferenceCode pregenerateSibsReferenceCode =
                 sibsPaymentCodePool.pregenerateSibsReferenceCode(debtAccountOne, new BigDecimal("100.00"));
+
+        assertEquals(1000001l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertEquals(1, debtAccountOne.getPregeneratedSibsReferenceCodesSet().size());
 
@@ -215,6 +249,8 @@ public class PregeneratedPaymentCodesCheckDigitTest {
 
         SibsPaymentRequest sibsPaymentRequestOne =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccountOne, Set.of(debitEntryOne), Collections.emptySet());
+
+        assertEquals(1000002l, sibsPaymentCodePool.getNextReferenceCode());
 
         assertNotEquals(pregenerateSibsReferenceCode, sibsPaymentRequestOne.getSibsReferenceCode());
 
