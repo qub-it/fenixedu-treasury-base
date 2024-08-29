@@ -1,3 +1,6 @@
+- New Feature: Generation of SIBS pre references, to improve performance of SIBS payment requests [#qubIT-Fenix-5597]
+- Bug Fix: If split debit entries is activated, separate debit entries from debit note, which are not settled [#qubIT-Fenix-5710]
+
 12.30.1 (29-08-2024)
 - Bug Fix: Disconnect FinantialEntity from TreasuryEvent [#qubIT-Fenix-5703]
 

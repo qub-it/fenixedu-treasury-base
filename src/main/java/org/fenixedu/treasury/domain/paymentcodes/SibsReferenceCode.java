@@ -88,6 +88,22 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
         checkRules();
     }
 
+    public SibsReferenceCode(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount, String referenceCode,
+            BigDecimal payableAmount) {
+        this();
+
+        setDigitalPaymentPlatform(sibsPaymentCodePool);
+        setPregeneratedReferenceDebtAccount(debtAccount);
+        setEntityReferenceCode(sibsPaymentCodePool.castToSibsPaymentCodePoolService().getEntityReferenceCode());
+        setReferenceCode(referenceCode);
+        setValidFrom(sibsPaymentCodePool.getValidFrom());
+        setValidTo(sibsPaymentCodePool.getValidTo());
+        setMinAmount(payableAmount);
+        setMaxAmount(payableAmount);
+
+        checkRules();
+    }
+
     public void checkRules() {
 
         if (getDomainRoot() == null) {
@@ -114,8 +130,12 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
             throw new TreasuryDomainException("error.SibsReferenceCode.maxAmount.required");
         }
 
-        if(TreasuryConstants.isGreaterThan(getMinAmount(), getMaxAmount())) {
+        if (TreasuryConstants.isGreaterThan(getMinAmount(), getMaxAmount())) {
             throw new TreasuryDomainException("error.SibsReferenceCode.minAmount.maxAmount.invalid");
+        }
+
+        if (getSibsPaymentRequest() != null && getPregeneratedReferenceDebtAccount() != null) {
+            throw new TreasuryDomainException("error.SibsReferenceCode.cannot.be.pregenerated.and.used.in.paymentRequest");
         }
     }
 
@@ -161,7 +181,17 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     public Interval getValidInterval() {
         DateTime validFromDateTime = getValidFrom().toDateTimeAtStartOfDay();
         DateTime validToDateTime = getValidTo().plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
+
         return new Interval(validFromDateTime, validToDateTime);
+    }
+
+    public boolean isValidInDateInterval(DateTime when) {
+        return getValidInterval().contains(when);
+    }
+
+    public boolean isInPayableAmountInterval(BigDecimal payableAmount) {
+        return !TreasuryConstants.isLessThan(payableAmount, getMinAmount())
+                && !TreasuryConstants.isGreaterThan(payableAmount, getMaxAmount());
     }
 
     @Override
@@ -178,12 +208,13 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     }
 
     public void delete() {
-        if(!isDeletable()) {
+        if (!isDeletable()) {
             throw new RuntimeException("error.SibsReferenceCode.delete.not.possible");
         }
-        
+
         super.setDomainRoot(null);
         super.setDigitalPaymentPlatform(null);
+        super.setPregeneratedReferenceDebtAccount(null);
 
         super.deleteDomainObject();
     }
@@ -195,10 +226,34 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     public void changeDates(LocalDate validFrom, LocalDate validTo) {
         setValidFrom(validFrom);
         setValidTo(validTo);
-        
+
         checkRules();
     }
-    
+
+    public void allocateAsPregeneratedReference(DebtAccount debtAccount) {
+        if (getSibsPaymentRequest() != null) {
+            throw new IllegalStateException("error");
+        }
+
+        setPregeneratedReferenceDebtAccount(debtAccount);
+
+        checkRules();
+    }
+
+    public void usePregeneratedReference() {
+        if (getSibsPaymentRequest() != null) {
+            throw new IllegalStateException("error");
+        }
+
+        if (getPregeneratedReferenceDebtAccount() == null) {
+            throw new IllegalStateException("error");
+        }
+
+        setPregeneratedReferenceDebtAccount(null);
+
+        checkRules();
+    }
+
     // @formatter:off
     /*
      * ********
@@ -212,14 +267,18 @@ public class SibsReferenceCode extends SibsReferenceCode_Base {
     }
 
     public static Stream<SibsReferenceCode> findByReferenceCode(String entityReferenceCode, String referenceCode) {
-        return findAll()
-                .filter(p -> entityReferenceCode.equals(p.getEntityReferenceCode()))
+        return findAll().filter(p -> entityReferenceCode.equals(p.getEntityReferenceCode()))
                 .filter(p -> referenceCode.equals(p.getReferenceCode()));
     }
 
     public static SibsReferenceCode create(SibsPaymentCodePool sibsPaymentCodePool, String referenceCode, LocalDate validFrom,
             LocalDate validTo, BigDecimal minAmount, BigDecimal maxAmount) {
         return new SibsReferenceCode(sibsPaymentCodePool, referenceCode, validFrom, validTo, minAmount, maxAmount);
+    }
+
+    public static SibsReferenceCode createPregeneratedReference(SibsPaymentCodePool sibsPaymentCodePool, DebtAccount debtAccount,
+            String referenceCode, BigDecimal payableAmount) {
+        return new SibsReferenceCode(sibsPaymentCodePool, debtAccount, referenceCode, payableAmount);
     }
 
 }

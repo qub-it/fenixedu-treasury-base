@@ -1292,6 +1292,16 @@ class paymentcodes.SibsReferenceCode {
 			multiplicity *;
 		}
 	}
+	
+	relation CustomerPregeneratedSibsReferenceCode {
+		debt.DebtAccount playsRole pregeneratedReferenceDebtAccount {
+			multiplicity 0..1;
+		}
+		
+		paymentcodes.SibsReferenceCode playsRole pregeneratedSibsReferenceCodes {
+			multiplicity *;
+		}
+	}
 
 // Deprecated
 class paymentcodes.PaymentReferenceCode {
