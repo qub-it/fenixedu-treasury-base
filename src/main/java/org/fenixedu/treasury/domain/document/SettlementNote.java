@@ -505,16 +505,18 @@ public class SettlementNote extends SettlementNote_Base {
                 // 2) If the collection is not empty, create an identical debit note
                 // 3) Transfer the not settled debit entries to the new debit note
 
-                Set<DebitEntry> settlingDebitEntriesSet = bean.getDebitEntriesByType(SettlementDebitEntryBean.class).stream() //
-                        .filter(d -> d.isIncluded()) //
-                        .map(d -> d.getDebitEntry()) //
-                        .collect(Collectors.toSet());
+                Set<DebitEntry> settlingDebitEntriesTotallySet =
+                        bean.getDebitEntriesByType(SettlementDebitEntryBean.class).stream() //
+                                .filter(d -> d.isIncluded()) //
+                                .filter(d -> TreasuryConstants.isEqual(d.getSettledAmount(), d.getDebitEntry().getOpenAmount())) //
+                                .map(d -> d.getDebitEntry()) //
+                                .collect(Collectors.toSet());
 
                 DebitNote settlingDebitNote = debitEntry.getDebitNote();
 
                 List<DebitEntry> notSettlingDebitEntriesSet = settlingDebitNote.getDebitEntriesSet().stream() //
                         .filter(d -> d != debitEntry) //
-                        .filter(d -> !settlingDebitEntriesSet.contains(d)) //
+                        .filter(d -> !settlingDebitEntriesTotallySet.contains(d)) //
                         .filter(d -> TreasuryConstants.isPositive(d.getTotalAmount())) //
                         .collect(Collectors.toList());
 
