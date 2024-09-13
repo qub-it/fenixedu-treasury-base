@@ -495,7 +495,8 @@ public class SettlementNote extends SettlementNote_Base {
                     && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
                 debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()),
                         "partial payment (system)");
-            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument().isPreparing()) {
+            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument() != null
+                    && debitEntry.getFinantialDocument().isPreparing()) {
                 // ANIL 2024-08-07 (#qubIT-Fenix-5710)
                 //
                 // Check if there are other debit entries, which are not being settled 

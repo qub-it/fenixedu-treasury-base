@@ -79,8 +79,10 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         setDomainRoot(FenixFramework.getDomainRoot());
     }
 
-    protected void init(final DebtAccount debtAccount, final FinantialDocument finantialDocument,
+    protected void init(FinantialEntity finantialEntity, final DebtAccount debtAccount, final FinantialDocument finantialDocument,
             final FinantialEntryType finantialEntryType, final BigDecimal amount, String description, DateTime entryDateTime) {
+
+        setFinantialEntity(finantialEntity);
         setFinantialDocument(finantialDocument);
         setFinantialEntryType(finantialEntryType);
         setAmount(amount);
@@ -112,6 +114,10 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
     }
 
     protected void checkRules() {
+        if (getFinantialEntity() == null) {
+            throw new TreasuryDomainException("error.FinantialDocumentEntry.finantialEntity.required");
+        }
+
         if (isFinantialDocumentRequired() && getFinantialDocument() == null) {
             throw new TreasuryDomainException("error.FinantialDocumentEntry.finantialDocument.required");
         }

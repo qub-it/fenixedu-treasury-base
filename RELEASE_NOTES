@@ -1,3 +1,7 @@
+- Refactor: Apply restriction for requirement of finantial entity for finantial document entries [#qubIT-Fenix-5263]
+- Refactor: Apply restriction for requirement of finantial entity for finantial documents [#qubIT-Fenix-5267]
+- Bug Fix: Fix exception when separating debit entries from debit note, if split debit entries is activated [#qubIT-Fenix-5710]
+
 12.31.0 (29-08-2024)
 - New Feature: Generation of SIBS pre references, to improve performance of SIBS payment requests [#qubIT-Fenix-5597]
 - Bug Fix: If split debit entries is activated, separate debit entries from debit note, which are not settled [#qubIT-Fenix-5710]

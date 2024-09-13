@@ -61,6 +61,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.InstallmentEntry;
@@ -163,17 +164,18 @@ public class SettlementEntry extends SettlementEntry_Base {
     }
 
     @Override
-    protected void init(final DebtAccount debtAccount, final FinantialDocument finantialDocument,
+    protected void init(FinantialEntity finantialEntity, final DebtAccount debtAccount, final FinantialDocument finantialDocument,
             final FinantialEntryType finantialEntryType, final BigDecimal amount, String description, DateTime entryDateTime) {
         throw new RuntimeException("error.SettlementEntry.use.init.without.finantialEntryType");
     }
 
     protected void init(final InvoiceEntry invoiceEntry, final FinantialDocument finantialDocument, final BigDecimal amount,
             String description, final DateTime entryDateTime) {
-        super.init(finantialDocument.getDebtAccount(), finantialDocument, FinantialEntryType.SETTLEMENT_ENTRY, amount,
-                description, entryDateTime);
+        super.init(invoiceEntry.getFinantialEntity(), finantialDocument.getDebtAccount(), finantialDocument,
+                FinantialEntryType.SETTLEMENT_ENTRY, amount, description, entryDateTime);
+
         setInvoiceEntry(invoiceEntry);
-        setFinantialEntity(invoiceEntry.getFinantialEntity());
+
         checkRules();
     }
 

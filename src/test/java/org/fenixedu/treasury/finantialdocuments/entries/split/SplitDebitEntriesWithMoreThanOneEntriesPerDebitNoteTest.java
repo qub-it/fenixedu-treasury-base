@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -66,6 +67,7 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
+        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
@@ -113,6 +115,7 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(false);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
+        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
@@ -163,6 +166,7 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
+        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
@@ -215,6 +219,7 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
+        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
@@ -233,6 +238,7 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         bean.getPaymentEntries().add(new PaymentEntryBean(new BigDecimal("149.00"), PaymentMethod.findByCode("NU"), null));
 
         SettlementNote.createSettlementNote(bean);
+        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         assertEquals(new BigDecimal("49.00"), debitEntryTwo.getTotalAmount());
 
@@ -287,6 +293,7 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
+        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
         bean.setDocNumSeries(DocumentNumberSeries
                 .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
