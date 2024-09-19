@@ -440,6 +440,11 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
             result.setTransactionDate(DATE_TIME_PATTERN.parseDateTime(response.getTransaction().getDate()));
         }
 
+        // ANIL 2024-09-19 (#qubIT-Fenix-5824)
+        //
+        // In development environment, it might throw a error due to 
+        // the JDK module java.xml . Check the task for more details
+
         result.setJsonRequest(TreasuryConstants.json(request));
         result.setJsonResponse(TreasuryConstants.json(response));
 

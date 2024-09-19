@@ -413,10 +413,21 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                         .map(InstallmentPaymenPlanBean.class::cast).map(ib -> ib.getInstallment()).collect(Collectors.toSet());
 
         ForwardPaymentRequest forwardPaymentRequest =
-                ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries, installments,
-                        bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+                createForwardPaymentRequest(bean, successUrlFunction, insuccessUrlFunction, debitEntries, installments);
 
         doWebPayment(forwardPaymentRequest, null /*forwardPaymentRequest.getForwardPaymentSuccessUrl()*/, null);
+
+        return forwardPaymentRequest;
+    }
+
+    @Atomic
+    private ForwardPaymentRequest createForwardPaymentRequest(SettlementNoteBean bean,
+            Function<ForwardPaymentRequest, String> successUrlFunction,
+            Function<ForwardPaymentRequest, String> insuccessUrlFunction, Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
+        ForwardPaymentRequest forwardPaymentRequest =
+                ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries, installments,
+                        bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
 
         return forwardPaymentRequest;
     }
