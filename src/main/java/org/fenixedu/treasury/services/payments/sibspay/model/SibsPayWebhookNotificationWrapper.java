@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 
 public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultBean {
 
@@ -21,8 +23,8 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
     // check if the paymentReference status is "PAID" . If it is not throw an exception
     // and analyse why it is not
     public void checkIfNotificationIsPaidAndPaymentReferenceIsAlsoInPaidStatus() {
-        if (isPaid() && this.webhookNotification.getPaymentReference() != null
-                && !"PAID".equals(this.webhookNotification.getPaymentReference().getStatus())) {
+        if (isPaid() && this.webhookNotification.getPaymentReference() != null && !"PAID".equals(
+                this.webhookNotification.getPaymentReference().getStatus())) {
             throw new RuntimeException("the notification is paid but the status of PaymentReference is not 'PAID'");
         }
     }
@@ -152,8 +154,9 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
         // payment platform
         //
         // Consider only PURS and PREF as successful payments
-        if (!SibsPayAPIService.isPaymentTypePurs(this.webhookNotification.getPaymentType())
-                && !SibsPayAPIService.isPaymentTypePref(this.webhookNotification.getPaymentType())) {
+        if (!SibsPayAPIService.isPaymentTypePurs(
+                this.webhookNotification.getPaymentType()) && !SibsPayAPIService.isPaymentTypePref(
+                this.webhookNotification.getPaymentType())) {
             return false;
         }
 
@@ -170,6 +173,92 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     public boolean isDeclined() {
         return SibsPayAPIService.isDeclined(this.getPaymentResultCode());
+    }
+
+    public boolean isAuthorizationAccepted() {
+        return SibsPayAPIService.isAuthorizationAccepted(this.getPaymentResultCode());
+    }
+
+    public boolean isSibsPayPaymentTypeAuth() {
+        return SibsPayAPIService.isPaymentTypeAuth(this.webhookNotification.getPaymentType());
+    }
+
+    public String getMandateId() {
+        if (this.webhookNotification.getMbwayMandate() != null) {
+            return this.webhookNotification.getMbwayMandate().getMandateIdentification();
+        }
+
+        return null;
+    }
+
+    public boolean IsMandateActionAuthCreation() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionAuthCreation(
+                this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
+    public boolean isMandateActionAuthSuspension() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionAuthSuspension(
+                this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
+    public boolean isMandateActionAuthReactivation() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionAuthReactivation(
+                this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
+    public boolean isMandateActionAuthLimitsUpdate() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionAuthLimitsUpdate(
+                this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
+    public boolean isMandateActionAuthCancel() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionAuthCancel(
+                this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
+    public boolean IsMandateActionStatusSuccess() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionStatusSuccess(
+                this.webhookNotification.getMbwayMandate().getMandateActionStatus());
+    }
+
+    public boolean isMandateActionStatusRejected() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionStatusRejected(
+                this.webhookNotification.getMbwayMandate().getMandateActionStatus());
+    }
+
+    public boolean isMandateActionStatusRefused() {
+        return this.webhookNotification.getMbwayMandate() != null && SibsPayAPIService.isMandateActionStatusRefused(
+                this.webhookNotification.getMbwayMandate().getMandateActionStatus());
+    }
+
+    public BigDecimal getPlafond() {
+        if (this.webhookNotification.getMbwayMandate() == null) {
+            return null;
+        }
+
+        if (this.webhookNotification.getMbwayMandate().getMandateAmountLimit() == null) {
+            return null;
+        }
+
+        return this.webhookNotification.getMbwayMandate().getMandateAmountLimit().getValue();
+    }
+
+    public LocalDate getAuthorizationExpirationDate() {
+        if (this.webhookNotification.getMbwayMandate() == null) {
+            return null;
+        }
+
+        if (this.webhookNotification.getMbwayMandate().getMandateExpirationDate() == null) {
+            return null;
+        }
+
+        String value = this.webhookNotification.getMbwayMandate().getMandateExpirationDate();
+
+        if (value.length() > 10) {
+            value = value.substring(0, 10);
+        }
+
+        return TreasuryConstants.parseLocalDate(value, "yyyy-MM-dd");
     }
 
 }

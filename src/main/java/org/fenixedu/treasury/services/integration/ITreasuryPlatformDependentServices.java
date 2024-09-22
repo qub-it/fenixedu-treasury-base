@@ -148,6 +148,8 @@ public interface ITreasuryPlatformDependentServices {
 
     LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
+    LocalizedString getDynamicApplicationMessage(String key);
+
     /* Versioning Information */
 
     <T> String versioningCreatorUsername(final T obj);

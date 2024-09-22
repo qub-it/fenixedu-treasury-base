@@ -42,16 +42,19 @@ public class SibsPayReturnCheckout {
 
     @JsonProperty("execution")
     private SibsPayExecution execution = null;
-    
+
     @JsonProperty("expiry")
     private DateTime expiry;
 
+    @JsonProperty("mandate")
+    private SibsPayMandate mandate;
+
     @JsonIgnore
     private String requestLog;
-    
+
     @JsonIgnore
     private String responseLog;
-    
+
     public SibsPayReturnCheckout returnStatus(SibsPayReturnStatus returnStatus) {
         this.returnStatus = returnStatus;
         return this;
@@ -236,13 +239,21 @@ public class SibsPayReturnCheckout {
     public void setExecution(SibsPayExecution execution) {
         this.execution = execution;
     }
-    
+
     public DateTime getExpiry() {
         return expiry;
     }
-    
+
     public void setExpiry(DateTime expiry) {
         this.expiry = expiry;
+    }
+
+    public SibsPayMandate getMandate() {
+        return mandate;
+    }
+
+    public void setMandate(SibsPayMandate mandate) {
+        this.mandate = mandate;
     }
 
     @Override
@@ -261,13 +272,14 @@ public class SibsPayReturnCheckout {
                 && Objects.equals(this.paymentMethodList, returnCheckout.paymentMethodList)
                 && Objects.equals(this.tokenList, returnCheckout.tokenList)
                 && Objects.equals(this.formContext, returnCheckout.formContext)
-                && Objects.equals(this.execution, returnCheckout.execution);
+                && Objects.equals(this.execution, returnCheckout.execution)
+                && Objects.equals(this.mandate, returnCheckout.mandate);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(returnStatus, transactionID, transactionSignature, amount, merchant, paymentMethodList, tokenList,
-                formContext, execution);
+                formContext, execution, mandate);
     }
 
     @Override
@@ -298,19 +310,19 @@ public class SibsPayReturnCheckout {
         }
         return o.toString().replace("\n", "\n    ");
     }
-    
+
     public String getRequestLog() {
         return requestLog;
     }
-    
+
     public void setRequestLog(String requestLog) {
         this.requestLog = requestLog;
     }
-    
+
     public String getResponseLog() {
         return responseLog;
     }
-    
+
     public void setResponseLog(String responseLog) {
         this.responseLog = responseLog;
     }
