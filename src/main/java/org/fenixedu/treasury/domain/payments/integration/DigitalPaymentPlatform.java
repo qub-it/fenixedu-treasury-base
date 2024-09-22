@@ -72,6 +72,7 @@ import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
 
 import com.google.common.base.Strings;
 
@@ -198,11 +199,41 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         return log;
     }
 
+    @Atomic(mode = TxMode.WRITE)
+    public PaymentRequestLog log(MbwayMandate mbwayMandate, String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
+        final PaymentRequestLog log = PaymentRequestLog.create(mbwayMandate, operationCode, mbwayMandate.getState().getCode(),
+                mbwayMandate.getState().getLocalizedName());
+
+        log.setStatusCode(statusCode);
+        log.setStatusMessage(statusMessage);
+
+        if (!Strings.isNullOrEmpty(requestBody)) {
+            log.saveRequest(requestBody);
+        }
+
+        if (!Strings.isNullOrEmpty(responseBody)) {
+            log.saveResponse(responseBody);
+        }
+
+        return log;
+    }
+
     public PaymentRequestLog logException(PaymentRequest paymentRequest, Exception e, String operationCode, String statusCode,
             String statusMessage, String requestBody, String responseBody) {
         PaymentRequestLog log = log(paymentRequest, operationCode, statusCode, statusMessage, requestBody, responseBody);
 
         log.logException(e);
+        return log;
+    }
+
+    public PaymentRequestLog logException(MbwayMandate mbwayMandate, Exception e, String operationCode, String statusCode,
+            String statusMessage, String requestBody, String responseBody) {
+
+        PaymentRequestLog log = log(mbwayMandate, operationCode, statusCode, statusMessage, requestBody, responseBody);
+
+        log.logException(e);
+
         return log;
     }
 

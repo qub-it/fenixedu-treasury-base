@@ -13,6 +13,7 @@ enum org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum								as 
 enum org.fenixedu.treasury.domain.InvoiceRegistrationMode                                           as InvoiceRegistrationMode;
 enum org.fenixedu.treasury.domain.document.InvoiceSourceBillingType                                 as InvoiceSourceBillingType;
 enum org.fenixedu.treasury.domain.document.PaymentSourcePaymentType                                 as PaymentSourcePaymentType;
+enum org.fenixedu.treasury.domain.sibspay.MbwayMandateState                                         as MbwayMandateState;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -3340,7 +3341,7 @@ class sibspaymentsgateway.MbwayRequest extends payments.PaymentRequest {
 	String phoneNumber;
 	PaymentReferenceCodeStateType state;
 }
-	
+
 //*********************************************
 //PaymentPlan
 //*********************************************
@@ -3743,6 +3744,77 @@ class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatfor
 	Integer referenceMinimumValidityInHours;
 }
 
+class sibspay.MbwayMandate {
+	MbwayMandateState state;
+
+	String mandateId;
+	String merchantTransactionId;
+	String transactionId;
+
+	String countryPrefix;
+    String localPhoneNumber;	
+    
+	DateTime requestDate;
+	DateTime authorizationDate;
+	DateTime updateDate;
+
+	BigDecimalT plafond;
+	DateTime expirationDate;
+	
+	String cancelReason;
+	String cancelResponsible;	
+}
+
+	relation MbwayMandateDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandateDigitalPaymentPlatform {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform {
+			multiplicity 1..1;
+		}
+				
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandateDebtAccount {
+		debt.DebtAccount playsRole debtAccount {
+			multiplicity 1..1;
+		}
+			
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity *;
+		}
+	}
+
+	relation MbwayMandateMbwayRequest {
+		sibspaymentsgateway.MbwayRequest playsRole mbwayRequests {
+			multiplicity *;
+		}
+
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity 0..1;
+		}
+	}
+	
+	relation MbwayMandatePaymentRequestLog {
+		sibspay.MbwayMandate playsRole mbwayMandate {
+			multiplicity 0..1;
+		}
+	
+		payments.PaymentRequestLog playsRole paymentRequestLogs {
+			multiplicity *;
+		}
+	}
+	
 /*************************
 * PaymentMethodReference *
 **************************/
