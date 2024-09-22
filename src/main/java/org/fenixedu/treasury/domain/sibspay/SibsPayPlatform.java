@@ -46,6 +46,7 @@ import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationResponse;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCreateMbwayMandateResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayResponseInquiryWrapper;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayReturnCheckout;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
@@ -946,8 +947,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             return List.of(responseInquiryWrapper);
         } catch (final Exception e) {
             FenixFramework.atomic(() -> {
-                PaymentRequestLog log =
-                        PaymentRequestLog.create(null, "getPaymentTransactionsReportListByMerchantId", null, null);
+                PaymentRequestLog log = PaymentRequestLog.create((PaymentRequest) null,
+                        "getPaymentTransactionsReportListByMerchantId", null, null);
 
                 log.setInternalMerchantTransactionId(merchantTransationId);
                 log.logException(e);
@@ -1109,9 +1110,67 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
     }
 
+    /*
+     * *****************
+     * SIBS PAY MANDATES
+     * *****************
+     */
+
+    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
+        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
+                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+
+        String merchantTransactionId = generateNewMerchantTransactionId();
+
+        MbwayMandate mbwayMandate =
+                MbwayMandate.create(this, debtAccount, merchantTransactionId, countryPrefix, localPhoneNumber);
+        try {
+
+            SibsPayCreateMbwayMandateResponse response =
+                    sibsPayService.createMbwayMandate(debtAccount, countryPrefix, localPhoneNumber, merchantTransactionId);
+
+            FenixFramework.atomic(() -> {
+                log(mbwayMandate, "requestMbwayMandateAuthorization", response.getOperationStatusCode(),
+                        response.getOperationStatusMessage(), response.getRequestLog(), response.getResponseLog());
+
+                if (response.isMandateCreationSuccess()) {
+                    String mandateId = response.getMandate() != null ? response.getMandate().getMandateId() : null;
+
+                    mbwayMandate.waitAuthorization(mandateId, response.getTransactionId());
+                } else {
+                    mbwayMandate.cancel("mandate creation insuccess");
+                }
+            });
+
+            return mbwayMandate;
+        } catch (final Exception e) {
+
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(mbwayMandate, e, "requestMbwayMandateAuthorization", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.requestMbwayMandateAuthorization");
+        }
+
+    }
+
+    /*
+     * ********
+     * SERVICES
+     * ********
+     */
+
     @Atomic(mode = TxMode.WRITE)
     private static PaymentRequestLog createLogForSibsPaymentRequest(String merchantTransactionId) {
-        PaymentRequestLog log = PaymentRequestLog.create(null, "createSibsPaymentRequest",
+        PaymentRequestLog log = PaymentRequestLog.create((PaymentRequest) null, "createSibsPaymentRequest",
                 PaymentReferenceCodeStateType.UNUSED.getCode(), PaymentReferenceCodeStateType.UNUSED.getDescriptionI18N());
 
         log.setInternalMerchantTransactionId(merchantTransactionId);

@@ -24,8 +24,13 @@ import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayAddress;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayAmount;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationRequest;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationResponse;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCreateAuthorizedPaymentRequest;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCreateMbwayMandateResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCustomer;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCustomerInfo;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayGetInquiryMbwayMandateResponse;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayGetMbwayMandatesListResponse;
+import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayMandate;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayMerchant;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayOriginalTransaction;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayPaymentReference;
@@ -558,13 +563,164 @@ public class SibsPayAPIService {
             return name;
         } else if (compounds.length == 1) {
             // Limit the name to maximum of MAX_NAME_SIZE
-            return compounds[0].substring(0,  Integer.min(compounds[0].length(), MAX_NAME_SIZE));
+            return compounds[0].substring(0, Integer.min(compounds[0].length(), MAX_NAME_SIZE));
         } else {
             // Return the first and the last name
             String result = compounds[0] + " " + compounds[compounds.length - 1];
 
             // But also limit to MAX_NAME_SIZE
             return result.substring(0, Integer.min(result.length(), MAX_NAME_SIZE));
+        }
+    }
+
+    /*
+     * *****************
+     * SIBS PAY MANDATES
+     * *****************
+     */
+
+    public SibsPayCreateMbwayMandateResponse createMbwayMandate(DebtAccount debtAccount, String countryPrefix,
+            String localPhoneNumber, String merchantTransactionId) throws OnlinePaymentsGatewayCommunicationException {
+
+        SibsPayCreateAuthorizedPaymentRequest request = new SibsPayCreateAuthorizedPaymentRequest();
+
+        request.setMerchant(new SibsPayMerchant());
+
+        request.getMerchant().setChannel("web");
+        request.getMerchant().setMerchantTransactionId(merchantTransactionId);
+        request.getMerchant().setTerminalId(this.terminalId);
+
+        request.setMandate(new SibsPayMandate());
+        request.getMandate().setMandateType("SUBSCRIPTION");
+
+        String mbwayId = String.format("%s#%s", countryPrefix, localPhoneNumber);
+        request.getMandate().setAliasMBWAY(mbwayId);
+
+        request.getMandate().setCustomerName(debtAccount.getCustomer().getName());
+
+        String requestLog = null;
+        String responseLog = null;
+
+        try {
+
+            ObjectMapper objectMapper = createObjectMapper();
+
+            requestLog = objectMapper.writeValueAsString(request);
+
+            logger.debug(requestLog);
+
+            WebTarget checkoutWebTarget = this.webTarget.path("mbway-mandates/creation");
+
+            Builder builder = checkoutWebTarget.request(MediaType.APPLICATION_JSON);
+
+            builder.header("Authorization", this.bearerToken);
+            builder.header("X-IBM-Client-Id", this.clientId);
+
+            Response response = builder.post(Entity.entity(requestLog, MediaType.APPLICATION_JSON));
+
+            if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
+                throw new OnlinePaymentsGatewayCommunicationException(requestLog, response.readEntity(String.class),
+                        "unsuccessful createMbwayMandate");
+            }
+
+            responseLog = response.readEntity(String.class);
+            logger.debug(responseLog);
+
+            SibsPayCreateMbwayMandateResponse returnValue =
+                    objectMapper.readValue(responseLog, SibsPayCreateMbwayMandateResponse.class);
+
+            return returnValue;
+        } catch (WebApplicationException var23) {
+            responseLog = var23.getResponse().readEntity(String.class);
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+        } catch (JsonProcessingException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        } catch (IOException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        }
+
+    }
+
+    public SibsPayGetMbwayMandatesListResponse getMbwayMandatesList() throws OnlinePaymentsGatewayCommunicationException {
+        String requestLog = "{}";
+        String responseLog = null;
+
+        try {
+
+            ObjectMapper objectMapper = createObjectMapper();
+
+            logger.debug(requestLog);
+
+            WebTarget checkoutWebTarget = this.webTarget.path("mbway-mandates/list");
+
+            Builder builder = checkoutWebTarget.request(MediaType.APPLICATION_JSON);
+
+            builder.header("Authorization", this.bearerToken);
+            builder.header("X-IBM-Client-Id", this.clientId);
+
+            Response response = builder.post(Entity.entity(requestLog, MediaType.APPLICATION_JSON));
+
+            if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
+                throw new OnlinePaymentsGatewayCommunicationException(requestLog, response.readEntity(String.class),
+                        "unsuccessful getMbwayMandatesList");
+            }
+
+            responseLog = response.readEntity(String.class);
+            logger.debug(responseLog);
+
+            SibsPayGetMbwayMandatesListResponse returnValue =
+                    objectMapper.readValue(responseLog, SibsPayGetMbwayMandatesListResponse.class);
+
+            return returnValue;
+        } catch (WebApplicationException var23) {
+            responseLog = var23.getResponse().readEntity(String.class);
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+        } catch (JsonProcessingException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        } catch (IOException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        }
+    }
+
+    public SibsPayGetInquiryMbwayMandateResponse getInquiryMbwayMandate(String transactionId, String countryPrefix,
+            String localPhoneNumber) throws OnlinePaymentsGatewayCommunicationException {
+        String requestLog = "{}";
+        String responseLog = null;
+
+        try {
+
+            ObjectMapper objectMapper = createObjectMapper();
+
+            logger.debug(requestLog);
+
+            WebTarget checkoutWebTarget = this.webTarget.path("mbway-mandates").path(transactionId).path("inquiry");
+
+            Builder builder = checkoutWebTarget.request(MediaType.APPLICATION_JSON);
+
+            builder.header("Authorization", this.bearerToken);
+            builder.header("X-IBM-Client-Id", this.clientId);
+
+            Response response = builder.post(Entity.entity(requestLog, MediaType.APPLICATION_JSON));
+
+            if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
+                throw new OnlinePaymentsGatewayCommunicationException(requestLog, response.readEntity(String.class),
+                        "unsuccessful getInquiryMbwayMandate");
+            }
+
+            responseLog = response.readEntity(String.class);
+            logger.debug(responseLog);
+
+            SibsPayGetInquiryMbwayMandateResponse returnValue =
+                    objectMapper.readValue(responseLog, SibsPayGetInquiryMbwayMandateResponse.class);
+
+            return returnValue;
+        } catch (WebApplicationException var23) {
+            responseLog = var23.getResponse().readEntity(String.class);
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+        } catch (JsonProcessingException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+        } catch (IOException e) {
+            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
         }
     }
 

@@ -1,0 +1,47 @@
+package org.fenixedu.treasury.domain.sibspay;
+
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
+
+import org.fenixedu.commons.i18n.LocalizedString;
+
+public enum MbwayMandateState {
+
+    NEW, WAITING_AUTHORIZATION, ACTIVE, SUSPENDED, CANCELED, EXPIRED, NOT_AUTHORIZED;
+
+    public boolean isNew() {
+        return this == NEW;
+    }
+
+    public boolean isWaitingAuthorization() {
+        return this == NEW;
+    }
+
+    public boolean isActive() {
+        return this == ACTIVE;
+    }
+
+    public boolean isSuspended() {
+        return this == SUSPENDED;
+    }
+
+    public boolean isCanceled() {
+        return this == CANCELED;
+    }
+
+    public boolean isExpired() {
+        return this == EXPIRED;
+    }
+
+    public boolean isNotAuthorized() {
+        return this == NOT_AUTHORIZED;
+    }
+
+    public String getCode() {
+        return name();
+    }
+
+    public LocalizedString getLocalizedName() {
+        return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
+    }
+
+}

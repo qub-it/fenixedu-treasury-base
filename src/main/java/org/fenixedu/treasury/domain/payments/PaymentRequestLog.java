@@ -62,6 +62,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.FiscalYear;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
@@ -123,6 +124,16 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
 
             setFiscalMonth(fiscalMonth);
         }
+    }
+
+    protected PaymentRequestLog(MbwayMandate mbwayMandate, String operationCode, String stateCode,
+            LocalizedString stateDescription) {
+        this();
+
+        setMbwayMandate(mbwayMandate);
+        setOperationCode(operationCode);
+        setStateCode(stateCode);
+        setStateDescription(stateDescription);
     }
 
     public PaymentRequestLog(String webhookNotification) {
@@ -252,6 +263,11 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
     public static PaymentRequestLog create(PaymentRequest request, String operationCode, String stateCode,
             LocalizedString stateDescription) {
         return new PaymentRequestLog(request, operationCode, stateCode, stateDescription);
+    }
+
+    public static PaymentRequestLog create(MbwayMandate mbwayMandate, String operationCode, String stateCode,
+            LocalizedString stateDescription) {
+        return new PaymentRequestLog(mbwayMandate, operationCode, stateCode, stateDescription);
     }
 
 }
