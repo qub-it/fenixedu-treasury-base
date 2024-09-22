@@ -66,6 +66,7 @@ import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -87,6 +88,8 @@ import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
 import org.fenixedu.treasury.domain.payments.integration.StandardSibsPaymentExpiryStrategy;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandatePaymentSchedule;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
@@ -96,6 +99,7 @@ import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCheckoutBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentItemBean;
+import org.fenixedu.treasury.dto.sibspay.MbwayMandateBean;
 import org.fenixedu.treasury.services.payments.meowallet.MeoWalletService;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -1285,6 +1289,71 @@ public class MeoWallet extends MeoWallet_Base
     @Override
     public int getMaximumLengthForPostalCode() {
         return 16;
+    }
+
+    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public void cancelMbwayMandate(MbwayMandate mbwayMandate, String reason) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public void updateMbwayMandateState(MbwayMandate mbwayMandate) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public boolean isMbwayAuthorizedPaymentsActive() {
+        return false;
+    }
+
+    @Override
+    public int getMbwayMandateDaysToScheduleDebts() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public int getMbwayMandateDaysToSendNotification() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public int getMbwayMandateDaysToChargePayment() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Set<Product> getMbwayMandatePossibleProductsToChargeSet() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public int getMaximumTimeForAuthorizationInMinutes() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public DateTime getLastMbwayPaymentScheduleExecution() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public void updateLastMbwayPaymentScheduleExecution() {
+        throw new RuntimeException("not supported");
     }
 
 }

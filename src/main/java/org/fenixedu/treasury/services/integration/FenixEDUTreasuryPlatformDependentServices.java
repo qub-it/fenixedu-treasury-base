@@ -250,6 +250,11 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     }
 
     @Override
+    public LocalizedString getDynamicApplicationMessage(String key){
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
     public <T> String versioningCreatorUsername(T obj) {
         return readVersioningCreatorUsername(obj);
     }

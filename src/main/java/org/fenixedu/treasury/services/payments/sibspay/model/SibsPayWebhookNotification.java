@@ -57,6 +57,9 @@ public class SibsPayWebhookNotification {
     @JsonProperty("notificationID")
     private String notificationID = null;
 
+    @JsonProperty("mbwayMandate")
+    private SibsPayMandate mbwayMandate;
+
     public SibsPayReturnStatus getReturnStatus() {
         return returnStatus;
     }
@@ -169,4 +172,11 @@ public class SibsPayWebhookNotification {
         this.internalTransactionId = internalTransactionId;
     }
 
+    public SibsPayMandate getMbwayMandate() {
+        return mbwayMandate;
+    }
+
+    public void setMbwayMandate(SibsPayMandate mbwayMandate) {
+        this.mbwayMandate = mbwayMandate;
+    }
 }
