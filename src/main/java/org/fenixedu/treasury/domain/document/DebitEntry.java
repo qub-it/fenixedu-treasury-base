@@ -1121,23 +1121,54 @@ public class DebitEntry extends DebitEntry_Base {
         getInterestDebitEntriesSet().stream().forEach(d -> d.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
 
         annulOnEvent();
-        if (isAnnulled() || !TreasuryConstants.isPositive(getAvailableNetAmountForCredit())) {
+
+        // ANIL 2024-09-26 (qub...)
+        //
+        // Before this date, it was being applied this condition besides isAnnulled() :
+        //
+        //  || !TreasuryConstants.isPositive(getAvailableNetAmountForCredit())
+        //
+        // which does not mark as annuled the debit entry and does not
+        // create the necessary credit entries, if it is closed
+
+        if (isAnnulled()) {
             return;
         }
 
         if (getFinantialDocument() != null) {
             if (getFinantialDocument().isPreparing()) {
                 removeFromDocument();
+
                 annulDebitEntry(reason);
             } else {
-                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false,
-                        calculateDefaultNetExemptedAmountsToCreditMap());
+                Map<TreasuryExemption, BigDecimal> calculateAllNetExemptedAmountsToCreditMap =
+                        calculateAllNetExemptedAmountsToCreditMap();
 
-                annulOnEvent();
+                if (!TreasuryConstants.isPositive(getAvailableNetAmountForCredit())
+                        && calculateAllNetExemptedAmountsToCreditMap.isEmpty()) {
+                    // Nothing to credit, just return
+                    return;
+                }
+
+                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false, calculateAllNetExemptedAmountsToCreditMap);
             }
         } else {
             annulDebitEntry(reason);
         }
+    }
+
+    // ANIL 2024-09-26 (qub...)
+    // 
+    // When annuling a closed debit entry, we must consider the all net exempted to credit
+    // and not just the exempted amount proportion of the netAmount, which netAmount might
+    // be zero, so the netExemptedAmount to credit will be zero also
+    private Map<TreasuryExemption, BigDecimal> calculateAllNetExemptedAmountsToCreditMap() {
+        Map<TreasuryExemption, BigDecimal> result = getTreasuryExemptionsSet().stream() //
+                .filter(te -> te.getCreditEntry() == null) //
+                .filter(te -> TreasuryConstants.isPositive(te.getAvailableNetExemptedAmountForCredit())) //
+                .collect(Collectors.toMap(te -> te, te -> te.getAvailableNetExemptedAmountForCredit()));
+
+        return result;
     }
 
     public Map<TreasuryExemption, BigDecimal> calculateDefaultNetExemptedAmountsToCreditMap() {
