@@ -1,3 +1,5 @@
+- Bug Fix: Fix calculation of exemption amount for credit, when it is given full exemption [#qubIT-Fenix-5852]
+
 12.32.1 (19-09-2024)
 - Bug Fix: Fix bug in creation of forward payment request for Payline [#qubIT-Fenix-5824]
 

@@ -496,6 +496,114 @@ public class CreditTreasuryExemptionTest {
     }
 
     @Test
+    public void testDebitEntryCreditWithSupportForCreditExemptionAndFullExemptionInDebitEntry() {
+
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        finantialEntity.getFinantialInstitution().setSupportCreditTreasuryExemptions(true);
+
+        DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
+        LocalDate dueDate = new LocalDate(2021, 9, 30);
+
+        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
+                Series.findByCode(getFinatialInstitution(), "INT"));
+        DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
+                date.toLocalDate(), null, Collections.emptyMap(), null, null);
+        Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
+
+        Product product = Product.findUniqueByCode(DEBT_PRODUCT).get();
+        DebitEntry debitEntryOne = DebitEntry.create(finantialEntity, getDebtAccount(), null, vat, new BigDecimal(1000), dueDate,
+                null, product, "debt description", BigDecimal.ONE, null, date, false, false, debitNote);
+
+        TreasuryExemptionType treasuryExemptionType = TreasuryExemptionType.findByCode("TreasuryExemptionType").iterator().next();
+
+        TreasuryExemption treasuryExemption =
+                TreasuryExemption.create(treasuryExemptionType, "reason", new BigDecimal("1000"), debitEntryOne);
+
+        debitNote.closeDocument();
+
+        assertEquals("Available amount to exempt is not equals", new BigDecimal("1000.00"), debitEntryOne
+                .calculateDefaultNetExemptedAmountsToCreditMap().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        assertEquals("Available amount to exempt is not equals", new BigDecimal("1000.00"),
+                debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(BigDecimal.ZERO).values().stream()
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        assertEquals("Available amount to credit is not equals", new BigDecimal("0.00"),
+                debitEntryOne.getAvailableNetAmountForCredit());
+
+        debitEntryOne.creditDebitEntry(BigDecimal.ZERO, "reason", false, Map.of(treasuryExemption, new BigDecimal("499.50")));
+
+        assertEquals("Available amount to exemption is not equals", new BigDecimal("500.50"),
+                treasuryExemption.getAvailableNetExemptedAmountForCredit());
+    }
+
+    @Test
+    public void testDebitEntryPartialCreditWithSupportForCreditExemption() {
+
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        finantialEntity.getFinantialInstitution().setSupportCreditTreasuryExemptions(true);
+
+        DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
+        LocalDate dueDate = new LocalDate(2021, 9, 30);
+
+        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
+                Series.findByCode(getFinatialInstitution(), "INT"));
+        DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
+                date.toLocalDate(), null, Collections.emptyMap(), null, null);
+        Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
+
+        Product product = Product.findUniqueByCode(DEBT_PRODUCT).get();
+        DebitEntry debitEntryOne = DebitEntry.create(finantialEntity, getDebtAccount(), null, vat, new BigDecimal(1000), dueDate,
+                null, product, "debt description", BigDecimal.ONE, null, date, false, false, debitNote);
+
+        TreasuryExemptionType treasuryExemptionType = TreasuryExemptionType.findByCode("TreasuryExemptionType").iterator().next();
+
+        TreasuryExemption treasuryExemption =
+                TreasuryExemption.create(treasuryExemptionType, "reason", new BigDecimal("467.65"), debitEntryOne);
+
+        debitNote.closeDocument();
+
+        assertEquals("Net amount is not equal", new BigDecimal("532.35"), debitEntryOne.getNetAmount());
+
+        assertEquals("Available exempted amount to credit is not equals", new BigDecimal("467.65"), debitEntryOne
+                .calculateDefaultNetExemptedAmountsToCreditMap().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        assertEquals("Available exempted amount to credit is not equals", new BigDecimal("0"),
+                debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(new BigDecimal("0")).values().stream()
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        assertEquals(0, debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(new BigDecimal("0")).size());
+
+        assertEquals("Available amount to credit is not equals", new BigDecimal("532.35"),
+                debitEntryOne.getAvailableNetAmountForCredit());
+
+        debitEntryOne.creditDebitEntry(new BigDecimal("100.64"), "reason", false,
+                debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(new BigDecimal("100.64")));
+
+        assertEquals("Available amount to credit is not equals", new BigDecimal("431.71"),
+                debitEntryOne.getAvailableNetAmountForCredit());
+
+        assertEquals("Available exemption amount for credit is not equals", new BigDecimal("379.24"),
+                treasuryExemption.getAvailableNetExemptedAmountForCredit());
+
+        assertEquals("Credited exemption amount is not equal", new BigDecimal("88.41"), debitEntryOne.getCreditEntriesSet()
+                .iterator().next().getCreditTreasuryExemptionsSet().iterator().next().getCreditedNetExemptedAmount());
+
+        debitEntryOne.creditDebitEntry(new BigDecimal("431.71"), "reason", false,
+                debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap());
+
+        assertEquals("Available amount to credit is not equals", new BigDecimal("0.00"),
+                debitEntryOne.getAvailableNetAmountForCredit());
+
+        assertEquals("Available exemption amount for credit is not equals", new BigDecimal("0.00"),
+                treasuryExemption.getAvailableNetExemptedAmountForCredit());
+
+        assertEquals(0, debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap().size());
+    }
+
+    @Test
     public void testTwoDebitEntryCreditWithSupportForCreditExemption() {
 
         FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
@@ -551,6 +659,60 @@ public class CreditTreasuryExemptionTest {
 
         assertEquals("Available amount to credit is not equals", new BigDecimal("100.00"),
                 debitEntryTwo.getAvailableNetAmountForCredit());
+    }
+
+    @Test
+    public void testDebitEntryCreditWithSupportForCreditExemptionAndFullExemptionInDebitEntryAndTestExemptionCreditCalculation() {
+
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+
+        finantialEntity.getFinantialInstitution().setSupportCreditTreasuryExemptions(true);
+
+        DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
+        LocalDate dueDate = new LocalDate(2021, 9, 30);
+
+        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
+                Series.findByCode(getFinatialInstitution(), "INT"));
+        DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
+                date.toLocalDate(), null, Collections.emptyMap(), null, null);
+        Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();
+
+        Product product = Product.findUniqueByCode(DEBT_PRODUCT).get();
+        DebitEntry debitEntryOne = DebitEntry.create(finantialEntity, getDebtAccount(), null, vat, new BigDecimal(1000), dueDate,
+                null, product, "debt description", BigDecimal.ONE, null, date, false, false, debitNote);
+
+        TreasuryExemptionType treasuryExemptionType = TreasuryExemptionType.findByCode("TreasuryExemptionType").iterator().next();
+
+        TreasuryExemption treasuryExemption =
+                TreasuryExemption.create(treasuryExemptionType, "reason", new BigDecimal("1000"), debitEntryOne);
+
+        debitNote.closeDocument();
+
+        assertEquals("Available amount to exempt is not equals", new BigDecimal("1000.00"), debitEntryOne
+                .calculateDefaultNetExemptedAmountsToCreditMap().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        assertEquals("Available amount to credit is not equals", new BigDecimal("0.00"),
+                debitEntryOne.getAvailableNetAmountForCredit());
+
+        debitEntryOne.creditDebitEntry(BigDecimal.ZERO, "reason", false, Map.of(treasuryExemption, new BigDecimal("499.50")));
+
+        assertEquals("Available amount to exemption is not equals", new BigDecimal("500.50"),
+                treasuryExemption.getAvailableNetExemptedAmountForCredit());
+
+        // Request again the exemption amount to credit
+
+        assertEquals(1, debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap().size());
+
+        assertEquals(1, debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(new BigDecimal("0")).size());
+
+        assertEquals(new BigDecimal("500.50"),
+                debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(new BigDecimal("0")).values().iterator().next());
+
+        debitEntryOne.creditDebitEntry(BigDecimal.ZERO, "reason", false, Map.of(treasuryExemption, new BigDecimal("500.50")));
+
+        assertEquals(0, debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap().size());
+
+        assertEquals(0, debitEntryOne.calculateDefaultNetExemptedAmountsToCreditMap(new BigDecimal("0")).size());
     }
 
     private static DebtAccount getDebtAccount() {

@@ -1121,19 +1121,40 @@ public class DebitEntry extends DebitEntry_Base {
         getInterestDebitEntriesSet().stream().forEach(d -> d.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
 
         annulOnEvent();
-        if (isAnnulled() || !TreasuryConstants.isPositive(getAvailableNetAmountForCredit())) {
+
+        // ANIL 2024-09-26 (#qubIT-Fenix-5852)
+        //
+        // Before this date, it was being applied this condition besides isAnnulled() :
+        //
+        //  if(isAnnulled() || !TreasuryConstants.isPositive(getAvailableNetAmountForCredit())) {
+        //      return true;
+        //  }
+        //
+        // which does not mark as annuled the debit entry and does not
+        // create the necessary credit entries for exemptions, if it is closed
+
+        if (isAnnulled()) {
             return;
         }
 
         if (getFinantialDocument() != null) {
             if (getFinantialDocument().isPreparing()) {
                 removeFromDocument();
+
                 annulDebitEntry(reason);
             } else {
-                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false,
-                        calculateDefaultNetExemptedAmountsToCreditMap());
+                Map<TreasuryExemption, BigDecimal> calculateAllNetExemptedAmountsToCreditMap =
+                        calculateDefaultNetExemptedAmountsToCreditMap();
 
-                annulOnEvent();
+                BigDecimal totalNetExemptedAmountToCredit =
+                        calculateAllNetExemptedAmountsToCreditMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (!TreasuryConstants.isPositive(getAvailableNetAmountForCredit())
+                        && !TreasuryConstants.isPositive(totalNetExemptedAmountToCredit)) {
+                    // Nothing to credit, just return
+                    return;
+                }
+
+                creditDebitEntry(getAvailableNetAmountForCredit(), reason, false, calculateAllNetExemptedAmountsToCreditMap);
             }
         } else {
             annulDebitEntry(reason);
@@ -1145,19 +1166,33 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public Map<TreasuryExemption, BigDecimal> calculateDefaultNetExemptedAmountsToCreditMap(BigDecimal netAmountToCredit) {
-        if (!TreasuryConstants.isPositive(netAmountToCredit)) {
-            return Collections.emptyMap();
-        }
-
         if (!TreasuryConstants.isLessOrEqualThan(netAmountToCredit, getAvailableNetAmountForCredit())) {
             throw new IllegalArgumentException("netAmountToCredit is less than availableNetAmountForCredit");
         }
 
-        BigDecimal ratio = TreasuryConstants.divide(netAmountToCredit, getAvailableNetAmountForCredit());
+        // ANIL 2024-09-26 (#qubIT-Fenix-5852)
+        // 
+        // If the netAmountToCredit and the getAvailableNetAmountForCredit() are both zero,
+        // then the ratio should be one
+
+        BigDecimal calculatedRatio = BigDecimal.ONE;
+
+        // Avoid divide by zero exception
+        if (TreasuryConstants.isPositive(getAvailableNetAmountForCredit())) {
+            calculatedRatio = TreasuryConstants.divide(netAmountToCredit, getAvailableNetAmountForCredit());
+        }
+
+        BigDecimal ratio = calculatedRatio;
+
+        // ANIL 2024-09-26 (#qubIT-Fenix-5852) **README**
+        // 
+        // If the multiplication by ratio is not positive, then discard
 
         Map<TreasuryExemption, BigDecimal> result = getTreasuryExemptionsSet().stream() //
                 .filter(te -> te.getCreditEntry() == null) //
                 .filter(te -> TreasuryConstants.isPositive(te.getAvailableNetExemptedAmountForCredit())) //
+                .filter(te -> TreasuryConstants
+                        .isPositive(Currency.getValueWithScale(te.getAvailableNetExemptedAmountForCredit().multiply(ratio)))) // **README**
                 .collect(Collectors.toMap(te -> te,
                         te -> Currency.getValueWithScale(te.getAvailableNetExemptedAmountForCredit().multiply(ratio))));
 

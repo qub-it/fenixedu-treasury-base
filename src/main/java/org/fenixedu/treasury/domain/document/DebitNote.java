@@ -433,9 +433,16 @@ public class DebitNote extends DebitNote_Base {
 
             if (anullGeneratedInterests) {
                 //Annul open interest debit entry
-                getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream())
-                        .filter(interest -> !interest.isAnnulled()
-                                && TreasuryConstants.isPositive(interest.getAvailableNetAmountForCredit()))
+
+                // ANIL 2024-09-27 (#qubIT-Fenix-5852) **README**
+                // 
+                // discard only those that are annuled but not those
+                // that the availableNetAmountForCredit is not positive
+                // because there might be availableNetExemptionAmountForCredit
+                // that is positive
+
+                getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream()) //
+                        .filter(interest -> !interest.isAnnulled()) // read comment marked in **README**
                         .forEach(interest -> interest.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
             }
 
