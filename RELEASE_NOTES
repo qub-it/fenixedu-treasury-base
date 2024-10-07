@@ -1,3 +1,5 @@
+- Refactor: Removes bouncy castle dependency [#qubIT-Omnis-6271]
+
 12.32.2 (30-09-2024)
 - Bug Fix: Fix calculation of exemption amount for credit, when it is given full exemption [#qubIT-Fenix-5852]
 
