@@ -65,6 +65,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.AdhocCustomerBean;
 import org.fenixedu.treasury.util.FiscalCodeValidation;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -124,6 +125,16 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         registerFinantialInstitutions(finantialInstitutions);
 
         checkRules();
+
+        // ANIL 2024-10-10 (qubIT-Fenix-5910)
+        //
+        // Apply pluggable validation of customer creation in order to 
+        // apply specific requirements over fiscal numbers attribution
+        if (TreasuryDebtProcessMainService.isCustomerFiscalNumberInvalid(this)) {
+            List<LocalizedString> reasonsList = TreasuryDebtProcessMainService.getCustomerFiscalNumberInvalidReason(this);
+            throw new IllegalArgumentException(
+                    String.join(",", reasonsList.stream().map(l -> l.getContent()).collect(Collectors.toList())));
+        }
     }
 
     @Override

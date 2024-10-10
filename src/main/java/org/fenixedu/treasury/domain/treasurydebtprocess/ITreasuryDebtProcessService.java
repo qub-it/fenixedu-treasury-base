@@ -3,6 +3,7 @@ package org.fenixedu.treasury.domain.treasurydebtprocess;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -13,27 +14,35 @@ import org.fenixedu.treasury.domain.document.SettlementNote;
 public interface ITreasuryDebtProcessService {
 
     LocalizedString getServiceDescription();
-    
+
     boolean isBlockingPaymentInFrontend(InvoiceEntry invoiceEntry);
-    
+
     boolean isBlockingPaymentInBackoffice(InvoiceEntry invoiceEntry);
 
     LocalizedString getBlockingPaymentReasonForFrontend(DebtAccount debtAccount);
-    
+
     LocalizedString getBlockingPaymentReasonForFrontend(InvoiceEntry invoiceEntry);
-    
+
     LocalizedString getBlockingPaymentReasonForBackoffice(InvoiceEntry invoiceEntry);
-    
+
     Set<? extends ITreasuryDebtProcess> getDebtProcesses(InvoiceEntry invoiceEntry);
-    
+
     boolean isInterestCreationWhenTotalSettledPrevented(InvoiceEntry invoiceEntry);
-    
+
     boolean isFinantialDocumentAnnullmentActionBlocked(FinantialDocument finantialDocument);
 
     boolean isFinantialDocumentEntryAnnullmentActionBlocked(FinantialDocumentEntry finantialDocumentEntry);
-    
+
     Set<? extends ITreasuryDebtProcess> getDebtProcesses(SettlementNote settlementNote);
-    
+
     boolean isDebitEntryInterestCreationInAdvanceBlocked(DebitEntry debitEntry);
-    
+
+    default boolean isCustomerFiscalNumberInvalid(Customer customer) {
+        return false;
+    }
+
+    default LocalizedString getCustomerFiscalNumberInvalidReason(Customer customer) {
+        return null;
+    }
+
 }

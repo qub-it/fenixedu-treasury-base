@@ -1,14 +1,13 @@
 package org.fenixedu.treasury.domain.treasurydebtprocess;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
@@ -87,7 +86,7 @@ public class TreasuryDebtProcessMainService {
 
         return result;
     }
-    
+
     public static List<LocalizedString> getBlockingPaymentReasonsForFrontend(InvoiceEntry invoiceEntry) {
         List<LocalizedString> result = new ArrayList<>();
 
@@ -131,7 +130,7 @@ public class TreasuryDebtProcessMainService {
 
         return false;
     }
-    
+
     public static boolean isFinantialDocumentEntryAnnullmentActionBlocked(FinantialDocumentEntry finantialDocumentEntry) {
         for (ITreasuryDebtProcessService service : services) {
             if (service.isFinantialDocumentEntryAnnullmentActionBlocked(finantialDocumentEntry)) {
@@ -141,7 +140,7 @@ public class TreasuryDebtProcessMainService {
 
         return false;
     }
-    
+
     public static Set<? extends ITreasuryDebtProcess> getDebtProcesses(SettlementNote settlementNote) {
         Set<ITreasuryDebtProcess> result = new HashSet<>();
 
@@ -149,7 +148,7 @@ public class TreasuryDebtProcessMainService {
 
         return result;
     }
-    
+
     public static boolean isDebitEntryInterestCreationInAdvanceBlocked(DebitEntry debitEntry) {
         for (ITreasuryDebtProcessService service : services) {
             if (service.isDebitEntryInterestCreationInAdvanceBlocked(debitEntry)) {
@@ -159,4 +158,27 @@ public class TreasuryDebtProcessMainService {
 
         return false;
     }
+
+    public static boolean isCustomerFiscalNumberInvalid(Customer customer) {
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.isCustomerFiscalNumberInvalid(customer)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static List<LocalizedString> getCustomerFiscalNumberInvalidReason(Customer customer) {
+        List<LocalizedString> result = new ArrayList<>();
+
+        for (ITreasuryDebtProcessService service : services) {
+            if (service.getCustomerFiscalNumberInvalidReason(customer) != null) {
+                result.add(service.getCustomerFiscalNumberInvalidReason(customer));
+            }
+        }
+
+        return result;
+    }
+
 }
