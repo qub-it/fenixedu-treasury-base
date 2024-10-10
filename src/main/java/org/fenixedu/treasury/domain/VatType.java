@@ -109,7 +109,7 @@ public class VatType extends VatType_Base {
         }
 
         setDomainRoot(null);
-
+        getProductGroupsSet().clear();
         deleteDomainObject();
     }
 
