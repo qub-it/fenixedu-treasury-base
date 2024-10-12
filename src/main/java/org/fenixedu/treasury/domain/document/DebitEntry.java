@@ -749,8 +749,13 @@ public class DebitEntry extends DebitEntry_Base {
 
         BigDecimal amountToPay = getAmountWithVat();
         for (final SettlementEntry settlementEntry : entries) {
-            if (!settlementEntry.isAnnulled()) {
-                if (settlementEntry.getEntryDateTime().toLocalDate().isAfter(paymentDate)) {
+            // ANIL 2024-10-10 (qubIT-Fenix-5932)
+            //
+            // The only settlements that must be considered are those closed (and not open)
+            // Also only before the paymentDate . The return value must be the amount in debt at the start of day
+            if (settlementEntry.getFinantialDocument() != null && settlementEntry.getFinantialDocument().isClosed()) {
+
+                if (!settlementEntry.getEntryDateTime().toLocalDate().isBefore(paymentDate)) {
                     break;
                 }
 

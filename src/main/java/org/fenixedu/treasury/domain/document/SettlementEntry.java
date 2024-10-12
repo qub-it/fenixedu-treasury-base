@@ -152,8 +152,9 @@ public class SettlementEntry extends SettlementEntry_Base {
                                 .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
 
                         DebitNote interestDebitNote = DebitNote.create(debitEntry.getFinantialEntity(),
-                                debitEntry.getDebtAccount(), debitEntry.getDebitNote().getPayorDebtAccount(), debitNoteSeries,
-                                new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
+                                debitEntry.getDebtAccount(),
+                                debitEntry.getDebitNote() != null ? debitEntry.getDebitNote().getPayorDebtAccount() : null,
+                                debitNoteSeries, new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
 
                         debitEntry.createInterestRateDebitEntry(undebitedInterestValue, whenInterestDebitEntryDateTime,
                                 interestDebitNote);

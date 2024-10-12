@@ -1,3 +1,6 @@
+- Bug Fix: Fix error relating to the calculation of amount in debt of debit entry in certain date [#qubIT-Fenix-5932]
+- Bug Fix: Prevent NPE in creating interests if their are not being settled with the origin debit entry [#qubIT-Fenix-5932]
+
 12.34.0 (10-10-2024)
 - Refactor: Apply pluggable validation in creation of customers [#qubIT-Fenix-5910]
 
