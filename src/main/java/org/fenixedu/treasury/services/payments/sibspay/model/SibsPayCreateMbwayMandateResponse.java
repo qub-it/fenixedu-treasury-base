@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SibsPayCreateMbwayMandateResponse {
 
+    private static final String SUCCESS_CODE = "000";
+
     @JsonProperty("returnStatus")
     private SibsPayReturnStatus returnStatus = null;
 
@@ -54,7 +56,7 @@ public class SibsPayCreateMbwayMandateResponse {
     }
 
     public boolean isMandateCreationSuccess() {
-        return this.returnStatus != null && "SUCCESS".equals(this.returnStatus.getStatusCode());
+        return this.returnStatus != null && SUCCESS_CODE.equals(this.returnStatus.getStatusCode());
     }
 
     public SibsPayReturnStatus getReturnStatus() {

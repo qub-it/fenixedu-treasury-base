@@ -306,6 +306,18 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
                 .filter(d -> active == d.isActive(creditCardPaymentMethod));
     }
 
+    public static Stream<? extends DigitalPaymentPlatform> findForMbwayPaymentService(FinantialEntity finantialEntity,
+            boolean active) {
+        PaymentMethod mbwayPaymentMethod = TreasurySettings.getInstance().getMbWayPaymentMethod();
+
+        return find(finantialEntity.getFinantialInstitution()).filter(d -> d.isMbwayServiceSupported())
+                .filter(d -> d.getFinantialEntity() == finantialEntity).filter(d -> active == d.isActive(mbwayPaymentMethod));
+    }
+
+    public static Stream<? extends DigitalPaymentPlatform> findActiveForMbwayPaymentService(FinantialEntity finantialEntity) {
+        return findForMbwayPaymentService(finantialEntity, true);
+    }
+
     public static Stream<? extends DigitalPaymentPlatform> find(FinantialInstitution finantialInstitution,
             PaymentMethod paymentMethod, boolean active) {
         return find(finantialInstitution).filter(d -> active == d.isActive(paymentMethod));

@@ -172,4 +172,30 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
         return SibsPayAPIService.isDeclined(this.getPaymentResultCode());
     }
 
+    public boolean isAuthorizationAccepted() {
+        return SibsPayAPIService.isAuthorizationAccepted(this.getPaymentResultCode());
+    }
+
+    public boolean isSibsPayPaymentTypeAuth() {
+        return SibsPayAPIService.isPaymentTypeAuth(this.webhookNotification.getPaymentType());
+    }
+
+    public String getMandateId() {
+        if (this.webhookNotification.getMbwayMandate() != null) {
+            return this.webhookNotification.getMbwayMandate().getMandateIdentification();
+        }
+
+        return null;
+    }
+
+    public boolean IsMandateActionAuthCreation() {
+        return this.webhookNotification.getMbwayMandate() != null
+                && SibsPayAPIService.isMandateActionAuthCreation(this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
+    public boolean IsMandateActionStatusSuccess() {
+        return this.webhookNotification.getMbwayMandate() != null
+                && SibsPayAPIService.isMandateActionStatusSuccess(this.webhookNotification.getMbwayMandate().getMandateAction());
+    }
+
 }

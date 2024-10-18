@@ -1,6 +1,7 @@
 package org.fenixedu.treasury.domain.sibspay;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
@@ -112,6 +113,12 @@ public class MbwayMandate extends MbwayMandate_Base {
         checkRules();
     }
 
+    public void suspend() {
+        setState(MbwayMandateState.SUSPENDED);
+
+        checkRules();
+    }
+
     public void updatePlafondAndExpirationDate(BigDecimal newPlafond, DateTime expirationDate) {
         setPlafond(newPlafond);
         setExpirationDate(expirationDate);
@@ -151,6 +158,11 @@ public class MbwayMandate extends MbwayMandate_Base {
             FinantialInstitution finantialInstitution) {
         return findAllFromCustomer(customer, finantialInstitution)
                 .filter(m -> m.getState() == MbwayMandateState.WAITING_AUTHORIZATION);
+    }
+
+    public static Optional<MbwayMandate> findUniqueByMandateId(String mandateId) {
+        return FenixFramework.getDomainRoot().getMbwayMandatesSet().stream().filter(m -> mandateId.equals(m.getMandateId()))
+                .findFirst();
     }
 
 }

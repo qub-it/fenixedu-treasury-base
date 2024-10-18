@@ -103,6 +103,8 @@ import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformP
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGatewayEnviromentMode;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandatePaymentSchedule;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.SibsPaymentsGatewayLog;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
@@ -1353,4 +1355,21 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
         return true;
     }
+
+    @Override
+    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public void updateMbwayMandateState(MbwayMandate mbwayMandate) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
+        throw new RuntimeException("not supported");
+    }
+
 }
