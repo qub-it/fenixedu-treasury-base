@@ -13,7 +13,7 @@ public enum MbwayMandateState {
     }
 
     public boolean isWaitingAuthorization() {
-        return this == NEW;
+        return this == WAITING_AUTHORIZATION;
     }
 
     public boolean isActive() {

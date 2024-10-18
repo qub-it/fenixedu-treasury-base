@@ -1,5 +1,9 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
+import org.apache.commons.lang3.StringUtils;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandateState;
+import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SibsPayGetInquiryMbwayMandateResponse {
@@ -15,6 +19,28 @@ public class SibsPayGetInquiryMbwayMandateResponse {
 
     @JsonProperty("execution")
     private SibsPayExecution execution = null;
+
+    public boolean isOperationSuccess() {
+        return this.returnStatus != null && SibsPayAPIService.isOperationSuccess(this.returnStatus.getStatusCode());
+    }
+
+    public boolean isOperationErrorUnknownAuthPayment() {
+        return this.returnStatus != null && SibsPayAPIService.isUnknownMbwayAuthorizedPayment(this.returnStatus.getStatusCode());
+    }
+
+    public MbwayMandateState getCurrentMandateState() {
+        if (getMandate() != null && StringUtils.isNotEmpty(getMandate().getMandateStatus())) {
+            return switch (this.mandate.getMandateStatus()) {
+            case "ACTV" -> MbwayMandateState.ACTIVE;
+            case "SSPN" -> MbwayMandateState.SUSPENDED;
+            case "EXPR" -> MbwayMandateState.EXPIRED;
+            case "CNCL" -> MbwayMandateState.CANCELED;
+            default -> throw new IllegalArgumentException("Unexpected value: " + this.mandate.getMandateStatus());
+            };
+        }
+
+        return null;
+    }
 
     public SibsPayReturnStatus getReturnStatus() {
         return returnStatus;

@@ -32,6 +32,7 @@ import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
 import org.fenixedu.treasury.domain.sibspay.SibsPayPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
@@ -129,6 +130,41 @@ public class SibsPayWebhookController {
                         webhookNotificationWrapper.getPaymentBrand());
             });
 
+            // Before considering this as payment request, check if it is an authorization mbway mandate
+            if (webhookNotificationWrapper.IsMandateActionAuthCreation()) {
+                String mandateId = webhookNotificationWrapper.getMandateId();
+
+                if (StringUtils.isEmpty(mandateId)) {
+                    // IGNORE
+                    return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
+                }
+
+                Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateId(mandateId);
+
+                if (!mbwayMandateOpt.isPresent()) {
+                    // Could not find the mbwayMandate, return ok to dismiss the notification
+                    return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
+                }
+
+                MbwayMandate mbwayMandate = mbwayMandateOpt.get();
+
+                // If the mandate is waiting authorization, then update according to the result
+                if (webhookNotificationWrapper.IsMandateActionStatusSuccess()) {
+                    FenixFramework.atomic(() -> {
+                        mbwayMandate.authorize();
+                    });
+                } else {
+                    FenixFramework.atomic(() -> {
+                        mbwayMandate.cancel("Received declined in the platform by a webhook notification");
+                    });
+                }
+
+                // What else can we check?
+                return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
+            }
+
+            // deal with mandate suspension, cancelation, limits change, etc...
+
             // Find payment request
             Optional<PaymentRequest> paymentRequestOptional = configurationToUse.getPaymentRequestsSet().stream()
                     .filter(p -> webhookNotificationWrapper.getTransactionId().equals(p.getTransactionId())).findFirst();
@@ -187,7 +223,9 @@ public class SibsPayWebhookController {
 
             return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
 
-        } catch (Exception e) {
+        } catch (
+
+        Exception e) {
             logger.error(e.getLocalizedMessage(), e);
 
             FenixFramework.atomic(() -> log.logException(e));

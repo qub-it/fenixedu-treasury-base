@@ -58,6 +58,8 @@ import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandatePaymentSchedule;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 
@@ -82,4 +84,10 @@ public interface IMbwayPaymentPlatformService {
 
     public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
 
+    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber);
+
+    public void updateMbwayMandateState(MbwayMandate mbwayMandate);
+
+    public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
+            Set<Installment> installments);
 }

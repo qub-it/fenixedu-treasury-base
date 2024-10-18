@@ -36,6 +36,9 @@ public class SibsPayWebhookNotification {
     @JsonProperty("token")
     private SibsPayToken token = null;
 
+    @JsonProperty("mbwayMandate")
+    private SibsPayMandate mbwayMandate;
+
     public SibsPayReturnStatus getReturnStatus() {
         return returnStatus;
     }
@@ -114,5 +117,13 @@ public class SibsPayWebhookNotification {
 
     public void setToken(SibsPayToken token) {
         this.token = token;
+    }
+
+    public SibsPayMandate getMbwayMandate() {
+        return mbwayMandate;
+    }
+
+    public void setMbwayMandate(SibsPayMandate mbwayMandate) {
+        this.mbwayMandate = mbwayMandate;
     }
 }

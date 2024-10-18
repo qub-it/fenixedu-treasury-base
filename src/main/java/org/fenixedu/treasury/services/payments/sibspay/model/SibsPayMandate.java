@@ -34,6 +34,24 @@ public class SibsPayMandate {
     @JsonProperty("transactionId")
     private String transactionId;
 
+    @JsonProperty("mandateIdentification")
+    private String mandateIdentification;
+
+    @JsonProperty("mandateAction")
+    private String mandateAction;
+
+    @JsonProperty("mandateActionStatus")
+    private String mandateActionStatus;
+
+    @JsonProperty("clientName")
+    private String clientName;
+
+    @JsonProperty("mandateAvailable")
+    private Boolean mandateAvailable;
+
+    @JsonProperty("termsAndConditions")
+    private String termsAndConditions;
+
     public String getMandateType() {
         return mandateType;
     }
@@ -113,6 +131,54 @@ public class SibsPayMandate {
         this.transactionId = transactionId;
     }
 
+    public String getMandateIdentification() {
+        return mandateIdentification;
+    }
+
+    public void setMandateIdentification(String mandateIdentification) {
+        this.mandateIdentification = mandateIdentification;
+    }
+
+    public String getMandateAction() {
+        return mandateAction;
+    }
+
+    public void setMandateAction(String mandateAction) {
+        this.mandateAction = mandateAction;
+    }
+
+    public String getMandateActionStatus() {
+        return mandateActionStatus;
+    }
+
+    public void setMandateActionStatus(String mandateActionStatus) {
+        this.mandateActionStatus = mandateActionStatus;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    public Boolean getMandateAvailable() {
+        return mandateAvailable;
+    }
+
+    public void setMandateAvailable(Boolean mandateAvailable) {
+        this.mandateAvailable = mandateAvailable;
+    }
+
+    public String getTermsAndConditions() {
+        return termsAndConditions;
+    }
+
+    public void setTermsAndConditions(String termsAndConditions) {
+        this.termsAndConditions = termsAndConditions;
+    }
+
     @Override
     public boolean equals(java.lang.Object o) {
         if (this == o) {
@@ -130,13 +196,20 @@ public class SibsPayMandate {
                 && Objects.equals(this.mandateStatus, mandate.mandateStatus) //
                 && Objects.equals(this.mandateExpirationDate, mandate.mandateExpirationDate) //
                 && Objects.equals(this.amountLimit, mandate.amountLimit) //
-                && Objects.equals(this.transactionId, mandate.transactionId);
+                && Objects.equals(this.transactionId, mandate.transactionId)
+                && Objects.equals(this.mandateIdentification, mandate.mandateIdentification)
+                && Objects.equals(this.mandateAction, mandate.mandateAction)
+                && Objects.equals(this.mandateActionStatus, mandate.mandateActionStatus)
+                && Objects.equals(this.clientName, mandate.clientName)
+                && Objects.equals(this.mandateAvailable, mandate.mandateAvailable)
+                && Objects.equals(this.termsAndConditions, mandate.termsAndConditions);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(this.mandateType, this.aliasMBWAY, this.customerName, this.mandateId, this.mandateStatus,
-                this.mandateExpirationDate, this.amountLimit, this.transactionId);
+                this.mandateExpirationDate, this.amountLimit, this.transactionId, this.mandateIdentification, this.mandateAction,
+                this.mandateActionStatus, this.clientName, this.mandateAvailable, this.termsAndConditions);
     }
 
     @Override

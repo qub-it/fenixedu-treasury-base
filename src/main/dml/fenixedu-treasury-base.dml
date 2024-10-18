@@ -3815,6 +3815,58 @@ class sibspay.MbwayMandate {
 		}
 	}
 	
+class sibspay.MbwayMandatePaymentSchedule {
+	
+	DateTime creationDate;
+	DateTime sendEmailDate;
+	DateTime paymentChargeDate;
+	
+	LocalizedString emailSubject;
+	LocalizedString emailBody;
+	boolean emailSent;
+}
+
+	relation MbwayMandatePaymentScheduleDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandatePaymentScheduleMbwayMandate {
+
+		sibspay.MbwayMandate playsRole mbwayMandate {
+			multiplicity 1..1;
+		}
+
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandatePaymentScheduleDebitEntry {
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {
+			multiplicity *;
+		}
+	
+		document.DebitEntry playsRole debitEntries {
+			multiplicity *;
+		}		
+	}
+	
+	relation MbwayMandatePaymentScheduleMbwayPayment {
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {
+			multiplicity 0..1;
+		}
+	
+		sibspaymentsgateway.MbwayRequest playsRole mbwayRequests {
+			multiplicity *;
+		}	
+	}
+	
 /*************************
 * PaymentMethodReference *
 **************************/
