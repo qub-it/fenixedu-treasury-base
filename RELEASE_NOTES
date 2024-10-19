@@ -1,3 +1,5 @@
+- Improvement: Add relation between product group and vat type and require vat exemption, to improve product creation [#qubIT-Fenix-5909]
+
 12.34.1 (12-10-2024)
 - Bug Fix: Fix error relating to the calculation of amount in debt of debit entry in certain date [#qubIT-Fenix-5932]
 - Bug Fix: Prevent NPE in creating interests if their are not being settled with the origin debit entry [#qubIT-Fenix-5932]

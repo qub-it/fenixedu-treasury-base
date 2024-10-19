@@ -76,6 +76,7 @@ class CustomerType {
 class VatType {
 	String code;
 	LocalizedStringT name;
+	boolean requiresVatExemptionReason;
 }
 
 class Vat {
@@ -95,6 +96,16 @@ class VatExemptionReason
 class ProductGroup {
 	String code;
 	LocalizedStringT name;
+}
+
+relation ProductGroupVatType {
+	VatType playsRole vatTypes {
+		multiplicity *;
+	}
+	
+	ProductGroup playsRole productGroups{
+		multiplicity *;
+	}
 }
 
 class Product {
