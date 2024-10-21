@@ -55,13 +55,17 @@ package org.fenixedu.treasury.domain.payments;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.FiscalMonth;
+import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.FenixFramework;
 
@@ -88,6 +92,26 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setOperationCode(operationCode);
         setStateCode(stateCode);
         setStateDescription(stateDescription);
+
+        //Set fiscal month
+        Optional<FiscalYear> optionalFiscalYear =
+                FiscalYear.findUnique(request.getFinantialEntity().getFinantialInstitution(), getCreationDate().getYear());
+
+        if (optionalFiscalYear.isPresent()) {
+            FiscalYear fiscalYear = optionalFiscalYear.get();
+            Optional<FiscalMonth> optionalFiscalMonth = FiscalMonth.findUnique(fiscalYear, getCreationDate().getMonthOfYear());
+            if (optionalFiscalMonth.isPresent()) {
+                setFiscalMonth(optionalFiscalMonth.get());
+            } else {
+                FiscalMonth createdMonth = FiscalMonth.create(fiscalYear, getCreationDate().getMonthOfYear());
+                setFiscalMonth(createdMonth);
+            }
+        } else {
+            FiscalYear createdFiscalYear = FiscalYear.create(request.getFinantialEntity().getFinantialInstitution(),
+                    getCreationDate().getYear(), new LocalDate(getCreationDate().getYear(), 12, 31));
+            FiscalMonth createdFiscalMonth = FiscalMonth.create(createdFiscalYear, getCreationDate().getMonthOfYear());
+            setFiscalMonth(createdFiscalMonth);
+        }
     }
 
     public PaymentRequestLog(String webhookNotification) {

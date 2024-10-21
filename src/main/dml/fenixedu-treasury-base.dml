@@ -3083,6 +3083,16 @@ class FiscalMonth {
 			multiplicity *;
 		}
 	}
+	
+	relation FiscalMonthPaymentRequestLog {
+		FiscalMonth playsRole fiscalMonth {
+			multiplicity 0..1;
+		}
+	
+		payments.PaymentRequestLog playsRole paymentRequestLogs {
+			multiplicity *;
+		}
+	}
 
 /* 
  * *************************
