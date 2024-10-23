@@ -140,16 +140,15 @@ public class ReimbursementUtils {
         final DebtAccount debtAccount = originalCreditEntry.getDebtAccount();
         FinantialEntity finantialEntity = originalCreditEntry.getFinantialEntity();
         final CreditNote originalCreditNote = (CreditNote) originalCreditEntry.getFinantialDocument();
-        final Series series = Series.findUniqueDefaultSeries(finantialEntity);
 
         final DebtAccount payorDebtAccount = originalCreditNote.getPayorDebtAccount();
 
         final DocumentNumberSeries debitNumberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), series);
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         final DocumentNumberSeries creditNumberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), series);
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), finantialEntity);
         final DocumentNumberSeries settlementNumberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), series);
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity);
 
         if (TreasuryConstants.isGreaterThan(amountToReimburseWithVat, originalCreditEntry.getOpenAmount())) {
             throw new TreasuryDomainException("error.ReimbursementUtils.amountToReimburse.greater.than.open.amount.of.credit");

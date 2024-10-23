@@ -661,10 +661,9 @@ public class DebitEntry extends DebitEntry_Base {
         boolean isInvoiceRegistrationByTreasuryCertification =
                 getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
 
-        if (isInvoiceRegistrationByTreasuryCertification
-                && this.getFinantialDocument().getDocumentNumberSeries().getSeries().isLegacy()) {
-            documentNumberSeriesSettlementNote = DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
-                    Series.findUniqueDefaultSeries(finantialEntity));
+        if (isInvoiceRegistrationByTreasuryCertification) {
+            documentNumberSeriesSettlementNote =
+                    DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity);
         }
 
         if (creditEntry.getFinantialDocument().isAnnulled()) {

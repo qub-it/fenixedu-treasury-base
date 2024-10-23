@@ -169,9 +169,6 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
 
     @Override
     public void execute(SettlementNoteBean settlementNoteBean, ISettlementInvoiceEntryBean invoiceEntryBean) {
-        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), settlementNoteBean.getDebtAccount().getFinantialInstitution())
-                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
         if (!(invoiceEntryBean instanceof SettlementInterestEntryBean)) {
             return;
         }
@@ -184,6 +181,9 @@ public class VirtualInterestHandler implements IVirtualPaymentEntryHandler {
             Customer payorCustomer = settlementNoteBean.getReferencedCustomers().iterator().next();
             payorDebtAccount = payorCustomer.getDebtAccountFor(settlementNoteBean.getDebtAccount().getFinantialInstitution());
         }
+
+        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), settlementNoteBean.getFinantialEntity());
 
         DebitNote interestDebitNote =
                 DebitNote.create(settlementNoteBean.getFinantialEntity(), settlementNoteBean.getDebtAccount(), payorDebtAccount,

@@ -26,7 +26,6 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxSettings;
@@ -108,8 +107,8 @@ public class DebitEntry_getAmountInDebtTest {
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -124,8 +123,8 @@ public class DebitEntry_getAmountInDebtTest {
 
         SettlementNoteBean bean = new SettlementNoteBean(debitEntry.getDebtAccount(), false, false);
 
-        bean.setDocNumSeries(DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForSettlementNote(),
-                debitEntry.getDebtAccount().getFinantialInstitution()).get());
+        bean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity));
 
         bean.setFinantialEntity(debitEntry.getFinantialEntity());
 

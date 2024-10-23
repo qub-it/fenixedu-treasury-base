@@ -472,10 +472,6 @@ public class SettlementNote extends SettlementNote_Base {
 
         BigDecimal restAmountToUse = paymentEntriesAmount.add(creditsAmount);
 
-        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
-                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
-
         List<DebitEntry> untiedDebitEntries = new ArrayList<DebitEntry>();
         for (SettlementDebitEntryBean debitEntryBean : bean.getDebitEntriesByType(SettlementDebitEntryBean.class)) {
             if (!debitEntryBean.isIncluded()) {
@@ -607,6 +603,9 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         if (untiedDebitEntries.size() != 0) {
+            DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
+                    .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), bean.getFinantialEntity());
+
             DebitNote debitNote = DebitNote.create(bean.getFinantialEntity(), bean.getDebtAccount(), null, debitNoteSeries,
                     bean.getDate(), bean.getDate().toLocalDate(), null, Collections.emptyMap(), null, null);
 

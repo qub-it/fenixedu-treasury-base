@@ -25,7 +25,6 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
-import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.domain.paymentpenalty.PaymentPenaltyTaxSettings;
@@ -106,8 +105,8 @@ public class DebitEntry_AnnulOnlyThisDebitEntryAndInterestsInBusinessContextTest
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -138,8 +137,8 @@ public class DebitEntry_AnnulOnlyThisDebitEntryAndInterestsInBusinessContextTest
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -185,8 +184,8 @@ public class DebitEntry_AnnulOnlyThisDebitEntryAndInterestsInBusinessContextTest
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -232,8 +231,8 @@ public class DebitEntry_AnnulOnlyThisDebitEntryAndInterestsInBusinessContextTest
         DateTime date = new LocalDate(2021, 9, 1).toDateTimeAtStartOfDay();
         LocalDate dueDate = new LocalDate(2021, 9, 30);
 
-        DocumentNumberSeries documentNumberSeries = DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(),
-                Series.findByCode(getFinatialInstitution(), "INT"));
+        DocumentNumberSeries documentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
                 date.toLocalDate(), null, Collections.emptyMap(), null, null);
         Vat vat = Vat.findActiveUnique(VatType.findByCode("INT"), getFinatialInstitution(), date).get();

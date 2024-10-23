@@ -55,11 +55,12 @@ public class SimpleSettlementNoteCreationTest {
         finantialInstitution.setSplitDebitEntriesWithSettledAmount(true);
 
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
-        bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+        bean.setFinantialEntity(finantialEntity);
         bean.setAdvancePayment(true);
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity));
         bean.setDate(new DateTime());
 
         bean.getDebitEntries().stream().filter(de -> de.getInvoiceEntry() == debitEntry).forEach(de -> {
