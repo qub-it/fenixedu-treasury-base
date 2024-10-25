@@ -138,12 +138,14 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
         final FinantialInstitution finantialInstitution = fromDebtAccount.getFinantialInstitution();
         final Currency currency = finantialInstitution.getCurrency();
-        final DocumentNumberSeries documentNumberSeries =
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
         final DateTime now = new DateTime();
 
         final Set<DebitNote> pendingDebitNotes = Sets.newHashSet();
         for (final InvoiceEntry invoiceEntry : fromDebtAccount.getPendingInvoiceEntriesSet()) {
+            FinantialEntity finantialEntity = invoiceEntry.getFinantialEntity();
+
+            final DocumentNumberSeries documentNumberSeries =
+                    DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
 
             if (TreasuryDebtProcessMainService.isFinantialDocumentEntryAnnullmentActionBlocked(invoiceEntry)) {
                 throw new TreasuryDomainException("error.DebitEntry.cannot.annul.or.credit.due.to.existing.active.debt.process");
@@ -232,8 +234,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
     }
 
     protected void transferCreditEntry(final CreditEntry invoiceEntry) {
-        final FinantialInstitution finantialInstitution = this.fromDebtAccount.getFinantialInstitution();
-        final Series defaultSeries = Series.findUniqueDefault(finantialInstitution).get();
+        FinantialEntity finantialEntity = invoiceEntry.getFinantialEntity();
+        final Series defaultSeries = Series.findUniqueDefaultSeries(finantialEntity);
         final DocumentNumberSeries settlementNoteSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), defaultSeries);
         final DateTime now = new DateTime();
@@ -293,9 +295,9 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
     }
 
     protected void transferDebitEntries(final DebitNote objectDebitNote) {
-        final FinantialInstitution finantialInstitution = objectDebitNote.getDebtAccount().getFinantialInstitution();
+        FinantialEntity finantialEntity = objectDebitNote.getFinantialEntity();
         final DocumentNumberSeries settlementNumberSeries =
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get();
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity);
         final DateTime now = new DateTime();
 
         if (objectDebitNote.isPreparing()) {

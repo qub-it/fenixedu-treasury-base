@@ -248,6 +248,46 @@ public class DebitNote extends DebitNote_Base {
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate, String originNumber,
             Map<String, String> propertiesMap, String documentObservations, String documentTermsAndConditions) {
 
+        // ANIL 2024-08-02
+        //
+        // Validate document number series against finantial entity or finantial institution
+
+        if (Boolean.TRUE.equals(debtAccount.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            if (documentNumberSeries.getSeries().getFinantialEntity() != finantialEntity) {
+                throw new TreasuryDomainException("error.DebitNote.documentNumberSeries.finantialEntity.mismatch");
+            }
+        } else {
+            if (documentNumberSeries.getSeries().getFinantialInstitution() != debtAccount.getFinantialInstitution()) {
+                throw new TreasuryDomainException("error.DebitNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+
+            if (documentNumberSeries.getSeries().getFinantialEntity() != null) {
+                throw new TreasuryDomainException("error.DebitNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+        }
+
+        DebitNote note = new DebitNote(finantialEntity, debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
+
+        note.setOriginDocumentNumber(originNumber);
+        note.setDocumentDueDate(documentDueDate);
+
+        note.setDocumentObservations(documentObservations);
+        note.setDocumentTermsAndConditions(documentTermsAndConditions);
+        note.editPropertiesMap(propertiesMap);
+
+        note.checkRules();
+
+        return note;
+    }
+
+    // ANIL 2024-08-02
+    //
+    // It is necessary to not validate the document number series againsts finantial entity or finantial institution
+    public static DebitNote createForImportation(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DebtAccount payorDebtAccount, DocumentNumberSeries documentNumberSeries, DateTime documentDate,
+            LocalDate documentDueDate, String originNumber, Map<String, String> propertiesMap, String documentObservations,
+            String documentTermsAndConditions) {
+
         DebitNote note = new DebitNote(finantialEntity, debtAccount, payorDebtAccount, documentNumberSeries, documentDate);
 
         note.setOriginDocumentNumber(originNumber);
@@ -630,14 +670,13 @@ public class DebitNote extends DebitNote_Base {
         boolean isInvoiceRegistrationByTreasuryCertification =
                 getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
 
-        if (isInvoiceRegistrationByTreasuryCertification && getDocumentNumberSeries().getSeries().isLegacy()) {
+        if (isInvoiceRegistrationByTreasuryCertification) {
             // This is relevant for treasury certification
             //
             // Avoid using the same document number series for documents from other
             // software applications, documents issued manually or recovered documents
 
-            return DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(),
-                    Series.findUniqueDefault(getDebtAccount().getFinantialInstitution()).get());
+            return DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), getFinantialEntity());
         } else {
             return DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), getDocumentNumberSeries().getSeries());
         }

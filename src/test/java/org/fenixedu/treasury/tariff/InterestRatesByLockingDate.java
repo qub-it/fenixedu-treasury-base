@@ -6,7 +6,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.math.BigDecimal;
 
 import org.fenixedu.treasury.base.FenixFrameworkRunner;
-import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
@@ -113,10 +113,10 @@ public class InterestRatesByLockingDate {
 
     private void createSettlementNote(DebitEntry debitEntry, BigDecimal amount, LocalDate paymentDate) {
         SettlementNoteBean settlementNoteBean = new SettlementNoteBean(debitEntry.getDebtAccount(), false, true);
-        FinantialInstitution finantialInstitution = debitEntry.getDebtAccount().getFinantialInstitution();
+        FinantialEntity finantialEntity = debitEntry.getFinantialEntity();
 
-        settlementNoteBean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        settlementNoteBean.setDocNumSeries(
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity));
         settlementNoteBean.setDate(paymentDate.toDateTimeAtStartOfDay());
         settlementNoteBean.getDebitEntries().stream().filter(d -> d.getInvoiceEntry() == debitEntry).findFirst().get()
                 .setIncluded(true);

@@ -59,6 +59,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 import java.math.BigDecimal;
 import java.util.Collections;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Vat;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
@@ -137,18 +138,17 @@ public class ReimbursementUtils {
             final BigDecimal amountToReimburseWithVat) {
         final DateTime now = new DateTime();
         final DebtAccount debtAccount = originalCreditEntry.getDebtAccount();
-        final FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
+        FinantialEntity finantialEntity = originalCreditEntry.getFinantialEntity();
         final CreditNote originalCreditNote = (CreditNote) originalCreditEntry.getFinantialDocument();
-        final Series series = Series.findUniqueDefault(finantialInstitution).get();
 
         final DebtAccount payorDebtAccount = originalCreditNote.getPayorDebtAccount();
 
         final DocumentNumberSeries debitNumberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), series);
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
         final DocumentNumberSeries creditNumberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForCreditNote(), series);
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForCreditNote(), finantialEntity);
         final DocumentNumberSeries settlementNumberSeries =
-                DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), series);
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(), finantialEntity);
 
         if (TreasuryConstants.isGreaterThan(amountToReimburseWithVat, originalCreditEntry.getOpenAmount())) {
             throw new TreasuryDomainException("error.ReimbursementUtils.amountToReimburse.greater.than.open.amount.of.credit");

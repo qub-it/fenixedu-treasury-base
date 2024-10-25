@@ -472,10 +472,6 @@ public class SettlementNote extends SettlementNote_Base {
 
         BigDecimal restAmountToUse = paymentEntriesAmount.add(creditsAmount);
 
-        DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-                .find(FinantialDocumentType.findForDebitNote(), bean.getDebtAccount().getFinantialInstitution())
-                .filter(x -> Boolean.TRUE.equals(x.getSeries().getDefaultSeries())).findFirst().orElse(null);
-
         List<DebitEntry> untiedDebitEntries = new ArrayList<DebitEntry>();
         for (SettlementDebitEntryBean debitEntryBean : bean.getDebitEntriesByType(SettlementDebitEntryBean.class)) {
             if (!debitEntryBean.isIncluded()) {
@@ -607,6 +603,9 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         if (untiedDebitEntries.size() != 0) {
+            DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
+                    .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), bean.getFinantialEntity());
+
             DebitNote debitNote = DebitNote.create(bean.getFinantialEntity(), bean.getDebtAccount(), null, debitNoteSeries,
                     bean.getDate(), bean.getDate().toLocalDate(), null, Collections.emptyMap(), null, null);
 
@@ -1022,6 +1021,34 @@ public class SettlementNote extends SettlementNote_Base {
     // @formatter:on
 
     public static SettlementNote create(FinantialEntity finantialEntity, DebtAccount debtAccount,
+            DocumentNumberSeries documentNumberSeries, DateTime documentDate, DateTime paymentDate, String originDocumentNumber,
+            String finantialTransactionReference) {
+
+        if (Boolean.TRUE.equals(debtAccount.getFinantialInstitution().getSeriesByFinantialEntity())) {
+            if (documentNumberSeries.getSeries().getFinantialEntity() != finantialEntity) {
+                throw new TreasuryDomainException("error.SettlementNote.documentNumberSeries.finantialEntity.mismatch");
+            }
+        } else {
+            if (documentNumberSeries.getSeries().getFinantialInstitution() != debtAccount.getFinantialInstitution()) {
+                throw new TreasuryDomainException("error.SettlementNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+
+            if (documentNumberSeries.getSeries().getFinantialEntity() != null) {
+                throw new TreasuryDomainException("error.SettlementNote.documentNumberSeries.finantialInstitution.mismatch");
+            }
+        }
+
+        SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,
+                paymentDate, originDocumentNumber, finantialTransactionReference);
+
+        return settlementNote;
+    }
+
+    // ANIL 2024-08-02
+    //
+    // Add this method factory to not validate the document number series against the finantial entity
+    // or finantial institution
+    public static SettlementNote createForImportation(FinantialEntity finantialEntity, DebtAccount debtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, DateTime paymentDate, String originDocumentNumber,
             String finantialTransactionReference) {
         SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,

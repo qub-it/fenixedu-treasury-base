@@ -59,6 +59,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
+import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.document.TreasuryDocumentTemplate;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.tariff.FixedTariff;
@@ -171,6 +172,18 @@ public class FinantialEntity extends FinantialEntity_Base {
     public Set<FixedTariff> getFixedTariffSet() {
         return this.getTariffSet().stream().filter(x -> x instanceof FixedTariff).map(FixedTariff.class::cast)
                 .collect(Collectors.toSet());
+    }
+
+    public void markSeriesAsDefault(final Series series) {
+        if (!Boolean.TRUE.equals(getFinantialInstitution().getSeriesByFinantialEntity())) {
+            throw new IllegalStateException("default series is not by finantial entity");
+        }
+
+        for (final Series s : getSeriesSet()) {
+            s.setDefaultSeries(false);
+        }
+
+        series.setDefaultSeries(true);
     }
 
     /*

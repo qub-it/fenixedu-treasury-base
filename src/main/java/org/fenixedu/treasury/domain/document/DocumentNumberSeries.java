@@ -53,11 +53,11 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 
@@ -144,10 +144,10 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     public void editReplacingPrefix(final boolean replacePrefix, final String replacingPrefix) {
-        if(!getFinantialDocumentsSet().isEmpty()) {
+        if (!getFinantialDocumentsSet().isEmpty()) {
             throw new RuntimeException("edit replacing prefix not possible. documentNumberSeries with finantial documents");
         }
-        
+
         setReplacePrefix(replacePrefix);
         if (isReplacePrefix()) {
             setReplacingPrefix(replacingPrefix);
@@ -191,13 +191,25 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
                 .filter(x -> x.getSeries().getFinantialInstitution().getCode().equals(finantialInstitution.getCode()));
     }
 
-    public static Optional<DocumentNumberSeries> findUniqueDefault(final FinantialDocumentType finantialDocumentType,
-            final FinantialInstitution finantialInstitution) {
-        if (!Series.findUniqueDefault(finantialInstitution).isPresent()) {
-            return Optional.<DocumentNumberSeries> empty();
+    public static Stream<DocumentNumberSeries> findActiveAndSelectableSeries(FinantialDocumentType finantialDocumentType,
+            FinantialEntity finantialEntity) {
+        return Series.findActiveAndSelectableSeries(finantialEntity).flatMap(s -> s.getDocumentNumberSeriesSet().stream())
+                .filter(dns -> dns.getFinantialDocumentType() == finantialDocumentType);
+    }
+
+    public static Stream<DocumentNumberSeries> findActiveAndSelectableSeries(FinantialDocumentType finantialDocumentType,
+            FinantialInstitution finantialInstitution) {
+        return Series.findActiveAndSelectableSeries(finantialInstitution).flatMap(s -> s.getDocumentNumberSeriesSet().stream())
+                .filter(dns -> dns.getFinantialDocumentType() == finantialDocumentType);
+    }
+
+    public static DocumentNumberSeries findUniqueDefaultSeries(FinantialDocumentType finantialDocumentType,
+            FinantialEntity finantialEntity) {
+        if (Series.findUniqueDefaultSeries(finantialEntity) == null) {
+            return null;
         }
 
-        return Optional.of(find(finantialDocumentType, Series.findUniqueDefault(finantialInstitution).get()));
+        return find(finantialDocumentType, Series.findUniqueDefaultSeries(finantialEntity));
     }
 
     @Atomic
@@ -218,7 +230,6 @@ public class DocumentNumberSeries extends DocumentNumberSeries_Base {
     }
 
     public static Stream<DocumentNumberSeries> applyActiveSelectableAndDefaultSorting(Stream<DocumentNumberSeries> stream) {
-
         return stream.filter(x -> x.getSeries().getActive()).filter(d -> d.getSeries().isSelectable())
                 .sorted(COMPARE_BY_DEFAULT.thenComparing(COMPARE_BY_NAME));
     }

@@ -167,11 +167,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             throw new TreasuryDomainException("error.FinantialDocument.finantialEntity.required");
         }
 
-        if (!getDocumentNumberSeries().getSeries().getFinantialInstitution().equals(getDebtAccount().getFinantialInstitution())) {
+        if (getDocumentNumberSeries().getSeries().getFinantialInstitution() != getDebtAccount().getFinantialInstitution()) {
             throw new TreasuryDomainException("error.FinantialDocument.finantialinstitution.mismatch");
         }
 
-        if (getDocumentNumberSeries().getSeries().getLegacy() == false) {
+        if (!getDocumentNumberSeries().getSeries().getLegacy()) {
             if (getDocumentDueDate().isBefore(getDocumentDate().toLocalDate())) {
                 throw new TreasuryDomainException("error.FinantialDocument.documentDueDate.invalid");
             }
@@ -201,10 +201,6 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         }
 
-        // TODO: Apply when all finantial documents have code
-//        if (FinantialDocument.findByCode(getDebtAccount(), getCode()).count() > 1) {
-//            throw new TreasuryDomainException("error.FinantialDocument.code.must.be.unique");
-//        }
     }
 
     protected boolean isDocumentEmpty() {
@@ -581,7 +577,13 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             FinantialDocumentType type = FinantialDocumentType.findByCode(documentType);
 
             if (type != null) {
-                Series series = Series.findByCode(finantialInstitution, seriesNumber);
+                Series series = Series.findByCode(seriesNumber);
+
+                // Ensure the finantial institution of series is the same as finantial institution
+                if (series.getFinantialInstitution() != finantialInstitution) {
+                    throw new IllegalStateException("finantial institution series differ");
+                }
+
                 if (series != null) {
                     DocumentNumberSeries dns = DocumentNumberSeries.find(type, series);
 

@@ -275,8 +275,8 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
         if (debitNote == null) {
-            DocumentNumberSeries documentNumberSeries =
-                    DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get();
+            DocumentNumberSeries documentNumberSeries = DocumentNumberSeries
+                    .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), tariff.getFinantialEntity());
 
             debitNote = DebitNote.create(settings.getFinantialEntity(), debtAccount, null, documentNumberSeries,
                     whenDebtCreationDate.toDateTimeAtStartOfDay(), whenDebtCreationDate, null, Collections.emptyMap(), null,

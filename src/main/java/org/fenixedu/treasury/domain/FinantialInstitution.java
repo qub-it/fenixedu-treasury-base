@@ -89,6 +89,8 @@ public class FinantialInstitution extends FinantialInstitution_Base {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setInvoiceRegistrationMode(InvoiceRegistrationMode.ERP_INTEGRATION);
+        setSupportCreditTreasuryExemptions(false);
+        setSeriesByFinantialEntity(false);
     }
 
     protected FinantialInstitution(final FiscalCountryRegion fiscalCountryRegion, final Currency currency, final String code,
@@ -233,6 +235,10 @@ public class FinantialInstitution extends FinantialInstitution_Base {
 
     @Atomic
     public void markSeriesAsDefault(final Series series) {
+        if (Boolean.TRUE.equals(getSeriesByFinantialEntity())) {
+            throw new IllegalStateException("default series is not by finantial institution");
+        }
+
         for (final Series s : getSeriesSet()) {
             s.setDefaultSeries(false);
         }
@@ -311,6 +317,18 @@ public class FinantialInstitution extends FinantialInstitution_Base {
 
     public boolean isSupportForCreditExemptionsActive() {
         return Boolean.TRUE.equals(getSupportCreditTreasuryExemptions());
+    }
+
+    @Override
+    // ANIL 2024-07-05
+    //
+    // Ensure the finantial institution is the same
+    public void setRegulationSeries(Series regulationSeries) {
+        if (regulationSeries.getFinantialInstitution() != this) {
+            throw new IllegalArgumentException("finantial institution of series differ");
+        }
+
+        super.setRegulationSeries(regulationSeries);
     }
 
     // ********

@@ -43,10 +43,10 @@ public class BalanceTransferForSAPAndSINGAPWithCompensationForAdvancePaymentCred
 
     private void createAdvancePaymentCreditInDestinyDebtAccount(CreditEntry creditEntry, BigDecimal creditOpenAmount) {
         FinantialInstitution finantialInstitution = this.destinyDebtAccount.getFinantialInstitution();
-        Series defaultSeries = Series.findUniqueDefault(finantialInstitution).get();
+        FinantialEntity finantialEntity = creditEntry.getFinantialEntity();
+        Series defaultSeries = Series.findUniqueDefaultSeries(finantialEntity);
         DocumentNumberSeries settlementNoteSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(), defaultSeries);
-        FinantialEntity finantialEntity = creditEntry.getFinantialEntity();
 
         SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this.destinyDebtAccount, false, false);
         settlementNoteBean.setDate(new DateTime());
@@ -74,11 +74,11 @@ public class BalanceTransferForSAPAndSINGAPWithCompensationForAdvancePaymentCred
 
     private void reimburseAdvancePaymentCredit(CreditEntry creditEntry, BigDecimal creditOpenAmount) {
         FinantialInstitution finantialInstitution = this.fromDebtAccount.getFinantialInstitution();
-        Series defaultSeries = Series.findUniqueDefault(finantialInstitution).get();
+        FinantialEntity finantialEntity = creditEntry.getFinantialEntity();
+        Series defaultSeries = Series.findUniqueDefaultSeries(finantialEntity);
         DocumentNumberSeries reimbursementNoteSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForReimbursementNote(), defaultSeries);
         DateTime entryDateTime = new DateTime();
-        FinantialEntity finantialEntity = creditEntry.getFinantialEntity();
 
         SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this.fromDebtAccount, true, true);
         settlementNoteBean.setDate(entryDateTime);

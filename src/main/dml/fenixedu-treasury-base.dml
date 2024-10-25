@@ -194,6 +194,7 @@ class FinantialInstitution {
 	String balanceTransferServiceImplementationClass;
 	
 	Boolean supportCreditTreasuryExemptions;
+	Boolean seriesByFinantialEntity;
 }
 
 class FinantialEntity {
@@ -312,9 +313,13 @@ class document.Series {
 	LocalizedStringT name (REQUIRED);
 	boolean active;
 	boolean externSeries;
-	boolean certificated;
 	boolean legacy;
+	
+	// TODO ANIL 2024-07-07 
+	// 
+	// Default should be marked as a relation with FinantialInstitution or FinantialEntity
 	boolean defaultSeries;
+	
 	boolean selectable;
 }
 
@@ -327,7 +332,7 @@ class document.Series {
 			multiplicity 0..1;
 		}
 	}
-
+	
 class document.DocumentNumberSeries {
 	int counter;
 	boolean replacePrefix;
@@ -2236,6 +2241,16 @@ relation SeriesBennu {
 relation SeriesFinantialInstitution {
 	FinantialInstitution playsRole finantialInstitution {
 		multiplicity 1..1;
+	}
+	
+	document.Series playsRole series {
+		multiplicity *;
+	}
+}
+
+relation SeriesFinantialEntity {
+	FinantialEntity playsRole finantialEntity {
+		multiplicity 0..1;
 	}
 	
 	document.Series playsRole series {

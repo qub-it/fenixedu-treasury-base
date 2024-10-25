@@ -57,8 +57,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
-        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null, DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntryOne.getFinantialEntity()),
                 new DateTime(), new LocalDate(), null, null, null);
 
         debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo));
@@ -69,8 +69,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(),
+                debitEntryOne.getFinantialEntity()));
         bean.setDate(new DateTime());
 
         bean.getDebitEntries().stream().filter(de -> de.getInvoiceEntry() == debitEntryOne).forEach(de -> {
@@ -105,8 +105,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
-        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null, DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntryOne.getFinantialEntity()),
                 new DateTime(), new LocalDate(), null, null, null);
 
         debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo));
@@ -117,8 +117,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(),
+                debitEntryOne.getFinantialEntity()));
         bean.setDate(new DateTime());
 
         bean.getDebitEntries().stream().filter(de -> de.getInvoiceEntry() == debitEntryOne).forEach(de -> {
@@ -156,8 +156,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
-        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null, DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntryOne.getFinantialEntity()),
                 new DateTime(), new LocalDate(), null, null, null);
 
         debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo, debitEntryThree));
@@ -168,8 +168,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(),
+                debitEntryOne.getFinantialEntity()));
         bean.setDate(new DateTime());
 
         bean.getDebitEntries().stream().filter(de -> de.getInvoiceEntry() == debitEntryOne).forEach(de -> {
@@ -209,8 +209,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
-        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null, DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntryOne.getFinantialEntity()),
                 new DateTime(), new LocalDate(), null, null, null);
 
         debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo, debitEntryThree));
@@ -221,8 +221,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(),
+                debitEntryOne.getFinantialEntity()));
         bean.setDate(new DateTime());
 
         bean.getDebitEntries().stream().filter(de -> de.getInvoiceEntry() == debitEntryOne).forEach(de -> {
@@ -279,14 +279,14 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         DebtAccount debtAccount = debitEntryOne.getDebtAccount();
         FinantialInstitution finantialInstitution = debtAccount.getFinantialInstitution();
 
-        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+        DebitNote.createDebitNoteForDebitEntry(debitEntryOne, null, DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntryOne.getFinantialEntity()),
                 new DateTime(), new LocalDate(), null, null, null);
 
         debitEntryOne.getDebitNote().addDebitNoteEntries(List.of(debitEntryTwo, debitEntryThree));
 
-        DebitNote.createDebitNoteForDebitEntry(debitEntryFour, null,
-                DocumentNumberSeries.findUniqueDefault(FinantialDocumentType.findForDebitNote(), finantialInstitution).get(),
+        DebitNote.createDebitNoteForDebitEntry(debitEntryFour, null, DocumentNumberSeries
+                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntryOne.getFinantialEntity()),
                 new DateTime(), new LocalDate(), null, null, null);
 
         finantialInstitution.setSplitCreditEntriesWithSettledAmount(true);
@@ -295,8 +295,8 @@ public class SplitDebitEntriesWithMoreThanOneEntriesPerDebitNoteTest {
         SettlementNoteBean bean = new SettlementNoteBean(debtAccount, false, false);
         bean.setFinantialEntity(FinantialEntity.findAll().iterator().next());
 
-        bean.setDocNumSeries(DocumentNumberSeries
-                .findUniqueDefault(FinantialDocumentType.findForSettlementNote(), finantialInstitution).get());
+        bean.setDocNumSeries(DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForSettlementNote(),
+                debitEntryOne.getFinantialEntity()));
         bean.setDate(new DateTime());
 
         assertEquals(4, bean.getDebitEntries().size());
