@@ -175,10 +175,6 @@ public class FinantialEntity extends FinantialEntity_Base {
     }
 
     public void markSeriesAsDefault(final Series series) {
-        if (!Boolean.TRUE.equals(getFinantialInstitution().getSeriesByFinantialEntity())) {
-            throw new IllegalStateException("default series is not by finantial entity");
-        }
-
         for (final Series s : getSeriesSet()) {
             s.setDefaultSeries(false);
         }

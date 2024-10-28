@@ -104,9 +104,7 @@ public class Series extends Series_Base {
         setActive(true);
         setFinantialInstitution(finantialInstitution);
 
-        if (Boolean.TRUE.equals(finantialInstitution.getSeriesByFinantialEntity())) {
-            setFinantialEntity(finantialEntity);
-        }
+        setFinantialEntity(finantialEntity);
 
         setCode(code);
         setName(name);
@@ -344,20 +342,12 @@ public class Series extends Series_Base {
     @Atomic
     public static Series create(FinantialInstitution finantialInstitution, String code, LocalizedString name,
             boolean externSeries, boolean legacy, boolean defaultSeries, boolean selectable) {
-        if (Boolean.TRUE.equals(finantialInstitution.getSeriesByFinantialEntity())) {
-            throw new IllegalArgumentException("series are by finantial entity. this constructor should not be called");
-        }
-
         return new Series(finantialInstitution, null, code, name, externSeries, legacy, defaultSeries, selectable);
     }
 
     @Atomic
     public static Series create(FinantialEntity finantialEntity, String code, LocalizedString name, boolean externSeries,
             boolean legacy, boolean defaultSeries, boolean selectable) {
-        if (!Boolean.TRUE.equals(finantialEntity.getFinantialInstitution().getSeriesByFinantialEntity())) {
-            throw new IllegalArgumentException("series are by finantial institution. this constructor should not be called");
-        }
-
         return new Series(finantialEntity.getFinantialInstitution(), finantialEntity, code, name, externSeries, legacy,
                 defaultSeries, selectable);
     }
