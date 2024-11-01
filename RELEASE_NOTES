@@ -1,3 +1,5 @@
+- Improvement: Extend SIBS SPG payment code processing, to pass custom payment date [#qubIT-Fenix-6029]
+
 13.0.1 (28-10-2024)
 - Bug Fix: Fix bugs in creation of new series in advance [#qubIT-Fenix-5456]
 

@@ -880,6 +880,22 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public PaymentTransaction processPaymentReferenceCodeTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean) {
+        final DateTime paymentDate = bean.getPaymentDate() != null ? bean.getPaymentDate() : DateTime.now();
+
+        return processPaymentReferenceCodeTransaction(log, bean, paymentDate);
+    }
+
+    // ANIL 2024-10-31 (#qubIT-Fenix-6029)
+    //
+    // Extends this method to receive a custom payment date
+    //
+    // Unfortunately SIBS SPG API does not respond with the real payment date. The payment date
+    // is only transmitted through the webhook notification. So if the operator need to 
+    // register the payment throught the consultation of SIBS SPG API, then he must enter the 
+    // real payment date. Apparently this real payment date can be consulted in SIBS Backoffice Portal
+    // or can be considered the date of the first webhook notification attempt by SIBS
+    public PaymentTransaction processPaymentReferenceCodeTransaction(final PaymentRequestLog log, DigitalPlatformResultBean bean,
+            DateTime customPaymentDate) {
         SibsPaymentRequest paymentRequest = (SibsPaymentRequest) log.getPaymentRequest();
         if (!bean.getTransactionId().equals(paymentRequest.getTransactionId())) {
             throw new TreasuryDomainException(
@@ -887,25 +903,24 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
 
         final BigDecimal paidAmount = bean.getAmount();
-        final DateTime paymentDate = bean.getPaymentDate() != null ? bean.getPaymentDate() : DateTime.now();
 
         FenixFramework.atomic(() -> {
             log.savePaymentTypeAndBrand(bean.getPaymentType(), bean.getPaymentBrand());
-            log.savePaymentInfo(paidAmount, paymentDate);
+            log.savePaymentInfo(paidAmount, customPaymentDate);
         });
 
         if (paidAmount == null || !TreasuryConstants.isPositive(paidAmount)) {
             throw new TreasuryDomainException("error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.amount");
         }
 
-        if (paymentDate == null) {
+        if (customPaymentDate == null) {
             throw new TreasuryDomainException(
                     "error.PaymentReferenceCode.processPaymentReferenceCodeTransaction.invalid.payment.date");
         }
 
         String entityReferenceCode = this.getEntityReferenceCode();
         if (SibsPaymentCodeTransaction.isReferenceProcessingDuplicate(entityReferenceCode, paymentRequest.getReferenceCode(),
-                paymentDate)) {
+                customPaymentDate)) {
             FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
             return null;
         }
@@ -914,7 +929,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
             return null;
         }
-        return paymentRequest.processPayment(paidAmount, paymentDate, bean.getTransactionId(), null,
+
+        return paymentRequest.processPayment(paidAmount, customPaymentDate, bean.getTransactionId(), null,
                 bean.getMerchantTransactionId(), new DateTime(), null, true);
     }
 
