@@ -137,6 +137,10 @@ public class SibsPayWebhookController {
 
             if (!paymentRequestOptional.isPresent()) {
                 // Transaction not recognized, might be from other system, just return HTTP STATUS 200
+
+                logger.info("Transaction not found, maybe was generated in other system: '%s' - '%s'. Return ok...".formatted(
+                        webhookNotificationWrapper.getMerchantTransactionId(), webhookNotificationWrapper.getTransactionId()));
+
                 return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 

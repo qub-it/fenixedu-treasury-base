@@ -59,6 +59,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FiscalMonth;
+import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
@@ -78,6 +81,26 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
         setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+
+        // ANIL 2024-11-14 (#qubIT-Fenix-5969)
+        //
+        // The association with fiscal month is only to avoid
+        // reading all instances of this entity, which in some
+        // instalations are many. This relation will be used
+        // to filter the logs by an interval of dates.
+        //
+        // It is ok to associate with the fiscal month of any finantial
+        // institution, even if it does not match with the finantial
+        // institution of the associated payment request
+        FinantialInstitution finantialInstitution = FinantialInstitution.findAll().iterator().next();
+
+        int year = getCreationDate().getYear();
+        int monthOfYear = getCreationDate().getMonthOfYear();
+
+        FiscalYear fiscalYear = FiscalYear.getOrCreateFiscalYear(finantialInstitution, year);
+        FiscalMonth fiscalMonth = FiscalMonth.getOrCreateFiscalMonth(fiscalYear, monthOfYear);
+
+        setFiscalMonth(fiscalMonth);
     }
 
     protected PaymentRequestLog(PaymentRequest request, String operationCode, String stateCode,
@@ -88,6 +111,18 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setOperationCode(operationCode);
         setStateCode(stateCode);
         setStateDescription(stateDescription);
+
+        if (request != null) {
+            // Redefine the fiscal month of the FinantialInstitution 
+            FinantialInstitution finantialInstitution = request.getDebtAccount().getFinantialInstitution();
+            int year = getCreationDate().getYear();
+            int monthOfYear = getCreationDate().getMonthOfYear();
+
+            FiscalYear fiscalYear = FiscalYear.getOrCreateFiscalYear(finantialInstitution, year);
+            FiscalMonth fiscalMonth = FiscalMonth.getOrCreateFiscalMonth(fiscalYear, monthOfYear);
+
+            setFiscalMonth(fiscalMonth);
+        }
     }
 
     public PaymentRequestLog(String webhookNotification) {
@@ -180,6 +215,24 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
                     OCTECT_STREAM_CONTENT_TYPE, notificationEncryptedPayload.getBytes());
 
             setNotificationEncryptedPayloadFileId(notificationEncryptedPayloadFileId);
+        }
+    }
+
+    @Override
+    public void setPaymentRequest(PaymentRequest paymentRequest) {
+        super.setPaymentRequest(paymentRequest);
+
+        // Redefine the fiscal month of the FinantialInstitution associated 
+        // with the payment request
+        if (paymentRequest != null) {
+            FinantialInstitution finantialInstitution = paymentRequest.getDebtAccount().getFinantialInstitution();
+            int year = getCreationDate().getYear();
+            int monthOfYear = getCreationDate().getMonthOfYear();
+
+            FiscalYear fiscalYear = FiscalYear.getOrCreateFiscalYear(finantialInstitution, year);
+            FiscalMonth fiscalMonth = FiscalMonth.getOrCreateFiscalMonth(fiscalYear, monthOfYear);
+
+            setFiscalMonth(fiscalMonth);
         }
     }
 

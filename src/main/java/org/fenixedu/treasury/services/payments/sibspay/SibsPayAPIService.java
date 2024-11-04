@@ -57,6 +57,9 @@ public class SibsPayAPIService {
     private static final String PAYMENT_RESULT_CODE_EXPIRED = "Expired";
     private static final String PAYMENT_RESULT_CODE_DECLINED = "Declined";
 
+    private static final String PAYMENT_TYPE_PURS = "PURS";
+    private static final String PAYMENT_TYPE_PREF = "PREF";
+
     private static final Logger logger = LoggerFactory.getLogger(SibsPayAPIService.class);
 
     private String sibsEndpoint;
@@ -550,6 +553,14 @@ public class SibsPayAPIService {
 
     public static boolean isDeclined(String paymentResultCode) {
         return PAYMENT_RESULT_CODE_DECLINED.equals(paymentResultCode);
+    }
+
+    public static boolean isPaymentTypePurs(String paymentTypeCode) {
+        return PAYMENT_TYPE_PURS.equals(paymentTypeCode);
+    }
+
+    public static boolean isPaymentTypePref(String paymentTypeCode) {
+        return PAYMENT_TYPE_PREF.equals(paymentTypeCode);
     }
 
     public String getJsScriptURL(String checkoutId) {
