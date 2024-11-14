@@ -1,3 +1,5 @@
+- Refactor: Support processing SIBS SPG 2.0 MB reference code creation notification [#qubIT-Fenix-6095]
+
 13.0.2 (02-11-2024)
 - Improvement: Extend SIBS SPG payment code processing, to pass custom payment date [#qubIT-Fenix-6029]
 

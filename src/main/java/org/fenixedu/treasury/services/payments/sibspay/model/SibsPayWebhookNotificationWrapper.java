@@ -15,6 +15,18 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
         this.webhookNotification = webhookNotification;
     }
 
+    // ANIL 2024-11-14  (#qubIT-Fenix-6095)
+    //
+    // If the notification is paid and the data of structure paymentReference is present,
+    // check if the paymentReference status is "PAID" . If it is not throw an exception
+    // and analyse why it is not
+    public void checkIfNotificationIsPaidAndPaymentReferenceIsAlsoInPaidStatus() {
+        if (isPaid() && this.webhookNotification.getPaymentReference() != null
+                && !"PAID".equals(this.webhookNotification.getPaymentReference().getStatus())) {
+            throw new RuntimeException("the notification is paid but the status of PaymentReference is not 'PAID'");
+        }
+    }
+
     @Override
     public BigDecimal getAmount() {
         return this.webhookNotification.getAmount().getValue();

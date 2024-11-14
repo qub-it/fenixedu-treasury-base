@@ -103,6 +103,8 @@ public class SibsPayWebhookController {
             }
 
             SibsPayPlatform configurationToUse = configurationToUseOptional.get();
+            logger.debug("Using SibsPayPlatform: " + configurationToUse.getName());
+
             SibsPayWebhookNotificationWrapper webhookNotificationWrapper = webhookNotificationWrapperOptional.get();
 
             ITreasuryPlatformDependentServices treasuryServices = TreasuryPlataformDependentServicesFactory.implementation();
@@ -153,18 +155,45 @@ public class SibsPayWebhookController {
                     // Mark this notification as duplicate and skip processing
                     FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
 
+                    logger.debug("The transaction is duplicate. Nothing to do, return: "
+                            + webhookNotificationWrapper.getTransactionId());
+
                     return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
                 }
-            }
 
-            if (!paymentRequest.isInCreatedState() && !paymentRequest.isInRequestedState()) {
-                return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
+                // ANIL 2024-11-14 (#qubIT-Fenix-6095)
+                //
+                // For payments by credit card (ForwardPaymentRequest) or MB-WAY (MbwayRequest)
+                // if the current state is not in created state or in requested state, then
+                // the platform should respond with an error and analyse.
+                // 
+                // For payments by SIBS MB (SibsPaymentRequest), the paymentRequest might be
+                // annuled when the notification is pending for processing. This might happen when the debt items were
+                // annuled and the SibsPaymentRequest was also annuled.
+                //
+                // Another case is a different payment made by the customer, with the same reference code.
+                //
+                // In this case the payment must be allowed to be processed 
+                if (!(paymentRequest instanceof SibsPaymentRequest) && !paymentRequest.isInCreatedState()
+                        && !paymentRequest.isInRequestedState()) {
+                    throw new RuntimeException(
+                            "The notification is a successful payment but the paymentRequest is already processed or annuled. Please check");
+                }
+
+                // ANIL 2024-11-14  (#qubIT-Fenix-6095)
+                //
+                // Check comments in the called method
+                webhookNotificationWrapper.checkIfNotificationIsPaidAndPaymentReferenceIsAlsoInPaidStatus();
             }
 
             if (webhookNotificationWrapper.isPending()) {
                 // Transaction is pending, ignore by returnig 200
+                logger.debug("The notification is pending status. Nothing to do, return...: "
+                        + webhookNotificationWrapper.getTransactionId());
+
                 return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             } else if (webhookNotificationWrapper.isPaid()) {
+                logger.debug("The notification paid. Registering payment: " + webhookNotificationWrapper.getTransactionId());
 
                 if (paymentRequest instanceof ForwardPaymentRequest) {
                     configurationToUse.processForwardPaymentFromWebhook(log, webhookNotificationWrapper);
@@ -179,14 +208,18 @@ public class SibsPayWebhookController {
 
                 throw new RuntimeException("unknown payment request type");
             } else if (webhookNotificationWrapper.isExpired() || webhookNotificationWrapper.isDeclined()) {
+                logger.debug("The notification is expired or declined. Reject payment request...: "
+                        + webhookNotificationWrapper.getTransactionId());
 
                 FenixFramework.atomic(() -> configurationToUse.rejectRequest(paymentRequest, log, webhookNotificationWrapper));
 
                 return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 
-            return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
+            logger.info("Unknown state, nothing to do, return with successful response: "
+                    + webhookNotificationWrapper.getTransactionId());
 
+            return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage(), e);
 

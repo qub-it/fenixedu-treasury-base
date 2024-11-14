@@ -18,6 +18,9 @@ public class SibsPayWebhookNotification {
     @JsonProperty("transactionID")
     private String transactionID = null;
 
+    @JsonProperty("transactionDateTime")
+    private DateTime transactionDateTime = null;
+
     @JsonProperty("amount")
     private SibsPayAmount amount = null;
 
@@ -27,14 +30,32 @@ public class SibsPayWebhookNotification {
     @JsonProperty("paymentType")
     private String paymentType = null;
 
-    @JsonProperty("notificationID")
-    private String notificationID = null;
-
-    @JsonProperty("transactionDateTime")
-    private DateTime transactionDateTime = null;
+    @JsonProperty("paymentReference")
+    private SibsPayPaymentInquiryReference paymentReference = null;
 
     @JsonProperty("token")
     private SibsPayToken token = null;
+
+    // financialOperation
+
+    // mbwayMandate
+
+    // installmentPlan
+
+    // customer
+
+    // merchantInitiatedTransaction
+
+    // threeDSecure
+
+    private String terminalBrand;
+
+    private String wrapperType;
+
+    private String internalTransactionId;
+
+    @JsonProperty("notificationID")
+    private String notificationID = null;
 
     public SibsPayReturnStatus getReturnStatus() {
         return returnStatus;
@@ -115,4 +136,37 @@ public class SibsPayWebhookNotification {
     public void setToken(SibsPayToken token) {
         this.token = token;
     }
+
+    public SibsPayPaymentInquiryReference getPaymentReference() {
+        return paymentReference;
+    }
+
+    public void setPaymentReference(SibsPayPaymentInquiryReference paymentReference) {
+        this.paymentReference = paymentReference;
+    }
+
+    public String getTerminalBrand() {
+        return terminalBrand;
+    }
+
+    public void setTerminalBrand(String terminalBrand) {
+        this.terminalBrand = terminalBrand;
+    }
+
+    public String getWrapperType() {
+        return wrapperType;
+    }
+
+    public void setWrapperType(String wrapperType) {
+        this.wrapperType = wrapperType;
+    }
+
+    public String getInternalTransactionId() {
+        return internalTransactionId;
+    }
+
+    public void setInternalTransactionId(String internalTransactionId) {
+        this.internalTransactionId = internalTransactionId;
+    }
+
 }
