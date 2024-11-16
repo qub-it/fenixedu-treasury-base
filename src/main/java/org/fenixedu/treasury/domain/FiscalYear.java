@@ -66,46 +66,47 @@ public class FiscalYear extends FiscalYear_Base {
 
     public static final Comparator<FiscalYear> COMPARE_BY_YEAR = (o1, o2) -> {
         int c = Integer.compare(o1.getYear(), o2.getYear());
-        
-        if(c != 0) {
+
+        if (c != 0) {
             return c;
         }
-        
+
         return o1.getExternalId().compareTo(o2.getExternalId());
     };
-    
+
     public FiscalYear() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
     }
-    
-    public FiscalYear(final FinantialInstitution finantialInstitution, final int year, final LocalDate settlementAnnulmentLimitDate) {
+
+    public FiscalYear(final FinantialInstitution finantialInstitution, final int year,
+            final LocalDate settlementAnnulmentLimitDate) {
         this();
         setFinantialInstitution(finantialInstitution);
         setYear(year);
         setSettlementAnnulmentLimitDate(settlementAnnulmentLimitDate);
 
-        for(int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= 12; i++) {
             FiscalMonth.create(this, i);
         }
-        
+
         checkRules();
     }
-    
+
     public void checkRules() {
-        if(getDomainRoot() == null) {
+        if (getDomainRoot() == null) {
             throw new TreasuryDomainException("error.FiscalYear.domainRoot.required");
         }
-        
-        if(getFinantialInstitution() == null) {
+
+        if (getFinantialInstitution() == null) {
             throw new TreasuryDomainException("error.FiscalYear.finantialInstitution.required");
         }
-        
-        if(getSettlementAnnulmentLimitDate() == null) {
+
+        if (getSettlementAnnulmentLimitDate() == null) {
             throw new TreasuryDomainException("error.FiscalYear.settlementAnnulmentLimitDate.required");
         }
-        
-        if(FiscalYear.find(getFinantialInstitution(), getYear()).count() > 1) {
+
+        if (FiscalYear.find(getFinantialInstitution(), getYear()).count() > 1) {
             throw new TreasuryDomainException("error.FiscalYear.already.defined.for.finantial.institution.and.year");
         }
     }
@@ -113,31 +114,39 @@ public class FiscalYear extends FiscalYear_Base {
     @Atomic
     public void editSettlementAnnulmentLimitDate(final LocalDate limitDate) {
         setSettlementAnnulmentLimitDate(limitDate);
-        
+
         checkRules();
     }
-    
+
     // @formatter:off
     /* ********
      * SERVICES
      * ********
      */
     // @formatter:on
-    
+
     public static Stream<FiscalYear> findAll() {
         return FenixFramework.getDomainRoot().getFiscalYearsSet().stream();
     }
-    
+
     public static Stream<FiscalYear> find(final FinantialInstitution finantialInstitution, final int year) {
         return finantialInstitution.getFiscalYearsSet().stream().filter(fy -> fy.getYear() == year);
     }
-    
+
     public static Optional<FiscalYear> findUnique(final FinantialInstitution finantialInstitution, final int year) {
         return find(finantialInstitution, year).findFirst();
     }
-    
+
     @Atomic
-    public static FiscalYear create(final FinantialInstitution finantialInstitution, final int year, final LocalDate settlementAnnulmentLimitDate) {
+    public static FiscalYear create(final FinantialInstitution finantialInstitution, final int year,
+            final LocalDate settlementAnnulmentLimitDate) {
         return new FiscalYear(finantialInstitution, year, settlementAnnulmentLimitDate);
+    }
+
+    @Atomic
+    public static FiscalYear getOrCreateFiscalYear(FinantialInstitution finantialInstitution, int year) {
+        return findUnique(finantialInstitution, year)
+                .orElseGet(() -> create(finantialInstitution, year, new LocalDate(year, 12, 31)));
+
     }
 }

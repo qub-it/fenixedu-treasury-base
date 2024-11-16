@@ -34,7 +34,7 @@ public class FiscalMonth extends FiscalMonth_Base {
 
         checkRules();
     }
-    
+
     public boolean isFiscalExerciseExpired() {
         return isFiscalExerciseExpired(new LocalDate());
     }
@@ -109,7 +109,7 @@ public class FiscalMonth extends FiscalMonth_Base {
 
         return !Boolean.TRUE.equals(FiscalMonth.findUnique(fiscalYear, month).get().getFiscalOperationsClosed());
     }
-    
+
     public static boolean isFiscalOperationsClosed(FinantialInstitution finantialInstitution, int year, int month) {
         if (!FiscalYear.findUnique(finantialInstitution, year).isPresent()) {
             return false;
@@ -120,7 +120,7 @@ public class FiscalMonth extends FiscalMonth_Base {
         if (!FiscalMonth.findUnique(fiscalYear, month).isPresent()) {
             return false;
         }
-        
+
         return Boolean.TRUE.equals(FiscalMonth.findUnique(fiscalYear, month).get().getFiscalOperationsClosed());
     }
 
@@ -128,4 +128,7 @@ public class FiscalMonth extends FiscalMonth_Base {
         return new FiscalMonth(fiscalYear, month);
     }
 
+    public static FiscalMonth getOrCreateFiscalMonth(FiscalYear fiscalYear, int month) {
+        return findUnique(fiscalYear, month).orElseGet(() -> create(fiscalYear, month));
+    }
 }

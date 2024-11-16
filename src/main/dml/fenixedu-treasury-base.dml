@@ -1192,7 +1192,7 @@ class payments.PaymentRequestLog {
 			multiplicity 0..1;
 		}
 	}
-	
+
 class payments.PaymentRequestLogFile /* implements IGenericFile */  {
 	String fileId;
 	DateTime creationDate;
@@ -3109,7 +3109,28 @@ class FiscalMonth {
 			multiplicity *;
 		}
 	}
-
+	
+	// ANIL 2024-11-14 (#qubIT-Fenix-5969)
+	//
+	// This association is only to improve the search
+	// and avoid the reading all payment request logs,
+	// which will be filtered by and interval of dates
+	//
+	// Although FiscalMonth is related to one FinantialInstitution,
+	// it is ok to associate whatever finantial institution,
+	// even if it is different from the finantial institution of
+	// payment request
+	
+	relation FiscalMonthPaymentRequestLog {
+		FiscalMonth playsRole fiscalMonth {
+			multiplicity 0..1;
+		}
+	
+		payments.PaymentRequestLog playsRole paymentRequestLogs {
+			multiplicity *;
+		}
+	}
+	
 /* 
  * *************************
  * SibsOnlinePaymentsGateway

@@ -88,6 +88,26 @@ public class SibsPayResponseInquiryWrapper implements DigitalPlatformResultBean 
 
     @Override
     public boolean isPaid() {
+        // ANIL 2024-11-15 (#qubIT-Fenix-6101)
+        //
+        // The notification of annulment of SIBS payment requests are sent with the 
+        // paymentStatus or #getPaymentResultCode() equal to "Success" .
+        //
+        // This is misleading as these transactions are not successful payments but
+        // successful annulments. The payments were not being registered because the
+        // transactionIds of annulement notifications are different from what is registered 
+        // within the paymentRequest
+        //
+        // Also in the web controller SibsPayWebhookController, if the payment request
+        // was not in creation or request state, it did nothing and returned OK to the
+        // payment platform
+        //
+        // Consider only PURS and PREF as successful payments
+        if (!SibsPayAPIService.isPaymentTypePurs(this.responseInquiry.getPaymentType())
+                && !SibsPayAPIService.isPaymentTypePref(this.responseInquiry.getPaymentType())) {
+            return false;
+        }
+
         return SibsPayAPIService.isPaid(this.responseInquiry.getPaymentStatus());
     }
 
