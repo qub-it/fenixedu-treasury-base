@@ -1,3 +1,4 @@
+13.1.0 (18-11-2024)
 - Improvement: Improve payment request logs search by associated with FiscalMonth, to avoid the read all pattern [#qubIT-Fenix-5969]
 - Bug Fix: In SIBS SPG 2.0, consider paid transactions which paymentType is only PURS (MB-WAY or credit card) or PREF (SIBS reference code) [#qubIT-Fenix-6101]
 
