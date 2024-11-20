@@ -1,3 +1,6 @@
+- Bug Fix: For SIBS DPG 1.0, before registering settlement note in credit card payment, check if the request is already paid [#qubIT-Fenix-6113]
+- Bug Fix: For the old SIBS pool (check-digit or SIBS references file), check if the pool is active before creating pre generated ferences [#qubIT-Fenix-6113]
+
 13.1.0 (18-11-2024)
 - Improvement: Improve payment request logs search by associated with FiscalMonth, to avoid the read all pattern [#qubIT-Fenix-5969]
 - Bug Fix: In SIBS SPG 2.0, consider paid transactions which paymentType is only PURS (MB-WAY or credit card) or PREF (SIBS reference code) [#qubIT-Fenix-6101]

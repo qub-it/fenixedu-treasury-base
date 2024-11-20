@@ -483,12 +483,36 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             if (bean.isInPayedState()) {
                 FenixFramework.atomic(() -> {
-                    SibsPaymentsGatewayLog log = (SibsPaymentsGatewayLog) forwardPayment.advanceToPaidState(bean.getStatusCode(),
-                            bean.getStatusMessage(), bean.getPayedAmount(), bean.getTransactionDate(), bean.getTransactionId(),
-                            null, bean.getRequestBody(), bean.getResponseBody(), "");
-                    log.setRequestSendDate(requestSendDate);
-                    log.setRequestReceiveDate(requestReceiveDate);
-                    log.setSibsGatewayTransactionId(bean.getTransactionId());
+                    // ANIL 2024-11-20 (#qubIT-Fenix-6113)
+                    //
+                    // The processing of registering settlement notes, are acomplished
+                    // by the customer returning from the payment platform into FenixEdu,
+                    // and also by the webhook notification
+                    //
+                    // Before advancing the payment request state to paid,
+                    // verify if the payment request is paid.
+                    // 
+                    if (forwardPayment.isInPaidState()) {
+                        // create log and mark as duplicated
+                        PaymentRequestLog log = log(forwardPayment, "advanceToPaidState", bean.getStatusCode(),
+                                bean.getStatusMessage(), bean.getRequestBody(), bean.getResponseBody());
+
+                        log.setOperationSuccess(true);
+                        log.setTransactionWithPayment(true);
+                        log.setTransactionDuplicated(true);
+                        log.setInternalMerchantTransactionId(forwardPayment.getMerchantTransactionId());
+                        log.setExternalTransactionId(bean.getTransactionId());
+
+                    } else {
+                        SibsPaymentsGatewayLog log =
+                                (SibsPaymentsGatewayLog) forwardPayment.advanceToPaidState(bean.getStatusCode(),
+                                        bean.getStatusMessage(), bean.getPayedAmount(), bean.getTransactionDate(),
+                                        bean.getTransactionId(), null, bean.getRequestBody(), bean.getResponseBody(), "");
+
+                        log.setRequestSendDate(requestSendDate);
+                        log.setRequestReceiveDate(requestReceiveDate);
+                        log.setSibsGatewayTransactionId(bean.getTransactionId());
+                    }
                 });
 
             } else if (bean.isInRejectedState()) {
@@ -1275,9 +1299,27 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             if (bean.isPaid()) {
                 FenixFramework.atomic(() -> {
-                    forwardPayment.advanceToPaidState(result.getStatusCode(), result.getPayedAmount(),
-                            result.getTransactionDate(), result.getTransactionId(), null);
-                    log.setSibsGatewayTransactionId(bean.getTransactionId());
+                    // ANIL 2024-11-20 (#qubIT-Fenix-6113)
+                    //
+                    // The processing of registering settlement notes, are acomplished
+                    // by the customer returning from the payment platform into FenixEdu,
+                    // and also by the webhook notification
+                    //
+                    // Before advancing the payment request state to paid,
+                    // verify if the payment request is paid.
+                    // 
+
+                    if (forwardPayment.isInPaidState()) {
+                        // mark log as duplicated
+                        log.setOperationSuccess(true);
+                        log.setTransactionWithPayment(true);
+                        log.setSibsTransactionDuplicated(true);
+                        log.setOperationCode("processDuplicated");
+                    } else {
+                        forwardPayment.advanceToPaidState(result.getStatusCode(), result.getPayedAmount(),
+                                result.getTransactionDate(), result.getTransactionId(), null);
+                        log.setSibsGatewayTransactionId(bean.getTransactionId());
+                    }
                 });
 
             } else if (!bean.isOperationSuccess()) {

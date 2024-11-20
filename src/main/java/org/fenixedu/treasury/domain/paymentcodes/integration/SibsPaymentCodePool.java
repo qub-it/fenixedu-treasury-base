@@ -263,6 +263,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     // TODO: Only used by PaymentReferenceCodeController.createPaymentCodeForSeveralDebitEntries() method. Replace with settlement note bean
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, BigDecimal payableAmount) {
+        if (!isActive()) {
+            throw new RuntimeException("payment code pool not active");
+        }
 
         LocalDate now = new LocalDate();
         Set<LocalDate> map = debitEntries.stream().map(d -> d.getDueDate()).collect(Collectors.toSet());
@@ -356,6 +359,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     @Atomic
     private SibsPaymentRequest createPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate validTo, BigDecimal payableAmount) {
+        if (!isActive()) {
+            throw new RuntimeException("payment code pool not active");
+        }
 
         if (SibsPaymentRequest.findRequestedByDebitEntriesSet(debitEntries).count() > 0
                 || SibsPaymentRequest.findCreatedByDebitEntriesSet(debitEntries).count() > 0) {
@@ -533,6 +539,10 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     public SibsReferenceCode pregenerateSibsReferenceCode(DebtAccount debtAccount, BigDecimal payableAmount) {
+        if (!isActive()) {
+            throw new RuntimeException("payment code pool not active");
+        }
+
         if (isUseCheckDigit()) {
             long nextReferenceCode = getAndIncrementNextReferenceCode();
             if (nextReferenceCode > getMaxReferenceCode()) {
