@@ -210,6 +210,16 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return result;
     }
 
+    // ANIL 2024-10-15 (#qubIT-Fenix-5929)
+    //
+    // This method produces a map with the amountWithVat by product including interests.
+    // If the caller of this method does not want to deal with interests, then he
+    // must skip it from the resulting map
+    public Map<Product, BigDecimal> getAmountWithVatToPayByProductMap() {
+        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct,
+                d -> d.getAmountWithVat().subtract(d.getTotalCreditedAmountWithVat()), (v1, v2) -> v1.add(v2)));
+    }
+
     /*
      * *****************
      * getNetAmountToPay
@@ -263,6 +273,16 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditNetAmount(product));
 
         return result;
+    }
+
+    // ANIL 2024-10-15 (#qubIT-Fenix-5929)
+    //
+    // This method produces a map with the netAmount by product including interests.
+    // If the caller of this method does not want to deal with interests, then he
+    // must skip it from the resulting map
+    public Map<Product, BigDecimal> getNetAmountToPayByProductMap() {
+        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct,
+                d -> d.getNetAmount().subtract(d.getTotalCreditedNetAmount()), (v1, v2) -> v1.add(v2)));
     }
 
     public BigDecimal getInterestsAmountToPay() {
@@ -438,6 +458,18 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         return result;
+    }
+
+    // ANIL 2024-10-15 (#qubIT-Fenix-5929)
+    //
+    // This method produces a map with the netExemptedAmount by product including interests.
+    // If the caller of this method does not want to deal with interests, then he
+    // must skip it from the resulting map
+    public Map<Product, BigDecimal> getNetExemptedAmountByProductMap() {
+        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct,
+                d -> d.getNetExemptedAmount().add(d.getCreditEntriesSet().stream().filter(c -> !c.isAnnulled())
+                        .filter(c -> c.isFromExemption()).map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)),
+                (v1, v2) -> v1.add(v2)));
     }
 
     public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap() {
