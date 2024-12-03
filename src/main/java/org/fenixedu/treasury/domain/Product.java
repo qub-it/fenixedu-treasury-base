@@ -125,6 +125,11 @@ public class Product extends Product_Base {
         if (getVatType() == null) {
             throw new TreasuryDomainException("error.Product.vatType.required");
         }
+
+        if (getVatType().getRequiresVatExemptionReason() && getVatExemptionReason() == null) {
+            throw new TreasuryDomainException("error.Product.vatExemptionReason.required");
+        }
+
         if (getProductGroup() == null) {
             throw new TreasuryDomainException("error.Product.productGroup.required");
         }
