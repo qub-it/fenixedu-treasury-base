@@ -407,7 +407,14 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public BigDecimal getInterestsCreditAmount(final Product product) {
         final Product interestProduct = TreasurySettings.getInstance().getInterestProduct();
 
-        return CreditEntry.findActive(this).filter(c -> c.getDebitEntry().getProduct() == interestProduct)
+        // ANIL 2024-12-12 (#qubIT-Fenix-6345)
+        //
+        // Exclude credit entries that are not associated with a debit entry
+        // That credit entries were created in migration but have to be associated
+        // with a treasury event in order to have other business context information
+
+        return CreditEntry.findActive(this).filter(c -> c.getDebitEntry() != null)
+                .filter(c -> c.getDebitEntry().getProduct() == interestProduct)
                 .filter(c -> product == null || (c.getDebitEntry().getDebitEntry() != null
                         && c.getDebitEntry().getDebitEntry().getProduct() == product))
                 .map(c -> c.getAmountWithVat()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);

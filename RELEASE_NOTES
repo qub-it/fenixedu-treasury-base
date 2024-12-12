@@ -1,4 +1,5 @@
 - Bug Fix: Ensures that VAT exemption reason is set in product, if VAT type requires exemption reason [#qubIT-Fenix-6219]
+- Bug Fix: In method TreasuryEvent#getInterestsCreditAmount(Product), exclude credit entries that are not associated with debit entries [#qubIT-Fenix-6345]
 
 13.1.2 (25-11-2024)
 - Improvement: Add methods to TreasuryEvent, to return a map of amount by product [#qubIT-Fenix-5929]
