@@ -187,6 +187,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         for (PaymentPlan objectPaymentPlan : this.openPaymentPlans) {
             // Create destiny PaymentPlan
             PaymentPlan destinyPaymentPlan = new PaymentPlan();
+            destinyPaymentPlan.setFinantialEntity(objectPaymentPlan.getFinantialEntity());
             destinyPaymentPlan.setCreationDate(objectPaymentPlan.getCreationDate());
             destinyPaymentPlan.setDebtAccount(destinyDebtAccount);
             destinyPaymentPlan.setReason(objectPaymentPlan.getReason());
