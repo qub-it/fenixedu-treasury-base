@@ -10,7 +10,7 @@
 
 	<groupId>org.fenixedu</groupId>
 	<artifactId>fenixedu-treasury-base</artifactId>
-	<version>13.1.4</version>
+	<version>13.1.5</version>
 	<packaging>jar</packaging>
 
 	<name>Treasury</name>
