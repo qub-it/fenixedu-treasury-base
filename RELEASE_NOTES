@@ -1,3 +1,5 @@
+- Bug Fix: When retrieving the PersonCustomer#getActiveCustomer(), validate that the active customer is found. If it is not, throw exception [#qubIT-Fenix-6386]
+
 13.1.4 (13-12-2024)
 - Bug Fix: Fix error in transfering payment plan to the new active debt account [#qubIT-Fenix-6356]
 

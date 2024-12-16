@@ -187,8 +187,16 @@ public class DebtAccount extends DebtAccount_Base {
             throw new TreasuryDomainException("error.DebtAccount.transfer.from.must.not.be.active");
         }
 
-        Optional<DebtAccount> activeDebtAccount =
-                DebtAccount.findUnique(getFinantialInstitution(), getCustomer().getActiveCustomer());
+        Customer activeCustomer = getCustomer().getActiveCustomer();
+        if (activeCustomer == null) {
+            // ANIL 2024-12-14 (#qubIT-Fenix-6386)
+            //
+            // If there is not active customer, then something is not right
+            // with the data and relations with associated person
+            throw new TreasuryDomainException("error.DebtAccount.transferBalanceForActiveDebtAccount.activeCustomer.not.set");
+        }
+
+        Optional<DebtAccount> activeDebtAccount = DebtAccount.findUnique(getFinantialInstitution(), activeCustomer);
 
         if (!activeDebtAccount.isPresent()) {
             throw new TreasuryDomainException("error.DebtAccount.active.debt.account.not.found");
