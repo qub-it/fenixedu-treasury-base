@@ -265,14 +265,16 @@ public class SequentialPregeneratedPaymentCodesTest {
 
     @Test
     public void testPregenerationInvalidDateInterval() {
+        Integer currentYear = new LocalDate().getYear();
         DebtAccount debtAccountOne = createDebtAccount("one");
-        DebitEntry debitEntryOne = createDebitEntry(debtAccountOne, new BigDecimal("100.00"), new LocalDate(2025, 1, 5), false);
+        DebitEntry debitEntryOne =
+                createDebitEntry(debtAccountOne, new BigDecimal("100.00"), new LocalDate(currentYear + 1, 1, 5), false);
 
         FinantialInstitution finantialInstitution = debtAccountOne.getFinantialInstitution();
         FinantialEntity finantialEntity = debitEntryOne.getFinantialEntity();
 
-        LocalDate validFrom = new LocalDate(2024, 1, 1);
-        LocalDate validTo = new LocalDate(2024, 12, 31);
+        LocalDate validFrom = new LocalDate(currentYear, 1, 1);
+        LocalDate validTo = new LocalDate(currentYear, 12, 31);
 
         SibsPaymentCodePool sibsPaymentCodePool =
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12350", 1000000,
@@ -293,7 +295,7 @@ public class SequentialPregeneratedPaymentCodesTest {
 
         assertEquals(1, debtAccountOne.getPregeneratedSibsReferenceCodesSet().size());
 
-        sibsPaymentCodePool.setValidTo(new LocalDate(2030, 1, 1));
+        sibsPaymentCodePool.setValidTo(new LocalDate(currentYear + 6, 1, 1));
 
         sibsPaymentCodePool.createReferenceCodesInAdvance(10);
 
@@ -315,14 +317,16 @@ public class SequentialPregeneratedPaymentCodesTest {
 
     @Test
     public void testPregenerationDifferenceSibsPaymentCodePools() {
+        Integer currentYear = new LocalDate().getYear();
         DebtAccount debtAccountOne = createDebtAccount("one");
-        DebitEntry debitEntryOne = createDebitEntry(debtAccountOne, new BigDecimal("100.00"), new LocalDate(2024, 1, 5), false);
+        DebitEntry debitEntryOne =
+                createDebitEntry(debtAccountOne, new BigDecimal("100.00"), new LocalDate(currentYear, 1, 5), false);
 
         FinantialInstitution finantialInstitution = debtAccountOne.getFinantialInstitution();
         FinantialEntity finantialEntity = debitEntryOne.getFinantialEntity();
 
-        LocalDate validFrom = new LocalDate(2024, 1, 1);
-        LocalDate validTo = new LocalDate(2024, 12, 31);
+        LocalDate validFrom = new LocalDate(currentYear, 1, 1);
+        LocalDate validTo = new LocalDate(currentYear, 12, 31);
 
         SibsPaymentCodePool sibsPaymentCodePoolOne =
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12351", 1000000,
@@ -406,8 +410,9 @@ public class SequentialPregeneratedPaymentCodesTest {
     public static DebtAccount createDebtAccount(String name) {
         FinantialInstitution finantialInstitution = FinantialInstitution.findAll().iterator().next();
 
-        AdhocCustomer create = AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(),
-                Customer.DEFAULT_FISCAL_NUMBER, name, "morada", "", "", "", "pt", "", List.of(finantialInstitution));
+        AdhocCustomer create =
+                AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(), Customer.DEFAULT_FISCAL_NUMBER, name,
+                        "morada", "", "", "", "pt", "", List.of(finantialInstitution));
 
         return DebtAccount.create(finantialInstitution, create);
     }
@@ -433,8 +438,9 @@ public class SequentialPregeneratedPaymentCodesTest {
 
             InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
-            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType,
-                    numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
+            InterestRate interestRate =
+                    InterestRate.createForDebitEntry(debitEntry, globalInterestRateType, numberOfDaysAfterDueDate,
+                            applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
         }
         return debitEntry;

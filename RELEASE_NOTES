@@ -1,3 +1,5 @@
+- Bug Fix: Fix pre generation of reference codes tests, to not depend on a fixed year [#qubIT-Fenix-5597]
+
 13.1.5 (16-12-2024)
 - Bug Fix: When retrieving the PersonCustomer#getActiveCustomer(), validate that the active customer is found. If it is not, throw exception [#qubIT-Fenix-6386]
 

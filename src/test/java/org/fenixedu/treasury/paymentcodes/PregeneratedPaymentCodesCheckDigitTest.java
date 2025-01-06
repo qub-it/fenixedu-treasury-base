@@ -184,14 +184,16 @@ public class PregeneratedPaymentCodesCheckDigitTest {
 
     @Test
     public void testPregenerationDifferentDatesFuture() {
+        Integer currentYear = new LocalDate().getYear();
         DebtAccount debtAccountOne = createDebtAccount("one");
-        DebitEntry debitEntryOne = createDebitEntry(debtAccountOne, new BigDecimal("100.00"), new LocalDate(2024, 1, 5), false);
+        DebitEntry debitEntryOne =
+                createDebitEntry(debtAccountOne, new BigDecimal("100.00"), new LocalDate(currentYear, 1, 5), false);
 
         FinantialInstitution finantialInstitution = debtAccountOne.getFinantialInstitution();
         FinantialEntity finantialEntity = debitEntryOne.getFinantialEntity();
 
-        LocalDate validFrom = new LocalDate(2025, 1, 1);
-        LocalDate validTo = new LocalDate(2030, 12, 31);
+        LocalDate validFrom = new LocalDate(currentYear + 1, 1, 1);
+        LocalDate validTo = new LocalDate(currentYear + 5, 12, 31);
 
         SibsPaymentCodePool sibsPaymentCodePool =
                 SibsPaymentCodePool.create(finantialInstitution, finantialEntity, "Check digit pool", true, "12348", 1000000,
@@ -206,7 +208,7 @@ public class PregeneratedPaymentCodesCheckDigitTest {
 
         assertEquals(1, debtAccountOne.getPregeneratedSibsReferenceCodesSet().size());
 
-        sibsPaymentCodePool.setValidFrom(new LocalDate(2024, 1, 1));
+        sibsPaymentCodePool.setValidFrom(new LocalDate(currentYear, 1, 1));
 
         SibsPaymentRequest sibsPaymentRequestOne =
                 sibsPaymentCodePool.createSibsPaymentRequest(debtAccountOne, Set.of(debitEntryOne), Collections.emptySet());
@@ -263,8 +265,9 @@ public class PregeneratedPaymentCodesCheckDigitTest {
     public static DebtAccount createDebtAccount(String name) {
         FinantialInstitution finantialInstitution = FinantialInstitution.findAll().iterator().next();
 
-        AdhocCustomer create = AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(),
-                Customer.DEFAULT_FISCAL_NUMBER, name, "morada", "", "", "", "pt", "", List.of(finantialInstitution));
+        AdhocCustomer create =
+                AdhocCustomer.create(CustomerType.findByCode("ADHOC").findFirst().get(), Customer.DEFAULT_FISCAL_NUMBER, name,
+                        "morada", "", "", "", "pt", "", List.of(finantialInstitution));
 
         return DebtAccount.create(finantialInstitution, create);
     }
@@ -290,8 +293,9 @@ public class PregeneratedPaymentCodesCheckDigitTest {
 
             InterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
-            InterestRate interestRate = InterestRate.createForDebitEntry(debitEntry, globalInterestRateType,
-                    numberOfDaysAfterDueDate, applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
+            InterestRate interestRate =
+                    InterestRate.createForDebitEntry(debitEntry, globalInterestRateType, numberOfDaysAfterDueDate,
+                            applyInFirstWorkday, maximumDaysToApplyPenalty, BigDecimal.ZERO, rate);
             debitEntry.changeInterestRate(interestRate);
         }
         return debitEntry;
