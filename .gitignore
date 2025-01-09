@@ -10,3 +10,5 @@
 /bin/
 /src/main/java/test/not/commit
 .dbeaver-data-sources.xml
+fenixedu-treasury-base.iml
+.idea
