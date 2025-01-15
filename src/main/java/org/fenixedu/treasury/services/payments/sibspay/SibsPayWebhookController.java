@@ -74,9 +74,14 @@ public class SibsPayWebhookController {
 
         boolean mockedUser = false;
         try {
+            boolean decryptedSuccessfully = false;
+            UnableToDecryptException savedUnableToDecryptException = null;
+
             for (SibsPayPlatform configuration : SibsPayPlatform.findAllActive().collect(Collectors.toList())) {
                 try {
                     String jsonBody = decrypt(configuration.getSecretKey(), iv, authTag, encryptedBody);
+                    decryptedSuccessfully = true;
+
                     FenixFramework.atomic(() -> {
                         log.saveRequest(jsonBody);
                     });
@@ -93,6 +98,15 @@ public class SibsPayWebhookController {
                     }
                 } catch (UnableToDecryptException e) {
                     // Continue to the other sibsPayPlatform
+                    savedUnableToDecryptException = e;
+                }
+            }
+
+            if (!decryptedSuccessfully) {
+                logger.error("Unable to decrypt the encrypted body");
+
+                if (savedUnableToDecryptException != null) {
+                    logger.error(savedUnableToDecryptException.getMessage());
                 }
             }
 
@@ -109,9 +123,9 @@ public class SibsPayWebhookController {
 
             ITreasuryPlatformDependentServices treasuryServices = TreasuryPlataformDependentServicesFactory.implementation();
 
-            boolean needToMockUser =
-                    StringUtils.isEmpty(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername())
-                            && StringUtils.isNotEmpty(configurationToUse.getApplicationUsernameForAutomaticOperations());
+            boolean needToMockUser = StringUtils.isEmpty(
+                    TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername()) && StringUtils.isNotEmpty(
+                    configurationToUse.getApplicationUsernameForAutomaticOperations());
 
             if (needToMockUser) {
                 treasuryServices.setCurrentApplicationUser(configurationToUse.getApplicationUsernameForAutomaticOperations());
@@ -159,8 +173,8 @@ public class SibsPayWebhookController {
                     // Mark this notification as duplicate and skip processing
                     FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
 
-                    logger.debug("The transaction is duplicate. Nothing to do, return: "
-                            + webhookNotificationWrapper.getTransactionId());
+                    logger.debug(
+                            "The transaction is duplicate. Nothing to do, return: " + webhookNotificationWrapper.getTransactionId());
 
                     return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
                 }
@@ -178,8 +192,7 @@ public class SibsPayWebhookController {
                 // Another case is a different payment made by the customer, with the same reference code.
                 //
                 // In this case the payment must be allowed to be processed 
-                if (!(paymentRequest instanceof SibsPaymentRequest) && !paymentRequest.isInCreatedState()
-                        && !paymentRequest.isInRequestedState()) {
+                if (!(paymentRequest instanceof SibsPaymentRequest) && !paymentRequest.isInCreatedState() && !paymentRequest.isInRequestedState()) {
                     throw new RuntimeException(
                             "The notification is a successful payment but the paymentRequest is already processed or annuled. Please check");
                 }
@@ -192,8 +205,8 @@ public class SibsPayWebhookController {
 
             if (webhookNotificationWrapper.isPending()) {
                 // Transaction is pending, ignore by returnig 200
-                logger.debug("The notification is pending status. Nothing to do, return...: "
-                        + webhookNotificationWrapper.getTransactionId());
+                logger.debug(
+                        "The notification is pending status. Nothing to do, return...: " + webhookNotificationWrapper.getTransactionId());
 
                 return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             } else if (webhookNotificationWrapper.isPaid()) {
@@ -212,16 +225,16 @@ public class SibsPayWebhookController {
 
                 throw new RuntimeException("unknown payment request type");
             } else if (webhookNotificationWrapper.isExpired() || webhookNotificationWrapper.isDeclined()) {
-                logger.debug("The notification is expired or declined. Reject payment request...: "
-                        + webhookNotificationWrapper.getTransactionId());
+                logger.debug(
+                        "The notification is expired or declined. Reject payment request...: " + webhookNotificationWrapper.getTransactionId());
 
                 FenixFramework.atomic(() -> configurationToUse.rejectRequest(paymentRequest, log, webhookNotificationWrapper));
 
                 return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 
-            logger.info("Unknown state, nothing to do, return with successful response: "
-                    + webhookNotificationWrapper.getTransactionId());
+            logger.info(
+                    "Unknown state, nothing to do, return with successful response: " + webhookNotificationWrapper.getTransactionId());
 
             return Response.ok(response(webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
@@ -281,10 +294,8 @@ public class SibsPayWebhookController {
 
             // Return
             return new String(bytes, "UTF-8");
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException
-                | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | NoSuchProviderException e) {
-            logger.error(e.getMessage());
-
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException |
+                IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | NoSuchProviderException e) {
             throw new UnableToDecryptException(e);
         }
 
