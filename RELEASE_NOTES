@@ -1,3 +1,4 @@
+13.1.6 (15-01-2025)
 - Bug Fix: Fix pre generation of reference codes tests, to not depend on a fixed year [#qubIT-Fenix-5597]
 - Bug Fix: Do not print error log in decrypting SIBS Pay notifications, if one active configuration is able to decrypt [#qubIT-Fenix-6544]
 
