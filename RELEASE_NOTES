@@ -1,3 +1,4 @@
+13.2.0 (03-03-2025)
 - Refactor: Declare DebitEntry annulment methods to have the option of annull the interest debit entries [#qubIT-Fenix-6662]
 
 13.1.7 (03-03-2025)
