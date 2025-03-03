@@ -1090,6 +1090,17 @@ public class DebitEntry extends DebitEntry_Base {
 
     @Atomic
     public void annulDebitEntry(final String reason) {
+        annulDebitEntry(reason, true);
+    }
+
+    /* ANIL 2025-03-03 (#qubIT-Fenix-6662)
+     *
+     * There are some cases, like tuition recalculation, in which
+     * we cannot annul the interests, if the installment must be
+     * annuled and created again
+     */
+    @Atomic
+    public void annulDebitEntry(final String reason, boolean annulInterests) {
         if (isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.annul.is.already.annuled");
         }
@@ -1113,17 +1124,29 @@ public class DebitEntry extends DebitEntry_Base {
 
         setFinantialDocument(debitNote);
 
-        debitNote.anullDebitNoteWithCreditNote(reason, true);
+        debitNote.anullDebitNoteWithCreditNote(reason, annulInterests);
     }
 
+    public void annulOnlyThisDebitEntryAndInterestsInBusinessContext(String reason) {
+        annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason, true);
+    }
+
+    /* ANIL 2025-03-03 (#qubIT-Fenix-6662)
+     *
+     * There are some cases, like tuition recalculation, in which
+     * we cannot annul the interests, if the installment must be
+     * annuled and created again
+     */
     /**
      * The purpose of this method is to avoid rewriting the logic
      * of checking if the debit entry is in finantial document or not
      * and to annul the interest debit entries
      */
-    public void annulOnlyThisDebitEntryAndInterestsInBusinessContext(String reason) {
-        // Ensure interests are annuled
-        getInterestDebitEntriesSet().stream().forEach(d -> d.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason));
+    public void annulOnlyThisDebitEntryAndInterestsInBusinessContext(String reason, boolean annulInterests) {
+        if(annulInterests) {
+            // Ensure interests are annuled
+            getInterestDebitEntriesSet().stream().forEach(d -> d.annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason, annulInterests));
+        }
 
         annulOnEvent();
 
