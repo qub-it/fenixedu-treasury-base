@@ -1,3 +1,4 @@
+13.1.7 (03-03-2025)
 - Bug Fix: Limit customer name sent to SIBS SPG to 45 characters [#qubIT-Fenix-6683]
 
 13.1.6 (15-01-2025)
