@@ -14,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
@@ -157,7 +158,12 @@ public class SibsPayAPIService {
         result.setCustomer(new SibsPayCustomer());
         result.getCustomer().setCustomerInfo(new SibsPayCustomerInfo());
 
-        result.getCustomer().getCustomerInfo().setCustomerName(forwardPayment.getDebtAccount().getCustomer().getName());
+        // ANIL 2025-02-28 (#qubIT-Fenix-6683)
+        //
+        // THe customer name must be limited to 45 characters
+
+        result.getCustomer().getCustomerInfo()
+                .setCustomerName(limitCustomerName(forwardPayment.getDebtAccount().getCustomer().getName()));
         SibsPayAddress address = new SibsPayAddress();
         String cityText = billingAddressBean.getCity();
         String zipCodeText = billingAddressBean.getZipCode();
@@ -282,7 +288,7 @@ public class SibsPayAPIService {
 
     /* **********************
      * SIBS PAYMENT REFERENCE
-     * ********************** 
+     * **********************
      */
 
     public SibsPayReturnCheckout processSibsPaymentRequestOrMbwayCheckout(DebtAccount debtAccount, BigDecimal payableAmount,
@@ -294,8 +300,9 @@ public class SibsPayAPIService {
         try {
             ObjectMapper objectMapper = createObjectMapper();
 
-            SibsPayRequestCheckout requestCheckout = createCheckoutForSibsPaymentRequestOrMbWayGeneration(debtAccount,
-                    payableAmount, validFrom, validTo, merchantTransactionId);
+            SibsPayRequestCheckout requestCheckout =
+                    createCheckoutForSibsPaymentRequestOrMbWayGeneration(debtAccount, payableAmount, validFrom, validTo,
+                            merchantTransactionId);
 
             requestLog = objectMapper.writeValueAsString(requestCheckout);
 
@@ -493,7 +500,11 @@ public class SibsPayAPIService {
         result.setCustomer(new SibsPayCustomer());
         result.getCustomer().setCustomerInfo(new SibsPayCustomerInfo());
 
-        result.getCustomer().getCustomerInfo().setCustomerName(debtAccount.getCustomer().getName());
+        // ANIL 2025-02-28 (#qubIT-Fenix-6683)
+        //
+        // THe customer name must be limited to 45 characters
+
+        result.getCustomer().getCustomerInfo().setCustomerName(limitCustomerName(debtAccount.getCustomer().getName()));
 
         String email = TreasuryPlataformDependentServicesFactory.implementation().getCustomerEmail(debtAccount.getCustomer());
         result.getCustomer().getCustomerInfo().setCustomerEmail(email);
@@ -522,6 +533,39 @@ public class SibsPayAPIService {
         paymentReference.setMaxAmount(amount);
 
         return result;
+    }
+
+    private static final int MAX_NAME_SIZE = 45;
+
+    // ANIL 2025-02-28 (#qubIT-Fenix-6683)
+    //
+    // The customer name must be limited to 45 characters
+    private String limitCustomerName(String name) {
+        if (StringUtils.isEmpty(name)) {
+            return name;
+        }
+
+        if (name.length() <= MAX_NAME_SIZE) {
+            return name;
+        }
+
+        // Just return the first and the last name
+        String[] compounds = name.split("\\s+");
+
+        if (compounds.length == 0) {
+            // Strange case but check for the sake of it, return the original name
+
+            return name;
+        } else if (compounds.length == 1) {
+            // Limit the name to maximum of MAX_NAME_SIZE
+            return compounds[0].substring(0,  Integer.min(compounds[0].length(), MAX_NAME_SIZE));
+        } else {
+            // Return the first and the last name
+            String result = compounds[0] + " " + compounds[compounds.length - 1];
+
+            // But also limit to MAX_NAME_SIZE
+            return result.substring(0, Integer.min(result.length(), MAX_NAME_SIZE));
+        }
     }
 
     private static ObjectMapper createObjectMapper() {
