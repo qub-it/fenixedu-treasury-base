@@ -3938,3 +3938,37 @@ relation DefaultInterestRateTypeTreasurySettings {
 class interestrate.MonthlyInterestRateType extends tariff.InterestRateType {
 }
 
+/* Group debit entries, so they can be paid together */
+
+class payments.PaymentInvoiceEntriesGroup {
+}
+
+    relation PaymentInvoiceEntriesGroupDomainRoot {
+        .pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+            multiplicity 1..1;
+        }
+
+        payments.PaymentInvoiceEntriesGroup playsRole paymentInvoiceEntriesGroups {
+            multiplicity *;
+        }
+    }
+
+    relation PaymentInvoiceEntriesGroupDebtAccount {
+        debt.DebtAccount playsRole debtAccount {
+            multiplicity 1..1;
+        }
+
+        payments.PaymentInvoiceEntriesGroup playsRole paymentInvoiceEntriesGroups {
+            multiplicity *;
+        }
+    }
+
+    relation PaymentInvoiceEntriesGroupInvoiceEntry {
+        payments.PaymentInvoiceEntriesGroup playsRole paymentInvoiceEntriesGroups {
+            multiplicity *;
+        }
+
+        document.InvoiceEntry playsRole invoiceEntries {
+            multiplicity *;
+        }
+    }
