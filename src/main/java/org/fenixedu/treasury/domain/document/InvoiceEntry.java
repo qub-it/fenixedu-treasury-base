@@ -63,10 +63,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fenixedu.treasury.domain.Currency;
-import org.fenixedu.treasury.domain.FinantialEntity;
-import org.fenixedu.treasury.domain.Product;
-import org.fenixedu.treasury.domain.Vat;
+import com.google.common.collect.Sets;
+import org.fenixedu.treasury.domain.*;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -461,6 +459,13 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return amount;
     }
 
+    @Override
+    public void addToFinantialDocument(FinantialDocument finantialDocument) {
+        super.addToFinantialDocument(finantialDocument);
+
+        getPaymentInvoiceEntriesGroupsSet().stream().forEach(g -> g.checkRules());
+    }
+
     @Deprecated
     @Override
     public void addPaymentCodes(MultipleEntriesPaymentCode paymentCodes) {
@@ -579,6 +584,21 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
 
         if (result == null) {
             result = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(this);
+        }
+
+        return result;
+    }
+
+    public static Set<Customer> getReferencedCustomers(Set<InvoiceEntry> invoiceEntrySet) {
+        final Set<Customer> result = Sets.newHashSet();
+
+        for (final InvoiceEntry entry : invoiceEntrySet) {
+            if (entry.getFinantialDocument() != null && ((Invoice) entry.getFinantialDocument()).isForPayorDebtAccount()) {
+                result.add(((Invoice) entry.getFinantialDocument()).getPayorDebtAccount().getCustomer());
+                continue;
+            }
+
+            result.add(entry.getDebtAccount().getCustomer());
         }
 
         return result;

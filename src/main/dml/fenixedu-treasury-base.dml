@@ -3941,6 +3941,10 @@ class interestrate.MonthlyInterestRateType extends tariff.InterestRateType {
 /* Group debit entries, so they can be paid together */
 
 class payments.PaymentInvoiceEntriesGroup {
+    DateTime creationDate;
+    String responsible;
+    String groupKey;
+    String remarks;
 }
 
     relation PaymentInvoiceEntriesGroupDomainRoot {
@@ -3969,6 +3973,16 @@ class payments.PaymentInvoiceEntriesGroup {
         }
 
         document.InvoiceEntry playsRole invoiceEntries {
+            multiplicity *;
+        }
+    }
+
+    relation PaymentInvoiceEntriesGroupFinantialEntity {
+        FinantialEntity playsRole finantialEntity {
+            multiplicity 1..1;
+        }
+
+        payments.PaymentInvoiceEntriesGroup playsRole paymentInvoiceEntriesGroups {
             multiplicity *;
         }
     }
