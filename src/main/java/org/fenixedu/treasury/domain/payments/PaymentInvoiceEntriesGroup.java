@@ -68,8 +68,8 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
             throw new IllegalStateException("error.PaymentInvoiceEntriesGroup.finantialEntity.required");
         }
 
-        if (getInvoiceEntriesSet().size() < 2) {
-            throw new IllegalStateException("error.PaymentInvoiceEntriesGroup.invoiceEntries.at.least.two.required");
+        if (getInvoiceEntriesSet().size() < 1) {
+            throw new IllegalStateException("error.PaymentInvoiceEntriesGroup.invoiceEntries.required");
         }
 
         if (getInvoiceEntriesSet().stream().map(e -> e.getFinantialEntity()).distinct().count() != 1) {
@@ -100,11 +100,30 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
         return InvoiceEntry.getReferencedCustomers(getInvoiceEntriesSet());
     }
 
+    public void editRemarks(String remarks) {
+        super.setRemarks(remarks);
+
+        checkRules();
+    }
+
+    @Override
+    public void addInvoiceEntries(InvoiceEntry invoiceEntry) {
+        super.addInvoiceEntries(invoiceEntry);
+
+        checkRules();
+    }
 
     /* SERVICES */
 
     public static PaymentInvoiceEntriesGroup create(FinantialEntity finantialEntity, DebtAccount debtAccount,
             Set<? extends InvoiceEntry> invoiceEntrySet, String groupKey) {
+
+        // Annul payment reference codes
+        invoiceEntrySet.stream().filter(i -> i.isDebitNoteEntry()) //
+                .map(i -> (DebitEntry) i) //
+                .flatMap(i -> i.getActiveSibsPaymentRequests().stream()) //
+                .forEach(i -> i.anull());
+
         return new PaymentInvoiceEntriesGroup(finantialEntity, debtAccount, invoiceEntrySet, groupKey);
     }
 
