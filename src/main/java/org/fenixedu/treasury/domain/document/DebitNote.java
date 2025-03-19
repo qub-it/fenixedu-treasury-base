@@ -342,7 +342,7 @@ public class DebitNote extends DebitNote_Base {
             this.addFinantialDocumentEntries(d);
         });
 
-        getDebitEntriesSet().stream().flatMap(e -> e.getPaymentInvoiceEntriesGroupsSet().stream()).distinct()
+        debitEntries.stream().flatMap(e -> e.getPaymentInvoiceEntriesGroupsSet().stream()).distinct()
                 .forEach(g -> g.checkRules());
 
         checkRules();
