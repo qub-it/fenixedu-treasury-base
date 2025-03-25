@@ -1,5 +1,6 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.treasury.domain.sibspay.MbwayMandateState;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
@@ -19,6 +20,12 @@ public class SibsPayGetInquiryMbwayMandateResponse {
 
     @JsonProperty("execution")
     private SibsPayExecution execution = null;
+
+    @JsonIgnore
+    private String requestLog;
+
+    @JsonIgnore
+    private String responseLog;
 
     public boolean isOperationSuccess() {
         return this.returnStatus != null && SibsPayAPIService.isOperationSuccess(this.returnStatus.getStatusCode());
@@ -74,4 +81,19 @@ public class SibsPayGetInquiryMbwayMandateResponse {
         this.execution = execution;
     }
 
+    public String getRequestLog() {
+        return requestLog;
+    }
+
+    public void setRequestLog(String requestLog) {
+        this.requestLog = requestLog;
+    }
+
+    public String getResponseLog() {
+        return responseLog;
+    }
+
+    public void setResponseLog(String responseLog) {
+        this.responseLog = responseLog;
+    }
 }

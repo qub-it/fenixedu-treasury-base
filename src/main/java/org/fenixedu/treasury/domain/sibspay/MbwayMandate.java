@@ -13,6 +13,7 @@ import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
+import org.joda.time.LocalDate;
 import pt.ist.fenixframework.FenixFramework;
 
 public class MbwayMandate extends MbwayMandate_Base {
@@ -91,6 +92,16 @@ public class MbwayMandate extends MbwayMandate_Base {
         checkRules();
     }
 
+    public void reactivate() {
+        if(!getState().isSuspended()) {
+            throw new IllegalStateException("mandate should in suspended state, in order to be to be reactivated");
+        }
+
+        setState(MbwayMandateState.ACTIVE);
+
+        checkRules();
+    }
+
     public void markAsNotAuthorized() {
         setState(MbwayMandateState.NOT_AUTHORIZED);
         setAuthorizationDate(new DateTime());
@@ -119,7 +130,7 @@ public class MbwayMandate extends MbwayMandate_Base {
         checkRules();
     }
 
-    public void updatePlafondAndExpirationDate(BigDecimal newPlafond, DateTime expirationDate) {
+    public void updatePlafondAndExpirationDate(BigDecimal newPlafond, LocalDate expirationDate) {
         setPlafond(newPlafond);
         setExpirationDate(expirationDate);
 

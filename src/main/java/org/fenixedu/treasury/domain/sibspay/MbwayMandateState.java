@@ -6,7 +6,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 
 public enum MbwayMandateState {
 
-    NEW, WAITING_AUTHORIZATION, ACTIVE, SUSPENDED, CANCELED, EXPIRED, NOT_AUTHORIZED;
+    NEW, WAITING_AUTHORIZATION, ACTIVE, SUSPENDED, CANCELED, EXPIRED, NOT_AUTHORIZED, TRANSFERRED;
 
     public boolean isNew() {
         return this == NEW;
@@ -34,6 +34,10 @@ public enum MbwayMandateState {
 
     public boolean isNotAuthorized() {
         return this == NOT_AUTHORIZED;
+    }
+
+    public boolean isTransferred() {
+        return this == TRANSFERRED;
     }
 
     public String getCode() {

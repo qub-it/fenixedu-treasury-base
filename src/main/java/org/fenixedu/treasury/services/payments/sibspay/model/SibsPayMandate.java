@@ -3,6 +3,7 @@ package org.fenixedu.treasury.services.payments.sibspay.model;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.joda.time.LocalDate;
 
 /**
  * Object that defines a Mandate
@@ -51,6 +52,9 @@ public class SibsPayMandate {
 
     @JsonProperty("termsAndConditions")
     private String termsAndConditions;
+
+    @JsonProperty("mandateAmountLimit")
+    private SibsPayAmount mandateAmountLimit;
 
     public String getMandateType() {
         return mandateType;
@@ -177,6 +181,14 @@ public class SibsPayMandate {
 
     public void setTermsAndConditions(String termsAndConditions) {
         this.termsAndConditions = termsAndConditions;
+    }
+
+    public SibsPayAmount getMandateAmountLimit() {
+        return mandateAmountLimit;
+    }
+
+    public void setMandateAmountLimit(SibsPayAmount mandateAmountLimit) {
+        this.mandateAmountLimit = mandateAmountLimit;
     }
 
     @Override

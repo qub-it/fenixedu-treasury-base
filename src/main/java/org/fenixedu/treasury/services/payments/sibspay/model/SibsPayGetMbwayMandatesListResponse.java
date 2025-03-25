@@ -2,6 +2,7 @@ package org.fenixedu.treasury.services.payments.sibspay.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SibsPayGetMbwayMandatesListResponse {
@@ -17,6 +18,12 @@ public class SibsPayGetMbwayMandatesListResponse {
 
     @JsonProperty("execution")
     private SibsPayExecution execution = null;
+
+    @JsonIgnore
+    private String requestLog;
+
+    @JsonIgnore
+    private String responseLog;
 
     public SibsPayReturnStatus getReturnStatus() {
         return returnStatus;

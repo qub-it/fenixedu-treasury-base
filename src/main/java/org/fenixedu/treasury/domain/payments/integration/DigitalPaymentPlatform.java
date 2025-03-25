@@ -130,6 +130,10 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
                 .anyMatch(m -> m.getPaymentMethod() == TreasurySettings.getInstance().getMbWayPaymentMethod());
     }
 
+    public boolean isMbwayMandateSupported() {
+        return false;
+    }
+
     public boolean isActive() {
         return getActive();
     }

@@ -14,6 +14,7 @@ enum org.fenixedu.treasury.domain.InvoiceRegistrationMode                       
 enum org.fenixedu.treasury.domain.document.InvoiceSourceBillingType                                 as InvoiceSourceBillingType;
 enum org.fenixedu.treasury.domain.document.PaymentSourcePaymentType                                 as PaymentSourcePaymentType;
 enum org.fenixedu.treasury.domain.sibspay.MbwayMandateState                                         as MbwayMandateState;
+enum org.fenixedu.treasury.domain.sibspay.MbwayMandatePaymentScheduleState                          as MbwayMandatePaymentScheduleState;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -3806,7 +3807,7 @@ class sibspay.MbwayMandate {
 	DateTime updateDate;
 
 	BigDecimalT plafond;
-	DateTime expirationDate;
+	LocalDate expirationDate;
 	
 	String cancelReason;
 	String cancelResponsible;	
@@ -3863,15 +3864,16 @@ class sibspay.MbwayMandate {
 	}
 	
 class sibspay.MbwayMandatePaymentSchedule {
-	
 	DateTime creationDate;
 	DateTime sendEmailDate;
 	DateTime paymentChargeDate;
-	
+
+    MbwayMandatePaymentScheduleState state;
+
 	LocalizedString emailSubject;
 	LocalizedString emailBody;
-	boolean emailSent;
 }
+
 
 	relation MbwayMandatePaymentScheduleDomainRoot {
 		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
@@ -3882,7 +3884,17 @@ class sibspay.MbwayMandatePaymentSchedule {
 			multiplicity *;
 		}
 	}
-	
+
+	relation MbwayMandatePaymentScheduleFinantialEntity {
+	    FinantialEntity playsRole finantialEntity {
+            multiplicity 1..1;
+        }
+
+        sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
+            multiplicity *;
+        }
+	}
+
 	relation MbwayMandatePaymentScheduleMbwayMandate {
 
 		sibspay.MbwayMandate playsRole mbwayMandate {
@@ -3903,6 +3915,16 @@ class sibspay.MbwayMandatePaymentSchedule {
 			multiplicity *;
 		}		
 	}
+
+	relation MbwayMandatePaymentScheduleInstallment {
+        sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {
+            multiplicity *;
+        }
+
+        paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+    }
 	
 	relation MbwayMandatePaymentScheduleMbwayPayment {
 		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {

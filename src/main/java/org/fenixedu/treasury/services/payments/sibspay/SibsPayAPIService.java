@@ -70,7 +70,14 @@ public class SibsPayAPIService {
     private static final String PAYMENT_TYPE_PREF = "PREF";
 
     private static final String MANDATE_ACTION_AUTH_CREATION = "CRTN";
+    private static final String MANDATE_ACTION_AUTH_SUSPENSION = "SSPN";
+    private static final String MANDATE_ACTION_AUTH_REACTIVATION = "RCTV";
+    private static final String MANDATE_ACTION_AUTH_LIMITS_UPDATE = "LMUP";
+    private static final String MANDATE_ACTION_AUTH_CANCEL = "CNCL";
+
     private static final String MANDATE_ACTION_STATUS_SUCCESS = "SCCS";
+    private static final String MANDATE_ACTION_STATUS_REJECTED = "RJCT";
+    private static final String MANDATE_ACTION_STATUS_REFUSED = "RFSD";
 
     private static final Logger logger = LoggerFactory.getLogger(SibsPayAPIService.class);
 
@@ -695,10 +702,9 @@ public class SibsPayAPIService {
         String requestLog = "{}";
         String responseLog = null;
 
+        ObjectMapper objectMapper = createObjectMapper();
+
         try {
-
-            ObjectMapper objectMapper = createObjectMapper();
-
             logger.debug(requestLog);
 
             WebTarget checkoutWebTarget = this.webTarget.path("mbway-mandates").path(transactionId).path("inquiry");
@@ -707,15 +713,9 @@ public class SibsPayAPIService {
 
             builder.header("Authorization", this.bearerToken);
             builder.header("X-IBM-Client-Id", this.clientId);
+            builder.header("Mbway-ID", "%s#%s".formatted(countryPrefix, localPhoneNumber));
 
             Response response = builder.post(Entity.entity(requestLog, MediaType.APPLICATION_JSON));
-
-            if (response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode()) {
-                return null;
-            } else if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-                throw new OnlinePaymentsGatewayCommunicationException(requestLog, response.readEntity(String.class),
-                        "unsuccessful getInquiryMbwayMandate");
-            }
 
             responseLog = response.readEntity(String.class);
             logger.debug(responseLog);
@@ -723,12 +723,29 @@ public class SibsPayAPIService {
             SibsPayGetInquiryMbwayMandateResponse returnValue =
                     objectMapper.readValue(responseLog, SibsPayGetInquiryMbwayMandateResponse.class);
 
+            if (returnValue == null) {
+                throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog,
+                        "unsuccessful getInquiryMbwayMandate");
+            }
+
+            returnValue.setRequestLog(requestLog);
+            returnValue.setResponseLog(responseLog);
+
             return returnValue;
         } catch (WebApplicationException var23) {
             responseLog = var23.getResponse().readEntity(String.class);
-            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
-        } catch (JsonProcessingException e) {
-            throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
+
+            try {
+                SibsPayGetInquiryMbwayMandateResponse returnValue =
+                        objectMapper.readValue(responseLog, SibsPayGetInquiryMbwayMandateResponse.class);
+
+                returnValue.setRequestLog(requestLog);
+                returnValue.setResponseLog(responseLog);
+
+                return returnValue;
+            } catch (IOException e) {
+                throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, var23);
+            }
         } catch (IOException e) {
             throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog, e);
         }
@@ -917,8 +934,32 @@ public class SibsPayAPIService {
         return MANDATE_ACTION_AUTH_CREATION.equals(mandateAction);
     }
 
+    public static boolean isMandateActionAuthSuspension(String mandateAction) {
+        return MANDATE_ACTION_AUTH_SUSPENSION.equals(mandateAction);
+    }
+
+    public static boolean isMandateActionAuthReactivation(String mandateAction) {
+        return MANDATE_ACTION_AUTH_REACTIVATION.equals(mandateAction);
+    }
+
+    public static boolean isMandateActionAuthLimitsUpdate(String mandateAction) {
+        return MANDATE_ACTION_AUTH_LIMITS_UPDATE.equals(mandateAction);
+    }
+
+    public static boolean isMandateActionAuthCancel(String mandateAction) {
+        return MANDATE_ACTION_AUTH_CANCEL.equals(mandateAction);
+    }
+
     public static boolean isMandateActionStatusSuccess(String mandateActionStatus) {
         return MANDATE_ACTION_STATUS_SUCCESS.equals(mandateActionStatus);
+    }
+
+    public static boolean isMandateActionStatusRejected(String mandateActionStatus) {
+        return MANDATE_ACTION_STATUS_REJECTED.equals(mandateActionStatus);
+    }
+
+    public static boolean isMandateActionStatusRefused(String mandateActionStatus) {
+        return MANDATE_ACTION_STATUS_REFUSED.equals(mandateActionStatus);
     }
 
     public String getJsScriptURL(String checkoutId) {
