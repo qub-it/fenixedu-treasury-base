@@ -1,3 +1,4 @@
+13.3.1 (26-03-2025)
 - Bug Fix: Reverse comparison when checking if MeoWallet response status is failed, to avoid NPE [#qubIT-Fenix-6768]
 
 13.3.0 (21-03-2025)
