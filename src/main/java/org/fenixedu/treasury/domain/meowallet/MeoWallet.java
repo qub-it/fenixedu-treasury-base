@@ -224,7 +224,7 @@ public class MeoWallet extends MeoWallet_Base
 
             FenixFramework.atomic(() -> {
                 log.logRequestReceiveDateAndData(paymentBean.getId(), paymentBean.getType(), paymentBean.getMethod(),
-                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals(STATUS_FAIL));
+                        paymentBean.getAmount(), paymentBean.getStatus(), !STATUS_FAIL.equals(paymentBean.getStatus()));
 
                 log.saveRequest(paymentBean.getRequestLog());
                 log.saveResponse(paymentBean.getResponseLog());
@@ -314,7 +314,7 @@ public class MeoWallet extends MeoWallet_Base
 
             FenixFramework.atomic(() -> {
                 log.logRequestReceiveDateAndData(paymentBean.getId(), paymentBean.getType(), paymentBean.getMethod(),
-                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals(STATUS_FAIL));
+                        paymentBean.getAmount(), paymentBean.getStatus(), !STATUS_FAIL.equals(paymentBean.getStatus()));
 
                 log.saveRequest(paymentBean.getRequestLog());
                 log.saveResponse(paymentBean.getResponseLog());
@@ -600,7 +600,7 @@ public class MeoWallet extends MeoWallet_Base
             final String sibsReferenceId = paymentBean.getId();
             FenixFramework.atomic(() -> {
                 log.logRequestReceiveDateAndData(paymentBean.getId(), paymentBean.getType(), paymentBean.getMethod(),
-                        paymentBean.getAmount(), paymentBean.getStatus(), !paymentBean.getStatus().equals(STATUS_FAIL));
+                        paymentBean.getAmount(), paymentBean.getStatus(), !STATUS_FAIL.equals(paymentBean.getStatus()));
 
                 log.saveRequest(paymentBean.getRequestLog());
                 log.saveResponse(paymentBean.getResponseLog());
@@ -904,7 +904,7 @@ public class MeoWallet extends MeoWallet_Base
 
         if (operationResultType.equals(STATUS_COMPLETED)) {
             return ForwardPaymentStateType.PAYED;
-        } else if (operationResultType.equals(STATUS_FAIL)) {
+        } else if (STATUS_FAIL.equals(operationResultType)) {
             return ForwardPaymentStateType.REJECTED;
         }
 

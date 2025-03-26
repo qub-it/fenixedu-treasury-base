@@ -261,7 +261,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
         if (status.equals(STATUS_PAID)) {
             return ForwardPaymentStateType.PAYED;
-        } else if (status.equals(STATUS_FAIL)) {
+        } else if (STATUS_FAIL.equals(status)) {
             return ForwardPaymentStateType.REJECTED;
         }
 
