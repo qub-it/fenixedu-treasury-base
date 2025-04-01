@@ -85,6 +85,7 @@ public class SibsPayWebhookLogic {
             }
         }
 
+        logger.error("Unable to decrypt the encrypted body");
         if (savedUnableToDecryptException != null) {
             logger.error(savedUnableToDecryptException.getMessage());
         }
@@ -102,8 +103,7 @@ public class SibsPayWebhookLogic {
             boolean decryptedSuccessfully = decryptNotificationAndFindConfiguration();
 
             if (!decryptedSuccessfully) {
-                logger.error("Unable to decrypt the encrypted body");
-
+                throw new RuntimeException("the system was not able to decrypt or integration is down");
             }
 
             mockUserIfNecessary();

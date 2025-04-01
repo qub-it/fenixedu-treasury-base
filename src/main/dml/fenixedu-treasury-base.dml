@@ -3843,16 +3843,6 @@ class sibspay.MbwayMandate {
 		}
 	}
 
-	relation MbwayMandateMbwayRequest {
-		sibspaymentsgateway.MbwayRequest playsRole mbwayRequests {
-			multiplicity *;
-		}
-
-		sibspay.MbwayMandate playsRole mbwayMandates {
-			multiplicity 0..1;
-		}
-	}
-	
 	relation MbwayMandatePaymentRequestLog {
 		sibspay.MbwayMandate playsRole mbwayMandate {
 			multiplicity 0..1;
@@ -3883,16 +3873,6 @@ class sibspay.MbwayMandatePaymentSchedule {
 		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
 			multiplicity *;
 		}
-	}
-
-	relation MbwayMandatePaymentScheduleFinantialEntity {
-	    FinantialEntity playsRole finantialEntity {
-            multiplicity 1..1;
-        }
-
-        sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
-            multiplicity *;
-        }
 	}
 
 	relation MbwayMandatePaymentScheduleMbwayMandate {

@@ -44,6 +44,7 @@ import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
+import org.fenixedu.treasury.dto.sibspay.MbwayMandateBean;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCreateMbwayMandateResponse;
@@ -1195,6 +1196,65 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     private static final int AUTHORIZATION_EXPIRE_TIME_IN_MINUTES = 20;
 
     @Atomic(mode = TxMode.READ)
+    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate) {
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+        try {
+            // First, check if the mandate exists
+            SibsPayGetInquiryMbwayMandateResponse inquiryMbwayMandateResponse =
+                    sibsPayService.getInquiryMbwayMandate(mbwayMandate.getTransactionId(), mbwayMandate.getCountryPrefix(),
+                            mbwayMandate.getLocalPhoneNumber());
+
+            log(mbwayMandate, "checkMbwayMandateStateInDigitalPaymentPlatform", inquiryMbwayMandateResponse.getReturnStatus().getStatusCode(),
+                    inquiryMbwayMandateResponse.getReturnStatus().getStatusDescription(),
+                    inquiryMbwayMandateResponse.getRequestLog(), inquiryMbwayMandateResponse.getResponseLog());
+
+            if (inquiryMbwayMandateResponse.isOperationSuccess()) {
+                MbwayMandateState currentMandateState = inquiryMbwayMandateResponse.getCurrentMandateState();
+
+                MbwayMandateBean bean = new MbwayMandateBean();
+                bean.setMandateId(inquiryMbwayMandateResponse.getMandate().getMandateId());
+                bean.setTransactionId(inquiryMbwayMandateResponse.getMandate().getTransactionId());
+                bean.setState(currentMandateState);
+                bean.setPlafond(inquiryMbwayMandateResponse.getMandate()
+                        .getAmountLimit() != null ? inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue() : null);
+
+                return bean;
+            } else if (inquiryMbwayMandateResponse.isOperationErrorUnknownAuthPayment()) {
+                // This might be the case where an authorization was issued
+                // and is new or waiting authorization, and has passed too
+                // much time to authorize
+
+                // If it is the case then cancel the mandate
+                if (mbwayMandate.getState().isCreated() || mbwayMandate.getState().isWaitingAuthorization()) {
+                    if (new Duration(mbwayMandate.getRequestDate(), new DateTime()).toStandardMinutes()
+                            .getMinutes() > AUTHORIZATION_EXPIRE_TIME_IN_MINUTES) {
+                        mbwayMandate.cancel("not authorized in time in the digital platform");
+                    }
+                }
+            } else {
+                throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                        inquiryMbwayMandateResponse.getResponseLog(), "not able to process the response");
+            }
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(mbwayMandate, e, "requestMbwayMandateAuthorization", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.requestMbwayMandateAuthorization");
+        }
+    }
+
+    @Atomic(mode = TxMode.READ)
     public void updateMbwayMandateState(MbwayMandate mbwayMandate) {
         SibsPayAPIService sibsPayService =
                 new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
@@ -1238,7 +1298,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 throw new IllegalArgumentException("it was not possible to infer the mandate state");
             }
 
-            if (mbwayMandate.getState().isNew()) {
+            if (mbwayMandate.getState().isCreated()) {
                 if (currentMandateState.isCanceled()) {
                     mbwayMandate.cancel("canceled authorization in the digital platform");
                 } else if (currentMandateState.isExpired()) {
@@ -1325,7 +1385,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             // much time to authorize
 
             // If it is the case then cancel the mandate
-            if (mbwayMandate.getState().isNew() || mbwayMandate.getState().isWaitingAuthorization()) {
+            if (mbwayMandate.getState().isCreated() || mbwayMandate.getState().isWaitingAuthorization()) {
                 if (new Duration(mbwayMandate.getRequestDate(), new DateTime()).toStandardMinutes()
                         .getMinutes() > AUTHORIZATION_EXPIRE_TIME_IN_MINUTES) {
                     mbwayMandate.cancel("not authorized in time in the digital platform");

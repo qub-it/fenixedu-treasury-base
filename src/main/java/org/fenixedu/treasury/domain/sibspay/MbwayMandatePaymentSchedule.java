@@ -10,6 +10,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
@@ -106,18 +107,33 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
             throw new IllegalStateException("nothing to charge in this schedule");
         }
 
-        MbwayRequest mbwayRequest = getMbwayMandate().getDigitalPaymentPlatform().castToMbwayPaymentPlatformService()
-                .createMbwayRequest(this, getDebitEntriesSet(), getInstallmentsSet());
+        try {
+            MbwayRequest mbwayRequest = getMbwayMandate().getDigitalPaymentPlatform().castToMbwayPaymentPlatformService()
+                    .createMbwayRequest(this, getDebitEntriesSet(), getInstallmentsSet());
 
-        updateStateToPaymentCharged();
+            updateStateToPaymentCharged();
 
-        return mbwayRequest;
+            return mbwayRequest;
+        } catch(TreasuryDomainException e) {
+            // And error occurred, mark this request with error, so the operator can see it
+            updateStateToError();
+
+            throw e;
+        }
+
+
     }
 
     @Atomic
     private void updateStateToPaymentCharged() {
         setState(MbwayMandatePaymentScheduleState.PAYMENT_CHARGED);
     }
+
+    @Atomic
+    private void updateStateToError() {
+        setState(MbwayMandatePaymentScheduleState.ERROR);
+    }
+
 
     /*
      * SERVICES

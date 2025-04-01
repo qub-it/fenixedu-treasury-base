@@ -22,7 +22,7 @@ public class MbwayMandate extends MbwayMandate_Base {
         super();
 
         setDomainRoot(FenixFramework.getDomainRoot());
-        setState(MbwayMandateState.NEW);
+        setState(MbwayMandateState.CREATED);
         setRequestDate(new DateTime());
     }
 
@@ -77,6 +77,7 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public void waitAuthorization(String mandateId, String transactionId) {
+        setUpdateDate(new DateTime());
         setState(MbwayMandateState.WAITING_AUTHORIZATION);
 
         setMandateId(mandateId);
@@ -86,6 +87,7 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public void authorize() {
+        setUpdateDate(new DateTime());
         setState(MbwayMandateState.ACTIVE);
         setAuthorizationDate(new DateTime());
 
@@ -93,6 +95,7 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public void reactivate() {
+        setUpdateDate(new DateTime());
         if(!getState().isSuspended()) {
             throw new IllegalStateException("mandate should in suspended state, in order to be to be reactivated");
         }
@@ -103,6 +106,7 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public void markAsNotAuthorized() {
+        setUpdateDate(new DateTime());
         setState(MbwayMandateState.NOT_AUTHORIZED);
         setAuthorizationDate(new DateTime());
 
@@ -110,6 +114,7 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public void cancel(String reason) {
+        setUpdateDate(new DateTime());
         setState(MbwayMandateState.CANCELED);
 
         setCancelReason(reason);
@@ -119,22 +124,24 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public void expire() {
+        setUpdateDate(new DateTime());
         setState(MbwayMandateState.EXPIRED);
 
         checkRules();
     }
 
     public void suspend() {
+        setUpdateDate(new DateTime());
         setState(MbwayMandateState.SUSPENDED);
 
         checkRules();
     }
 
     public void updatePlafondAndExpirationDate(BigDecimal newPlafond, LocalDate expirationDate) {
+        setUpdateDate(new DateTime());
+
         setPlafond(newPlafond);
         setExpirationDate(expirationDate);
-
-        setUpdateDate(new DateTime());
     }
 
     /*

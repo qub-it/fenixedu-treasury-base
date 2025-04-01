@@ -5,7 +5,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 public enum MbwayMandatePaymentScheduleState {
-    SCHEDULED, EMAIL_SENT, PAYMENT_CHARGED, ANNULLED;
+    SCHEDULED, EMAIL_SENT, PAYMENT_CHARGED, ANNULLED, ERROR;
 
     public String getCode() {
         return name();

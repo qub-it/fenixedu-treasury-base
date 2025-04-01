@@ -6,10 +6,10 @@ import org.fenixedu.commons.i18n.LocalizedString;
 
 public enum MbwayMandateState {
 
-    NEW, WAITING_AUTHORIZATION, ACTIVE, SUSPENDED, CANCELED, EXPIRED, NOT_AUTHORIZED, TRANSFERRED;
+    CREATED, WAITING_AUTHORIZATION, ACTIVE, SUSPENDED, CANCELED, EXPIRED, NOT_AUTHORIZED, TRANSFERRED;
 
-    public boolean isNew() {
-        return this == NEW;
+    public boolean isCreated() {
+        return this == CREATED;
     }
 
     public boolean isWaitingAuthorization() {
