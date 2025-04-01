@@ -124,7 +124,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         final LocalDate nextDayOfInterestsCharge =
                 calculateLastDayToChargeInterests(debitEntry, lastPayment, firstDayToChargeInterests).plusDays(1);
 
-        BigDecimal amountToPayAtFirstDay = amountInDebtAtDay(debitEntry, paymentsMap, firstDayToChargeInterests.minusDays(1));
+        BigDecimal amountToPayAtFirstDay = amountInDebtAtDay(debitEntry, paymentsMap, firstDayToChargeInterests);
         BigDecimal interestRateAtFirstDay = interestRateValue(firstDayToChargeInterests);
 
         NavigableMap<LocalDate, InterestCalculationEvent> result = new TreeMap<>();

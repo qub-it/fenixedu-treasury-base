@@ -1,3 +1,5 @@
+- Bug Fix: Fix interests calculation with payments in due date of the debt [#qubIT-Fenix-6783]
+
 13.3.1 (26-03-2025)
 - Bug Fix: Reverse comparison when checking if MeoWallet response status is failed, to avoid NPE [#qubIT-Fenix-6768]
 
