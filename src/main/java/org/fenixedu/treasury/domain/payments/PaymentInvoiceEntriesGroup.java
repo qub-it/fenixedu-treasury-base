@@ -68,12 +68,16 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
             throw new IllegalStateException("error.PaymentInvoiceEntriesGroup.finantialEntity.required");
         }
 
-        if (getInvoiceEntriesSet().size() < 1) {
+        if (getInvoiceEntriesSet().isEmpty()) {
             throw new IllegalStateException("error.PaymentInvoiceEntriesGroup.invoiceEntries.required");
         }
 
         if (getInvoiceEntriesSet().stream().map(e -> e.getFinantialEntity()).distinct().count() != 1) {
             throw new TreasuryDomainException("error.PaymentInvoiceEntriesGroup.different.finantialEntities.from.invoiceEntries");
+        }
+
+        if(getInvoiceEntriesSet().stream().anyMatch(i -> i.getDebtAccount() != getDebtAccount())) {
+            throw new TreasuryDomainException("error.PaymentInvoiceEntriesGroup.different.debtAccounts.from.invoiceEntries");
         }
 
         if (getReferencedCustomers().size() != 1) {

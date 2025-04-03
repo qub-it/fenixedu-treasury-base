@@ -1,3 +1,5 @@
+- Refactor: Check that all invoice entries grouped for payment, is from the same debt account [#qubIT-Fenix-6786]
+
 13.3.3 (03-04-2025)
 - Bug Fix: Maintain the same payment groups when splitting debit entries [#qubIT-Fenix-6786]
 
