@@ -112,6 +112,7 @@ import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
+import org.fenixedu.treasury.dto.sibspay.MbwayMandateBean;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -1358,6 +1359,11 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate) {
         throw new RuntimeException("not supported");
     }
 

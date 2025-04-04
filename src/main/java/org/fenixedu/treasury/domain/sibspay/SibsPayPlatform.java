@@ -1163,7 +1163,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
                     mbwayMandate.waitAuthorization(mandateId, response.getTransactionId());
                 } else {
-                    mbwayMandate.cancel("mandate creation insuccess");
+                    mbwayMandate.cancel("mandate creation not successful");
                 }
             });
 
@@ -1202,11 +1202,37 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                         getEntityReferenceCode());
         try {
             // First, check if the mandate exists
+            String transactionId = mbwayMandate.getTransactionId();
+
+            if (transactionId == null) {
+                // we have to discover the transaction id with the merchant transaction id
+                SibsPayResponseInquiryWrapper paymentStatusByMerchantTransactionId =
+                        sibsPayService.getPaymentStatusByMerchantTransactionId(mbwayMandate.getMerchantTransactionId());
+
+                if (paymentStatusByMerchantTransactionId != null) {
+                    transactionId = paymentStatusByMerchantTransactionId.getTransactionId();
+                }
+            }
+
+            if(transactionId == null) {
+                // The transaction id is not present, almost certainly
+                // the authorization request was not sent
+
+                MbwayMandateBean bean = new MbwayMandateBean();
+                bean.setMandateId(null);
+                bean.setTransactionId(null);
+                bean.setState(null);
+                bean.setPlafond(null);
+
+                return bean;
+            }
+
             SibsPayGetInquiryMbwayMandateResponse inquiryMbwayMandateResponse =
-                    sibsPayService.getInquiryMbwayMandate(mbwayMandate.getTransactionId(), mbwayMandate.getCountryPrefix(),
+                    sibsPayService.getInquiryMbwayMandate(transactionId, mbwayMandate.getCountryPrefix(),
                             mbwayMandate.getLocalPhoneNumber());
 
-            log(mbwayMandate, "checkMbwayMandateStateInDigitalPaymentPlatform", inquiryMbwayMandateResponse.getReturnStatus().getStatusCode(),
+            log(mbwayMandate, "checkMbwayMandateStateInDigitalPaymentPlatform",
+                    inquiryMbwayMandateResponse.getReturnStatus().getStatusCode(),
                     inquiryMbwayMandateResponse.getReturnStatus().getStatusDescription(),
                     inquiryMbwayMandateResponse.getRequestLog(), inquiryMbwayMandateResponse.getResponseLog());
 
@@ -1214,11 +1240,16 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 MbwayMandateState currentMandateState = inquiryMbwayMandateResponse.getCurrentMandateState();
 
                 MbwayMandateBean bean = new MbwayMandateBean();
-                bean.setMandateId(inquiryMbwayMandateResponse.getMandate().getMandateId());
-                bean.setTransactionId(inquiryMbwayMandateResponse.getMandate().getTransactionId());
+                bean.setMandateId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate().getMandateId() : null);
+                bean.setTransactionId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate().getTransactionId() : null);
                 bean.setState(currentMandateState);
                 bean.setPlafond(inquiryMbwayMandateResponse.getMandate()
                         .getAmountLimit() != null ? inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue() : null);
+
+                bean.setExpirationDate(mbwayMandate.getExpirationDate());
+                if (inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate() != null) {
+                    bean.setExpirationDate(parseLocalDate(inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate()));
+                }
 
                 return bean;
             } else if (inquiryMbwayMandateResponse.isOperationErrorUnknownAuthPayment()) {
@@ -1226,13 +1257,24 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 // and is new or waiting authorization, and has passed too
                 // much time to authorize
 
+                MbwayMandateBean bean = new MbwayMandateBean();
+                bean.setMandateId(null);
+                bean.setTransactionId(transactionId);
+                bean.setState(mbwayMandate.getState());
+                bean.setPlafond(null);
+                bean.setExpirationDate(null);
+
                 // If it is the case then cancel the mandate
                 if (mbwayMandate.getState().isCreated() || mbwayMandate.getState().isWaitingAuthorization()) {
                     if (new Duration(mbwayMandate.getRequestDate(), new DateTime()).toStandardMinutes()
                             .getMinutes() > AUTHORIZATION_EXPIRE_TIME_IN_MINUTES) {
-                        mbwayMandate.cancel("not authorized in time in the digital platform");
+                        bean.setState(MbwayMandateState.NOT_AUTHORIZED);
+
+                        return bean;
                     }
                 }
+
+                return bean;
             } else {
                 throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
                         inquiryMbwayMandateResponse.getResponseLog(), "not able to process the response");

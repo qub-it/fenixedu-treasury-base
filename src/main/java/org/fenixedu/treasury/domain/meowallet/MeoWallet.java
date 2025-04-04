@@ -98,6 +98,7 @@ import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCheckoutBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentBean;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletPaymentItemBean;
+import org.fenixedu.treasury.dto.sibspay.MbwayMandateBean;
 import org.fenixedu.treasury.services.payments.meowallet.MeoWalletService;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -1276,6 +1277,11 @@ public class MeoWallet extends MeoWallet_Base
 
     @Override
     public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate) {
         throw new RuntimeException("not supported");
     }
 
