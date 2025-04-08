@@ -14,4 +14,24 @@ public enum MbwayMandatePaymentScheduleState {
     public LocalizedString getLocalizedName() {
         return treasuryBundleI18N(getClass().getSimpleName() + "." + name());
     }
+
+    public boolean isScheduled() {
+        return this == SCHEDULED;
+    }
+
+    public boolean isEmailSent()  {
+        return this == EMAIL_SENT;
+    }
+
+    public boolean isPaymentCharged()  {
+        return this == PAYMENT_CHARGED;
+    }
+
+    public boolean isAnnulled()  {
+        return this == ANNULLED;
+    }
+
+    public boolean isError()  {
+        return this == ERROR;
+    }
 }

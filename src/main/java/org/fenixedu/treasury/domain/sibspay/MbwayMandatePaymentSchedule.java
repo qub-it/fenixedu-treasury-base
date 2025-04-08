@@ -1,5 +1,6 @@
 package org.fenixedu.treasury.domain.sibspay;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,8 +61,9 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         }
 
         // Ensure all debit entries and installments are from the same debt account
-        if (Stream.concat(getDebitEntriesSet().stream().map(DebitEntry::getDebtAccount),
-                getInstallmentsSet().stream().map(i -> i.getPaymentPlan().getDebtAccount())).distinct().count() != 1) {
+        if (Stream.concat(Stream.concat(getDebitEntriesSet().stream().map(DebitEntry::getDebtAccount),
+                        getInstallmentsSet().stream().map(i -> i.getPaymentPlan().getDebtAccount())),
+                Stream.of(getMbwayMandate().getDebtAccount())).distinct().count() != 1) {
             throw new IllegalStateException("error.MbwayMandatePaymentSchedule.debitEntries.from.different.debt.accounts");
         }
 
@@ -70,10 +72,20 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         // Ensure all debit entries and installments are from the same financial entity
         Set<FinantialEntity> finantialEntitySet = Stream.concat(getDebitEntriesSet().stream().map(DebitEntry::getFinantialEntity),
                 getInstallmentsSet().stream().map(i -> i.getPaymentPlan().getFinantialEntity())).collect(Collectors.toSet());
+
         if (finantialEntitySet.size() != 1 || finantialEntitySet.iterator().next() != finantialEntity) {
             throw new IllegalStateException("error.MbwayMandatePaymentSchedule.debitEntries.from.different.finantial.entities");
         }
 
+    }
+
+    public BigDecimal getOpenAmount() {
+        BigDecimal result =
+                getDebitEntriesSet().stream().map(de -> de.getOpenAmountWithInterests()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        result = result.add(getInstallmentsSet().stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        return result;
     }
 
     public boolean isAnnulled() {
@@ -114,13 +126,12 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
             updateStateToPaymentCharged();
 
             return mbwayRequest;
-        } catch(TreasuryDomainException e) {
+        } catch (TreasuryDomainException e) {
             // And error occurred, mark this request with error, so the operator can see it
             updateStateToError();
 
             throw e;
         }
-
 
     }
 
@@ -133,7 +144,6 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
     private void updateStateToError() {
         setState(MbwayMandatePaymentScheduleState.ERROR);
     }
-
 
     /*
      * SERVICES
