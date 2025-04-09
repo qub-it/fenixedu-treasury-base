@@ -978,6 +978,9 @@ public class DebitEntry extends DebitEntry_Base {
 
         recalculateAmountValues();
 
+        // ANIL 2025-04-09 (#qubIT-Fenix-6814)
+        getSibsPaymentRequests().stream().filter(r -> r.isInCreatedState() || r.isInRequestedState()).forEach(r -> r.anull());
+
         checkRules();
     }
 
