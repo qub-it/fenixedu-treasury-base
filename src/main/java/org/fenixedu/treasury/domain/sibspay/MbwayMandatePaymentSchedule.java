@@ -13,7 +13,9 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
+import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.joda.time.DateTime;
 
@@ -88,22 +90,55 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         return result;
     }
 
+    public boolean isInProgress() {
+        return getState().isScheduled() || getState().isEmailSent();
+    }
+
     public boolean isAnnulled() {
         return getState() == MbwayMandatePaymentScheduleState.ANNULLED;
     }
 
-    public void editEmail(LocalizedString emailSubject, LocalizedString emailBody) {
-        setEmailSubject(emailSubject);
-        setEmailBody(emailBody);
-    }
-
     public void sendEmail() {
-
         setState(MbwayMandatePaymentScheduleState.EMAIL_SENT);
+
+        checkRules();
     }
 
     public void annul() {
         super.setState(MbwayMandatePaymentScheduleState.ANNULLED);
+
+        checkRules();
+    }
+
+    public void reschedule() {
+        if (!getState().isError()) {
+            throw new IllegalStateException("error.MbwayMandatePaymentSchedule.reschedule.not.error.state");
+        }
+
+        getDebitEntriesSet().forEach(d -> {
+            if (findSchedulesInProgressForDebitEntry(d).count() > 0) {
+                throw new TreasuryDomainException("error.MbwayMandatePaymentSchedule.debitEntry.already.has.schedule.in.progress",
+                        d.getDescription());
+            }
+        });
+
+        getInstallmentsSet().stream().forEach(i -> {
+            if (FindSchedulesInProgressForInstallment(i).count() > 0) {
+                throw new TreasuryDomainException(
+                        "error.MbwayMandatePaymentSchedule.installment.already.has.schedule.in.progress",
+                        i.getDescription().getContent());
+            }
+        });
+
+        IMbwayPaymentPlatformService service = getMbwayMandate().getDigitalPaymentPlatform().castToMbwayPaymentPlatformService();
+
+        if (!service.isMbwayAuthorizedPaymentsActive()) {
+            throw new TreasuryDomainException("error.MbwayMandate.create.platform.not.active");
+        }
+
+        super.setState(MbwayMandatePaymentScheduleState.SCHEDULED);
+
+        checkRules();
     }
 
     @Atomic(mode = Atomic.TxMode.READ)
@@ -132,7 +167,6 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
 
             throw e;
         }
-
     }
 
     @Atomic
@@ -150,6 +184,28 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
      */
     public static MbwayMandatePaymentSchedule create(MbwayMandate mbwayMandate, DateTime sendEmailDate,
             DateTime paymentChargeDate, Set<DebitEntry> debitEntriesSet, Set<Installment> installmentSet) {
+
+        debitEntriesSet.stream().forEach(d -> {
+            if (findSchedulesInProgressForDebitEntry(d).count() > 0) {
+                throw new TreasuryDomainException("error.MbwayMandatePaymentSchedule.debitEntry.already.has.schedule.in.progress",
+                        d.getDescription());
+            }
+        });
+
+        installmentSet.stream().forEach(i -> {
+            if (FindSchedulesInProgressForInstallment(i).count() > 0) {
+                throw new TreasuryDomainException(
+                        "error.MbwayMandatePaymentSchedule.installment.already.has.schedule.in.progress",
+                        i.getDescription().getContent());
+            }
+        });
+
+        IMbwayPaymentPlatformService service = mbwayMandate.getDigitalPaymentPlatform().castToMbwayPaymentPlatformService();
+
+        if (!service.isMbwayAuthorizedPaymentsActive()) {
+            throw new TreasuryDomainException("error.MbwayMandate.create.platform.not.active");
+        }
+
         return new MbwayMandatePaymentSchedule(mbwayMandate, sendEmailDate, paymentChargeDate, debitEntriesSet, installmentSet);
     }
 
@@ -157,12 +213,12 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         return FenixFramework.getDomainRoot().getMbwayMandatePaymentSchedulesSet().stream();
     }
 
-    public static Stream<MbwayMandatePaymentSchedule> findActiveSchedulesForDebitEntry(DebitEntry debitEntry) {
-        return debitEntry.getMbwayMandatePaymentScheduleSet().stream().filter(s -> !s.isAnnulled());
+    public static Stream<MbwayMandatePaymentSchedule> findSchedulesInProgressForDebitEntry(DebitEntry debitEntry) {
+        return debitEntry.getMbwayMandatePaymentScheduleSet().stream().filter(s -> s.isInProgress());
     }
 
-    public static Stream<MbwayMandatePaymentSchedule> findActiveSchedulesForInstallment(Installment installment) {
-        return installment.getMbwayMandatePaymentScheduleSet().stream().filter(s -> !s.isAnnulled());
+    public static Stream<MbwayMandatePaymentSchedule> FindSchedulesInProgressForInstallment(Installment installment) {
+        return installment.getMbwayMandatePaymentScheduleSet().stream().filter(s -> s.isInProgress());
     }
 
     public static Stream<MbwayMandatePaymentSchedule> findActive() {

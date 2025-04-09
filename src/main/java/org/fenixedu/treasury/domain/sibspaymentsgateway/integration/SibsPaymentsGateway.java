@@ -79,6 +79,7 @@ import org.fenixedu.onlinepaymentsgateway.sibs.sdk.SibsEnvironmentMode;
 import org.fenixedu.onlinepaymentsgateway.sibs.sdk.SibsResultCodeType;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -1378,4 +1379,33 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         throw new RuntimeException("not supported");
     }
 
+    @Override
+    public boolean isMbwayAuthorizedPaymentsActive() {
+        return false;
+    }
+
+    @Override
+    public Integer getMbwayMandateMinimumNumberOfDaysFromDueDateToScheduleDebts() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToScheduleDebts() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToSendNotification() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToChargePayment() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Set<Product> getMbwayMandatePossibleProductsToChargeSet() {
+        throw new RuntimeException("not supported");
+    }
 }

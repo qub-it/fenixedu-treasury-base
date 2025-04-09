@@ -15,6 +15,7 @@ import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -1140,6 +1141,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
      * *****************
      */
 
+    @Override
     public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
         SibsPayAPIService sibsPayService =
                 new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
@@ -1196,6 +1198,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     private static final int AUTHORIZATION_EXPIRE_TIME_IN_MINUTES = 20;
 
     @Atomic(mode = TxMode.READ)
+    @Override
     public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate) {
         SibsPayAPIService sibsPayService =
                 new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
@@ -1214,7 +1217,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 }
             }
 
-            if(transactionId == null) {
+            if (transactionId == null) {
                 // The transaction id is not present, almost certainly
                 // the authorization request was not sent
 
@@ -1240,8 +1243,10 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 MbwayMandateState currentMandateState = inquiryMbwayMandateResponse.getCurrentMandateState();
 
                 MbwayMandateBean bean = new MbwayMandateBean();
-                bean.setMandateId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate().getMandateId() : null);
-                bean.setTransactionId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate().getTransactionId() : null);
+                bean.setMandateId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate()
+                        .getMandateId() : null);
+                bean.setTransactionId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate()
+                        .getTransactionId() : null);
                 bean.setState(currentMandateState);
                 bean.setPlafond(inquiryMbwayMandateResponse.getMandate()
                         .getAmountLimit() != null ? inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue() : null);
@@ -1297,6 +1302,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     }
 
     @Atomic(mode = TxMode.READ)
+    @Override
     public void updateMbwayMandateState(MbwayMandate mbwayMandate) {
         SibsPayAPIService sibsPayService =
                 new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
@@ -1628,6 +1634,36 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
         mbwayRequest.setMbwayMandatePaymentSchedule(mbwayMandatePaymentSchedule);
         return mbwayRequest;
+    }
+
+    @Override
+    public boolean isMbwayAuthorizedPaymentsActive() {
+        return getMbwayAuthorizedPaymentsActive();
+    }
+
+    @Override
+    public Integer getMbwayMandateMinimumNumberOfDaysFromDueDateToScheduleDebts() {
+        return getMbwayMandateMinimumDaysToScheduleDebts();
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToScheduleDebts() {
+        return getMbwayMandateDaysToScheduleDebts();
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToSendNotification() {
+        return getMbwayMandateDaysToSendNotification();
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToChargePayment() {
+        return getMbwayMandateDaysToChargePayment();
+    }
+
+    @Override
+    public Set<Product> getMbwayMandatePossibleProductsToChargeSet() {
+        return getProductsToChargeInMbwayMandatesSet();
     }
 
     /*

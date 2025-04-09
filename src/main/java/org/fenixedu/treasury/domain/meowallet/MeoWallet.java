@@ -66,6 +66,7 @@ import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -1295,4 +1296,35 @@ public class MeoWallet extends MeoWallet_Base
             Set<Installment> installments) {
         throw new RuntimeException("not supported");
     }
+
+    @Override
+    public boolean isMbwayAuthorizedPaymentsActive() {
+        return false;
+    }
+
+    @Override
+    public Integer getMbwayMandateMinimumNumberOfDaysFromDueDateToScheduleDebts() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToScheduleDebts() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToSendNotification() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToChargePayment() {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public Set<Product> getMbwayMandatePossibleProductsToChargeSet() {
+        throw new RuntimeException("not supported");
+    }
+
 }

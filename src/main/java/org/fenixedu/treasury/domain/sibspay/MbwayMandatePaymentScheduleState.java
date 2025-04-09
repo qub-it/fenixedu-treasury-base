@@ -5,7 +5,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 public enum MbwayMandatePaymentScheduleState {
-    SCHEDULED, EMAIL_SENT, PAYMENT_CHARGED, ANNULLED, ERROR;
+    SCHEDULED, EMAIL_SENT, PAYMENT_CHARGED, ANNULLED, ERROR, TRANSFERRED;
 
     public String getCode() {
         return name();
@@ -19,19 +19,19 @@ public enum MbwayMandatePaymentScheduleState {
         return this == SCHEDULED;
     }
 
-    public boolean isEmailSent()  {
+    public boolean isEmailSent() {
         return this == EMAIL_SENT;
     }
 
-    public boolean isPaymentCharged()  {
+    public boolean isPaymentCharged() {
         return this == PAYMENT_CHARGED;
     }
 
-    public boolean isAnnulled()  {
+    public boolean isAnnulled() {
         return this == ANNULLED;
     }
 
-    public boolean isError()  {
+    public boolean isError() {
         return this == ERROR;
     }
 }

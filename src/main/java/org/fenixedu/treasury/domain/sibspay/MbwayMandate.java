@@ -73,7 +73,10 @@ public class MbwayMandate extends MbwayMandate_Base {
                 throw new TreasuryDomainException("error.MbwayMandate.transactionId.required");
             }
         }
+    }
 
+    public boolean isMandateProcessActiveInPaymentPlatform() {
+        return getState().isCreated() || getState().isActive() || getState().isSuspended();
     }
 
     public void waitAuthorization(String mandateId, String transactionId) {
@@ -96,7 +99,7 @@ public class MbwayMandate extends MbwayMandate_Base {
 
     public void reactivate() {
         setUpdateDate(new DateTime());
-        if(!getState().isSuspended()) {
+        if (!getState().isSuspended()) {
             throw new IllegalStateException("mandate should in suspended state, in order to be to be reactivated");
         }
 
@@ -142,6 +145,8 @@ public class MbwayMandate extends MbwayMandate_Base {
 
         setPlafond(newPlafond);
         setExpirationDate(expirationDate);
+
+        checkRules();
     }
 
     /*
@@ -152,6 +157,15 @@ public class MbwayMandate extends MbwayMandate_Base {
 
     public static MbwayMandate create(DigitalPaymentPlatform digitalPaymentPlatform, DebtAccount debtAccount,
             String merchantTransactionId, String countryPrefix, String localPhoneNumber) {
+        if (findAllMandatesActiveInPaymentPlatform(debtAccount.getCustomer(),
+                digitalPaymentPlatform.getFinantialInstitution()).count() > 0) {
+            throw new TreasuryDomainException("error.MbwayMandate.create.customer.already.has.mandate.alive");
+        }
+
+        if(!digitalPaymentPlatform.castToMbwayPaymentPlatformService().isMbwayAuthorizedPaymentsActive()) {
+            throw new TreasuryDomainException("error.MbwayMandate.create.platform.not.active");
+        }
+
         return new MbwayMandate(digitalPaymentPlatform, debtAccount, merchantTransactionId, countryPrefix, localPhoneNumber);
     }
 
@@ -168,14 +182,9 @@ public class MbwayMandate extends MbwayMandate_Base {
                 .flatMap(d -> d.getMbwayMandatesSet().stream());
     }
 
-    public static Stream<MbwayMandate> findAllActiveFromCustomer(Customer customer, FinantialInstitution finantialInstitution) {
-        return findAllFromCustomer(customer, finantialInstitution).filter(m -> m.getState() == MbwayMandateState.ACTIVE);
-    }
-
-    public static Stream<MbwayMandate> findWaitingAuthorizationFromCustomer(Customer customer,
+    public static Stream<MbwayMandate> findAllMandatesActiveInPaymentPlatform(Customer customer,
             FinantialInstitution finantialInstitution) {
-        return findAllFromCustomer(customer, finantialInstitution)
-                .filter(m -> m.getState() == MbwayMandateState.WAITING_AUTHORIZATION);
+        return findAllFromCustomer(customer, finantialInstitution).filter(m -> m.isMandateProcessActiveInPaymentPlatform());
     }
 
     public static Optional<MbwayMandate> findUniqueByMandateId(String mandateId) {

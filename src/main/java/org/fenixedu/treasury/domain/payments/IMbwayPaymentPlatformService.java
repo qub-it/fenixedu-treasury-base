@@ -55,6 +55,7 @@ package org.fenixedu.treasury.domain.payments;
 import java.util.Set;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
@@ -93,4 +94,16 @@ public interface IMbwayPaymentPlatformService {
 
     public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
             Set<Installment> installments);
+
+    public boolean isMbwayAuthorizedPaymentsActive();
+
+    public Integer getMbwayMandateMinimumNumberOfDaysFromDueDateToScheduleDebts();
+
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToScheduleDebts();
+
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToSendNotification();
+
+    public Integer getMbwayMandateNumberOfDaysFromDueDateToChargePayment();
+
+    public Set<Product> getMbwayMandatePossibleProductsToChargeSet();
 }

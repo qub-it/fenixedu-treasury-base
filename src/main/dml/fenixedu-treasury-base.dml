@@ -3790,7 +3790,24 @@ class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatfor
 	String endpointUrl;
 	String assetsEndpointUrl;
 	Integer referenceMinimumValidityInHours;
+
+	// MB-WAY Authorized Payments
+	boolean mbwayAuthorizedPaymentsActive;
+	int mbwayMandateMinimumDaysToScheduleDebts;
+	int mbwayMandateDaysToScheduleDebts;
+	int mbwayMandateDaysToSendNotification;
+	int mbwayMandateDaysToChargePayment;
 }
+
+    relation SibsPayMbwayMandatePossibleProductsToCharge {
+        sibspay.SibsPayPlatform playsRole sibsPayPlatformForMbwayMandates {
+            multiplicity 0..1;
+        }
+
+        Product playsRole productsToChargeInMbwayMandates {
+            multiplicity *;
+        }
+    }
 
 class sibspay.MbwayMandate {
 	MbwayMandateState state;
@@ -3859,9 +3876,6 @@ class sibspay.MbwayMandatePaymentSchedule {
 	DateTime paymentChargeDate;
 
     MbwayMandatePaymentScheduleState state;
-
-	LocalizedString emailSubject;
-	LocalizedString emailBody;
 }
 
 
