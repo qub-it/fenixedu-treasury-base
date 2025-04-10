@@ -3876,6 +3876,9 @@ class sibspay.MbwayMandatePaymentSchedule {
 	DateTime paymentChargeDate;
 
     MbwayMandatePaymentScheduleState state;
+    String annulmentReason;
+    DateTime annulmentDate;
+    String annulmentResponsible;
 }
 
 

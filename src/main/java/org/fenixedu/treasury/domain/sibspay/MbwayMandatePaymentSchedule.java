@@ -17,6 +17,7 @@ import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
@@ -104,8 +105,12 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         checkRules();
     }
 
-    public void annul() {
+    public void annul(String reason) {
         super.setState(MbwayMandatePaymentScheduleState.ANNULLED);
+
+        setAnnulmentReason(reason);
+        setAnnulmentDate(new DateTime());
+        setAnnulmentResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
 
         checkRules();
     }
@@ -209,7 +214,7 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         return new MbwayMandatePaymentSchedule(mbwayMandate, sendEmailDate, paymentChargeDate, debitEntriesSet, installmentSet);
     }
 
-    public static Stream<MbwayMandatePaymentSchedule> find() {
+    public static Stream<MbwayMandatePaymentSchedule> findAll() {
         return FenixFramework.getDomainRoot().getMbwayMandatePaymentSchedulesSet().stream();
     }
 
@@ -222,7 +227,7 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
     }
 
     public static Stream<MbwayMandatePaymentSchedule> findActive() {
-        return find().filter(s -> !s.isAnnulled());
+        return findAll().filter(s -> !s.isAnnulled());
     }
 
 }
