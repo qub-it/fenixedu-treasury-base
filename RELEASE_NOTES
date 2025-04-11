@@ -1,3 +1,5 @@
+- Refactor: Declare helper method to get Invoice object from InvoiceEntry [#qubIT-Fenix-6835]
+
 13.3.4 (09-04-2025)
 - Refactor: Check that all invoice entries grouped for payment, is from the same debt account [#qubIT-Fenix-6786]
 - Bug Fix: Annul active SIBS payment requests when editing the amounts of a debit entry [#qubIT-Fenix-6814]

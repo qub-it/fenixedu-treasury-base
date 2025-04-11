@@ -336,6 +336,10 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return FinantialDocumentEntry.findAll().filter(f -> f instanceof InvoiceEntry).map(InvoiceEntry.class::cast);
     }
 
+    public Invoice getInvoice() {
+        return (Invoice) getFinantialDocument();
+    }
+
     public boolean isPendingForPayment() {
         if (this.getFinantialDocument() != null && this.getFinantialDocument().getState().isAnnuled()) {
             return false;
