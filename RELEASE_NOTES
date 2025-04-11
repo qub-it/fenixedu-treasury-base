@@ -1,3 +1,4 @@
+13.3.5 (11-04-2025)
 - Refactor: Declare helper method to get Invoice object from InvoiceEntry [#qubIT-Fenix-6835]
 
 13.3.4 (09-04-2025)
