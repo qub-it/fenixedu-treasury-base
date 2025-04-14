@@ -60,11 +60,10 @@ import static org.fenixedu.treasury.util.TreasuryConstants.rationalVatRate;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialEntity;
@@ -92,6 +91,7 @@ import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
+import org.fenixedu.treasury.domain.payments.PaymentInvoiceEntriesGroup;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
@@ -181,6 +181,35 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         }
 
         transferPaymentPlans();
+
+        transferPaymentInvoiceEntriesGroups();
+    }
+
+    private void transferPaymentInvoiceEntriesGroups() {
+        // Collect the groups from the previous debt account and consider only those that are payable
+        this.fromDebtAccount.getPaymentInvoiceEntriesGroupsSet().stream().forEach(g -> transferPaymentGroupToNewDebtAccount(g));
+    }
+
+    private void transferPaymentGroupToNewDebtAccount(PaymentInvoiceEntriesGroup paymentGroup) {
+        // Collect the open debit entries from other debt account
+        Set<DebitEntry> newDebitEntrySet =
+                paymentGroup.getInvoiceEntriesSet().stream() //
+                        .filter(d -> this.conversionMap.containsKey(d)) //
+                        .map(d -> this.conversionMap.get(d)) //
+                        .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())) //
+                        .collect(Collectors.toSet());
+
+        if (newDebitEntrySet.isEmpty()) {
+            return;
+        }
+
+        PaymentInvoiceEntriesGroup group = PaymentInvoiceEntriesGroup.findUniqueByGroupKey(this.destinyDebtAccount,
+                        StringUtils.isNotEmpty(paymentGroup.getGroupKey()) ? paymentGroup.getGroupKey() : UUID.randomUUID().toString())
+                .orElseGet(
+                        () -> PaymentInvoiceEntriesGroup.create(paymentGroup.getFinantialEntity(), this.destinyDebtAccount,
+                                newDebitEntrySet, paymentGroup.getGroupKey()));
+
+        newDebitEntrySet.forEach(d -> group.addInvoiceEntries(d));
     }
 
     private void transferPaymentPlans() {

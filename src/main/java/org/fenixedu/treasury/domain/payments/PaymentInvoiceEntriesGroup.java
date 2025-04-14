@@ -15,6 +15,7 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 import org.joda.time.DateTime;
 import pt.ist.fenixframework.FenixFramework;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -141,6 +142,14 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
 
     public static Stream<PaymentInvoiceEntriesGroup> find(InvoiceEntry invoiceEntry) {
         return invoiceEntry.getPaymentInvoiceEntriesGroupsSet().stream();
+    }
+
+    public static Stream<PaymentInvoiceEntriesGroup> findByGroupKey(DebtAccount debtAccount, String groupKey) {
+        return find(debtAccount).filter(d -> groupKey.equals(d.getGroupKey()));
+    }
+
+    public static Optional<PaymentInvoiceEntriesGroup> findUniqueByGroupKey(DebtAccount debtAccount, String groupKey) {
+        return findByGroupKey(debtAccount, groupKey).findFirst();
     }
 
     public static Set<InvoiceEntry> getAllPaymentRelatableInvoiceEntries(InvoiceEntry invoiceEntry) {
