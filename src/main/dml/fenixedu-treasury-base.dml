@@ -3876,13 +3876,15 @@ class sibspay.MbwayMandate {
 	
 class sibspay.MbwayMandatePaymentSchedule {
 	DateTime creationDate;
-	DateTime sendNotificationDate;
-	DateTime paymentChargeDate;
+	LocalDate sendNotificationDate;
+	LocalDate paymentChargeDate;
 
     MbwayMandatePaymentScheduleState state;
     String cancelReason;
     DateTime cancelDate;
     String cancelResponsible;
+
+    DateTime updateStateDate;
 }
 
 

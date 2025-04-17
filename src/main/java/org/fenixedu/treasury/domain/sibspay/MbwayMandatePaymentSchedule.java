@@ -1,10 +1,5 @@
 package org.fenixedu.treasury.domain.sibspay;
 
-import java.math.BigDecimal;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -14,9 +9,14 @@ import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
-
+import org.joda.time.LocalDate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+
+import java.math.BigDecimal;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Base {
 
@@ -25,9 +25,10 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
         setState(MbwayMandatePaymentScheduleState.SCHEDULED);
+        setUpdateStateDate(new DateTime());
     }
 
-    public MbwayMandatePaymentSchedule(MbwayMandate mbwayMandate, DateTime sendNotificationDate, DateTime paymentChargeDate,
+    public MbwayMandatePaymentSchedule(MbwayMandate mbwayMandate, LocalDate sendNotificationDate, LocalDate paymentChargeDate,
             Set<DebitEntry> debitEntriesSet, Set<Installment> installmentSet) {
         this();
 
@@ -98,12 +99,14 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         // Make logic to send notification
 
         setState(MbwayMandatePaymentScheduleState.NOTIFICATION_SENT);
+        setUpdateStateDate(new DateTime());
 
         checkRules();
     }
 
     public void annul(String reason) {
         super.setState(MbwayMandatePaymentScheduleState.CANCELED);
+        setUpdateStateDate(new DateTime());
 
         setCancelReason(reason);
         setCancelDate(new DateTime());
@@ -139,6 +142,7 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         }
 
         super.setState(MbwayMandatePaymentScheduleState.SCHEDULED);
+        setUpdateStateDate(new DateTime());
 
         checkRules();
     }
@@ -174,18 +178,20 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
     @Atomic
     private void updateStateToPaymentCharged() {
         setState(MbwayMandatePaymentScheduleState.PAYMENT_CHARGED);
+        setUpdateStateDate(new DateTime());
     }
 
     @Atomic
     private void updateStateToError() {
         setState(MbwayMandatePaymentScheduleState.ERROR);
+        setUpdateStateDate(new DateTime());
     }
 
     /*
      * SERVICES
      */
-    public static MbwayMandatePaymentSchedule create(MbwayMandate mbwayMandate, DateTime sendEmailDate,
-            DateTime paymentChargeDate, Set<DebitEntry> debitEntriesSet, Set<Installment> installmentSet) {
+    public static MbwayMandatePaymentSchedule create(MbwayMandate mbwayMandate, LocalDate sendEmailDate,
+            LocalDate paymentChargeDate, Set<DebitEntry> debitEntriesSet, Set<Installment> installmentSet) {
 
         debitEntriesSet.stream().forEach(d -> {
             if (findSchedulesInProgressForDebitEntry(d).count() > 0) {
