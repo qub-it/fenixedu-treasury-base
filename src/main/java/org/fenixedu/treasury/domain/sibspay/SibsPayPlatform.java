@@ -1191,12 +1191,13 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                     responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
                 }
 
+                // Cancel because the request was not successful
+                mbwayMandate.cancel("mandate creation not successful");
                 logException(mbwayMandate, e, "requestMbwayMandateAuthorization", "error", "error", requestBody, responseBody);
             });
 
             throw new TreasuryDomainException(e, "error.SibsPayPlatform.requestMbwayMandateAuthorization");
         }
-
     }
 
     @Atomic
