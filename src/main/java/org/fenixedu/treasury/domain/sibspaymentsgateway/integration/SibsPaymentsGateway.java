@@ -1378,7 +1378,12 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     }
 
     @Override
-    public void cancelMbwayMandate(MbwayMandate mbwayMandate, String reason) {
+    public void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
+    public void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate) {
         throw new RuntimeException("not supported");
     }
 

@@ -15,7 +15,6 @@ import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -1213,14 +1212,20 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     // digital payment platform
     @Atomic(mode = TxMode.READ)
     @Override
-    public void cancelMbwayMandate(MbwayMandate mbwayMandate, String reason) {
+    public void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason) {
         if (mbwayMandate.getState().isCanceled()) {
             // Already cancelled, just return
             return;
         }
 
-        markMbwayMandateAsCancelled(mbwayMandate, reason);
+        markMbwayMandateAsCancelledAndScheduleForCancelationInDigitalPlatform(mbwayMandate, reason);
 
+        requestMbwayMandateCancellationInPlatform(mbwayMandate);
+    }
+
+    @Atomic(mode = TxMode.READ)
+    @Override
+    public void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate) {
         SibsPayAPIService sibsPayService =
                 new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
                         getEntityReferenceCode());
@@ -1233,8 +1238,11 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             FenixFramework.atomic(() -> {
                 log(mbwayMandate, "cancelMbwayMandate", response.getOperationStatusCode(), response.getOperationStatusMessage(),
                         response.getRequestLog(), response.getResponseLog());
-            });
 
+                if (response.isOperationSuccess()) {
+                    mbwayMandate.clearScheduledCancellationInPlatform();
+                }
+            });
         } catch (final Exception e) {
 
             FenixFramework.atomic(() -> {
@@ -1254,8 +1262,10 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     }
 
     @Atomic
-    private void markMbwayMandateAsCancelled(MbwayMandate mbwayMandate, String reason) {
+    private void markMbwayMandateAsCancelledAndScheduleForCancelationInDigitalPlatform(MbwayMandate mbwayMandate, String reason) {
         mbwayMandate.cancel(reason);
+
+        mbwayMandate.scheduleForCancellationInPlatform();
     }
 
     private static final int AUTHORIZATION_EXPIRE_TIME_IN_MINUTES = 10;

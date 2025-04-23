@@ -125,6 +125,10 @@ public interface ITreasuryPlatformDependentServices {
 
     String getLoggedUsername();
 
+    default Customer getLoggedActiveCustomer() {
+        return null;
+    }
+
     String getCustomerEmail(Customer customer);
 
     void setCurrentApplicationUser(String username);

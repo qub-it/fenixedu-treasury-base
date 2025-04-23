@@ -156,6 +156,14 @@ public class MbwayMandate extends MbwayMandate_Base {
         checkRules();
     }
 
+    public void scheduleForCancellationInPlatform() {
+        setPendingMbwayMandateCancellationPlatform(getDigitalPaymentPlatform());
+    }
+
+    public void clearScheduledCancellationInPlatform() {
+        setPendingMbwayMandateCancellationPlatform(null);
+    }
+
     /*
      * ********
      * SERVICES

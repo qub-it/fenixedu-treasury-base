@@ -95,7 +95,9 @@ public interface IMbwayPaymentPlatformService {
     public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
             Set<Installment> installments);
 
-    public void cancelMbwayMandate(MbwayMandate mbwayMandate, String reason);
+    public void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason);
+
+    public void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate);
 
     public boolean isMbwayAuthorizedPaymentsActive();
 

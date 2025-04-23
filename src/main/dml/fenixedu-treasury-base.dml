@@ -3873,6 +3873,16 @@ class sibspay.MbwayMandate {
 			multiplicity *;
 		}
 	}
+
+	relation MbwayMandateScheduleCancelation {
+		payments.integration.DigitalPaymentPlatform playsRole pendingMbwayMandateCancellationPlatform {
+			multiplicity 0..1;
+		}
+
+		sibspay.MbwayMandate playsRole pendingCancellationMbwayMandates {
+			multiplicity *;
+		}
+	}
 	
 class sibspay.MbwayMandatePaymentSchedule {
 	DateTime creationDate;
