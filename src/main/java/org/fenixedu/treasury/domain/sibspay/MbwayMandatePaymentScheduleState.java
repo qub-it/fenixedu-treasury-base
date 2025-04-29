@@ -31,6 +31,10 @@ public enum MbwayMandatePaymentScheduleState {
         return this == CANCELED;
     }
 
+    public boolean isTransferred() {
+        return this == TRANSFERRED;
+    }
+
     public boolean isError() {
         return this == ERROR;
     }

@@ -8,12 +8,15 @@ import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -92,7 +95,7 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
     }
 
     public boolean isCanceled() {
-        return getState() == MbwayMandatePaymentScheduleState.CANCELED;
+        return getState().isCanceled();
     }
 
     public void sendNotification() {
@@ -231,6 +234,43 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
 
     public static Stream<MbwayMandatePaymentSchedule> findActive() {
         return findAll().filter(s -> !s.isCanceled());
+    }
+
+    public void transferScheduleToOtherDebtAccount(MbwayMandate newMandate, Map<DebitEntry, DebitEntry> debitEntriesTransferMap,
+            Map<Installment, Installment> installmentsTransferMap) {
+        Set<DebitEntry> newDebitEntriesSet = getDebitEntriesSet().stream() //
+                .filter(d -> debitEntriesTransferMap.get(d) != null) //
+                .filter(d -> debitEntriesTransferMap.get(d).isInDebt()) //
+                .map(d -> debitEntriesTransferMap.get(d)) //
+                .collect(Collectors.toSet());
+
+        Set<Installment> newInstallmentsSet = getInstallmentsSet().stream() //
+                .filter(i -> installmentsTransferMap.get(i) != null) //
+                .filter(i -> TreasuryConstants.isPositive(installmentsTransferMap.get(i).getOpenAmount()))
+                .map(i -> installmentsTransferMap.get(i)) //
+                .collect(Collectors.toSet());
+
+        MbwayMandatePaymentScheduleState originalState = getState();
+        DateTime originalUpdateStateDate = getUpdateStateDate();
+
+        setState(MbwayMandatePaymentScheduleState.TRANSFERRED);
+        setUpdateStateDate(new DateTime());
+
+        if (!newDebitEntriesSet.isEmpty() || !newInstallmentsSet.isEmpty()) {
+            MbwayMandatePaymentSchedule newSchedule =
+                    new MbwayMandatePaymentSchedule(newMandate, getSendNotificationDate(), getPaymentChargeDate(),
+                            newDebitEntriesSet, newInstallmentsSet);
+
+            newSchedule.setState(originalState);
+            newSchedule.setUpdateStateDate(originalUpdateStateDate);
+            newSchedule.setCreationDate(getCreationDate());
+            newSchedule.setSendNotificationDate(getSendNotificationDate());
+            newSchedule.setPaymentChargeDate(getPaymentChargeDate());
+
+            newSchedule.checkRules();
+        }
+
+        checkRules();
     }
 
 }

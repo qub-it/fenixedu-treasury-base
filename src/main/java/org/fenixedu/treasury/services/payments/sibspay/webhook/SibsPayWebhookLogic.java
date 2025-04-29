@@ -14,7 +14,6 @@ import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
-import org.fenixedu.treasury.services.payments.sibspay.SibsPayWebhookController;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotification;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
@@ -165,7 +164,7 @@ public class SibsPayWebhookLogic {
             return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         }
 
-        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateId(mandateId);
+        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateIdExcludingTransferred(mandateId);
 
         if (!mbwayMandateOpt.isPresent()) {
             // Could not find the mbwayMandate, return ok to dismiss the notification
@@ -195,7 +194,7 @@ public class SibsPayWebhookLogic {
             return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         }
 
-        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateId(mandateId);
+        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateIdExcludingTransferred(mandateId);
 
         if (!mbwayMandateOpt.isPresent()) {
             // Could not find the mbwayMandate, return ok to dismiss the notification
@@ -226,7 +225,7 @@ public class SibsPayWebhookLogic {
             return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         }
 
-        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateId(mandateId);
+        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateIdExcludingTransferred(mandateId);
 
         if (!mbwayMandateOpt.isPresent()) {
             // Could not find the mbwayMandate, return ok to dismiss the notification
@@ -354,7 +353,7 @@ public class SibsPayWebhookLogic {
             return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         }
 
-        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateId(mandateId);
+        Optional<MbwayMandate> mbwayMandateOpt = MbwayMandate.findUniqueByMandateIdExcludingTransferred(mandateId);
 
         if (!mbwayMandateOpt.isPresent()) {
             // Could not find the mbwayMandate, return ok to dismiss the notification
