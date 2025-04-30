@@ -15,7 +15,6 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -107,7 +106,11 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         checkRules();
     }
 
-    public void annul(String reason) {
+    public void cancel(String reason) {
+        if(!isInProgress()) {
+            throw new TreasuryDomainException("error.MbwayMandatePaymentSchedule.cancel.not.in.progress");
+        }
+
         super.setState(MbwayMandatePaymentScheduleState.CANCELED);
         setUpdateStateDate(new DateTime());
 

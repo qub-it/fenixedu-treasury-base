@@ -138,6 +138,9 @@ public class MbwayMandate extends MbwayMandate_Base {
         setCancelReason(reason);
         setCancelResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
 
+        // Cancel any active schedules
+        getMbwayMandatePaymentSchedulesSet().stream().filter(s -> s.isInProgress()).forEach(s -> s.cancel(reason));
+
         checkRules();
     }
 
@@ -242,7 +245,7 @@ public class MbwayMandate extends MbwayMandate_Base {
         setUpdateDate(new DateTime());
 
         getMbwayMandatePaymentSchedulesSet().stream() //
-                .filter(s -> s.getState().isScheduled() || s.getState().isNotificationSent())
+                .filter(s -> s.isInProgress()) //
                 .forEach(s -> s.transferScheduleToOtherDebtAccount(newMandate, debitEntriesTransferMap, installmentsTransferMap));
 
         checkRules();
