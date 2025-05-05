@@ -88,7 +88,21 @@ public class SibsPayAPIService {
 
         this.client.register(LoggingFeature.class);
 
-        this.webTarget = client.target(sibsEndpoint).path("sibs/spg/v2");
+        // ANIL 2025-05-04 (#qubIT-Fenix-6885)
+        //
+        // The path should be totally retrieved from database until the /payments
+        // Instead of client.target(sibsEndpoint).path("sibs/spg/v2") , just invoke
+        // client.target(sibsEndpoint)
+
+        // The development path is https://spg.qly.site1.sibs.pt/api/v2/payments
+        // The production path is https://api.sibspayments.com/api/v2/payments
+
+        // The sibsEndpoint parameter should be configured in SibsPayPlatform object with:
+        //
+        // https://spg.qly.site1.sibs.pt/api/v2 (FOR DEVELOPMENT)
+        // https://api.sibspayments.com/api/v2 (FOR PRODUCTION)
+
+        this.webTarget = client.target(sibsEndpoint);
     }
 
     /* ***************

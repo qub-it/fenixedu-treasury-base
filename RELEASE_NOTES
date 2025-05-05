@@ -1,3 +1,5 @@
+- Bug Fix: Remove hardcoded path portion for the SIBS SPG endpoint [#qubIT-Fenix-6885]
+
 13.3.6 (14-04-2025)
 - Refactor: Declare static methods to find payment groups by grouping key [#qubIT-Fenix-6836]
 
