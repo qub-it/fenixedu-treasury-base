@@ -1109,6 +1109,21 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
     }
 
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return SibsPayAPIService.MAX_STREET_LENGTH;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return SibsPayAPIService.MAX_CITY_LENGTH;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return SibsPayAPIService.MAX_POSTCODE_LENGTH;
+    }
+
     @Atomic(mode = TxMode.WRITE)
     private static PaymentRequestLog createLogForSibsPaymentRequest(String merchantTransactionId) {
         PaymentRequestLog log = PaymentRequestLog.create(null, "createSibsPaymentRequest",

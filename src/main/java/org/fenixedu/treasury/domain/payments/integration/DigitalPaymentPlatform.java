@@ -231,6 +231,16 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
     public abstract List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(
             String merchantTransationId);
 
+
+    // ANIL 2025-05-08 (#qubIT-Fenix-6886)
+    public abstract int getMaximumLengthForAddressStreetFieldOne();
+
+    // ANIL 2025-05-08 (#qubIT-Fenix-6886)
+    public abstract int getMaximumLengthForAddressCity();
+
+    // ANIL 2025-05-08 (#qubIT-Fenix-6886)
+    public abstract int getMaximumLengthForPostalCode();
+
     // @formatter:off
     /*
      * --------

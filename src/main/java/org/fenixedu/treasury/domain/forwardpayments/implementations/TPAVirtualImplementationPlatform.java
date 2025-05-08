@@ -251,6 +251,21 @@ public class TPAVirtualImplementationPlatform extends TPAVirtualImplementationPl
         throw new TreasuryDomainException("label.ManageForwardPayments.postProcessPayment.not.supported.yet");
     }
 
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return 16;
+    }
+
     /* SERVICES */
 
     public static final TPAVirtualImplementationPlatform create(FinantialInstitution finantialInstitution, String name) {

@@ -379,6 +379,21 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                 authorizationNumber, requestBody, responseBody, null);
     }
 
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return 16;
+    }
+
     // @formatter:off
     /*
      * ********

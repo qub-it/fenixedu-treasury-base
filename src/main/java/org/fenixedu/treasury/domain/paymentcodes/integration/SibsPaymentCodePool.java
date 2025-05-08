@@ -728,4 +728,20 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
         return true;
     }
+
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return 16;
+    }
+
 }

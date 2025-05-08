@@ -1271,4 +1271,20 @@ public class MeoWallet extends MeoWallet_Base
         }
 
     }
+
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return 16;
+    }
+
 }

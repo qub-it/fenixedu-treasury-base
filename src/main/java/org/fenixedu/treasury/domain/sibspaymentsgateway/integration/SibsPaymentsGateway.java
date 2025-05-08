@@ -1353,4 +1353,20 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
         return true;
     }
+
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return 16;
+    }
+
 }

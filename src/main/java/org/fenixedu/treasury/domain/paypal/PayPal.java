@@ -537,4 +537,20 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             throw e;
         }
     }
+
+    @Override
+    public int getMaximumLengthForAddressStreetFieldOne() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForAddressCity() {
+        return 50;
+    }
+
+    @Override
+    public int getMaximumLengthForPostalCode() {
+        return 16;
+    }
+
 }
