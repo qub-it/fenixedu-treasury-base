@@ -1,3 +1,5 @@
+- Improvement: Sort digital payment platform payment modes [#qubIT-Fenix-6902]
+
 13.3.8 (08-05-2025)
 - Refactor: Allow variable address fields maximum length by digital payment platform [#qubIT-Fenix-6886]
 

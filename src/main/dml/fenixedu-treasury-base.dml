@@ -923,6 +923,7 @@ class payments.integration.DigitalPaymentPlatformPaymentMode {
 	String logosSmallImageFileId;
 	String logosBigImageFileId;
 	Boolean activeForFrontend;
+	int paymentModeOrder;
 }
 
 	relation DigitalPaymentPlatformPaymentModeDomainRoot {

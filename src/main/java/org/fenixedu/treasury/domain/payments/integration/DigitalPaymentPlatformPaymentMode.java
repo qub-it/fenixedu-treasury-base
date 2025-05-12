@@ -52,6 +52,8 @@
  */
 package org.fenixedu.treasury.domain.payments.integration;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -67,6 +69,9 @@ import pt.ist.fenixframework.FenixFramework;
 
 public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPaymentMode_Base {
 
+    public final static Comparator<DigitalPaymentPlatformPaymentMode> COMPARE_BY_ORDER =
+            Comparator.comparing(DigitalPaymentPlatformPaymentMode::getPaymentModeOrder).thenComparing(DigitalPaymentPlatformPaymentMode::getExternalId);
+
     public DigitalPaymentPlatformPaymentMode() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
@@ -76,9 +81,17 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     public DigitalPaymentPlatformPaymentMode(DigitalPaymentPlatform platform, PaymentMethod paymentMethod) {
         this();
 
+        List<DigitalPaymentPlatformPaymentMode> orderedPaymentModesList =
+                platform.getOrderedPaymentModesList();
+
         setDigitalPaymentPlatform(platform);
         setPaymentMethod(paymentMethod);
         setActive(true);
+
+        setPaymentModeOrder(!orderedPaymentModesList.isEmpty() ? orderedPaymentModesList.get(orderedPaymentModesList.size() - 1)
+                .getPaymentModeOrder() + 1 : 1);
+
+        getDigitalPaymentPlatform().orderPaymentModes();
 
         checkRules();
     }
@@ -103,7 +116,8 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     }
 
     private boolean isDigitalPaymentPlatformAndPaymentModeActive(boolean isForFrontend) {
-        return getDigitalPaymentPlatform().isActive() && isActive() && (!isForFrontend || Boolean.TRUE.equals(getActiveForFrontend()));
+        return getDigitalPaymentPlatform().isActive() && isActive() && (!isForFrontend || Boolean.TRUE.equals(
+                getActiveForFrontend()));
     }
 
     public boolean isActive() {
@@ -137,6 +151,59 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
         super.deleteDomainObject();
     }
 
+    public boolean isFirstInPaymentOrder() {
+        int index = getDigitalPaymentPlatform().getOrderedPaymentModesList().indexOf(this);
+
+        return index == 0;
+    }
+
+    public boolean isLastInPaymentOrder() {
+        int index = getDigitalPaymentPlatform().getOrderedPaymentModesList().indexOf(this);
+
+        return index == (getDigitalPaymentPlatform().getOrderedPaymentModesList().size() - 1);
+    }
+
+    public void orderUp() {
+        if(isFirstInPaymentOrder()) {
+            // Already the first
+            return;
+        }
+
+        List<DigitalPaymentPlatformPaymentMode> orderedPaymentModesList =
+                getDigitalPaymentPlatform().getOrderedPaymentModesList();
+
+        int index = orderedPaymentModesList.indexOf(this);
+
+        DigitalPaymentPlatformPaymentMode previous = orderedPaymentModesList.get(index - 1);
+
+        int temp = previous.getPaymentModeOrder();
+        previous.setPaymentModeOrder(getPaymentModeOrder());
+
+        setPaymentModeOrder(temp);
+
+        getDigitalPaymentPlatform().orderPaymentModes();
+    }
+
+    public void orderDown() {
+        if(isLastInPaymentOrder()) {
+            // already the last
+            return;
+        }
+
+        List<DigitalPaymentPlatformPaymentMode> orderedPaymentModesList =
+                getDigitalPaymentPlatform().getOrderedPaymentModesList();
+
+        int index = orderedPaymentModesList.indexOf(this);
+
+        DigitalPaymentPlatformPaymentMode next = orderedPaymentModesList.get(index + 1);
+
+        int temp = next.getPaymentModeOrder();
+        next.setPaymentModeOrder(getPaymentModeOrder());
+        setPaymentModeOrder(temp);
+
+        getDigitalPaymentPlatform().orderPaymentModes();
+    }
+
     /*
      * SERVICES
      */
@@ -161,7 +228,8 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
         return findAll().filter(pm -> pm.isDigitalPaymentPlatformAndPaymentModeActive());
     }
 
-    public static Stream<DigitalPaymentPlatformPaymentMode> findDigitalPaymentPlatformAndPaymentModeActive(boolean isForFrontend) {
+    public static Stream<DigitalPaymentPlatformPaymentMode> findDigitalPaymentPlatformAndPaymentModeActive(
+            boolean isForFrontend) {
         return findAll().filter(pm -> pm.isDigitalPaymentPlatformAndPaymentModeActive(isForFrontend));
     }
 

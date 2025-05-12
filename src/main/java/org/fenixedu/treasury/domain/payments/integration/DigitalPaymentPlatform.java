@@ -52,10 +52,8 @@
  */
 package org.fenixedu.treasury.domain.payments.integration;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -181,8 +179,9 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
     @Atomic(mode = TxMode.WRITE)
     public PaymentRequestLog log(PaymentRequest paymentRequest, String operationCode, String statusCode, String statusMessage,
             String requestBody, String responseBody) {
-        final PaymentRequestLog log = PaymentRequestLog.create(paymentRequest, operationCode,
-                paymentRequest.getCurrentState().getCode(), paymentRequest.getCurrentState().getLocalizedName());
+        final PaymentRequestLog log =
+                PaymentRequestLog.create(paymentRequest, operationCode, paymentRequest.getCurrentState().getCode(),
+                        paymentRequest.getCurrentState().getLocalizedName());
 
         log.setStatusCode(statusCode);
         log.setStatusMessage(statusMessage);
@@ -231,7 +230,6 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
     public abstract List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(
             String merchantTransationId);
 
-
     // ANIL 2025-05-08 (#qubIT-Fenix-6886)
     public abstract int getMaximumLengthForAddressStreetFieldOne();
 
@@ -240,6 +238,17 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
 
     // ANIL 2025-05-08 (#qubIT-Fenix-6886)
     public abstract int getMaximumLengthForPostalCode();
+
+    public List<DigitalPaymentPlatformPaymentMode> getOrderedPaymentModesList() {
+        return getDigitalPaymentPlatformPaymentModesSet().stream().sorted(DigitalPaymentPlatformPaymentMode.COMPARE_BY_ORDER)
+                .collect(Collectors.toList());
+    }
+
+    public void orderPaymentModes() {
+        AtomicInteger nextOrder = new AtomicInteger(1);
+
+        getOrderedPaymentModesList().forEach(mode -> mode.setPaymentModeOrder(nextOrder.getAndIncrement()));
+    }
 
     // @formatter:off
     /*
