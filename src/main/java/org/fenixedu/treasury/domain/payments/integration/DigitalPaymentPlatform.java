@@ -70,6 +70,7 @@ import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
 
 import com.google.common.base.Strings;
 
@@ -125,6 +126,10 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
     public boolean isMbwayServiceSupported() {
         return getDigitalPaymentPlatformPaymentModesSet().stream()
                 .anyMatch(m -> m.getPaymentMethod() == TreasurySettings.getInstance().getMbWayPaymentMethod());
+    }
+
+    public boolean isMbwayMandateSupported() {
+        return false;
     }
 
     public boolean isActive() {
@@ -197,11 +202,41 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         return log;
     }
 
+    @Atomic(mode = TxMode.WRITE)
+    public PaymentRequestLog log(MbwayMandate mbwayMandate, String operationCode, String statusCode, String statusMessage,
+            String requestBody, String responseBody) {
+        final PaymentRequestLog log = PaymentRequestLog.create(mbwayMandate, operationCode, mbwayMandate.getState().getCode(),
+                mbwayMandate.getState().getLocalizedName());
+
+        log.setStatusCode(statusCode);
+        log.setStatusMessage(statusMessage);
+
+        if (!Strings.isNullOrEmpty(requestBody)) {
+            log.saveRequest(requestBody);
+        }
+
+        if (!Strings.isNullOrEmpty(responseBody)) {
+            log.saveResponse(responseBody);
+        }
+
+        return log;
+    }
+
     public PaymentRequestLog logException(PaymentRequest paymentRequest, Exception e, String operationCode, String statusCode,
             String statusMessage, String requestBody, String responseBody) {
         PaymentRequestLog log = log(paymentRequest, operationCode, statusCode, statusMessage, requestBody, responseBody);
 
         log.logException(e);
+        return log;
+    }
+
+    public PaymentRequestLog logException(MbwayMandate mbwayMandate, Exception e, String operationCode, String statusCode,
+            String statusMessage, String requestBody, String responseBody) {
+
+        PaymentRequestLog log = log(mbwayMandate, operationCode, statusCode, statusMessage, requestBody, responseBody);
+
+        log.logException(e);
+
         return log;
     }
 
@@ -292,6 +327,18 @@ public abstract class DigitalPaymentPlatform extends DigitalPaymentPlatform_Base
         PaymentMethod creditCardPaymentMethod = TreasurySettings.getInstance().getCreditCardPaymentMethod();
         return find(finantialInstitution).filter(d -> d.isForwardPaymentServiceSupported())
                 .filter(d -> active == d.isActive(creditCardPaymentMethod));
+    }
+
+    public static Stream<? extends DigitalPaymentPlatform> findForMbwayPaymentService(FinantialEntity finantialEntity,
+            boolean active) {
+        PaymentMethod mbwayPaymentMethod = TreasurySettings.getInstance().getMbWayPaymentMethod();
+
+        return find(finantialEntity.getFinantialInstitution()).filter(d -> d.isMbwayServiceSupported())
+                .filter(d -> d.getFinantialEntity() == finantialEntity).filter(d -> active == d.isActive(mbwayPaymentMethod));
+    }
+
+    public static Stream<? extends DigitalPaymentPlatform> findActiveForMbwayPaymentService(FinantialEntity finantialEntity) {
+        return findForMbwayPaymentService(finantialEntity, true);
     }
 
     public static Stream<? extends DigitalPaymentPlatform> find(FinantialInstitution finantialInstitution,

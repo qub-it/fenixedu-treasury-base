@@ -55,11 +55,16 @@ package org.fenixedu.treasury.domain.payments;
 import java.util.Set;
 
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
+import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
+import org.fenixedu.treasury.domain.sibspay.MbwayMandatePaymentSchedule;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
+import org.fenixedu.treasury.dto.sibspay.MbwayMandateBean;
+import org.joda.time.DateTime;
 
 public interface IMbwayPaymentPlatformService {
 
@@ -74,12 +79,39 @@ public interface IMbwayPaymentPlatformService {
      * TODO ANIL 2023-10-25: There are many ways to create a payment request log,
      * which is confusing. There should be a cleanup in the various methods to
      * create a payment request log (and in derivate classes)
-     * 
-     */
-    public PaymentRequestLog createLogForWebhookNotification();
+     *
+     */ public PaymentRequestLog createLogForWebhookNotification();
 
     public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
     public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
 
+    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber);
+
+    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate);
+
+    public void updateMbwayMandateState(MbwayMandate mbwayMandate);
+
+    public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
+            Set<Installment> installments);
+
+    public void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason);
+
+    public void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate);
+
+    public boolean isMbwayAuthorizedPaymentsActive();
+
+    public int getMbwayMandateDaysToScheduleDebts();
+
+    public int getMbwayMandateDaysToSendNotification();
+
+    public int getMbwayMandateDaysToChargePayment();
+
+    public int getMaximumTimeForAuthorizationInMinutes();
+
+    public DateTime getLastMbwayPaymentScheduleExecution();
+
+    public void updateLastMbwayPaymentScheduleExecution();
+
+    public Set<Product> getMbwayMandatePossibleProductsToChargeSet();
 }

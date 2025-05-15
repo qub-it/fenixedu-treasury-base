@@ -12,11 +12,14 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import pt.ist.fenixframework.FenixFramework;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,7 +80,7 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
             throw new TreasuryDomainException("error.PaymentInvoiceEntriesGroup.different.finantialEntities.from.invoiceEntries");
         }
 
-        if(getInvoiceEntriesSet().stream().anyMatch(i -> i.getDebtAccount() != getDebtAccount())) {
+        if (getInvoiceEntriesSet().stream().anyMatch(i -> i.getDebtAccount() != getDebtAccount())) {
             throw new TreasuryDomainException("error.PaymentInvoiceEntriesGroup.different.debtAccounts.from.invoiceEntries");
         }
 
@@ -117,6 +120,28 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
 
         checkRules();
     }
+
+    public void transferPaymentGroupToNewDebtAccount(DebtAccount destinyDebtAccount,
+            Map<DebitEntry, DebitEntry> debitEntriesTransferMap) {
+        // Collect the open debit entries from other debt account
+        Set<DebitEntry> newDebitEntrySet = getInvoiceEntriesSet().stream() //
+                .filter(d -> debitEntriesTransferMap.containsKey(d)) //
+                .map(d -> debitEntriesTransferMap.get(d)) //
+                .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())) //
+                .collect(Collectors.toSet());
+
+        if (newDebitEntrySet.isEmpty()) {
+            return;
+        }
+
+        PaymentInvoiceEntriesGroup group = PaymentInvoiceEntriesGroup.findUniqueByGroupKey(destinyDebtAccount,
+                StringUtils.isNotEmpty(getGroupKey()) ? getGroupKey() : UUID.randomUUID().toString()).orElseGet(
+                () -> PaymentInvoiceEntriesGroup.create(getFinantialEntity(), destinyDebtAccount, newDebitEntrySet,
+                        getGroupKey()));
+
+        newDebitEntrySet.forEach(d -> group.addInvoiceEntries(d));
+    }
+
 
     /* SERVICES */
 

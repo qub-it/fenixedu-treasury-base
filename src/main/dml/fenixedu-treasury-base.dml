@@ -13,6 +13,8 @@ enum org.fenixedu.treasury.dto.PaymentPlans.AddictionsCalculeTypeEnum								as 
 enum org.fenixedu.treasury.domain.InvoiceRegistrationMode                                           as InvoiceRegistrationMode;
 enum org.fenixedu.treasury.domain.document.InvoiceSourceBillingType                                 as InvoiceSourceBillingType;
 enum org.fenixedu.treasury.domain.document.PaymentSourcePaymentType                                 as PaymentSourcePaymentType;
+enum org.fenixedu.treasury.domain.sibspay.MbwayMandateState                                         as MbwayMandateState;
+enum org.fenixedu.treasury.domain.sibspay.MbwayMandatePaymentScheduleState                          as MbwayMandatePaymentScheduleState;
 
 external class .org.fenixedu.bennu.io.domain.GenericFile;
 
@@ -854,7 +856,9 @@ class payments.integration.DigitalPaymentPlatform {
 	String name;
 	boolean active;
 	String migrationCode;
-	
+
+	LocalizedStringT merchantName;
+
 	// Used to override the finantial institution data displayed in the online payments header
 	// This info is required in every page used in the checkout process.
 	// By default the data is provided by Finantial Institution, but some institutions want
@@ -3388,7 +3392,7 @@ class sibspaymentsgateway.MbwayRequest extends payments.PaymentRequest {
 	String phoneNumber;
 	PaymentReferenceCodeStateType state;
 }
-	
+
 //*********************************************
 //PaymentPlan
 //*********************************************
@@ -3789,8 +3793,162 @@ class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatfor
 	String endpointUrl;
 	String assetsEndpointUrl;
 	Integer referenceMinimumValidityInHours;
+
+	// MB-WAY Authorized Payments
+	boolean mbwayAuthorizedPaymentsActive;
+	int mbwayMandateDaysToScheduleDebts;
+	int mbwayMandateDaysToSendNotification;
+	int mbwayMandateDaysToChargePayment;
+
+	DateTime lastMbwayPaymentScheduleExecution;
 }
 
+    relation SibsPayMbwayMandatePossibleProductsToCharge {
+        sibspay.SibsPayPlatform playsRole sibsPayPlatformForMbwayMandates {
+            multiplicity *;
+        }
+
+        Product playsRole mbwayMandatePossibleProductsToCharge {
+            multiplicity *;
+        }
+    }
+
+class sibspay.MbwayMandate {
+	MbwayMandateState state;
+
+	String mandateId;
+	String merchantTransactionId;
+	String transactionId;
+
+	String countryPrefix;
+    String localPhoneNumber;	
+    
+	DateTime requestDate;
+	DateTime authorizationDate;
+	DateTime updateDate;
+
+	BigDecimalT plafond;
+	LocalDate expirationDate;
+	
+	String cancelReason;
+	String cancelResponsible;	
+}
+
+	relation MbwayMandateDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+		
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandateDigitalPaymentPlatform {
+		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatform {
+			multiplicity 1..1;
+		}
+				
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandateDebtAccount {
+		debt.DebtAccount playsRole debtAccount {
+			multiplicity 1..1;
+		}
+			
+		sibspay.MbwayMandate playsRole mbwayMandates {
+			multiplicity *;
+		}
+	}
+
+	relation MbwayMandatePaymentRequestLog {
+		sibspay.MbwayMandate playsRole mbwayMandate {
+			multiplicity 0..1;
+		}
+	
+		payments.PaymentRequestLog playsRole paymentRequestLogs {
+			multiplicity *;
+		}
+	}
+
+	relation MbwayMandateScheduleCancelation {
+		payments.integration.DigitalPaymentPlatform playsRole pendingMbwayMandateCancellationPlatform {
+			multiplicity 0..1;
+		}
+
+		sibspay.MbwayMandate playsRole pendingCancellationMbwayMandates {
+			multiplicity *;
+		}
+	}
+	
+class sibspay.MbwayMandatePaymentSchedule {
+	DateTime creationDate;
+	LocalDate sendNotificationDate;
+	LocalDate paymentChargeDate;
+
+    MbwayMandatePaymentScheduleState state;
+    String cancelReason;
+    DateTime cancelDate;
+    String cancelResponsible;
+
+    DateTime updateStateDate;
+}
+
+
+	relation MbwayMandatePaymentScheduleDomainRoot {
+		.pt.ist.fenixframework.DomainRoot playsRole domainRoot {
+			multiplicity 1..1;
+		}
+
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
+			multiplicity *;
+		}
+	}
+
+	relation MbwayMandatePaymentScheduleMbwayMandate {
+
+		sibspay.MbwayMandate playsRole mbwayMandate {
+			multiplicity 1..1;
+		}
+
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedules {
+			multiplicity *;
+		}
+	}
+	
+	relation MbwayMandatePaymentScheduleDebitEntry {
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {
+			multiplicity *;
+		}
+	
+		document.DebitEntry playsRole debitEntries {
+			multiplicity *;
+		}		
+	}
+
+	relation MbwayMandatePaymentScheduleInstallment {
+        sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {
+            multiplicity *;
+        }
+
+        paymentPlan.Installment playsRole installments {
+            multiplicity *;
+        }
+    }
+	
+	relation MbwayMandatePaymentScheduleMbwayPayment {
+		sibspay.MbwayMandatePaymentSchedule playsRole mbwayMandatePaymentSchedule {
+			multiplicity 0..1;
+		}
+	
+		sibspaymentsgateway.MbwayRequest playsRole mbwayRequests {
+			multiplicity *;
+		}	
+	}
+	
 /*************************
 * PaymentMethodReference *
 **************************/

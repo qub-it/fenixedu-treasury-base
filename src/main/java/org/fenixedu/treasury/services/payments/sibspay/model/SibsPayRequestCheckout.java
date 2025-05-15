@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
         date = "2023-08-30T20:20:13.375686+01:00[Europe/Lisbon]")
 
 public class SibsPayRequestCheckout {
-    
+
     @JsonProperty("merchant")
     private SibsPayMerchant merchant = null;
 
@@ -32,6 +32,9 @@ public class SibsPayRequestCheckout {
 
     @JsonProperty("recurringTransaction")
     private SibsPayRecurringTransactionInput recurringTransaction = null;
+
+    @JsonProperty("mandate")
+    private SibsPayRequestCheckoutMandate mandate = null;
 
     public SibsPayRequestCheckout merchant(SibsPayMerchant merchant) {
         this.merchant = merchant;
@@ -163,6 +166,16 @@ public class SibsPayRequestCheckout {
 
     public void setRecurringTransaction(SibsPayRecurringTransactionInput recurringTransaction) {
         this.recurringTransaction = recurringTransaction;
+    }
+
+    /* Mandate */
+
+    public SibsPayRequestCheckoutMandate getMandate() {
+        return mandate;
+    }
+
+    public void setMandate(SibsPayRequestCheckoutMandate mandate) {
+        this.mandate = mandate;
     }
 
     @Override

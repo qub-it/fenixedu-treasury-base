@@ -44,11 +44,9 @@ import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.PaymentPenaltyEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
+import org.fenixedu.treasury.dto.sibspay.MbwayMandateBean;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
-import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayCancellationResponse;
-import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayResponseInquiryWrapper;
-import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayReturnCheckout;
-import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
+import org.fenixedu.treasury.services.payments.sibspay.model.*;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -86,6 +84,11 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         DigitalPaymentPlatformPaymentMode.create(this, TreasurySettings.getInstance().getMbWayPaymentMethod());
 
         checkRules();
+    }
+
+    @Override
+    public boolean isMbwayMandateSupported() {
+        return true;
     }
 
     @Override
@@ -193,8 +196,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         Optional<String> transactionIdOptional = Optional.empty();
         Optional<String> transactionSignatureOptional = Optional.empty();
 
-        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
 
         MbwayRequest mbwayRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber, payableAmount,
                 merchantTransactionId);
@@ -206,8 +210,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
                 DateTime requestSendDate = new DateTime();
 
-                SibsPayReturnCheckout sibsPayReturnCheckout = sibsPayService.processSibsPaymentRequestOrMbwayCheckout(debtAccount,
-                        payableAmount, new DateTime(), new DateTime().plusMinutes(3), merchantTransactionId);
+                SibsPayReturnCheckout sibsPayReturnCheckout =
+                        sibsPayService.processSibsPaymentRequestOrMbwayCheckout(debtAccount, payableAmount, new DateTime(),
+                                new DateTime().plusMinutes(3), merchantTransactionId);
 
                 DateTime requestReceiveDate = new DateTime();
 
@@ -255,8 +260,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 if (e instanceof TreasuryDomainException) {
                     throw (TreasuryDomainException) e;
                 } else {
-                    final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
-                            + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                    final String message =
+                            "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                     throw new TreasuryDomainException(e, message);
                 }
@@ -281,8 +286,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 String transactionId = transactionIdOptional.get();
                 String transactionSignature = transactionSignatureOptional.get();
 
-                SibsPayResponseInquiryWrapper responseInquiryWrapper = sibsPayService
-                        .generateMbwayRequestTransaction(transactionId, transactionSignature, countryPrefix, localPhoneNumber);
+                SibsPayResponseInquiryWrapper responseInquiryWrapper =
+                        sibsPayService.generateMbwayRequestTransaction(transactionId, transactionSignature, countryPrefix,
+                                localPhoneNumber);
 
                 FenixFramework.atomic(() -> {
                     log.logRequestReceiveDateAndData(transactionId, responseInquiryWrapper.isOperationSuccess(), false,
@@ -318,8 +324,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 if (e instanceof TreasuryDomainException) {
                     throw (TreasuryDomainException) e;
                 } else {
-                    final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
-                            + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                    final String message =
+                            "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                     throw new TreasuryDomainException(e, message);
                 }
@@ -344,9 +350,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
         ForwardPaymentRequest forwardPayment = null;
         try {
-            forwardPayment = FenixFramework
-                    .atomic(() -> ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
-                            debitEntries, installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction));
+            forwardPayment = FenixFramework.atomic(
+                    () -> ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries,
+                            installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -372,8 +378,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         try {
             DateTime requestSendDate = new DateTime();
 
-            SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                    getBearerToken(), getTerminalId(), getEntityReferenceCode());
+            SibsPayAPIService sibsPayService =
+                    new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(),
+                            getTerminalId(), getEntityReferenceCode());
 
             final SibsPayReturnCheckout returnCheckout =
                     sibsPayService.processForwardPaymentCheckout(forwardPayment, bean.getAddressBean());
@@ -384,16 +391,18 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             final ForwardPaymentStateType stateType =
                     isOperationSuccess ? ForwardPaymentStateType.REQUESTED : ForwardPaymentStateType.REJECTED;
 
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(isOperationSuccess, stateType,
-                    returnCheckout.getReturnStatus().getStatusCode(), returnCheckout.getReturnStatus().getStatusDescription(),
-                    returnCheckout.getRequestLog(), returnCheckout.getResponseLog());
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(isOperationSuccess, stateType, returnCheckout.getReturnStatus().getStatusCode(),
+                            returnCheckout.getReturnStatus().getStatusDescription(), returnCheckout.getRequestLog(),
+                            returnCheckout.getResponseLog());
 
             FenixFramework.atomic(() -> {
                 forwardPayment.setTransactionId(returnCheckout.getTransactionID());
                 forwardPayment.setFormContext(returnCheckout.getFormContext());
 
-                PaymentRequestLog log = log(forwardPayment, "createForwardPaymentRequest", result.getStatusCode(),
-                        result.getStatusMessage(), result.getRequestBody(), result.getResponseBody());
+                PaymentRequestLog log =
+                        log(forwardPayment, "createForwardPaymentRequest", result.getStatusCode(), result.getStatusMessage(),
+                                result.getRequestBody(), result.getResponseBody());
 
                 log.setInternalMerchantTransactionId(forwardPayment.getMerchantTransactionId());
                 log.setExternalTransactionId(forwardPayment.getTransactionId());
@@ -436,8 +445,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         }
 
         try {
-            SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                    getBearerToken(), getTerminalId(), getEntityReferenceCode());
+            SibsPayAPIService sibsPayService =
+                    new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(),
+                            getTerminalId(), getEntityReferenceCode());
 
             DateTime requestSendDate = new DateTime();
 
@@ -483,8 +493,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                     new PostProcessPaymentStatusBean(bean, forwardPayment.getState(), bean.isInPayedState());
 
             FenixFramework.atomic(() -> {
-                PaymentRequestLog log = log(forwardPayment, "postProcessPayment", bean.getStatusCode(), bean.getStatusMessage(),
-                        requestLog, responseLog);
+                PaymentRequestLog log =
+                        log(forwardPayment, "postProcessPayment", bean.getStatusCode(), bean.getStatusMessage(), requestLog,
+                                responseLog);
 
                 log.setInternalMerchantTransactionId(forwardPayment.getMerchantTransactionId());
                 log.setExternalTransactionId(bean.getTransactionId());
@@ -564,8 +575,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public ForwardPaymentStatusBean paymentStatus(ForwardPaymentRequest request) {
-        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
 
         try {
             SibsPayResponseInquiryWrapper responseInquiryWrapper = null;
@@ -581,9 +593,10 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
             final ForwardPaymentStateType paymentStateType = translateForwardPaymentStateType(responseInquiryWrapper);
 
-            final ForwardPaymentStatusBean bean = new ForwardPaymentStatusBean(responseInquiryWrapper.isOperationSuccess(),
-                    paymentStateType, responseInquiryWrapper.getPaymentResultCode(),
-                    responseInquiryWrapper.getPaymentResultDescription(), requestLog, responseLog);
+            final ForwardPaymentStatusBean bean =
+                    new ForwardPaymentStatusBean(responseInquiryWrapper.isOperationSuccess(), paymentStateType,
+                            responseInquiryWrapper.getPaymentResultCode(), responseInquiryWrapper.getPaymentResultDescription(),
+                            requestLog, responseLog);
 
             // README ANIL 2023-10-23: 
             // 
@@ -678,8 +691,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     @Override
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate) {
-        BigDecimal payableAmountDebitEntries = debitEntries.stream()
-                .map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountDebitEntries =
+                debitEntries.stream().map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmountInstallments =
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
@@ -705,8 +719,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         Optional<String> transactionIdOptional = Optional.empty();
         Optional<String> transactionSignatureOptional = Optional.empty();
 
-        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
         DateTime sibsValidFrom = new DateTime();
 
         // Set validTo to 23:59:59
@@ -721,8 +736,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
             try {
 
-                SibsPayReturnCheckout sibsPayReturnCheckout = sibsPayService.processSibsPaymentRequestOrMbwayCheckout(debtAccount,
-                        payableAmount, sibsValidFrom, sibsValidTo, merchantTransactionId);
+                SibsPayReturnCheckout sibsPayReturnCheckout =
+                        sibsPayService.processSibsPaymentRequestOrMbwayCheckout(debtAccount, payableAmount, sibsValidFrom,
+                                sibsValidTo, merchantTransactionId);
 
                 boolean isOperationSuccess =
                         SibsPayAPIService.isOperationSuccess(sibsPayReturnCheckout.getReturnStatus().getStatusCode());
@@ -814,8 +830,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 }
 
                 SibsPaymentRequest sibsPaymentRequest = FenixFramework.atomic(() -> {
-                    SibsPaymentRequest request = SibsPaymentRequest.create(this, debtAccount, debitEntries, installments,
-                            payableAmount, getEntityReferenceCode(), referenceCode, merchantTransactionId, transactionId);
+                    SibsPaymentRequest request =
+                            SibsPaymentRequest.create(this, debtAccount, debitEntries, installments, payableAmount,
+                                    getEntityReferenceCode(), referenceCode, merchantTransactionId, transactionId);
 
                     request.setPaymentDueDate(validTo);
                     request.setExpiresDate(sibsValidTo);
@@ -936,8 +953,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public List<? extends DigitalPlatformResultBean> getPaymentTransactionsReportListByMerchantId(String merchantTransationId) {
-        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
 
         try {
             SibsPayResponseInquiryWrapper responseInquiryWrapper =
@@ -947,7 +965,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         } catch (final Exception e) {
             FenixFramework.atomic(() -> {
                 PaymentRequestLog log =
-                        PaymentRequestLog.create(null, "getPaymentTransactionsReportListByMerchantId", null, null);
+                        PaymentRequestLog.create((PaymentRequest) null, "getPaymentTransactionsReportListByMerchantId", null,
+                                null);
 
                 log.setInternalMerchantTransactionId(merchantTransationId);
                 log.logException(e);
@@ -1005,8 +1024,9 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
     @Override
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
-        SibsPayAPIService sibsPayService = new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(),
-                getBearerToken(), getTerminalId(), getEntityReferenceCode());
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
 
         try {
             // 1. First check the state of the sibsPaymentRequest in the platform
@@ -1073,8 +1093,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 FenixFramework.atomic(() -> {
                     sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
                     log(sibsPaymentRequest, "annulPaymentRequestInPlatform", statusCode, statusMessage,
-                            cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog())
-                                    .setOperationSuccess(true);
+                            cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog()).setOperationSuccess(
+                            true);
 
                 });
 
@@ -1084,8 +1104,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
 
                 FenixFramework.atomic(() -> {
                     log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "UNKNOWN_STATE",
-                            "unknown payment result code, please check: " + responseInquiryWrapper.getPaymentResultCode(), "", "")
-                                    .setOperationSuccess(false);
+                            "unknown payment result code, please check: " + responseInquiryWrapper.getPaymentResultCode(), "",
+                            "").setOperationSuccess(false);
                 });
 
                 return false;
@@ -1124,9 +1144,592 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         return SibsPayAPIService.MAX_POSTCODE_LENGTH;
     }
 
+    /*
+     * *****************
+     * SIBS PAY MANDATES
+     * *****************
+     */
+
+    @Override
+    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber) {
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+
+        String merchantTransactionId = generateNewMerchantTransactionId();
+
+        MbwayMandate mbwayMandate = createMbwayMandateObject(debtAccount, countryPrefix, localPhoneNumber, merchantTransactionId);
+
+        try {
+
+            SibsPayCreateMbwayMandateResponse response =
+                    sibsPayService.createMbwayMandate(debtAccount, countryPrefix, localPhoneNumber, merchantTransactionId);
+
+            FenixFramework.atomic(() -> {
+                log(mbwayMandate, "requestMbwayMandateAuthorization", response.getOperationStatusCode(),
+                        response.getOperationStatusMessage(), response.getRequestLog(), response.getResponseLog());
+
+                if (response.isMandateCreationSuccess()) {
+                    String mandateId = response.getMandate() != null ? response.getMandate().getMandateId() : null;
+
+                    mbwayMandate.waitAuthorization(mandateId, response.getTransactionId());
+                } else {
+                    mbwayMandate.cancel("mandate creation not successful");
+                }
+            });
+
+            return mbwayMandate;
+        } catch (final Exception e) {
+
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                // Cancel because the request was not successful
+                mbwayMandate.cancel("mandate creation not successful");
+                logException(mbwayMandate, e, "requestMbwayMandateAuthorization", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.requestMbwayMandateAuthorization");
+        }
+    }
+
+    @Atomic
+    private MbwayMandate createMbwayMandateObject(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber,
+            String merchantTransactionId) {
+        return MbwayMandate.create(this, debtAccount, merchantTransactionId, countryPrefix, localPhoneNumber);
+    }
+
+    // ANIL (2025-04-16) (#qubIT-Fenix-5465)
+    //
+    // When there is the intent to cancel a mandate, it is important to mark
+    // as cancelled in the FenixEdu, and only then cancel the mandate in the
+    // digital payment platform
+    @Atomic(mode = TxMode.READ)
+    @Override
+    public void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason) {
+        if (mbwayMandate.getState().isCanceled()) {
+            // Already cancelled, just return
+            return;
+        }
+
+        markMbwayMandateAsCancelledAndScheduleForCancelationInDigitalPlatform(mbwayMandate, reason);
+
+        requestMbwayMandateCancellationInPlatform(mbwayMandate);
+    }
+
+    @Atomic(mode = TxMode.READ)
+    @Override
+    public void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate) {
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+
+        try {
+            SibsPayCancelMbwayMandateResponse response =
+                    sibsPayService.cancelMandate(mbwayMandate.getTransactionId(), mbwayMandate.getMerchantTransactionId(),
+                            mbwayMandate.getCountryPrefix(), mbwayMandate.getLocalPhoneNumber());
+
+            FenixFramework.atomic(() -> {
+                log(mbwayMandate, "cancelMbwayMandate", response.getOperationStatusCode(), response.getOperationStatusMessage(),
+                        response.getRequestLog(), response.getResponseLog());
+
+                if (response.isOperationSuccess()) {
+                    mbwayMandate.clearScheduledCancellationInPlatform();
+                }
+            });
+        } catch (final Exception e) {
+
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(mbwayMandate, e, "cancelMbwayMandate", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.cancelMbwayMandate");
+        }
+    }
+
+    @Atomic
+    private void markMbwayMandateAsCancelledAndScheduleForCancelationInDigitalPlatform(MbwayMandate mbwayMandate, String reason) {
+        mbwayMandate.cancel(reason);
+
+        mbwayMandate.scheduleForCancellationInPlatform();
+    }
+
+    private static final int AUTHORIZATION_EXPIRE_TIME_IN_MINUTES = 10;
+
+    @Atomic(mode = TxMode.READ)
+    @Override
+    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate) {
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+        try {
+            // First, check if the mandate exists
+            String transactionId = mbwayMandate.getTransactionId();
+
+            if (transactionId == null) {
+                // we have to discover the transaction id with the merchant transaction id
+                SibsPayResponseInquiryWrapper paymentStatusByMerchantTransactionId =
+                        sibsPayService.getPaymentStatusByMerchantTransactionId(mbwayMandate.getMerchantTransactionId());
+
+                if (paymentStatusByMerchantTransactionId != null) {
+                    transactionId = paymentStatusByMerchantTransactionId.getTransactionId();
+                }
+            }
+
+            if (transactionId == null) {
+                // The transaction id is not present, almost certainly
+                // the authorization request was not sent
+
+                MbwayMandateBean bean = new MbwayMandateBean();
+                bean.setMandateId(null);
+                bean.setTransactionId(null);
+                bean.setState(null);
+                bean.setPlafond(null);
+
+                return bean;
+            }
+
+            SibsPayGetInquiryMbwayMandateResponse inquiryMbwayMandateResponse =
+                    sibsPayService.getInquiryMbwayMandate(transactionId, mbwayMandate.getCountryPrefix(),
+                            mbwayMandate.getLocalPhoneNumber());
+
+            if (inquiryMbwayMandateResponse.isOperationSuccess()) {
+                MbwayMandateState currentMandateState = inquiryMbwayMandateResponse.getCurrentMandateState();
+
+                MbwayMandateBean bean = new MbwayMandateBean();
+                bean.setMandateId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate()
+                        .getMandateId() : null);
+                bean.setTransactionId(inquiryMbwayMandateResponse.getMandate() != null ? inquiryMbwayMandateResponse.getMandate()
+                        .getTransactionId() : null);
+                bean.setState(currentMandateState);
+                bean.setPlafond(inquiryMbwayMandateResponse.getMandate()
+                        .getAmountLimit() != null ? inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue() : null);
+
+                bean.setExpirationDate(mbwayMandate.getExpirationDate());
+                if (inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate() != null) {
+                    bean.setExpirationDate(parseLocalDate(inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate()));
+                }
+
+                return bean;
+            } else if (inquiryMbwayMandateResponse.isOperationErrorUnknownAuthPayment()) {
+                // This might be the case where an authorization was issued
+                // and is new or waiting authorization, and has passed too
+                // much time to authorize
+
+                MbwayMandateBean bean = new MbwayMandateBean();
+                bean.setMandateId(null);
+                bean.setTransactionId(transactionId);
+                bean.setState(mbwayMandate.getState());
+                bean.setPlafond(null);
+                bean.setExpirationDate(null);
+
+                // If it is the case then cancel the mandate
+                if (mbwayMandate.getState().isCreated() || mbwayMandate.getState().isWaitingAuthorization()) {
+                    if (new Duration(mbwayMandate.getRequestDate(), new DateTime()).toStandardMinutes()
+                            .getMinutes() > AUTHORIZATION_EXPIRE_TIME_IN_MINUTES) {
+                        bean.setState(MbwayMandateState.NOT_AUTHORIZED);
+
+                        return bean;
+                    }
+                }
+
+                return bean;
+            } else {
+                throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                        inquiryMbwayMandateResponse.getResponseLog(), "not able to process the response");
+            }
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(mbwayMandate, e, "requestMbwayMandateAuthorization", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.requestMbwayMandateAuthorization");
+        }
+    }
+
+    @Atomic(mode = TxMode.READ)
+    @Override
+    public void updateMbwayMandateState(MbwayMandate mbwayMandate) {
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+        try {
+            // First, check if the mandate exists
+            SibsPayGetInquiryMbwayMandateResponse inquiryMbwayMandateResponse =
+                    sibsPayService.getInquiryMbwayMandate(mbwayMandate.getTransactionId(), mbwayMandate.getCountryPrefix(),
+                            mbwayMandate.getLocalPhoneNumber());
+
+            executeUpdateMbwayMandateState(mbwayMandate, inquiryMbwayMandateResponse);
+        } catch (final Exception e) {
+            FenixFramework.atomic(() -> {
+                String requestBody = null;
+                String responseBody = null;
+
+                if (e instanceof OnlinePaymentsGatewayCommunicationException) {
+                    requestBody = ((OnlinePaymentsGatewayCommunicationException) e).getRequestLog();
+                    responseBody = ((OnlinePaymentsGatewayCommunicationException) e).getResponseLog();
+                }
+
+                logException(mbwayMandate, e, "requestMbwayMandateAuthorization", "error", "error", requestBody, responseBody);
+            });
+
+            throw new TreasuryDomainException(e, "error.SibsPayPlatform.requestMbwayMandateAuthorization");
+        }
+    }
+
+    @Atomic
+    private void executeUpdateMbwayMandateState(MbwayMandate mbwayMandate,
+            SibsPayGetInquiryMbwayMandateResponse inquiryMbwayMandateResponse)
+            throws OnlinePaymentsGatewayCommunicationException {
+        log(mbwayMandate, "updateMbwayMandateState", inquiryMbwayMandateResponse.getReturnStatus().getStatusCode(),
+                inquiryMbwayMandateResponse.getReturnStatus().getStatusDescription(), inquiryMbwayMandateResponse.getRequestLog(),
+                inquiryMbwayMandateResponse.getResponseLog());
+
+        if (inquiryMbwayMandateResponse.isOperationSuccess()) {
+            MbwayMandateState currentMandateState = inquiryMbwayMandateResponse.getCurrentMandateState();
+
+            if (currentMandateState == null) {
+                throw new IllegalArgumentException("it was not possible to infer the mandate state");
+            }
+
+            if (mbwayMandate.getState().isCreated()) {
+                if (currentMandateState.isCanceled()) {
+                    mbwayMandate.cancel("canceled authorization in the digital platform");
+                } else if (currentMandateState.isExpired()) {
+                    mbwayMandate.expire();
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                            inquiryMbwayMandateResponse.getResponseLog(),
+                            "not in the expected state [%s] [%s]".formatted(mbwayMandate.getState().name(),
+                                    currentMandateState.name()));
+                }
+            } else if (mbwayMandate.getState().isWaitingAuthorization()) {
+                if (currentMandateState.isActive()) {
+                    mbwayMandate.authorize();
+                } else if (currentMandateState.isCanceled()) {
+                    mbwayMandate.cancel("canceled authorization in the digital platform");
+                } else if (currentMandateState.isExpired()) {
+                    mbwayMandate.expire();
+                } else if (currentMandateState.isSuspended()) {
+                    mbwayMandate.suspend();
+                } else if (currentMandateState.isWaitingAuthorization()) {
+                    // Do nothing
+                } else if (currentMandateState.isNotAuthorized()) {
+                    mbwayMandate.markAsNotAuthorized("not authorized in digital platform");
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                            inquiryMbwayMandateResponse.getResponseLog(),
+                            "not in the expected state [%s] [%s]".formatted(mbwayMandate.getState().name(),
+                                    currentMandateState.name()));
+                }
+            } else if (mbwayMandate.getState().isActive()) {
+                if (currentMandateState.isCanceled()) {
+                    mbwayMandate.cancel("canceled authorization in the digital platform");
+                } else if (currentMandateState.isExpired()) {
+                    mbwayMandate.expire();
+                } else if (currentMandateState.isSuspended()) {
+                    mbwayMandate.suspend();
+                } else if (currentMandateState.isActive()) {
+                    // update plafond and expiration date
+
+                    BigDecimal limitAmount = mbwayMandate.getPlafond();
+                    if (inquiryMbwayMandateResponse.getMandate().getAmountLimit() != null) {
+                        limitAmount = inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue();
+                    }
+
+                    LocalDate expirationDate = mbwayMandate.getExpirationDate();
+                    if (inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate() != null) {
+                        expirationDate = parseLocalDate(inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate());
+                    }
+
+                    mbwayMandate.updatePlafondAndExpirationDate(limitAmount, expirationDate);
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                            inquiryMbwayMandateResponse.getResponseLog(),
+                            "not in the expected state [%s] [%s]".formatted(mbwayMandate.getState().name(),
+                                    currentMandateState.name()));
+                }
+            } else if (mbwayMandate.getState().isSuspended()) {
+                if (currentMandateState.isCanceled()) {
+                    mbwayMandate.cancel("canceled authorization in the digital platform");
+                } else if (currentMandateState.isExpired()) {
+                    mbwayMandate.expire();
+                } else if (currentMandateState.isActive()) {
+                    // reactivate the mandate
+                    mbwayMandate.reactivate();
+                } else if (currentMandateState.isSuspended()) {
+                    // Do nothing
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                            inquiryMbwayMandateResponse.getResponseLog(),
+                            "not in the expected state [%s] [%s]".formatted(mbwayMandate.getState().name(),
+                                    currentMandateState.name()));
+                }
+            } else if (mbwayMandate.getState().isCanceled() || mbwayMandate.getState().isExpired()) {
+                if (currentMandateState.isCanceled() || currentMandateState.isExpired()) {
+                    // Do nothing
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                            inquiryMbwayMandateResponse.getResponseLog(),
+                            "not in the expected state [%s] [%s]".formatted(mbwayMandate.getState().name(),
+                                    currentMandateState.name()));
+                }
+            }
+        } else if (inquiryMbwayMandateResponse.isOperationErrorUnknownAuthPayment()) {
+            // This might be the case where an authorization was issued
+            // and is new or waiting authorization, and has passed too
+            // much time to authorize
+
+            // If it is the case then cancel the mandate
+            if (mbwayMandate.getState().isCreated() || mbwayMandate.getState().isWaitingAuthorization()) {
+                if (new Duration(mbwayMandate.getRequestDate(), new DateTime()).toStandardMinutes()
+                        .getMinutes() > AUTHORIZATION_EXPIRE_TIME_IN_MINUTES) {
+                    mbwayMandate.markAsNotAuthorized("authorization time expired");
+                }
+            }
+        } else {
+            throw new OnlinePaymentsGatewayCommunicationException(inquiryMbwayMandateResponse.getRequestLog(),
+                    inquiryMbwayMandateResponse.getResponseLog(), "not able to process the response");
+        }
+    }
+
+    private static LocalDate parseLocalDate(String value) {
+        if (value.length() > 10) {
+            value = value.substring(0, 10);
+        }
+
+        return TreasuryConstants.parseLocalDate(value, "yyyy-MM-dd");
+    }
+
+    @Override
+    @Atomic(mode = TxMode.READ)
+    public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
+            Set<Installment> installments) {
+        MbwayMandate mbwayMandate = mbwayMandatePaymentSchedule.getMbwayMandate();
+
+        final Function<DebitEntry, BigDecimal> getExtraAmount = (DebitEntry debitEntry) -> {
+            PaymentPenaltyEntryBean penaltyTax =
+                    PaymentPenaltyTaxTreasuryEvent.calculatePaymentPenaltyTax(debitEntry, LocalDate.now());
+
+            BigDecimal penaltyTaxAmount = penaltyTax != null ? penaltyTax.getSettledAmount() : BigDecimal.ZERO;
+
+            return debitEntry.getOpenAmountWithInterests().add(penaltyTaxAmount);
+        };
+
+        if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
+            throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
+        }
+
+        DebtAccount debtAccount = mbwayMandate.getDebtAccount();
+
+        String phoneNumber = String.format("%s#%s", mbwayMandate.getCountryPrefix(), mbwayMandate.getLocalPhoneNumber());
+
+        BigDecimal payableAmountDebitEntries =
+                debitEntries.stream().map(e -> getExtraAmount.apply(e)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountInstallments =
+                installments.stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
+
+        String merchantTransactionId = generateNewMerchantTransactionId();
+
+        Optional<String> transactionIdOptional = Optional.empty();
+        Optional<String> transactionSignatureOptional = Optional.empty();
+
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+
+        MbwayRequest mbwayRequest =
+                createMbwayRequestWithMandatePaymentSchedule(mbwayMandatePaymentSchedule, debitEntries, installments, debtAccount,
+                        phoneNumber, payableAmount, merchantTransactionId);
+
+        // 1. Request checkout
+        {
+            PaymentRequestLog log = log(mbwayRequest, "createMbwayRequest", null, null, null, null);
+            try {
+
+                DateTime requestSendDate = new DateTime();
+
+                SibsPayReturnCheckout sibsPayReturnCheckout =
+                        sibsPayService.processMbwayMandateCheckout(debtAccount, payableAmount, merchantTransactionId,
+                                mbwayMandate.getMandateId());
+
+                DateTime requestReceiveDate = new DateTime();
+
+                boolean isOperationSuccess =
+                        SibsPayAPIService.isOperationSuccess(sibsPayReturnCheckout.getReturnStatus().getStatusCode());
+
+                FenixFramework.atomic(() -> {
+                    mbwayRequest.setTransactionId(sibsPayReturnCheckout.getTransactionID());
+
+                    log.setRequestSendDate(requestSendDate);
+                    log.setRequestReceiveDate(requestReceiveDate);
+                    log.logRequestReceiveDateAndData(sibsPayReturnCheckout.getTransactionID(), isOperationSuccess, false,
+                            sibsPayReturnCheckout.getReturnStatus().getStatusCode(),
+                            sibsPayReturnCheckout.getReturnStatus().getStatusDescription());
+
+                    log.saveRequest(sibsPayReturnCheckout.getRequestLog());
+                    log.saveResponse(sibsPayReturnCheckout.getResponseLog());
+                });
+
+                if (!isOperationSuccess) {
+                    throw new TreasuryDomainException("error.MbwayPaymentRequest.request.in.gateway.failed");
+                }
+
+                transactionIdOptional = Optional.ofNullable(sibsPayReturnCheckout.getTransactionID());
+                transactionSignatureOptional = Optional.ofNullable(sibsPayReturnCheckout.getTransactionSignature());
+
+            } catch (Exception e) {
+                boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
+
+                FenixFramework.atomic(() -> {
+
+                    mbwayRequest.anull();
+
+                    log.logRequestReceiveDateAndData(null, false, false, null, null);
+                    log.logException(e);
+
+                    if (isOnlinePaymentsGatewayException) {
+                        OnlinePaymentsGatewayCommunicationException onlineException =
+                                (OnlinePaymentsGatewayCommunicationException) e;
+                        log.saveRequest(onlineException.getRequestLog());
+                        log.saveResponse(onlineException.getResponseLog());
+                    }
+                });
+
+                if (e instanceof TreasuryDomainException) {
+                    throw (TreasuryDomainException) e;
+                } else {
+                    final String message =
+                            "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+
+                    throw new TreasuryDomainException(e, message);
+                }
+            }
+        }
+
+        // 2. generate mbway payment request
+        {
+            PaymentRequestLog log = log(mbwayRequest, "createMbwayRequest", null, null, null, null);
+
+            try {
+
+                if (transactionIdOptional.isEmpty() || StringUtils.isEmpty(transactionIdOptional.get())) {
+                    throw new TreasuryDomainException("error.SibsPayPlatform.transactionId.required.to.generate.reference");
+                }
+
+                if (transactionSignatureOptional.isEmpty() || StringUtils.isEmpty(transactionSignatureOptional.get())) {
+                    throw new TreasuryDomainException(
+                            "error.SibsPayPlatform.transactionSignature.required.to.generate.mbway.request");
+                }
+
+                String transactionId = transactionIdOptional.get();
+                String transactionSignature = transactionSignatureOptional.get();
+
+                SibsPayResponseInquiryWrapper responseInquiryWrapper =
+                        sibsPayService.generateMbwayMandateRequestTransaction(transactionId, transactionSignature);
+
+                FenixFramework.atomic(() -> {
+                    log.logRequestReceiveDateAndData(transactionId, responseInquiryWrapper.isOperationSuccess(), false,
+                            responseInquiryWrapper.getOperationStatusCode(),
+                            responseInquiryWrapper.getOperationStatusDescription());
+
+                    log.saveRequest(responseInquiryWrapper.getRequestLog());
+                    log.saveResponse(responseInquiryWrapper.getResponseLog());
+                });
+
+                if (!responseInquiryWrapper.isOperationSuccess()) {
+                    throw new TreasuryDomainException("error.MbwayPaymentRequest.request.in.gateway.failed");
+                }
+
+                return mbwayRequest;
+            } catch (Exception e) {
+                boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
+
+                FenixFramework.atomic(() -> {
+                    mbwayRequest.anull();
+
+                    log.logRequestReceiveDateAndData(null, false, false, null, null);
+                    log.logException(e);
+
+                    if (isOnlinePaymentsGatewayException) {
+                        OnlinePaymentsGatewayCommunicationException onlineException =
+                                (OnlinePaymentsGatewayCommunicationException) e;
+                        log.saveRequest(onlineException.getRequestLog());
+                        log.saveResponse(onlineException.getResponseLog());
+                    }
+                });
+
+                if (e instanceof TreasuryDomainException) {
+                    throw (TreasuryDomainException) e;
+                } else {
+                    final String message =
+                            "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+
+                    throw new TreasuryDomainException(e, message);
+                }
+            }
+        }
+
+    }
+
+    @Atomic
+    private MbwayRequest createMbwayRequestWithMandatePaymentSchedule(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule,
+            Set<DebitEntry> debitEntries, Set<Installment> installments, DebtAccount debtAccount, String phoneNumber,
+            BigDecimal payableAmount, String merchantTransactionId) {
+        MbwayRequest mbwayRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber, payableAmount,
+                merchantTransactionId);
+
+        mbwayRequest.setMbwayMandatePaymentSchedule(mbwayMandatePaymentSchedule);
+        return mbwayRequest;
+    }
+
+    @Override
+    public boolean isMbwayAuthorizedPaymentsActive() {
+        return getMbwayAuthorizedPaymentsActive();
+    }
+
+    @Override
+    public int getMaximumTimeForAuthorizationInMinutes() {
+        return AUTHORIZATION_EXPIRE_TIME_IN_MINUTES;
+    }
+
+    @Override
+    public void updateLastMbwayPaymentScheduleExecution() {
+        setLastMbwayPaymentScheduleExecution(new DateTime());
+    }
+
+    /*
+     * ********
+     * SERVICES
+     * ********
+     */
+
     @Atomic(mode = TxMode.WRITE)
     private static PaymentRequestLog createLogForSibsPaymentRequest(String merchantTransactionId) {
-        PaymentRequestLog log = PaymentRequestLog.create(null, "createSibsPaymentRequest",
+        PaymentRequestLog log = PaymentRequestLog.create((PaymentRequest) null, "createSibsPaymentRequest",
                 PaymentReferenceCodeStateType.UNUSED.getCode(), PaymentReferenceCodeStateType.UNUSED.getDescriptionI18N());
 
         log.setInternalMerchantTransactionId(merchantTransactionId);

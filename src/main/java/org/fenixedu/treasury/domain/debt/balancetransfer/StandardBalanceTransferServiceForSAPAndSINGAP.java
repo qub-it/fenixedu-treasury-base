@@ -61,9 +61,7 @@ import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.FinantialEntity;
@@ -91,7 +89,6 @@ import org.fenixedu.treasury.domain.paymentPlan.InstallmentSettlementEntry;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanConfigurator;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlanStateType;
-import org.fenixedu.treasury.domain.payments.PaymentInvoiceEntriesGroup;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
@@ -111,15 +108,18 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
     protected DebtAccount fromDebtAccount;
     protected DebtAccount destinyDebtAccount;
 
-    protected Map<DebitEntry, DebitEntry> conversionMap;
+    protected Map<DebitEntry, DebitEntry> debitEntriesConversionMap;
     protected Map<DebitEntry, SettlementEntry> settlementOfDebitEntryMap;
+
+    protected Map<Installment, Installment> installmentsConversionMap;
 
     private Set<PaymentPlan> openPaymentPlans;
 
     public StandardBalanceTransferServiceForSAPAndSINGAP(DebtAccount fromDebtAccount, DebtAccount destinyDebtAccount) {
         this.fromDebtAccount = fromDebtAccount;
         this.destinyDebtAccount = destinyDebtAccount;
-        this.conversionMap = new HashMap<>();
+        this.debitEntriesConversionMap = new HashMap<>();
+        this.installmentsConversionMap = new HashMap<>();
         this.settlementOfDebitEntryMap = new HashMap<>();
         this.openPaymentPlans = fromDebtAccount.getActivePaymentPlansSet();
     }
@@ -154,8 +154,9 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
             if (invoiceEntry.isDebitNoteEntry()) {
                 final DebitEntry debitEntry = (DebitEntry) invoiceEntry;
                 if (debitEntry.getFinantialDocument() == null) {
-                    final DebitNote debitNote = DebitNote.create(invoiceEntry.getFinantialEntity(), fromDebtAccount, null,
-                            documentNumberSeries, now, now.toLocalDate(), null, Collections.emptyMap(), null, null);
+                    final DebitNote debitNote =
+                            DebitNote.create(invoiceEntry.getFinantialEntity(), fromDebtAccount, null, documentNumberSeries, now,
+                                    now.toLocalDate(), null, Collections.emptyMap(), null, null);
                     debitNote.addDebitNoteEntries(Lists.newArrayList(debitEntry));
                 }
 
@@ -183,33 +184,22 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         transferPaymentPlans();
 
         transferPaymentInvoiceEntriesGroups();
+
+        transferActiveMbwayMandates();
+    }
+
+    private void transferActiveMbwayMandates() {
+        this.fromDebtAccount.getMbwayMandatesSet().stream() //
+                .filter(mandate -> mandate.getState().isActive() || mandate.getState()
+                        .isWaitingAuthorization() || mandate.getState().isSuspended()).forEach(
+                        mandate -> mandate.transferMandateToOtherDebtAccount(this.destinyDebtAccount, this.debitEntriesConversionMap,
+                                this.installmentsConversionMap));
     }
 
     private void transferPaymentInvoiceEntriesGroups() {
         // Collect the groups from the previous debt account and consider only those that are payable
-        this.fromDebtAccount.getPaymentInvoiceEntriesGroupsSet().stream().forEach(g -> transferPaymentGroupToNewDebtAccount(g));
-    }
-
-    private void transferPaymentGroupToNewDebtAccount(PaymentInvoiceEntriesGroup paymentGroup) {
-        // Collect the open debit entries from other debt account
-        Set<DebitEntry> newDebitEntrySet =
-                paymentGroup.getInvoiceEntriesSet().stream() //
-                        .filter(d -> this.conversionMap.containsKey(d)) //
-                        .map(d -> this.conversionMap.get(d)) //
-                        .filter(d -> TreasuryConstants.isPositive(d.getOpenAmount())) //
-                        .collect(Collectors.toSet());
-
-        if (newDebitEntrySet.isEmpty()) {
-            return;
-        }
-
-        PaymentInvoiceEntriesGroup group = PaymentInvoiceEntriesGroup.findUniqueByGroupKey(this.destinyDebtAccount,
-                        StringUtils.isNotEmpty(paymentGroup.getGroupKey()) ? paymentGroup.getGroupKey() : UUID.randomUUID().toString())
-                .orElseGet(
-                        () -> PaymentInvoiceEntriesGroup.create(paymentGroup.getFinantialEntity(), this.destinyDebtAccount,
-                                newDebitEntrySet, paymentGroup.getGroupKey()));
-
-        newDebitEntrySet.forEach(d -> group.addInvoiceEntries(d));
+        this.fromDebtAccount.getPaymentInvoiceEntriesGroupsSet().stream()
+                .forEach(g -> g.transferPaymentGroupToNewDebtAccount(this.destinyDebtAccount, this.debitEntriesConversionMap));
     }
 
     private void transferPaymentPlans() {
@@ -224,18 +214,18 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                     PaymentPlanConfigurator.findActives().iterator().next().getNumberGenerators().generateNumber());
             destinyPaymentPlan.setState(PaymentPlanStateType.OPEN);
             destinyPaymentPlan.getPaymentPlanValidatorsSet().addAll(objectPaymentPlan.getPaymentPlanValidatorsSet());
-            destinyPaymentPlan.setEmolument(conversionMap.get(objectPaymentPlan.getEmolument()));
+            destinyPaymentPlan.setEmolument(debitEntriesConversionMap.get(objectPaymentPlan.getEmolument()));
 
             for (Installment objectInstallment : objectPaymentPlan.getSortedOpenInstallments()) {
                 //Create destiny Installment
-                Installment destinyInstallment =
-                        Installment.create(
-                                objectInstallment.getDescription()
-                                        .map(des -> des.replace(objectPaymentPlan.getPaymentPlanId(),
-                                                destinyPaymentPlan.getPaymentPlanId())),
-                                objectInstallment.getDueDate(), destinyPaymentPlan);
+                Installment destinyInstallment = Installment.create(objectInstallment.getDescription()
+                                .map(des -> des.replace(objectPaymentPlan.getPaymentPlanId(), destinyPaymentPlan.getPaymentPlanId())),
+                        objectInstallment.getDueDate(), destinyPaymentPlan);
+
+                this.installmentsConversionMap.put(objectInstallment, destinyInstallment);
+
                 for (InstallmentEntry objectInstallmentEntry : objectInstallment.getSortedOpenInstallmentEntries()) {
-                    DebitEntry destinyDebitEntry = conversionMap.get(objectInstallmentEntry.getDebitEntry());
+                    DebitEntry destinyDebitEntry = debitEntriesConversionMap.get(objectInstallmentEntry.getDebitEntry());
                     if (destinyDebitEntry.getDebitNote() != null && !destinyDebitEntry.getDebitNote().isClosed()) {
                         destinyDebitEntry.getDebitNote().closeDocument();
                     }
@@ -273,20 +263,20 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         final CreditEntry creditEntry = invoiceEntry;
         final BigDecimal creditOpenAmount = creditEntry.getOpenAmount();
 
-        final String originNumber = creditEntry.getFinantialDocument() != null
-                && invoiceEntry.getFinantialDocument().isClosed() ? creditEntry.getFinantialDocument().getUiDocumentNumber() : "";
+        final String originNumber = creditEntry.getFinantialDocument() != null && invoiceEntry.getFinantialDocument()
+                .isClosed() ? creditEntry.getFinantialDocument().getUiDocumentNumber() : "";
         final DebtAccount payorDebtAccount =
-                creditEntry.getFinantialDocument() != null && ((Invoice) creditEntry.getFinantialDocument())
-                        .isForPayorDebtAccount() ? ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() : null;
-        DebitEntry regulationDebitEntry = createBalanceTransferDebit(invoiceEntry.getFinantialEntity(), fromDebtAccount, now,
-                now.toLocalDate(), originNumber, creditEntry.getProduct(), creditOpenAmount, payorDebtAccount,
-                creditEntry.getDescription(), null);
+                creditEntry.getFinantialDocument() != null && ((Invoice) creditEntry.getFinantialDocument()).isForPayorDebtAccount() ? ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() : null;
+        DebitEntry regulationDebitEntry =
+                createBalanceTransferDebit(invoiceEntry.getFinantialEntity(), fromDebtAccount, now, now.toLocalDate(),
+                        originNumber, creditEntry.getProduct(), creditOpenAmount, payorDebtAccount, creditEntry.getDescription(),
+                        null);
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
-            if (creditEntry.getFinantialDocument().isExportedInLegacyERP()
-                    || (creditEntry.getFinantialDocument().getCloseDate() != null
-                            && creditEntry.getFinantialDocument().getCloseDate().isBefore(ERP_INTEGRATION_START_DATE))) {
+            if (creditEntry.getFinantialDocument().isExportedInLegacyERP() || (creditEntry.getFinantialDocument()
+                    .getCloseDate() != null && creditEntry.getFinantialDocument().getCloseDate()
+                    .isBefore(ERP_INTEGRATION_START_DATE))) {
                 regulationDebitEntry.getFinantialDocument().setExportedInLegacyERP(true);
                 regulationDebitEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
             }
@@ -300,17 +290,18 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
-            if (creditEntry.getFinantialDocument().isExportedInLegacyERP()
-                    || (creditEntry.getFinantialDocument().getCloseDate() != null
-                            && creditEntry.getFinantialDocument().getCloseDate().isBefore(ERP_INTEGRATION_START_DATE))) {
+            if (creditEntry.getFinantialDocument().isExportedInLegacyERP() || (creditEntry.getFinantialDocument()
+                    .getCloseDate() != null && creditEntry.getFinantialDocument().getCloseDate()
+                    .isBefore(ERP_INTEGRATION_START_DATE))) {
                 regulationCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
                 regulationCreditEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
             }
 
         }
 
-        final SettlementNote settlementNote = SettlementNote.create(invoiceEntry.getFinantialEntity(), this.fromDebtAccount,
-                settlementNoteSeries, now, now, null, null);
+        final SettlementNote settlementNote =
+                SettlementNote.create(invoiceEntry.getFinantialEntity(), this.fromDebtAccount, settlementNoteSeries, now, now,
+                        null, null);
 
         if (creditEntry.getFinantialDocument().isPreparing()) {
             creditEntry.getFinantialDocument().closeDocument();
@@ -336,12 +327,14 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
             final DebtAccount payorDebtAccount =
                     objectDebitNote.isForPayorDebtAccount() ? objectDebitNote.getPayorDebtAccount() : null;
 
-            final DebitNote destinyDebitNote = DebitNote.create(objectDebitNote.getFinantialEntity(), this.destinyDebtAccount,
-                    payorDebtAccount, objectDebitNote.getDocumentNumberSeries(), now, now.toLocalDate(),
-                    objectDebitNote.getUiDocumentNumber(), Collections.emptyMap(), null, null);
+            final DebitNote destinyDebitNote =
+                    DebitNote.create(objectDebitNote.getFinantialEntity(), this.destinyDebtAccount, payorDebtAccount,
+                            objectDebitNote.getDocumentNumberSeries(), now, now.toLocalDate(),
+                            objectDebitNote.getUiDocumentNumber(), Collections.emptyMap(), null, null);
 
-            final SettlementNote settlementNote = SettlementNote.create(objectDebitNote.getFinantialEntity(),
-                    this.fromDebtAccount, settlementNumberSeries, now, now, null, null);
+            final SettlementNote settlementNote =
+                    SettlementNote.create(objectDebitNote.getFinantialEntity(), this.fromDebtAccount, settlementNumberSeries, now,
+                            now, null, null);
             for (final FinantialDocumentEntry objectEntry : objectDebitNote.getFinantialDocumentEntriesSet()) {
                 if (!isPositive(((DebitEntry) objectEntry).getOpenAmount())) {
                     continue;
@@ -355,20 +348,22 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 DebitEntry destinyDebitEntry = null;
                 SettlementEntry destinySettlementEntry = null;
 
-                if (!debitEntry.getFinantialDocument().getDocumentNumberSeries().getSeries().isRegulationSeries()
-                        && isGreaterOrEqualThan(availableCreditAmount, openAmount)) {
+                if (!debitEntry.getFinantialDocument().getDocumentNumberSeries().getSeries()
+                        .isRegulationSeries() && isGreaterOrEqualThan(availableCreditAmount, openAmount)) {
 
                     final BigDecimal openAmountWithoutVat = debitEntry.getCurrency().getValueWithScale(
                             TreasuryConstants.divide(openAmount, BigDecimal.ONE.add(rationalVatRate(debitEntry))));
-                    final CreditEntry newCreditEntry = debitEntry.createCreditEntry(now, debitEntry.getDescription(), null, null,
-                            openAmountWithoutVat, null, null, Collections.emptyMap());
+                    final CreditEntry newCreditEntry =
+                            debitEntry.createCreditEntry(now, debitEntry.getDescription(), null, null, openAmountWithoutVat, null,
+                                    null, Collections.emptyMap());
 
                     if (newCreditEntry.getFinantialDocument().isPreparing()) {
                         newCreditEntry.getFinantialDocument().closeDocument();
                     }
 
-                    destinySettlementEntry = SettlementEntry.create(debitEntry, settlementNote, openAmount,
-                            debitEntry.getDescription(), now, false);
+                    destinySettlementEntry =
+                            SettlementEntry.create(debitEntry, settlementNote, openAmount, debitEntry.getDescription(), now,
+                                    false);
                     SettlementEntry.create(newCreditEntry, settlementNote, openAmount, newCreditEntry.getDescription(), now,
                             false);
                     destinyDebitEntry = createDestinyDebitEntry(destinyDebitNote, debitEntry);
@@ -381,8 +376,8 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
 
                     if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
-                        if (objectDebitNote.isExportedInLegacyERP()
-                                || objectDebitNote.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE)) {
+                        if (objectDebitNote.isExportedInLegacyERP() || objectDebitNote.getCloseDate()
+                                .isBefore(ERP_INTEGRATION_START_DATE)) {
                             regulationCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
                             regulationCreditEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
                         }
@@ -393,23 +388,25 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                         regulationCreditEntry.getFinantialDocument().closeDocument();
                     }
 
-                    destinySettlementEntry = SettlementEntry.create(debitEntry, settlementNote, openAmount,
-                            debitEntry.getDescription(), now, false);
+                    destinySettlementEntry =
+                            SettlementEntry.create(debitEntry, settlementNote, openAmount, debitEntry.getDescription(), now,
+                                    false);
 
                     SettlementEntry.create(regulationCreditEntry, settlementNote, openAmount,
                             regulationCreditEntry.getDescription(), now, false);
 
-                    final DebitEntry regulationDebitEntry = createBalanceTransferDebit(debitEntry.getFinantialEntity(),
-                            this.destinyDebtAccount, debitEntry.getEntryDateTime(), debitEntry.getDueDate(),
-                            regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(), debitEntry.getProduct(),
-                            openAmount, payorDebtAccount, debitEntry.getDescription(), debitEntry.getInterestRate());
+                    final DebitEntry regulationDebitEntry =
+                            createBalanceTransferDebit(debitEntry.getFinantialEntity(), this.destinyDebtAccount,
+                                    debitEntry.getEntryDateTime(), debitEntry.getDueDate(),
+                                    regulationCreditEntry.getFinantialDocument().getUiDocumentNumber(), debitEntry.getProduct(),
+                                    openAmount, payorDebtAccount, debitEntry.getDescription(), debitEntry.getInterestRate());
 
                     destinyDebitEntry = regulationDebitEntry;
 
                     if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
 
-                        if (objectDebitNote.isExportedInLegacyERP()
-                                || objectDebitNote.getCloseDate().isBefore(ERP_INTEGRATION_START_DATE)) {
+                        if (objectDebitNote.isExportedInLegacyERP() || objectDebitNote.getCloseDate()
+                                .isBefore(ERP_INTEGRATION_START_DATE)) {
                             regulationDebitEntry.getFinantialDocument().setExportedInLegacyERP(true);
                             regulationDebitEntry.getFinantialDocument().setCloseDate(ERP_INTEGRATION_START_DATE.minusSeconds(1));
                         }
@@ -419,7 +416,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 }
 
                 //paymentPlan
-                this.conversionMap.put(debitEntry, destinyDebitEntry);
+                this.debitEntriesConversionMap.put(debitEntry, destinyDebitEntry);
                 this.settlementOfDebitEntryMap.put(debitEntry, destinySettlementEntry);
             }
 
@@ -432,11 +429,12 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         final BigDecimal openAmountWithoutVat =
                 TreasuryConstants.divide(debitEntry.getOpenAmount(), BigDecimal.ONE.add(rationalVatRate(debitEntry)));
 
-        final DebitEntry newDebitEntry = DebitEntry.create(debitEntry.getFinantialEntity(), this.destinyDebtAccount,
-                debitEntry.getTreasuryEvent(), debitEntry.getVat(), openAmountWithoutVat, debitEntry.getDueDate(),
-                debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
-                debitEntry.getInterestRate(), debitEntry.getEntryDateTime(), debitEntry.isAcademicalActBlockingSuspension(),
-                debitEntry.isBlockAcademicActsOnDebt(), destinyDebitNote);
+        final DebitEntry newDebitEntry =
+                DebitEntry.create(debitEntry.getFinantialEntity(), this.destinyDebtAccount, debitEntry.getTreasuryEvent(),
+                        debitEntry.getVat(), openAmountWithoutVat, debitEntry.getDueDate(), debitEntry.getPropertiesMap(),
+                        debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
+                        debitEntry.getInterestRate(), debitEntry.getEntryDateTime(),
+                        debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt(), destinyDebitNote);
 
         return newDebitEntry;
     }
@@ -459,11 +457,12 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                 debitEntry.annulOnEvent();
             }
 
-            DebitEntry newDebitEntry = DebitEntry.create(debitEntry.getFinantialEntity(), this.destinyDebtAccount,
-                    debitEntry.getTreasuryEvent(), debitEntry.getVat(), unitAmount, debitEntry.getDueDate(),
-                    debitEntry.getPropertiesMap(), debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
-                    debitEntry.getInterestRate(), debitEntry.getEntryDateTime(), debitEntry.isAcademicalActBlockingSuspension(),
-                    debitEntry.isBlockAcademicActsOnDebt(), newDebitNote);
+            DebitEntry newDebitEntry =
+                    DebitEntry.create(debitEntry.getFinantialEntity(), this.destinyDebtAccount, debitEntry.getTreasuryEvent(),
+                            debitEntry.getVat(), unitAmount, debitEntry.getDueDate(), debitEntry.getPropertiesMap(),
+                            debitEntry.getProduct(), debitEntry.getDescription(), debitEntry.getQuantity(),
+                            debitEntry.getInterestRate(), debitEntry.getEntryDateTime(),
+                            debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt(), newDebitNote);
 
             debitEntry.getTreasuryExemptionsSet().forEach(treasuryExemption -> {
                 TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(), treasuryExemption.getReason(),
@@ -472,7 +471,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
             });
 
             //paymentPlan
-            conversionMap.put(debitEntry, newDebitEntry);
+            debitEntriesConversionMap.put(debitEntry, newDebitEntry);
 
         }
 
@@ -510,8 +509,9 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
         final BigDecimal amountWithoutVat = Currency.getValueWithScale(TreasuryConstants.divide(amountWithVat,
                 TreasuryConstants.divide(transferVat.getTaxRate(), TreasuryConstants.HUNDRED_PERCENT).add(BigDecimal.ONE)));
 
-        CreditEntry entry = CreditEntry.create(finantialEntity, creditNote, entryDescription, product, transferVat,
-                amountWithoutVat, documentDate, BigDecimal.ONE);
+        CreditEntry entry =
+                CreditEntry.create(finantialEntity, creditNote, entryDescription, product, transferVat, amountWithoutVat,
+                        documentDate, BigDecimal.ONE);
 
         if (finantialInstitution.isToCloseCreditNoteWhenCreated()) {
             creditNote.closeDocument();

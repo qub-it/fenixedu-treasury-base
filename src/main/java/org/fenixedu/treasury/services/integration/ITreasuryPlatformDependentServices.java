@@ -125,6 +125,10 @@ public interface ITreasuryPlatformDependentServices {
 
     String getLoggedUsername();
 
+    default Customer getLoggedActiveCustomer() {
+        return null;
+    }
+
     String getCustomerEmail(Customer customer);
 
     void setCurrentApplicationUser(String username);
@@ -147,6 +151,8 @@ public interface ITreasuryPlatformDependentServices {
     String bundle(final Locale locale, final String bundleName, final String key, final String... args);
 
     LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
+
+    LocalizedString getDynamicApplicationMessage(String key);
 
     /* Versioning Information */
 
