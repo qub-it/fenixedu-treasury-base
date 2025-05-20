@@ -17,6 +17,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
@@ -84,7 +85,7 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public boolean isMandateProcessActiveInPaymentPlatform() {
-        return getState().isCreated() || getState().isActive() || getState().isSuspended();
+        return getState().isActive() || getState().isSuspended();
     }
 
     public void waitAuthorization(String mandateId, String transactionId) {
@@ -180,7 +181,18 @@ public class MbwayMandate extends MbwayMandate_Base {
         FinantialEntity finantialEntity = getDigitalPaymentPlatform().getFinantialEntity();
         IMbwayPaymentPlatformService service = getDigitalPaymentPlatform().castToMbwayPaymentPlatformService();
 
-        Set<MbwayMandatePaymentSchedule> resultValue = getDebtAccount().getPendingInvoiceEntriesSet().stream() //
+        Set<MbwayMandatePaymentSchedule> resultValue = getPossibleDebitEntriesToCharge(dateToCheckAgainstDueDate) //
+                .map(this::scheduleMbwayPayment) //
+                .collect(Collectors.toSet());
+
+        return resultValue;
+    }
+
+    private Stream<DebitEntry> getPossibleDebitEntriesToCharge(LocalDate dateToCheckAgainstDueDate) {
+        FinantialEntity finantialEntity = getDigitalPaymentPlatform().getFinantialEntity();
+        IMbwayPaymentPlatformService service = getDigitalPaymentPlatform().castToMbwayPaymentPlatformService();
+
+        return getDebtAccount().getPendingInvoiceEntriesSet().stream() //
                 .filter(i -> i.getFinantialEntity() == finantialEntity) //
                 .filter(i -> i.isDebitNoteEntry()) //
                 .filter(i -> i.getDebtAccount().getCustomer().isActive()) //
@@ -190,11 +202,7 @@ public class MbwayMandate extends MbwayMandate_Base {
                 .filter(d -> d.getDueDate()
                         .isEqual(dateToCheckAgainstDueDate.plusDays(service.getMbwayMandateDaysToScheduleDebts()))) //
                 .filter(d -> d.getMbwayMandatePaymentScheduleSet().stream()
-                        .allMatch(schedule -> schedule.isCanceled() || schedule.getState().isTransferred())) //
-                .map(this::scheduleMbwayPayment) //
-                .collect(Collectors.toSet());
-
-        return resultValue;
+                        .allMatch(schedule -> schedule.isCanceled() || schedule.getState().isTransferred()));
     }
 
     @Atomic
@@ -226,6 +234,10 @@ public class MbwayMandate extends MbwayMandate_Base {
         return debitEntry.getFinantialDocument() == null || debitEntry.getDebitNote().getPayorDebtAccount() == null;
     }
 
+    public boolean isPossibleToSchedulePayment() {
+        return isMandateProcessActiveInPaymentPlatform();
+    }
+
     public void transferMandateToOtherDebtAccount(DebtAccount destinyDebtAccount,
             Map<DebitEntry, DebitEntry> debitEntriesTransferMap, Map<Installment, Installment> installmentsTransferMap) {
         MbwayMandate newMandate =
@@ -252,6 +264,40 @@ public class MbwayMandate extends MbwayMandate_Base {
         newMandate.checkRules();
     }
 
+    public BigDecimal getRemainingPlafondForMonthAndYear(LocalDate when) {
+        // Start with the plafond
+        BigDecimal remainingPlafond = getPlafond();
+
+        BigDecimal paidWithMbwayTotalAmount = getMbwayMandatePaymentSchedulesSet().stream() //
+                .flatMap(s -> s.getMbwayRequestsSet().stream()) //
+                .filter(p -> p.getState().isProcessed()) //
+                .filter(p -> p.getRequestDate().getYear() == when.getYear() && p.getRequestDate()
+                        .getMonthOfYear() == when.getMonthOfYear()) //
+                .flatMap(p -> p.getPaymentTransactionsSet().stream()) //
+                .flatMap(t -> t.getSettlementNotesSet().stream()) //
+                .filter(s -> s.isClosed()) //
+                .flatMap(s -> s.getPaymentEntriesSet().stream()) //
+                .filter(p -> p.getPaymentMethod() == TreasurySettings.getInstance().getMbWayPaymentMethod()) //
+                .map(p -> p.getPayedAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        remainingPlafond = remainingPlafond.subtract(paidWithMbwayTotalAmount);
+
+        return remainingPlafond;
+    }
+
+    public BigDecimal getAmountScheduledToBeCharged(LocalDate when) {
+        IMbwayPaymentPlatformService service = getDigitalPaymentPlatform().castToMbwayPaymentPlatformService();
+
+        BigDecimal scheduleAmountToCharge = getMbwayMandatePaymentSchedulesSet().stream().filter(s -> s.isInProgress()) //
+                .filter(s -> s.getPaymentChargeDate().getMonthOfYear() == when.getMonthOfYear() && s.getPaymentChargeDate()
+                        .getYear() == when.getYear()) //
+                .map(s -> s.getOpenAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return scheduleAmountToCharge;
+    }
+
     /*
      * ********
      * SERVICES
@@ -260,8 +306,12 @@ public class MbwayMandate extends MbwayMandate_Base {
 
     public static MbwayMandate create(DigitalPaymentPlatform digitalPaymentPlatform, DebtAccount debtAccount,
             String merchantTransactionId, String countryPrefix, String localPhoneNumber) {
-        if (findAllMandatesActiveInPaymentPlatform(debtAccount.getCustomer(),
-                digitalPaymentPlatform.getFinantialInstitution()).count() > 0) {
+        Stream<MbwayMandate> allMandatesActiveOrToBeActivated =
+                findAllFromCustomer(debtAccount.getCustomer(), digitalPaymentPlatform.getFinantialInstitution()).filter(
+                        m -> m.getState().isCreated() || m.getState()
+                                .isWaitingAuthorization() || m.isMandateProcessActiveInPaymentPlatform());
+
+        if (allMandatesActiveOrToBeActivated.count() > 0) {
             throw new TreasuryDomainException("error.MbwayMandate.create.customer.already.has.mandate.alive");
         }
 
@@ -283,11 +333,6 @@ public class MbwayMandate extends MbwayMandate_Base {
     public static Stream<MbwayMandate> findAllFromCustomer(Customer customer, FinantialInstitution finantialInstitution) {
         return customer.getAllCustomers().stream().map(c -> c.getDebtAccountFor(finantialInstitution))
                 .flatMap(d -> d.getMbwayMandatesSet().stream());
-    }
-
-    public static Stream<MbwayMandate> findAllMandatesActiveInPaymentPlatform(Customer customer,
-            FinantialInstitution finantialInstitution) {
-        return findAllFromCustomer(customer, finantialInstitution).filter(m -> m.isMandateProcessActiveInPaymentPlatform());
     }
 
     public static Optional<MbwayMandate> findUniqueByMandateIdExcludingTransferred(String mandateId) {

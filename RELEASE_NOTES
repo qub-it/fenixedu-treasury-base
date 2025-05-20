@@ -1,3 +1,8 @@
+- Bug Fix: Consider as active MB WAY mandate, the waiting authorization state [#qubIT-Fenix-5465]
+- Refactor: Add method to get the sum of payments with the MB WAY mandate for given month and year [#qubIT-Fenix-5465]
+- Refactor: Add method to get the remaining plafond amount for given month and year [#qubIT-Fenix-5465]
+- Bug Fix: Fix MB WAY message labels [#qubIT-Fenix-5465]
+
 14.0.0 (16-05-2025)
 - New Feature: SIBS MB WAY Authorized Payments [#qubIT-Fenix-5465]
 
