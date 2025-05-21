@@ -1,3 +1,5 @@
+- Bug Fix: Fix interest creation within payment plan, set the treasury event of the origin debit entry [#qubIT-Fenix-6963]
+
 14.1.0 (20-05-2025)
 - Bug Fix: Consider as active MB WAY mandate, the waiting authorization state [#qubIT-Fenix-5465]
 - Refactor: Add method to get the sum of payments with the MB WAY mandate for given month and year [#qubIT-Fenix-5465]

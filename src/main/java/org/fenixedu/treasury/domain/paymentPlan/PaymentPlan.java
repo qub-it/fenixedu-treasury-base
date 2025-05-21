@@ -73,6 +73,7 @@ import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.document.Invoice;
+import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.integration.ISibsPaymentCodePoolService;
@@ -236,28 +237,32 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private Set<Customer> getCustomers() {
-        Set<DebitEntry> debitEntries = getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream())
-                .map(ie -> ie.getDebitEntry()).collect(Collectors.toSet());
+        Set<DebitEntry> debitEntries =
+                getInstallmentsSet().stream().flatMap(i -> i.getInstallmentEntriesSet().stream()).map(ie -> ie.getDebitEntry())
+                        .collect(Collectors.toSet());
 
         return debitEntries.stream()
-                .map(entry -> (entry.getFinantialDocument() != null && ((Invoice) entry.getFinantialDocument())
-                        .isForPayorDebtAccount()) ? ((Invoice) entry.getFinantialDocument()).getPayorDebtAccount()
-                                .getCustomer() : entry.getDebtAccount().getCustomer())
-                .collect(Collectors.toSet());
+                .map(entry -> (entry.getFinantialDocument() != null && ((Invoice) entry.getFinantialDocument()).isForPayorDebtAccount()) ? ((Invoice) entry.getFinantialDocument()).getPayorDebtAccount()
+                        .getCustomer() : entry.getDebtAccount().getCustomer()).collect(Collectors.toSet());
     }
 
     private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
-        DocumentNumberSeries defaultDocumentNumberSeries = DocumentNumberSeries
-                .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), paymentPlanBean.getFinantialEntity());
+        DocumentNumberSeries defaultDocumentNumberSeries =
+                DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(),
+                        paymentPlanBean.getFinantialEntity());
 
         return DebitNote.create(paymentPlanBean.getFinantialEntity(), paymentPlanBean.getDebtAccount(), null,
                 defaultDocumentNumberSeries, result.getCreationDate().toDateTimeAtStartOfDay(), result.getCreationDate(), null,
                 Collections.emptyMap(), null, null);
     }
 
+    // ANIL 2025-05-21 (#qubIT-Fenix-6963)
+    // The method now receives a treasury event to associate interests of the
+    // origin debit entry
     private static DebitEntry createDebitEntry(FinantialEntity finantialEntity, DebtAccount debtAccount, String description,
-            BigDecimal amount, LocalDate creationDate, LocalDate endDate, Product product, Vat vat, DebitNote debitNote) {
-        return DebitEntry.create(finantialEntity, debtAccount, null, vat, amount, endDate, Maps.newHashMap(), product,
+            BigDecimal amount, LocalDate creationDate, LocalDate endDate, Product product, Vat vat, TreasuryEvent treasuryEvent,
+            DebitNote debitNote) {
+        return DebitEntry.create(finantialEntity, debtAccount, treasuryEvent, vat, amount, endDate, Maps.newHashMap(), product,
                 description, BigDecimal.ONE, null, creationDate.toDateTimeAtStartOfDay(), false, false, debitNote);
     }
 
@@ -284,7 +289,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                             .orElse(null);
 
                     DebitEntry debitEntry = createDebitEntry(getFinantialEntity(), debtAccount, debitEntryBean.getDescription(),
-                            debitEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
+                            debitEntryBean.getSettledAmount(), creationDate, endDate, product, vat, null, debitNote);
 
                     result.put(bean, debitEntry);
                 });
@@ -299,20 +304,27 @@ public class PaymentPlan extends PaymentPlan_Base {
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
 
+                    // ANIL 2025-05-21 (#qubIT-Fenix-6963)
+                    // The interest debit entry must be associated with the treasury event of
+                    // the origin debit entry
                     DebitEntry debitEntry =
                             createDebitEntry(getFinantialEntity(), debtAccount, interestEntryBean.getDescription(),
-                                    interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat, debitNote);
+                                    interestEntryBean.getSettledAmount(), creationDate, endDate, product, vat,
+                                    interestEntryBean.getDebitEntry().getTreasuryEvent(), debitNote);
 
                     interestEntryBean.getDebitEntry().addInterestDebitEntries(debitEntry);
+
                     result.put(bean, debitEntry);
                 });
+
         //PenaltyTax (PenaltyTax)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForPaymentPenalty())
                 .forEach(bean -> {
                     PaymentPenaltyEntryBean penaltyBean = (PaymentPenaltyEntryBean) bean;
 
-                    DebitEntry debitEntry = PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(
-                            penaltyBean.getDebitEntry(), penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), null, true);
+                    DebitEntry debitEntry =
+                            PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax(penaltyBean.getDebitEntry(),
+                                    penaltyBean.getDueDate(), paymentPlanBean.getCreationDate(), null, true);
                     result.put(bean, debitEntry);
                 });
 
@@ -399,8 +411,8 @@ public class PaymentPlan extends PaymentPlan_Base {
 
     public void tryClosePaymentPlanByPaidOff() {
         if (getSortedOpenInstallments().isEmpty()) {
-            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff") + " ["
-                    + new LocalDate().toString("yyyy-MM-dd") + "]");
+            close(TreasuryConstants.treasuryBundle("label.PaymentPlan.paymentPlan.paidOff") + " [" + new LocalDate().toString(
+                    "yyyy-MM-dd") + "]");
         }
     }
 
