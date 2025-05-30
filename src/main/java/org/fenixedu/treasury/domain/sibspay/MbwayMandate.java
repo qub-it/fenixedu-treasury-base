@@ -331,7 +331,9 @@ public class MbwayMandate extends MbwayMandate_Base {
     }
 
     public static Stream<MbwayMandate> findAllFromCustomer(Customer customer, FinantialInstitution finantialInstitution) {
-        return customer.getAllCustomers().stream().map(c -> c.getDebtAccountFor(finantialInstitution))
+        return customer.getAllCustomers().stream()
+                .filter(c -> c.getDebtAccountFor(finantialInstitution) != null)
+                .map(c -> c.getDebtAccountFor(finantialInstitution))
                 .flatMap(d -> d.getMbwayMandatesSet().stream());
     }
 

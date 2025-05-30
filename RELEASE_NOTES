@@ -1,3 +1,5 @@
+- Bug Fix. Fix NPE bug in checking MB WAY mandates associated to customer [#qubIT-Fenix-6753]
+
 14.1.1 (21-05-2025)
 - Bug Fix: Fix interest creation within payment plan, set the treasury event of the origin debit entry [#qubIT-Fenix-6963]
 
