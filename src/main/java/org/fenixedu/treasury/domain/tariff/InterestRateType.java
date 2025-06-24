@@ -243,6 +243,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
 //                .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast).findFirst();
 //    }
 
+    // TODO ANIL 2025-06-17: Should be renamed to getActiveInterestRateTypesSortedByName
     public static List<? extends InterestRateType> getAvailableInterestRateTypesSortedByName() {
         return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream().sorted(InterestRateType.COMPARE_BY_NAME)
                 .collect(Collectors.toList());

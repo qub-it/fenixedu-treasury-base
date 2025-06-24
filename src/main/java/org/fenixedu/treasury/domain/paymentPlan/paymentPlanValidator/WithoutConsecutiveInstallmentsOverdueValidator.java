@@ -89,7 +89,12 @@ public class WithoutConsecutiveInstallmentsOverdueValidator extends WithoutConse
             int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(installment.getDueDate(), date);
             if (installment.isOverdue(date) && numberOfWorkDaysBetween > getNumberDaysToTakeEffect()) {
                 count++;
-                if (count == getNumberInstallments()) {
+
+                boolean isNotCompliant =
+                        (count == getNumberInstallments()) || (count == installment.getPaymentPlan().getSortedOpenInstallments()
+                                .size());
+
+                if (isNotCompliant) {
                     return false;
                 }
             } else {

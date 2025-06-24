@@ -1,3 +1,5 @@
+- Bug Fix: Consider marking as not compliant if the remaining consecutive payment plan installments are in due [#qubIT-Fenix-7140]
+
 14.1.2 (30-05-2025)
 - Bug Fix. Fix NPE bug in checking MB WAY mandates associated to customer [#qubIT-Fenix-6753]
 
