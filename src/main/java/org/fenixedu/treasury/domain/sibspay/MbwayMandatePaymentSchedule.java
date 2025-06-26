@@ -193,6 +193,11 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
         setUpdateStateDate(new DateTime());
     }
 
+    public void updateStateToPaid() {
+        setState(MbwayMandatePaymentScheduleState.PAID);
+        setUpdateStateDate(new DateTime());
+    }
+
     /*
      * SERVICES
      */

@@ -118,6 +118,10 @@ public class MbwayRequest extends MbwayRequest_Base {
 
         this.setState(PaymentReferenceCodeStateType.PROCESSED);
 
+        if (getMbwayMandatePaymentSchedule() != null && getMbwayMandatePaymentSchedule().getState().isPaymentCharged()) {
+            getMbwayMandatePaymentSchedule().updateStateToPaid();
+        }
+
         if (!TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             return internalProcessPaymentInNormalPaymentMixingLegacyInvoices(paidAmount, paymentDate, sibsTransactionId, comments,
                     additionalPropertiesMapFunction);
