@@ -1428,6 +1428,20 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             } else if (mbwayMandate.getState().isWaitingAuthorization()) {
                 if (currentMandateState.isActive()) {
                     mbwayMandate.authorize();
+
+                    // update plafond and expiration date
+
+                    BigDecimal limitAmount = mbwayMandate.getPlafond();
+                    if (inquiryMbwayMandateResponse.getMandate().getAmountLimit() != null) {
+                        limitAmount = inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue();
+                    }
+
+                    LocalDate expirationDate = mbwayMandate.getExpirationDate();
+                    if (inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate() != null) {
+                        expirationDate = parseLocalDate(inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate());
+                    }
+
+                    mbwayMandate.updatePlafondAndExpirationDate(limitAmount, expirationDate);
                 } else if (currentMandateState.isCanceled()) {
                     mbwayMandate.cancel("canceled authorization in the digital platform");
                 } else if (currentMandateState.isExpired()) {
@@ -1479,6 +1493,18 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 } else if (currentMandateState.isActive()) {
                     // reactivate the mandate
                     mbwayMandate.reactivate();
+
+                    BigDecimal limitAmount = mbwayMandate.getPlafond();
+                    if (inquiryMbwayMandateResponse.getMandate().getAmountLimit() != null) {
+                        limitAmount = inquiryMbwayMandateResponse.getMandate().getAmountLimit().getValue();
+                    }
+
+                    LocalDate expirationDate = mbwayMandate.getExpirationDate();
+                    if (inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate() != null) {
+                        expirationDate = parseLocalDate(inquiryMbwayMandateResponse.getMandate().getMandateExpirationDate());
+                    }
+
+                    mbwayMandate.updatePlafondAndExpirationDate(limitAmount, expirationDate);
                 } else if (currentMandateState.isSuspended()) {
                     // Do nothing
                 } else {
