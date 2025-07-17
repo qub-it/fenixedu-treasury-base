@@ -71,6 +71,7 @@ import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
@@ -92,7 +93,7 @@ public class MbwayRequest extends MbwayRequest_Base {
         setPhoneNumber(phoneNumber);
         setMerchantTransactionId(merchantTransactionId);
 
-        setState(PaymentReferenceCodeStateType.USED);
+        updateState(PaymentReferenceCodeStateType.USED);
 
         checkRules();
     }
@@ -116,7 +117,7 @@ public class MbwayRequest extends MbwayRequest_Base {
         Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
                 (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);
 
-        this.setState(PaymentReferenceCodeStateType.PROCESSED);
+        updateState(PaymentReferenceCodeStateType.PROCESSED);
 
         if (getMbwayMandatePaymentSchedule() != null && getMbwayMandatePaymentSchedule().getState().isPaymentCharged()) {
             getMbwayMandatePaymentSchedule().updateStateToPaid();
@@ -164,8 +165,14 @@ public class MbwayRequest extends MbwayRequest_Base {
         return getState() == PaymentReferenceCodeStateType.ANNULLED;
     }
 
+    private void updateState(PaymentReferenceCodeStateType state) {
+        super.setState(state);
+        super.setLastStateDate(new DateTime());
+        super.setLastStateResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+    }
+
     public void anull() {
-        setState(PaymentReferenceCodeStateType.ANNULLED);
+        updateState(PaymentReferenceCodeStateType.ANNULLED);
     }
 
     /* ************ */

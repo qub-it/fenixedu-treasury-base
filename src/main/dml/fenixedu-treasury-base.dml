@@ -1012,7 +1012,11 @@ class payments.PaymentRequest {
 	
 	// ANIL 2023-12-14: The expiryDate should track the limit date set by
 	// the digital payment platform
-	DateTime expiresDate;	
+	DateTime expiresDate;
+
+    // This is to known when the sibs payment requests are annuled
+	DateTime lastStateDate;
+	String lastStateResponsible;
 }
 
 	relation PaymentRequestDomainRoot {

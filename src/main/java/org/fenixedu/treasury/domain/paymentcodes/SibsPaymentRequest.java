@@ -73,7 +73,9 @@ import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool
 import org.fenixedu.treasury.domain.payments.PaymentRequest;
 import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
+import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
@@ -103,7 +105,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         setReferenceCode(sibsReferenceCode.getReferenceCode());
         setSibsReferenceCode(sibsReferenceCode);
 
-        setState(PaymentReferenceCodeStateType.USED);
+        updateState(PaymentReferenceCodeStateType.USED);
 
         checkRules();
     }
@@ -120,7 +122,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         setMerchantTransactionId(merchantTransactionId);
         setTransactionId(sibsReferenceId);
 
-        setState(PaymentReferenceCodeStateType.USED);
+        updateState(PaymentReferenceCodeStateType.USED);
 
         if (StringUtils.isEmpty(getMerchantTransactionId())) {
             throw new TreasuryDomainException("error.MbwayPaymentRequest.sibsMerchantTransaction.required");
@@ -194,16 +196,22 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         return isExpired(new DateTime());
     }
 
+    private void updateState(PaymentReferenceCodeStateType state) {
+        super.setState(state);
+        super.setLastStateDate(new DateTime());
+        super.setLastStateResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+    }
+
     public void anull() {
-        setState(PaymentReferenceCodeStateType.ANNULLED);
+        updateState(PaymentReferenceCodeStateType.ANNULLED);
         setDigitalPaymentPlatformPendingForAnnulment(getDigitalPaymentPlatform());
     }
 
     public String getDescription() {
         List<String> descriptions =
                 getOrderedDebitEntries().stream().map(DebitEntry::getDescription).collect(Collectors.toList());
-        descriptions
-                .addAll(getOrderedInstallments().stream().map(i -> i.getDescription().getContent()).collect(Collectors.toList()));
+        descriptions.addAll(
+                getOrderedInstallments().stream().map(i -> i.getDescription().getContent()).collect(Collectors.toList()));
         return String.join("\n", descriptions);
     }
 
@@ -218,8 +226,8 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
             i++;
         }
 
-        return result.charAt(result.length() - 1) == ' ' ? result.deleteCharAt(result.length() - 1).toString() : result
-                .toString();
+        return result.charAt(result.length() - 1) == ' ' ? result.deleteCharAt(result.length() - 1)
+                .toString() : result.toString();
     }
 
     @Atomic
@@ -232,19 +240,20 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
             return null;
         }
 
-        if (checkSibsTransactionIdDuplication
-                && SibsPaymentCodeTransaction.isSibsGatewayReferenceProcessingDuplicate(sibsTransactionId)) {
+        if (checkSibsTransactionIdDuplication && SibsPaymentCodeTransaction.isSibsGatewayReferenceProcessingDuplicate(
+                sibsTransactionId)) {
             throw new RuntimeException("Duplicate transaction id: " + sibsTransactionId);
         }
 
         if (getState() == PaymentReferenceCodeStateType.UNUSED || getState() == PaymentReferenceCodeStateType.USED) {
-            setState(PaymentReferenceCodeStateType.PROCESSED);
+            updateState(PaymentReferenceCodeStateType.PROCESSED);
         }
 
         Set<SettlementNote> noteSet = new HashSet<>();
 
-        SibsPaymentCodeTransaction transaction = SibsPaymentCodeTransaction.create(sibsReportFile, this, paymentDate, paidAmount,
-                sibsTransactionId, whenProcessedBySibs, sibsImportationFilename, noteSet);
+        SibsPaymentCodeTransaction transaction =
+                SibsPaymentCodeTransaction.create(sibsReportFile, this, paymentDate, paidAmount, sibsTransactionId,
+                        whenProcessedBySibs, sibsImportationFilename, noteSet);
 
         Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
                 (o) -> fillPaymentEntryPropertiesMap(sibsTransactionId);
@@ -253,8 +262,9 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
             noteSet.addAll(internalProcessPaymentInNormalPaymentMixingLegacyInvoices(paidAmount, paymentDate, sibsTransactionId,
                     sibsImportationFilename, additionalPropertiesMapFunction));
         } else {
-            noteSet.addAll(internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(paidAmount, paymentDate,
-                    sibsTransactionId, sibsImportationFilename, additionalPropertiesMapFunction));
+            noteSet.addAll(
+                    internalProcessPaymentInRestrictedPaymentMixingLegacyInvoices(paidAmount, paymentDate, sibsTransactionId,
+                            sibsImportationFilename, additionalPropertiesMapFunction));
         }
 
         for (SettlementNote settlementNote : noteSet) {

@@ -77,6 +77,7 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
@@ -99,7 +100,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         this.init(platform, debtAccount, debitEntries, installments, payableAmount,
                 TreasurySettings.getInstance().getCreditCardPaymentMethod());
 
-        setState(ForwardPaymentStateType.CREATED);
+        updateState(ForwardPaymentStateType.CREATED);
         setOrderNumber(TreasurySettings.getInstance().incrementAndGetForwardPaymentOrderNumber());
 
         checkRules();
@@ -155,6 +156,12 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         return !isInAnnuledState() && !isInRejectedState() && !isInPaidState();
     }
 
+    private void updateState(ForwardPaymentStateType state) {
+        super.setState(state);
+        super.setLastStateDate(new DateTime());
+        super.setLastStateResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+    }
+
     @Override
     protected boolean payAllDebitEntriesInterests() {
         return true;
@@ -163,7 +170,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     @Deprecated
     public PaymentRequestLog reject(String operationCode, String statusCode, String errorMessage, String requestBody,
             String responseBody) {
-        setState(ForwardPaymentStateType.REJECTED);
+        updateState(ForwardPaymentStateType.REJECTED);
 
         PaymentRequestLog log =
                 getDigitalPaymentPlatform().log(this, operationCode, statusCode, errorMessage, requestBody, responseBody);
@@ -177,7 +184,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     }
 
     public void reject() {
-        setState(ForwardPaymentStateType.REJECTED);
+        updateState(ForwardPaymentStateType.REJECTED);
 
         checkRules();
     }
@@ -190,7 +197,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
      */
     public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage,
             String requestBody, String responseBody) {
-        setState(ForwardPaymentStateType.REQUESTED);
+        updateState(ForwardPaymentStateType.REQUESTED);
         PaymentRequestLog log =
                 getDigitalPaymentPlatform().log(this, operationCode, statusCode, statusMessage, requestBody, responseBody);
 
@@ -200,7 +207,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     }
 
     public void advanceToRequestState() {
-        setState(ForwardPaymentStateType.REQUESTED);
+        updateState(ForwardPaymentStateType.REQUESTED);
 
         checkRules();
     }
@@ -222,7 +229,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
             throw new TreasuryDomainException("error.ForwardPayment.with.settlement.note.already.associated");
         }
 
-        setState(ForwardPaymentStateType.PAYED);
+        updateState(ForwardPaymentStateType.PAYED);
 
         PaymentRequestLog log =
                 getDigitalPaymentPlatform().log(this, "advanceToPaidState", statusCode, statusMessage, requestBody, responseBody);
@@ -268,7 +275,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
             throw new TreasuryDomainException("error.ForwardPayment.with.settlement.note.already.associated");
         }
 
-        setState(ForwardPaymentStateType.PAYED);
+        updateState(ForwardPaymentStateType.PAYED);
 
         Function<PaymentRequest, Map<String, String>> additionalPropertiesMapFunction =
                 (o) -> fillPaymentEntryPropertiesMap(transactionId, transactionDate, statusCode);
