@@ -81,6 +81,7 @@ import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
+import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
@@ -489,6 +490,11 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     }
 
     public void delete() {
+    }
+
+    public BigDecimal getRemainingAmountInDebt(SibsPaymentRequest p) {
+        return p.getDebitEntriesSet().stream().map(d -> d.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(p.getInstallmentsSet().stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     // @formatter:off
