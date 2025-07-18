@@ -1,6 +1,7 @@
 - Improvement: Save the last update date and responsible of payment request [#qubIT-Fenix-7226]
 - Bug Fix: Fix update MB WAY Mandate plafond and expiration date when checking the status [#qubIT-Fenix-7247]
 - Refactor: Method to get the remaining amount to pay of payment request [#qubIT-Fenix-6014]
+- Refactor: Declare the SAFT integration exporter 200 characters limit of debt description in constant [#qubIT-Fenix-6014]
 
 14.1.4 (01-07-2025)
 - Improvement: Add the Paid state to MB WAY authorized payment schedule, to distinguish from the charging payment state [#qubIT-Fenix-5465]

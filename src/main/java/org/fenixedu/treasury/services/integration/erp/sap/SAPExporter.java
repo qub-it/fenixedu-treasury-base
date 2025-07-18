@@ -179,6 +179,7 @@ public class SAPExporter implements IERPExporter {
 
     public static final String SAFT_PT_ENCODING = "UTF-8";
     public final static String ERP_HEADER_VERSION_1_00_00 = "1.0.3";
+    public static final int MAX_DEBT_DESCRIPTION = 200;
 
     private static Logger logger = LoggerFactory.getLogger(SAPExporter.class);
 
@@ -599,7 +600,7 @@ public class SAPExporter implements IERPExporter {
                 sourceDocument.setInvoiceDate(convertToXMLDate(dataTypeFactory,
                         settlementEntry.getInvoiceEntry().getFinantialDocument().getDocumentDate()));
 
-                sourceDocument.setDescription(StringUtils.abbreviate(settlementEntry.getDescription(), 200));
+                sourceDocument.setDescription(StringUtils.abbreviate(settlementEntry.getDescription(), MAX_DEBT_DESCRIPTION));
                 line.getSourceDocumentID().add(sourceDocument);
                 //SettlementAmount
                 line.setSettlementAmount(BigDecimal.ZERO);
@@ -938,7 +939,7 @@ public class SAPExporter implements IERPExporter {
         }
 
         // Description
-        line.setDescription(StringUtils.abbreviate(entry.getDescription(), 200));
+        line.setDescription(StringUtils.abbreviate(entry.getDescription(), MAX_DEBT_DESCRIPTION));
         List<OrderReferences> orderReferences = line.getOrderReferences();
 
         //Add the references on the document creditEntries <-> debitEntries
@@ -1408,7 +1409,7 @@ public class SAPExporter implements IERPExporter {
         p.setProductCode(product.getCode());
 
         // ProductDescription
-        p.setProductDescription(StringUtils.abbreviate(product.getName().getContent(), 200));
+        p.setProductDescription(StringUtils.abbreviate(product.getName().getContent(), MAX_DEBT_DESCRIPTION));
 
         // ProductGroup
         if (product.getProductGroup() != null) {
