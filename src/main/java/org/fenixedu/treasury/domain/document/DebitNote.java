@@ -741,6 +741,11 @@ public class DebitNote extends DebitNote_Base {
 
     @Atomic
     public DebitNote updatePayorDebtAccount(final DebtAccount payorDebtAccount) {
+        return updatePayorDebtAccount(payorDebtAccount, true);
+    }
+
+    @Atomic
+    public DebitNote updatePayorDebtAccount(final DebtAccount payorDebtAccount, boolean annulSibsPaymentRequests) {
         if (!isPreparing() && !isClosed()) {
             throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.not.preparing.nor.closed");
         }
@@ -776,10 +781,12 @@ public class DebitNote extends DebitNote_Base {
 
         updatingDebitNote.setPayorDebtAccount(payorDebtAccount);
 
-        for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
-            for (PaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
-                if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
-                    ((SibsPaymentRequest) paymentCode).anull();
+        if (annulSibsPaymentRequests) {
+            for (DebitEntry debitEntry : this.getDebitEntriesSet()) {
+                for (PaymentRequest paymentCode : debitEntry.getSibsPaymentRequests()) {
+                    if (paymentCode.isInCreatedState() || paymentCode.isInRequestedState()) {
+                        ((SibsPaymentRequest) paymentCode).anull();
+                    }
                 }
             }
         }

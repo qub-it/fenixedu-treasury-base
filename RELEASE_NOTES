@@ -1,3 +1,5 @@
+- Refactor: Add option to annul or not the SIBS payment requests when setting the payor entity [#qubIT-Fenix-7262]
+
 14.2.0 (18-07-2025)
 - Improvement: Save the last update date and responsible of payment request [#qubIT-Fenix-7226]
 - Bug Fix: Fix update MB WAY Mandate plafond and expiration date when checking the status [#qubIT-Fenix-7247]
