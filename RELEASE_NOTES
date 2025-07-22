@@ -1,3 +1,4 @@
+14.2.2 (22-07-2025)
 - Bug Fix: Fix the payment plan compliant validation, which was considering as non compliant one day after [#qubIT-Fenix-7273]
 
 14.2.1 (21-07-2025)
