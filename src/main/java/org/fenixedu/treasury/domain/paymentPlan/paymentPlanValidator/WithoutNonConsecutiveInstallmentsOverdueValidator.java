@@ -85,7 +85,7 @@ public class WithoutNonConsecutiveInstallmentsOverdueValidator extends WithoutNo
     public Boolean validate(LocalDate date, List<Installment> sortedInstallments) {
         return getNumberInstallments() > sortedInstallments.stream()
                 .filter(inst -> {
-                    int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(inst.getDueDate(), date);
+                    int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(inst.getDueDate().plusDays(1), date);
                     return inst.isOverdue(date) && numberOfWorkDaysBetween > getNumberDaysToTakeEffect();
                 }).count();
     }

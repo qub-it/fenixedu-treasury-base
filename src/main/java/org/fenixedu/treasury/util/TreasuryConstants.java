@@ -275,7 +275,7 @@ public class TreasuryConstants {
         Predicate<LocalDate> isWeekend = date -> date.getDayOfWeek() == DateTimeConstants.SATURDAY
                 || date.getDayOfWeek() == DateTimeConstants.SUNDAY || getHolidays().stream().anyMatch(h -> h.isMatch(date));
         
-        return IntStream.range(0, Days.daysBetween(startDate, endDate).getDays())
+        return IntStream.rangeClosed(0, Days.daysBetween(startDate, endDate).getDays())
                 .map(d -> isWeekend.test(startDate.plusDays(d)) ? 0 : 1).reduce(0, (a, b) -> a + b);
     }
 
