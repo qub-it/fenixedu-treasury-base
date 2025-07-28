@@ -1,3 +1,5 @@
+- Refactor: Method to return related payment requests that settle associated debts of payment request [#qubIT-Fenix-7292]
+
 14.2.2 (22-07-2025)
 - Bug Fix: Fix the payment plan compliant validation, which was considering as non compliant one day after [#qubIT-Fenix-7273]
 

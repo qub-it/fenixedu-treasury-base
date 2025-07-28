@@ -53,13 +53,7 @@
 package org.fenixedu.treasury.domain.payments;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -495,6 +489,20 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
     public BigDecimal getRemainingAmountInDebt(SibsPaymentRequest p) {
         return p.getDebitEntriesSet().stream().map(d -> d.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
                 .add(p.getInstallmentsSet().stream().map(i -> i.getOpenAmount()).reduce(BigDecimal.ZERO, BigDecimal::add));
+    }
+
+    public Set<PaymentRequest> getPaymentRequestsOfAssociatedDebtsInPaidStateIncludingSelf() {
+        Set<PaymentRequest> result = new HashSet<>();
+
+        getDebitEntriesSet().stream().flatMap(de -> de.getPaymentRequestsSet().stream())
+                .filter(pr -> pr.isInPaidState())
+                .collect(Collectors.toCollection(() -> result));
+
+        getInstallmentsSet().stream().flatMap(de -> de.getPaymentRequestsSet().stream())
+                .filter(pr -> pr.isInPaidState())
+                .collect(Collectors.toCollection(() -> result));
+
+        return result;
     }
 
     // @formatter:off
