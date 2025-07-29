@@ -173,6 +173,16 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
         return find(debtAccount).filter(d -> groupKey.equals(d.getGroupKey()));
     }
 
+    public static Stream<PaymentInvoiceEntriesGroup> findContainingAllInvoiceEntries(Set<? extends InvoiceEntry> invoiceEntriesSet) {
+        if (invoiceEntriesSet == null || invoiceEntriesSet.isEmpty()) {
+            return Stream.empty();
+        }
+
+        DebtAccount debtAccount = invoiceEntriesSet.iterator().next().getDebtAccount();
+
+        return find(debtAccount).filter(i -> i.getInvoiceEntriesSet().contains(invoiceEntriesSet));
+    }
+
     public static Optional<PaymentInvoiceEntriesGroup> findUniqueByGroupKey(DebtAccount debtAccount, String groupKey) {
         return findByGroupKey(debtAccount, groupKey).findFirst();
     }

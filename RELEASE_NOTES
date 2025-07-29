@@ -1,3 +1,5 @@
+- Refactor: Static method to get the payment group with all invoice entries [#qubIT-Fenix-7284]
+
 14.2.3 (28-07-2025)
 - Refactor: Method to return related payment requests that settle associated debts of payment request [#qubIT-Fenix-7292]
 
