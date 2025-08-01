@@ -131,6 +131,19 @@ public class DebtAccount extends DebtAccount_Base {
         return getFinantialInstitution().getCurrency().getValueWithScale(amount);
     }
 
+    public BigDecimal getTotalInDebtWithInterests() {
+        BigDecimal amount = BigDecimal.ZERO;
+        for (InvoiceEntry entry : this.getPendingInvoiceEntriesSet()) {
+            if (entry.isDebitNoteEntry()) {
+                amount = amount.add(entry.getOpenAmountWithInterests());
+            } else if (entry.isCreditNoteEntry()) {
+                amount = amount.subtract(entry.getOpenAmount());
+            }
+        }
+
+        return getFinantialInstitution().getCurrency().getValueWithScale(amount);
+    }
+
     public BigDecimal getDueInDebt() {
         return getDueInDebt(new LocalDate());
     }
@@ -141,6 +154,19 @@ public class DebtAccount extends DebtAccount_Base {
                 .map(DebitEntry.class::cast) //
                 .filter(de -> de.isDueDateExpired(when)) //
                 .map(de -> de.getOpenAmount()) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getDueDateInDebtWithInterests() {
+        return getDueDateInDebtWithInterests(new LocalDate());
+    }
+
+    public BigDecimal getDueDateInDebtWithInterests(LocalDate when) {
+        return this.getPendingInvoiceEntriesSet().stream() //
+                .filter(de -> de.isDebitNoteEntry()) //
+                .map(DebitEntry.class::cast) //
+                .filter(de -> de.isDueDateExpired(when)) //
+                .map(de -> de.getOpenAmountWithInterestsAtDate(when)) //
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -158,7 +184,7 @@ public class DebtAccount extends DebtAccount_Base {
     /**
      * Only used to present the active reference codes that can be used.
      * To be used in UI and reports
-     * 
+     *
      * @return
      */
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
@@ -169,7 +195,7 @@ public class DebtAccount extends DebtAccount_Base {
     /**
      * Only used to present the active reference codes that can be used
      * To be used in UI and reports
-     * 
+     *
      * @return
      */
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingInstallments() {
@@ -242,9 +268,8 @@ public class DebtAccount extends DebtAccount_Base {
     }
 
     public boolean isDeletable() {
-        return this.getFinantialDocumentsSet().isEmpty() && getInvoiceEntrySet().isEmpty() && getInvoiceSet().isEmpty()
-                && getPayorDebitEntriesSet().isEmpty() && getForwardPaymentsSet().isEmpty() && getPaymentRequestsSet().isEmpty()
-                && getTreasuryEventsSet().isEmpty();
+        return this.getFinantialDocumentsSet()
+                .isEmpty() && getInvoiceEntrySet().isEmpty() && getInvoiceSet().isEmpty() && getPayorDebitEntriesSet().isEmpty() && getForwardPaymentsSet().isEmpty() && getPaymentRequestsSet().isEmpty() && getTreasuryEventsSet().isEmpty();
     }
 
     @Atomic
@@ -269,8 +294,8 @@ public class DebtAccount extends DebtAccount_Base {
 
         for (Customer customer : getCustomer().getAllCustomers()) {
             if (DebtAccount.findUnique(getFinantialInstitution(), customer).isPresent()) {
-                result = result
-                        .add(DebtAccount.findUnique(getFinantialInstitution(), customer).get().calculatePendingInterestAmount());
+                result = result.add(
+                        DebtAccount.findUnique(getFinantialInstitution(), customer).get().calculatePendingInterestAmount());
             }
         }
 
@@ -294,8 +319,9 @@ public class DebtAccount extends DebtAccount_Base {
     }
 
     public Stream<InvoiceEntry> getActiveInvoiceEntries() {
-        return this.getInvoiceEntrySet().stream().filter(x -> x.getFinantialDocument() == null
-                || x.getFinantialDocument() != null && x.getFinantialDocument().isAnnulled() == false);
+        return this.getInvoiceEntrySet().stream()
+                .filter(x -> x.getFinantialDocument() == null || x.getFinantialDocument() != null && x.getFinantialDocument()
+                        .isAnnulled() == false);
     }
 
     public boolean hasPreparingDocuments() {

@@ -1,3 +1,5 @@
+- Improvement: Declare Debt Account total amount in debt, and due in debt with interests calculation [#qubIT-Fenix-7333]
+
 14.2.5 (01-08-2025)
 - Improvement: Allow correction of fiscal numbers of customers, which countries are other than of finantial institution [#qubIT-Fenix-7300]
 
