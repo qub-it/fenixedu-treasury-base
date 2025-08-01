@@ -1,3 +1,5 @@
+- Improvement: Allow correction of fiscal numbers of customers, which countries are other than of finantial institution [#qubIT-Fenix-7300]
+
 14.2.4 (30-07-2025)
 - Refactor: Static method to get the payment group with all invoice entries [#qubIT-Fenix-7284]
 

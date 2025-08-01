@@ -193,10 +193,11 @@ public abstract class Customer extends Customer_Base {
         //
         // Validate only of the customer is active
         if (isActive()) {
-            if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode())
-                    || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
-                final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber())
-                        .filter(c -> c.isActive()).collect(Collectors.<Customer> toSet());
+            if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || !DEFAULT_FISCAL_NUMBER.equals(
+                    getFiscalNumber())) {
+                final Set<Customer> customers =
+                        findByFiscalInformation(getAddressCountryCode(), getFiscalNumber()).filter(c -> c.isActive())
+                                .collect(Collectors.<Customer> toSet());
 
                 if (customers.size() > 1) {
                     final Customer self = this;
@@ -236,9 +237,10 @@ public abstract class Customer extends Customer_Base {
             throw new TreasuryDomainException("error.Customer.findByFiscalCountryAndNumber.fiscalNumber.required");
         }
 
-        return findAll().filter(c -> !Strings.isNullOrEmpty(c.getAddressCountryCode())
-                && lowerCase(c.getAddressCountryCode()).equals(lowerCase(fiscalCountryCode))
-                && !Strings.isNullOrEmpty(c.getFiscalNumber()) && c.getFiscalNumber().equals(fiscalNumber));
+        return findAll().filter(
+                c -> !Strings.isNullOrEmpty(c.getAddressCountryCode()) && lowerCase(c.getAddressCountryCode()).equals(
+                        lowerCase(fiscalCountryCode)) && !Strings.isNullOrEmpty(c.getFiscalNumber()) && c.getFiscalNumber()
+                        .equals(fiscalNumber));
     }
 
     public boolean matchesMultiFilter(String searchText) {
@@ -258,12 +260,12 @@ public abstract class Customer extends Customer_Base {
         final String nameClear =
                 Normalizer.normalize(getName().toLowerCase(), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
 
-        return TreasuryConstants.matchNames(nameClear, searchFieldClear)
-                || getIdentificationNumber() != null && getIdentificationNumber().contains(searchFieldClear)
-                || getFiscalNumber() != null && getFiscalNumber().toLowerCase().contains(searchFieldClear)
-                || getCode() != null && getCode().contains(searchFieldClear)
-                || getBusinessIdentification() != null && getBusinessIdentification().contains(searchFieldClear)
-                || getUsername() != null && getUsername().contains(searchFieldClear);
+        return TreasuryConstants.matchNames(nameClear,
+                searchFieldClear) || getIdentificationNumber() != null && getIdentificationNumber().contains(
+                searchFieldClear) || getFiscalNumber() != null && getFiscalNumber().toLowerCase()
+                .contains(searchFieldClear) || getCode() != null && getCode().contains(
+                searchFieldClear) || getBusinessIdentification() != null && getBusinessIdentification().contains(
+                searchFieldClear) || getUsername() != null && getUsername().contains(searchFieldClear);
     }
 
     public Set<FinantialInstitution> getFinantialInstitutions() {
@@ -312,8 +314,8 @@ public abstract class Customer extends Customer_Base {
     }
 
     public static boolean isPortugueseCustomerWithInvalidFiscalNumber(String addressCountryCode, String fiscalNumber) {
-        return TreasuryConstants.isSameCountryCode(PORTUGUESE_COUNTRY_CODE, addressCountryCode)
-                && !FiscalCodeValidation.isValidFiscalNumber(addressCountryCode, fiscalNumber);
+        return TreasuryConstants.isSameCountryCode(PORTUGUESE_COUNTRY_CODE,
+                addressCountryCode) && !FiscalCodeValidation.isValidFiscalNumber(addressCountryCode, fiscalNumber);
     }
 
     public boolean isAbleToChangeFiscalNumber() {
@@ -329,11 +331,16 @@ public abstract class Customer extends Customer_Base {
             return false;
         }
 
-        if (isFiscalValidated() && isFiscalCodeValid()) {
+        if (isFiscalAddressFromDefaultCountry() && isFiscalCodeValid()) {
             return false;
         }
 
         return true;
+    }
+
+    public boolean isFiscalAddressFromDefaultCountry() {
+        return FinantialInstitution.findAll().map(e -> e.getCountry().alpha2).anyMatch(
+                institutionCountryCode -> TreasuryConstants.isSameCountryCode(institutionCountryCode, getAddressCountryCode()));
     }
 
     protected boolean isWithFinantialDocumentsCertified() {

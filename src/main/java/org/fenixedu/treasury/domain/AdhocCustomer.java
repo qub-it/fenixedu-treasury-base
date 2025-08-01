@@ -233,7 +233,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             throw new TreasuryDomainException("error.Customer.already.with.fiscal.information");
         }
 
-        if (isFiscalValidated() && isFiscalCodeValid()) {
+        if (isFiscalAddressFromDefaultCountry() && isFiscalCodeValid()) {
             throw new TreasuryDomainException("error.Customer.changeFiscalNumber.already.valid");
         }
 
