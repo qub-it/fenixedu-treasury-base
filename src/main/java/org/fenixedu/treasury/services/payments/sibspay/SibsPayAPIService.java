@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response.Status.Family;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
@@ -195,8 +196,7 @@ public class SibsPayAPIService {
         // result.getCustomer().getCustomerInfo().setShippingAddress(address);
         result.getCustomer().getCustomerInfo().setBillingAddress(address);
 
-        String email = TreasuryPlataformDependentServicesFactory.implementation()
-                .getCustomerEmail(forwardPayment.getDebtAccount().getCustomer());
+        String email = getEmail(forwardPayment.getDebtAccount().getCustomer());
         result.getCustomer().getCustomerInfo().setCustomerEmail(email);
 
         SibsPayTransaction transaction = new SibsPayTransaction();
@@ -524,7 +524,8 @@ public class SibsPayAPIService {
 
         result.getCustomer().getCustomerInfo().setCustomerName(limitCustomerName(debtAccount.getCustomer().getName()));
 
-        String email = TreasuryPlataformDependentServicesFactory.implementation().getCustomerEmail(debtAccount.getCustomer());
+        String email = getEmail(debtAccount.getCustomer());
+
         result.getCustomer().getCustomerInfo().setCustomerEmail(email);
 
         SibsPayTransaction transaction = new SibsPayTransaction();
@@ -551,6 +552,14 @@ public class SibsPayAPIService {
         paymentReference.setMaxAmount(amount);
 
         return result;
+    }
+
+    private String getEmail(Customer customer) {
+        if(!StringUtils.isBlank(customer.getPersonalEmail())) {
+            return customer.getPersonalEmail();
+        }
+
+        return TreasuryPlataformDependentServicesFactory.implementation().getCustomerEmail(customer);
     }
 
     private static final int MAX_NAME_SIZE = 45;
@@ -814,7 +823,7 @@ public class SibsPayAPIService {
 
         result.getCustomer().getCustomerInfo().setCustomerName(debtAccount.getCustomer().getName());
 
-        String email = TreasuryPlataformDependentServicesFactory.implementation().getCustomerEmail(debtAccount.getCustomer());
+        String email = getEmail(debtAccount.getCustomer());
         result.getCustomer().getCustomerInfo().setCustomerEmail(email);
 
         SibsPayTransaction transaction = new SibsPayTransaction();

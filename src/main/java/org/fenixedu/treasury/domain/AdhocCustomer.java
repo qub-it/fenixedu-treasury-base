@@ -338,6 +338,11 @@ public class AdhocCustomer extends AdhocCustomer_Base {
     }
 
     @Override
+    public String getPersonalEmail() {
+        return null;
+    }
+
+    @Override
     public String getPhoneNumber() {
         return null;
     }

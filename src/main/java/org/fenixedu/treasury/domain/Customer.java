@@ -118,6 +118,8 @@ public abstract class Customer extends Customer_Base {
 
     public abstract String getEmail();
 
+    public abstract String getPersonalEmail();
+
     public abstract String getPhoneNumber();
 
     public abstract BigDecimal getGlobalBalance();

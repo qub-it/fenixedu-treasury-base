@@ -1,3 +1,6 @@
+- Improvement: Add method to retrieve the personal email from customer [#qubIT-Fenix-7385]
+- Bug Fix: Send the personal email in SIBS Pay checkout [#qubIT-Fenix-7385]
+
 14.2.6 (01-08-2025)
 - Improvement: Declare Debt Account total amount in debt, and due in debt with interests calculation [#qubIT-Fenix-7333]
 
