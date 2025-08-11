@@ -1,4 +1,5 @@
 - Refactor: Declare in Treasury services, if dynamic message is defined or not [#qubIT-Fenix-7405]
+- Refactor: Only fill the address details for credit card payment if the billing address is not null [#qubIT-Fenix-7390]
 
 14.2.7 (04-08-2025)
 - Improvement: Add method to retrieve the personal email from customer [#qubIT-Fenix-7385]

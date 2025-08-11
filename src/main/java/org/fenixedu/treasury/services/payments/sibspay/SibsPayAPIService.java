@@ -184,14 +184,16 @@ public class SibsPayAPIService {
         result.getCustomer().getCustomerInfo()
                 .setCustomerName(limitCustomerName(forwardPayment.getDebtAccount().getCustomer().getName()));
         SibsPayAddress address = new SibsPayAddress();
-        String cityText = billingAddressBean.getCity();
-        String zipCodeText = billingAddressBean.getZipCode();
-        String addressText = billingAddressBean.getAddress();
+        if (billingAddressBean != null) {
+            String cityText = billingAddressBean.getCity();
+            String zipCodeText = billingAddressBean.getZipCode();
+            String addressText = billingAddressBean.getAddress();
 
-        address.setCity(cityText != null ? Splitter.fixedLength(MAX_CITY_LENGTH).splitToList(cityText).get(0) : null);
-        address.setCountry(billingAddressBean.getAddressCountryCode());
-        address.setPostcode(zipCodeText != null ? Splitter.fixedLength(MAX_POSTCODE_LENGTH).splitToList(zipCodeText).get(0) : null);
-        address.setStreet1(addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
+            address.setCity(cityText != null ? Splitter.fixedLength(MAX_CITY_LENGTH).splitToList(cityText).get(0) : null);
+            address.setCountry(billingAddressBean.getAddressCountryCode());
+            address.setPostcode(zipCodeText != null ? Splitter.fixedLength(MAX_POSTCODE_LENGTH).splitToList(zipCodeText).get(0) : null);
+            address.setStreet1(addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
+        }
 
         // result.getCustomer().getCustomerInfo().setShippingAddress(address);
         result.getCustomer().getCustomerInfo().setBillingAddress(address);

@@ -202,8 +202,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     public PaymentRequestLog log(PaymentRequest paymentRequest, String operationCode, String statusCode, String statusMessage,
             String requestBody, String responseBody) {
 
-        SibsPaymentsGatewayLog log = SibsPaymentsGatewayLog.createPaymentRequestLog(paymentRequest,
-                paymentRequest.getCurrentState().getCode(), paymentRequest.getCurrentState().getLocalizedName());
+        SibsPaymentsGatewayLog log =
+                SibsPaymentsGatewayLog.createPaymentRequestLog(paymentRequest, paymentRequest.getCurrentState().getCode(),
+                        paymentRequest.getCurrentState().getLocalizedName());
 
         log.setOperationCode(operationCode);
         log.setStatusCode(statusCode);
@@ -246,8 +247,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         try {
             DateTime requestSendDate = new DateTime();
 
-            final CheckoutResultBean checkoutBean = prepareCheckout(forwardPayment.getDebtAccount(), merchantTransactionId,
-                    forwardPayment.getPayableAmount(), getReturnURL(forwardPayment), addressBean);
+            final CheckoutResultBean checkoutBean =
+                    prepareCheckout(forwardPayment.getDebtAccount(), merchantTransactionId, forwardPayment.getPayableAmount(),
+                            getReturnURL(forwardPayment), addressBean);
 
             DateTime requestReceiveDate = new DateTime();
 
@@ -309,14 +311,19 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             String returnUrl, SibsBillingAddressBean billingAddressBean) throws OnlinePaymentsGatewayCommunicationException {
         final SIBSOnlinePaymentsGatewayService gatewayService = gatewayService();
 
-        final PrepareCheckoutInputBean bean = new PrepareCheckoutInputBean(payableAmount, merchantTransactionId, returnUrl,
-                new DateTime(), new DateTime().plusDays(7));
+        final PrepareCheckoutInputBean bean =
+                new PrepareCheckoutInputBean(payableAmount, merchantTransactionId, returnUrl, new DateTime(),
+                        new DateTime().plusDays(7));
 
         if (isSendBillingDataInOnlinePayment()) {
             String customerEmail = debtAccount.getCustomer().getEmail();
 
-            bean.fillBillingData(/* debtAccount.getCustomer().getName() */ null, billingAddressBean.getAddressCountryCode(),
-                    billingAddressBean.getCity(), billingAddressBean.getAddress(), billingAddressBean.getZipCode(),
+            String addressCountryCode = billingAddressBean != null ? billingAddressBean.getAddressCountryCode() : null;
+            String city = billingAddressBean != null ? billingAddressBean.getCity() : null;
+            String address = billingAddressBean != null ? billingAddressBean.getAddress() : null;
+            String zipCode = billingAddressBean != null ? billingAddressBean.getZipCode() : null;
+
+            bean.fillBillingData(/* debtAccount.getCustomer().getName() */ null, addressCountryCode, city, address, zipCode,
                     customerEmail);
         }
 
@@ -423,8 +430,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         }
 
         if (paid) {
-            if (operationResultType != SibsResultCodeType.SUCCESSFUL_TRANSACTION
-                    && operationResultType != SibsResultCodeType.SUCESSFUL_PROCESSED_TRANSACTION_FOR_REVIEW) {
+            if (operationResultType != SibsResultCodeType.SUCCESSFUL_TRANSACTION && operationResultType != SibsResultCodeType.SUCESSFUL_PROCESSED_TRANSACTION_FOR_REVIEW) {
                 throw new TreasuryDomainException(
                         "error.SibsOnlinePaymentsGatewayForwardImplementation.payment.appears.paid.but.inconsistent.with.result.code");
             }
@@ -498,8 +504,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     // 
                     if (forwardPayment.isInPaidState()) {
                         // create log and mark as duplicated
-                        PaymentRequestLog log = log(forwardPayment, "advanceToPaidState", bean.getStatusCode(),
-                                bean.getStatusMessage(), bean.getRequestBody(), bean.getResponseBody());
+                        PaymentRequestLog log =
+                                log(forwardPayment, "advanceToPaidState", bean.getStatusCode(), bean.getStatusMessage(),
+                                        bean.getRequestBody(), bean.getResponseBody());
 
                         log.setOperationSuccess(true);
                         log.setTransactionWithPayment(true);
@@ -521,8 +528,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             } else if (bean.isInRejectedState()) {
                 FenixFramework.atomic(() -> {
-                    SibsPaymentsGatewayLog log = (SibsPaymentsGatewayLog) forwardPayment.reject("postProcessPayment",
-                            bean.getStatusCode(), bean.getStatusMessage(), bean.getRequestBody(), bean.getResponseBody());
+                    SibsPaymentsGatewayLog log =
+                            (SibsPaymentsGatewayLog) forwardPayment.reject("postProcessPayment", bean.getStatusCode(),
+                                    bean.getStatusMessage(), bean.getRequestBody(), bean.getResponseBody());
 
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
@@ -620,8 +628,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
     @Override
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate) {
-        BigDecimal payableAmountDebitEntries = debitEntries.stream()
-                .map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountDebitEntries =
+                debitEntries.stream().map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmountInstallments =
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
@@ -933,8 +942,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         SibsPaymentsGatewayLog log = createLog(merchantTransactionId);
 
         try {
-            MbwayRequest mbwayPaymentRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber,
-                    payableAmount, merchantTransactionId);
+            MbwayRequest mbwayPaymentRequest =
+                    MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber, payableAmount,
+                            merchantTransactionId);
 
             FenixFramework.atomic(() -> log.logRequestSendDate());
 
@@ -964,7 +974,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
         } catch (
 
-        Exception e) {
+                Exception e) {
             boolean isOnlinePaymentsGatewayException = e instanceof OnlinePaymentsGatewayCommunicationException;
 
             FenixFramework.atomic(() -> {
@@ -982,8 +992,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             if (e instanceof TreasuryDomainException) {
                 throw (TreasuryDomainException) e;
             } else {
-                final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
-                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                final String message =
+                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                 throw new TreasuryDomainException(e, message);
             }
@@ -1030,8 +1040,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         SibsPaymentsGatewayLog log = createLog(merchantTransactionId);
 
         try {
-            MbwayRequest mbwayPaymentRequest = MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber,
-                    payableAmount, merchantTransactionId);
+            MbwayRequest mbwayPaymentRequest =
+                    MbwayRequest.create(this, debtAccount, debitEntries, installments, phoneNumber, payableAmount,
+                            merchantTransactionId);
             FenixFramework.atomic(() -> {
                 log.logRequestSendDate();
             });
@@ -1078,8 +1089,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             if (e instanceof TreasuryDomainException) {
                 throw (TreasuryDomainException) e;
             } else {
-                final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
-                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                final String message =
+                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                 throw new TreasuryDomainException(e, message);
             }
@@ -1198,9 +1209,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
         ForwardPaymentRequest paymentRequest = null;
         try {
-            paymentRequest = FenixFramework
-                    .atomic(() -> ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
-                            debitEntries, installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction));
+            paymentRequest = FenixFramework.atomic(
+                    () -> ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries,
+                            installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -1255,8 +1266,9 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(bean.getOperationResultType(), bean.isPaid());
 
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType,
-                    bean.getPaymentGatewayResultCode(), bean.getPaymentGatewayResultDescription(), "", "");
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, bean.getPaymentGatewayResultCode(),
+                            bean.getPaymentGatewayResultDescription(), "", "");
 
             result.editTransactionDetails(bean.getTransactionId(), bean.getPaymentDate(), bean.getAmount());
 
