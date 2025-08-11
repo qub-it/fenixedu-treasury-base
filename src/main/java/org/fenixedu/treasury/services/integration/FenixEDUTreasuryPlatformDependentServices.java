@@ -250,6 +250,11 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     }
 
     @Override
+    public boolean isDynamicApplicationMessageDefined(String key) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
     public LocalizedString getDynamicApplicationMessage(String key){
         throw new RuntimeException("not supported");
     }

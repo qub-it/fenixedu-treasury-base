@@ -1,3 +1,5 @@
+- Refactor: Declare in Treasury services, if dynamic message is defined or not [#qubIT-Fenix-7405]
+
 14.2.7 (04-08-2025)
 - Improvement: Add method to retrieve the personal email from customer [#qubIT-Fenix-7385]
 - Bug Fix: Send the personal email in SIBS Pay checkout [#qubIT-Fenix-7385]

@@ -152,6 +152,8 @@ public interface ITreasuryPlatformDependentServices {
 
     LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
+
+    boolean isDynamicApplicationMessageDefined(String key);
     LocalizedString getDynamicApplicationMessage(String key);
 
     /* Versioning Information */
