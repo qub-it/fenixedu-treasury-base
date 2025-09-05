@@ -54,16 +54,7 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -105,6 +96,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.core.AbstractDomainObject;
 //import sun.text.normalizer.ICUBinary.Authenticate;
 
 public class DebitEntry extends DebitEntry_Base {
@@ -1019,6 +1011,26 @@ public class DebitEntry extends DebitEntry_Base {
         return this.getNetAmount().subtract(getTotalCreditedNetAmount());
     }
 
+    public BigDecimal getAvailableNetExemptedAmountForCredit() {
+        return getTreasuryExemptionsSet().stream() //
+                .map(TreasuryExemption::getAvailableNetExemptedAmountForCredit) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+    public BigDecimal getAvailableNetExemptedAmountForCredit(TreasuryExemptionType treasuryExemptionType) {
+        return getTreasuryExemptionsSet().stream() //
+                .filter(e -> e.getTreasuryExemptionType() == treasuryExemptionType) //
+                .map(TreasuryExemption::getAvailableNetExemptedAmountForCredit) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public Map<TreasuryExemptionType, BigDecimal> getEffectiveNetExemptionAmountsMapByType() {
+        return getTreasuryExemptionsSet().stream().collect(
+                Collectors.toMap(te -> te.getTreasuryExemptionType(), te -> te.getAvailableNetExemptedAmountForCredit(),
+                        BigDecimal::add, () -> new TreeMap<>(Comparator.comparing(AbstractDomainObject::getExternalId))));
+    }
+
     @Override
     public BigDecimal getOpenAmountWithInterests() {
         if (isAnnulled()) {
@@ -1237,6 +1249,34 @@ public class DebitEntry extends DebitEntry_Base {
                         Currency.getValueWithScale(te.getAvailableNetExemptedAmountForCredit().multiply(ratio)))) // **README**
                 .collect(Collectors.toMap(te -> te,
                         te -> Currency.getValueWithScale(te.getAvailableNetExemptedAmountForCredit().multiply(ratio))));
+
+        return result;
+    }
+
+    // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+    public Map<TreasuryExemption, BigDecimal> calculateNetExemptedAmountsToCreditMapBasedInExplicitAmounts(
+            Map<TreasuryExemptionType, BigDecimal> amountDistributionMap, boolean raiseErrorIfAmountLeftForDistribution) {
+        final Map<TreasuryExemption, BigDecimal> result = new HashMap<>();
+        final Map<TreasuryExemptionType, BigDecimal> remainingAmountToDistributeMap = new HashMap<>(amountDistributionMap);
+
+        amountDistributionMap.keySet().stream().forEach(type -> {
+            getTreasuryExemptionsSet().stream().filter(e -> e.getTreasuryExemptionType() == type).forEach(e -> {
+                BigDecimal minAmountToCredit =
+                        e.getAvailableNetExemptedAmountForCredit().min(remainingAmountToDistributeMap.get(type));
+
+                if (TreasuryConstants.isPositive(minAmountToCredit)) {
+                    result.put(e, minAmountToCredit);
+                    remainingAmountToDistributeMap.put(type,
+                            remainingAmountToDistributeMap.get(type).subtract(minAmountToCredit));
+                }
+            });
+        });
+
+        BigDecimal remainingTotalAmount =
+                remainingAmountToDistributeMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (raiseErrorIfAmountLeftForDistribution && TreasuryConstants.isPositive(remainingTotalAmount)) {
+            throw new RuntimeException("there is left amount to distribute");
+        }
 
         return result;
     }
