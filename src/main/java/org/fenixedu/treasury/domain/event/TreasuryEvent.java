@@ -446,8 +446,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     public BigDecimal getNetExemptedAmount() {
-        BigDecimal result =
-                DebitEntry.findActive(this).map(l -> l.getNetExemptedAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal result = DebitEntry.findActive(this).map(l -> l.getAvailableNetExemptedAmountForCredit())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         result = result.add(CreditEntry.findActive(this).filter(l -> l.isFromExemption()).map(l -> l.getNetAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
@@ -457,7 +457,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     public BigDecimal getNetExemptedAmount(Product product) {
         BigDecimal result = DebitEntry.findActive(this, product) //
-                .map(l -> l.getNetExemptedAmount()) //
+                .map(l -> l.getAvailableNetExemptedAmountForCredit()) //
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         result = result.add(CreditEntry.findActive(this, product) //
@@ -514,8 +514,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         // The correct is TreasuryExemption#getAvailableNetExemptedAmountForCredit
 
         return DebitEntry.findActive(this, product).flatMap(d -> d.getTreasuryExemptionsSet().stream()).collect(
-                Collectors.toMap(TreasuryExemption::getTreasuryExemptionType, TreasuryExemption::getAvailableNetExemptedAmountForCredit,
-                        BigDecimal::add, () -> new TreeMap<>(Comparator.comparing(AbstractDomainObject::getExternalId))));
+                Collectors.toMap(TreasuryExemption::getTreasuryExemptionType,
+                        TreasuryExemption::getAvailableNetExemptedAmountForCredit, BigDecimal::add,
+                        () -> new TreeMap<>(Comparator.comparing(AbstractDomainObject::getExternalId))));
     }
 
     public Map<String, String> getPropertiesMap() {

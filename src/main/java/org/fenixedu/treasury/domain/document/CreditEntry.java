@@ -111,8 +111,9 @@ public class CreditEntry extends CreditEntry_Base {
         if (creditExemptionsMap != null) {
             BigDecimal netExemptedAmount = creditExemptionsMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            creditExemptionsMap.forEach((exemptionToCredit, creditedNetExemptedAmount) -> CreditTreasuryExemption.create(this,
-                    exemptionToCredit, creditedNetExemptedAmount));
+            creditExemptionsMap.forEach(
+                    (exemptionToCredit, creditedNetExemptedAmount) -> CreditTreasuryExemption.create(this, exemptionToCredit,
+                            creditedNetExemptedAmount));
 
             super.setNetExemptedAmount(netExemptedAmount);
         }
@@ -226,8 +227,8 @@ public class CreditEntry extends CreditEntry_Base {
         newCreditNote.setCloseDate(getCreditNote().getCloseDate());
 
         // TODO: Check if precision is lost in cents
-        BigDecimal unitAmountOfNewCreditEntry =
-                Currency.getValueWithScale(TreasuryConstants.divide(TreasuryConstants.divide(amountWithVatOfNewCreditEntry,
+        BigDecimal unitAmountOfNewCreditEntry = Currency.getValueWithScale(TreasuryConstants.divide(
+                TreasuryConstants.divide(amountWithVatOfNewCreditEntry,
                         BigDecimal.ONE.add(TreasuryConstants.rationalVatRate(this))), getQuantity()));
 
         // TODO: the amountPerUnit should be truncated to fewer decimal places?
@@ -236,19 +237,25 @@ public class CreditEntry extends CreditEntry_Base {
                 getQuantity());
 
         BigDecimal newOpenUnitAmountOfThisCreditEntry = openUnitAmountOfThisCreditEntry.subtract(unitAmountOfNewCreditEntry);
+
         BigDecimal ratioBetweenOldAndNewAmounts =
                 TreasuryConstants.divide(newOpenUnitAmountOfThisCreditEntry, openUnitAmountOfThisCreditEntry);
 
-        Map<TreasuryExemption, BigDecimal> exemptionsMapForCurrentCreditEntry =
-                getCreditedExemptionsMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> Currency
-                        .getValueWithScale(TreasuryConstants.defaultScale(e.getValue()).multiply(ratioBetweenOldAndNewAmounts))));
+        Map<TreasuryExemption, BigDecimal> exemptionsMapForCurrentCreditEntry = getCreditedExemptionsMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e -> Currency.getValueWithScale(
+                        TreasuryConstants.defaultScale(e.getValue()).multiply(ratioBetweenOldAndNewAmounts))));
 
-        Map<TreasuryExemption, BigDecimal> exemptionsMapForNewCreditEntry =
-                getCreditedExemptionsMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey(),
+        Map<TreasuryExemption, BigDecimal> exemptionsMapForNewCreditEntry = getCreditedExemptionsMap().entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(),
                         e -> e.getValue().subtract(exemptionsMapForCurrentCreditEntry.get(e.getKey()))));
 
-        setAmount(newOpenUnitAmountOfThisCreditEntry);
-        setNetExemptedAmount(exemptionsMapForCurrentCreditEntry.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add));
+        // ANIL 2025-09-10 (#qubIT-Fenix-7457)
+        //
+        // The unitAmount must also have the netExemptedAmount
+        BigDecimal sumOfExemptionsMapForCurrentCreditEntry =
+                exemptionsMapForCurrentCreditEntry.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        setAmount(newOpenUnitAmountOfThisCreditEntry.add(sumOfExemptionsMapForCurrentCreditEntry));
+        setNetExemptedAmount(sumOfExemptionsMapForCurrentCreditEntry);
         resetCreditedNetExemptionAmounts(exemptionsMapForCurrentCreditEntry);
 
         recalculateAmountValues();
@@ -256,8 +263,11 @@ public class CreditEntry extends CreditEntry_Base {
         CreditEntry newCreditEntry = null;
 
         if (getDebitEntry() != null) {
-            newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(), unitAmountOfNewCreditEntry,
-                    getEntryDateTime(), getDebitEntry(), getQuantity(), exemptionsMapForNewCreditEntry);
+            BigDecimal sumOfExemptionsMapForNewCreditEntry =
+                    exemptionsMapForNewCreditEntry.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            newCreditEntry = create(newCreditNote, getDescription(), getProduct(), getVat(),
+                    unitAmountOfNewCreditEntry.add(sumOfExemptionsMapForNewCreditEntry), getEntryDateTime(), getDebitEntry(),
+                    getQuantity(), exemptionsMapForNewCreditEntry);
         } else {
             newCreditEntry = create(getFinantialEntity(), newCreditNote, getDescription(), getProduct(), getVat(),
                     unitAmountOfNewCreditEntry, getEntryDateTime(), getQuantity());
@@ -265,8 +275,8 @@ public class CreditEntry extends CreditEntry_Base {
 
         newCreditEntry.setFromExemption(isFromExemption());
 
-        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
-                && getFinantialDocument().isExportedInLegacyERP()) {
+        if (TreasurySettings.getInstance()
+                .isRestrictPaymentMixingLegacyInvoices() && getFinantialDocument().isExportedInLegacyERP()) {
             newCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
             newCreditEntry.getFinantialDocument().setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
         }
@@ -401,15 +411,13 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent) {
-        return Stream.concat(
-                DebitEntry.findActive(treasuryEvent)
+        return Stream.concat(DebitEntry.findActive(treasuryEvent)
                         .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
                 treasuryEvent.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled()));
     }
 
     public static Stream<? extends CreditEntry> findActive(final TreasuryEvent treasuryEvent, final Product product) {
-        return Stream.concat(
-                DebitEntry.findActive(treasuryEvent, product)
+        return Stream.concat(DebitEntry.findActive(treasuryEvent, product)
                         .flatMap(d -> d.getCreditEntriesSet().stream().filter(ce -> !ce.isAnnulled())),
                 treasuryEvent.getCreditEntriesSet().stream().filter(ce -> ce.getProduct() == product)
                         .filter(ce -> !ce.isAnnulled()));
@@ -426,8 +434,9 @@ public class CreditEntry extends CreditEntry_Base {
             throw new TreasuryDomainException("error.CreditEntry.debitEntry.required");
         }
 
-        CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, product, vat, unitAmount,
-                description, quantity, entryDateTime, debitEntry, null, creditExemptionsMap);
+        CreditEntry cr =
+                new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, product, vat, unitAmount, description,
+                        quantity, entryDateTime, debitEntry, null, creditExemptionsMap);
         return cr;
     }
 
@@ -452,8 +461,9 @@ public class CreditEntry extends CreditEntry_Base {
             throw new TreasuryDomainException("error.CreditEntry.createFromExemption.requires.treasuryExemption");
         }
 
-        final CreditEntry cr = new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, debitEntry.getProduct(),
-                debitEntry.getVat(), unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption, null);
+        final CreditEntry cr =
+                new CreditEntry(debitEntry.getFinantialEntity(), finantialDocument, debitEntry.getProduct(), debitEntry.getVat(),
+                        unitAmount, description, quantity, entryDateTime, debitEntry, treasuryExemption, null);
 
         return cr;
     }
