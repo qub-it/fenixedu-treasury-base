@@ -55,12 +55,7 @@ package org.fenixedu.treasury.domain.event;
 import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundleI18N;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,6 +83,7 @@ import com.google.common.collect.Sets;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.core.AbstractDomainObject;
 
 public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
@@ -161,8 +157,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     // Old name: getAmountToPay
     public BigDecimal getAmountWithVatToPay() {
-        final BigDecimal result = DebitEntry.findActive(this).map(d -> d.getAmountWithVat())
-                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmountWithVat());
+        final BigDecimal result =
+                DebitEntry.findActive(this).map(d -> d.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        .subtract(getCreditAmountWithVat());
 
         return result;
     }
@@ -204,8 +201,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
             throw new IllegalArgumentException("product argument required");
         }
 
-        final BigDecimal result = DebitEntry.findActive(this, product).map(d -> d.getAmountWithVat())
-                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditAmountWithVat(product));
+        final BigDecimal result =
+                DebitEntry.findActive(this, product).map(d -> d.getAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        .subtract(getCreditAmountWithVat(product));
 
         return result;
     }
@@ -216,8 +214,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     // If the caller of this method does not want to deal with interests, then he
     // must skip it from the resulting map
     public Map<Product, BigDecimal> getAmountWithVatToPayByProductMap() {
-        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct,
-                d -> d.getAmountWithVat().subtract(d.getTotalCreditedAmountWithVat()), (v1, v2) -> v1.add(v2)));
+        return DebitEntry.findActive(this).collect(
+                Collectors.toMap(DebitEntry::getProduct, d -> d.getAmountWithVat().subtract(d.getTotalCreditedAmountWithVat()),
+                        (v1, v2) -> v1.add(v2)));
     }
 
     /*
@@ -269,8 +268,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
             throw new IllegalArgumentException("product argument required");
         }
 
-        final BigDecimal result = DebitEntry.findActive(this, product).map(d -> d.getNetAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add).subtract(getCreditNetAmount(product));
+        final BigDecimal result =
+                DebitEntry.findActive(this, product).map(d -> d.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        .subtract(getCreditNetAmount(product));
 
         return result;
     }
@@ -281,8 +281,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     // If the caller of this method does not want to deal with interests, then he
     // must skip it from the resulting map
     public Map<Product, BigDecimal> getNetAmountToPayByProductMap() {
-        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct,
-                d -> d.getNetAmount().subtract(d.getTotalCreditedNetAmount()), (v1, v2) -> v1.add(v2)));
+        return DebitEntry.findActive(this).collect(
+                Collectors.toMap(DebitEntry::getProduct, d -> d.getNetAmount().subtract(d.getTotalCreditedNetAmount()),
+                        (v1, v2) -> v1.add(v2)));
     }
 
     public BigDecimal getInterestsAmountToPay() {
@@ -415,9 +416,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
         return CreditEntry.findActive(this).filter(c -> c.getDebitEntry() != null)
                 .filter(c -> c.getDebitEntry().getProduct() == interestProduct)
-                .filter(c -> product == null || (c.getDebitEntry().getDebitEntry() != null
-                        && c.getDebitEntry().getDebitEntry().getProduct() == product))
-                .map(c -> c.getAmountWithVat()).reduce((a, b) -> a.add(b)).orElse(BigDecimal.ZERO);
+                .filter(c -> product == null || (c.getDebitEntry().getDebitEntry() != null && c.getDebitEntry().getDebitEntry()
+                        .getProduct() == product)).map(c -> c.getAmountWithVat()).reduce((a, b) -> a.add(b))
+                .orElse(BigDecimal.ZERO);
     }
 
     public BigDecimal getPayedAmount() {
@@ -445,8 +446,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     public BigDecimal getNetExemptedAmount() {
-        BigDecimal result =
-                DebitEntry.findActive(this).map(l -> l.getNetExemptedAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal result = DebitEntry.findActive(this).map(l -> l.getAvailableNetExemptedAmountForCredit())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         result = result.add(CreditEntry.findActive(this).filter(l -> l.isFromExemption()).map(l -> l.getNetAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
@@ -456,7 +457,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     public BigDecimal getNetExemptedAmount(Product product) {
         BigDecimal result = DebitEntry.findActive(this, product) //
-                .map(l -> l.getNetExemptedAmount()) //
+                .map(l -> l.getAvailableNetExemptedAmountForCredit()) //
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         result = result.add(CreditEntry.findActive(this, product) //
@@ -473,24 +474,49 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     // If the caller of this method does not want to deal with interests, then he
     // must skip it from the resulting map
     public Map<Product, BigDecimal> getNetExemptedAmountByProductMap() {
-        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct,
-                d -> d.getNetExemptedAmount().add(d.getCreditEntriesSet().stream().filter(c -> !c.isAnnulled())
-                        .filter(c -> c.isFromExemption()).map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add)),
-                (v1, v2) -> v1.add(v2)));
+
+        // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+        //
+        // Using DebitEntry::getNetExemptedAmount does not give accurate result, because
+        // TreasuryExemptions can be credited in their exempted amount
+        //
+        // The method DebitEntry::getAvailableNetExemptedAmountForCredit give an accurate value
+        // of how much DebitEntry has been exempted
+
+        return DebitEntry.findActive(this).collect(Collectors.toMap(DebitEntry::getProduct, d -> {
+            BigDecimal exemptedAmountByCreditEntries =
+                    d.getCreditEntriesSet().stream().filter(c -> !c.isAnnulled()).filter(c -> c.isFromExemption())
+                            .map(c -> c.getNetAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            return d.getAvailableNetExemptedAmountForCredit().add(exemptedAmountByCreditEntries);
+        }, (v1, v2) -> v1.add(v2)));
     }
 
     public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap() {
-        return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream())
-                .collect(Collectors.toMap(te -> te.getTreasuryExemptionType(), te -> te.getNetExemptedAmount(), BigDecimal::add,
-                        () -> new TreeMap<TreasuryExemptionType, BigDecimal>(
-                                (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId()))));
+        // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+        //
+        // TreasuryExemption#getNetExemptedAmount does not give accurate exempted amount, because the
+        // exemption might be credited in the exemption
+        //
+        // The correct is TreasuryExemption#getAvailableNetExemptedAmountForCredit
+
+        return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream()).collect(
+                Collectors.toMap(te -> te.getTreasuryExemptionType(), te -> te.getAvailableNetExemptedAmountForCredit(),
+                        BigDecimal::add, () -> new TreeMap<>(Comparator.comparing(AbstractDomainObject::getExternalId))));
     }
 
     public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap(Product product) {
-        return DebitEntry.findActive(this, product).flatMap(d -> d.getTreasuryExemptionsSet().stream())
-                .collect(Collectors.toMap(TreasuryExemption::getTreasuryExemptionType, TreasuryExemption::getNetExemptedAmount,
-                        BigDecimal::add, () -> new TreeMap<TreasuryExemptionType, BigDecimal>(
-                                (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId()))));
+        // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+        //
+        // TreasuryExemption#getNetExemptedAmount does not give accurate exempted amount, because the
+        // exemption might be credited in the exemption
+        //
+        // The correct is TreasuryExemption#getAvailableNetExemptedAmountForCredit
+
+        return DebitEntry.findActive(this, product).flatMap(d -> d.getTreasuryExemptionsSet().stream()).collect(
+                Collectors.toMap(TreasuryExemption::getTreasuryExemptionType,
+                        TreasuryExemption::getAvailableNetExemptedAmountForCredit, BigDecimal::add,
+                        () -> new TreeMap<>(Comparator.comparing(AbstractDomainObject::getExternalId))));
     }
 
     public Map<String, String> getPropertiesMap() {
@@ -533,7 +559,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
 
     /**
      * This method is used to find a tariff, which might be academic or other, in which the types are not known by this module
-     * 
+     *
      * @param product
      * @param when
      * @return
@@ -560,8 +586,8 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         while (DebitEntry.findActive(this).map(DebitEntry.class::cast).count() > 0) {
             final DebitEntry debitEntry = DebitEntry.findActive(this).map(DebitEntry.class::cast).findFirst().get();
 
-            if (debitEntry.isProcessedInClosedDebitNote()
-                    && TreasuryConstants.isEqual(debitEntry.getAvailableAmountWithVatForCredit(), BigDecimal.ZERO)) {
+            if (debitEntry.isProcessedInClosedDebitNote() && TreasuryConstants.isEqual(
+                    debitEntry.getAvailableAmountWithVatForCredit(), BigDecimal.ZERO)) {
                 debitEntry.annulOnEvent();
                 continue;
             }
@@ -570,8 +596,9 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                 continue;
             }
 
-            DocumentNumberSeries defaultDocumentNumberSeries = DocumentNumberSeries
-                    .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), debitEntry.getFinantialEntity());
+            DocumentNumberSeries defaultDocumentNumberSeries =
+                    DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(),
+                            debitEntry.getFinantialEntity());
             if (!debitEntry.isProcessedInDebitNote()) {
                 final DebitNote debitNote = DebitNote.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(), null,
                         defaultDocumentNumberSeries, new DateTime(), new LocalDate(), null, Collections.emptyMap(), null, null);
@@ -591,9 +618,10 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
                     }
 
                     if (!interestDebitEntry.isProcessedInDebitNote()) {
-                        final DebitNote debitNoteForUnprocessedEntries = DebitNote.create(debitEntry.getFinantialEntity(),
-                                debitEntry.getDebtAccount(), null, defaultDocumentNumberSeries, new DateTime(), new LocalDate(),
-                                null, Collections.emptyMap(), null, null);
+                        final DebitNote debitNoteForUnprocessedEntries =
+                                DebitNote.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(), null,
+                                        defaultDocumentNumberSeries, new DateTime(), new LocalDate(), null,
+                                        Collections.emptyMap(), null, null);
 
                         interestDebitEntry.setFinantialDocument(debitNoteForUnprocessedEntries);
                     }
@@ -647,7 +675,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     /*
-     * Returns a description of the business object connected to 
+     * Returns a description of the business object connected to
      * this treasury event. For example academic registration, candidacy
      * or requisition current state
      */
@@ -672,11 +700,11 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     // @formatter: off
+
     /************
      * SERVICES *
      ************/
     // @formatter: on
-
     public static Stream<? extends TreasuryEvent> findAll() {
         return FenixFramework.getDomainRoot().getTreasuryEventsSet().stream();
     }

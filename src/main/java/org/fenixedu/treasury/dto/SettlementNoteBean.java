@@ -239,8 +239,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
              * Include only open installment, because the installment settlement entries are created
              * for installment entries of open debit entries.
              */
-            sortedInstallments.addAll(paymentRequest.getInstallmentsSet().stream()
-                    .filter(i -> i.getPaymentPlan().getState().isOpen()).collect(Collectors.toSet()));
+            sortedInstallments.addAll(
+                    paymentRequest.getInstallmentsSet().stream().filter(i -> i.getPaymentPlan().getState().isOpen())
+                            .collect(Collectors.toSet()));
 
             for (Installment installment : sortedInstallments) {
                 InstallmentPaymenPlanBean installmentBean = new InstallmentPaymenPlanBean(installment);
@@ -261,11 +262,11 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
                 continue;
             }
 
-            if (TreasuryConstants.isPositive(amountToDistribute)
-                    && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute, entryBean.getSettledAmount())) {
+            if (TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterOrEqualThan(amountToDistribute,
+                    entryBean.getSettledAmount())) {
                 amountToDistribute = amountToDistribute.subtract(entryBean.getSettledAmount());
-            } else if (TreasuryConstants.isPositive(amountToDistribute)
-                    && TreasuryConstants.isGreaterThan(entryBean.getSettledAmount(), amountToDistribute)) {
+            } else if (TreasuryConstants.isPositive(amountToDistribute) && TreasuryConstants.isGreaterThan(
+                    entryBean.getSettledAmount(), amountToDistribute)) {
                 entryBean.setSettledAmount(amountToDistribute);
                 amountToDistribute = BigDecimal.ZERO;
             } else {
@@ -381,17 +382,15 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         init();
 
         this.debtAccount = debtAccount;
-        this.finantialEntity = FinantialEntity.findAll()
-                .filter(fe -> TreasuryAccessControlAPI
-                        .isFrontOfficeMember(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername(), fe))
+        this.finantialEntity = FinantialEntity.findAll().filter(fe -> TreasuryAccessControlAPI.isFrontOfficeMember(
+                        TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername(), fe))
                 .filter(fe -> fe.getFinantialInstitution() == debtAccount.getFinantialInstitution()).findFirst().orElse(null);
 
         this.reimbursementNote = reimbursementNote;
 
         List<InvoiceEntry> pendingInvoiceEntriesList = debtAccount.getPendingInvoiceEntriesSet().stream() //
-                .filter(ie -> !excludeTreasuryDebtProcessBlockingPayment
-                        || !TreasuryDebtProcessMainService.isBlockingPayment(ie, this.invoiceEntriesPaymentBlockingContext))
-                .filter(ie -> !ie.hasPreparingSettlementEntries()) //
+                .filter(ie -> !excludeTreasuryDebtProcessBlockingPayment || !TreasuryDebtProcessMainService.isBlockingPayment(ie,
+                        this.invoiceEntriesPaymentBlockingContext)).filter(ie -> !ie.hasPreparingSettlementEntries()) //
                 .sorted(InvoiceEntry.COMPARE_BY_DUE_DATE) //
                 .collect(Collectors.<InvoiceEntry> toList());
 
@@ -399,8 +398,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             if (invoiceEntry instanceof DebitEntry) {
                 final DebitEntry debitEntry = (DebitEntry) invoiceEntry;
 
-                if (excludeDebtsForPayorAccount && debitEntry.getFinantialDocument() != null
-                        && ((Invoice) debitEntry.getFinantialDocument()).isForPayorDebtAccount()) {
+                if (excludeDebtsForPayorAccount && debitEntry.getFinantialDocument() != null && ((Invoice) debitEntry.getFinantialDocument()).isForPayorDebtAccount()) {
                     continue;
                 }
 
@@ -408,8 +406,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             } else {
                 final CreditEntry creditEntry = (CreditEntry) invoiceEntry;
 
-                if (excludeDebtsForPayorAccount && creditEntry.getFinantialDocument() != null
-                        && ((Invoice) creditEntry.getFinantialDocument()).isForPayorDebtAccount()) {
+                if (excludeDebtsForPayorAccount && creditEntry.getFinantialDocument() != null && ((Invoice) creditEntry.getFinantialDocument()).isForPayorDebtAccount()) {
                     continue;
                 }
 
@@ -417,11 +414,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             }
         }
 
-        Set<Installment> installments = debtAccount.getActivePaymentPlansSet().stream()
-                .flatMap(plan -> plan.getSortedOpenInstallments().stream())
-                .filter(i -> !excludeTreasuryDebtProcessBlockingPayment
-                        || !TreasuryDebtProcessMainService.isBlockingPayment(i, this.invoiceEntriesPaymentBlockingContext))
-                .collect(Collectors.toSet());
+        Set<Installment> installments =
+                debtAccount.getActivePaymentPlansSet().stream().flatMap(plan -> plan.getSortedOpenInstallments().stream())
+                        .filter(i -> !excludeTreasuryDebtProcessBlockingPayment || !TreasuryDebtProcessMainService.isBlockingPayment(
+                                i, this.invoiceEntriesPaymentBlockingContext)).collect(Collectors.toSet());
 
         for (Installment installment : installments) {
             debitEntries.add(new InstallmentPaymenPlanBean(installment));
@@ -430,13 +426,15 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         fillDocumentNumberSeriesOptionsList(debtAccount, reimbursementNote);
 
         if (this.finantialEntity != null) {
-            this.docNumSeries = DocumentNumberSeries.findUniqueDefaultSeries(reimbursementNote ? FinantialDocumentType
-                    .findForReimbursementNote() : FinantialDocumentType.findForSettlementNote(), this.finantialEntity);
+            this.docNumSeries = DocumentNumberSeries.findUniqueDefaultSeries(
+                    reimbursementNote ? FinantialDocumentType.findForReimbursementNote() : FinantialDocumentType.findForSettlementNote(),
+                    this.finantialEntity);
         }
 
-        this.settlementNoteStateUrls = Arrays.asList(
-                CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote, CHOOSE_INVOICE_ENTRIES_URL,
-                CALCULATE_INTEREST_URL, CREATE_DEBIT_NOTE_URL, INSERT_PAYMENT_URL, SUMMARY_URL);
+        this.settlementNoteStateUrls =
+                Arrays.asList(CHOOSE_INVOICE_ENTRIES_URL + debtAccount.getExternalId() + "/" + reimbursementNote,
+                        CHOOSE_INVOICE_ENTRIES_URL, CALCULATE_INTEREST_URL, CREATE_DEBIT_NOTE_URL, INSERT_PAYMENT_URL,
+                        SUMMARY_URL);
 
         this.advancePayment = false;
         this.finantialTransactionReferenceYear = String.valueOf((new LocalDate()).getYear());
@@ -500,10 +498,10 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     public Optional<SettlementNote> getLastPaidAdvancedCreditSettlementNote() {
         final Optional<SettlementNote> lastAdvancedCreditSettlementNote =
                 getCreditEntries().stream().filter(ce -> ce.isIncluded())
-                        .filter(ce -> ce.getCreditEntry().getFinantialDocument() != null
-                                && ((CreditNote) ce.getCreditEntry().getFinantialDocument()).isAdvancePayment())
-                        .map(ce -> ce.getCreditEntry().getFinantialDocument()).map(AdvancedPaymentCreditNote.class::cast)
-                        .filter(c -> c.getAdvancedPaymentSettlementNote() != null).map(c -> c.getAdvancedPaymentSettlementNote())
+                        .filter(ce -> ce.getCreditEntry().getFinantialDocument() != null && ((CreditNote) ce.getCreditEntry()
+                                .getFinantialDocument()).isAdvancePayment()).map(ce -> ce.getCreditEntry().getFinantialDocument())
+                        .map(AdvancedPaymentCreditNote.class::cast).filter(c -> c.getAdvancedPaymentSettlementNote() != null)
+                        .map(c -> c.getAdvancedPaymentSettlementNote())
                         .sorted(Comparator.comparing(SettlementNote::getPaymentDate).reversed()).findFirst();
 
         return lastAdvancedCreditSettlementNote;
@@ -619,8 +617,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     private void fillDocumentNumberSeriesOptionsList(DebtAccount debtAccount, boolean reimbursementNote) {
         if (this.finantialEntity != null) {
-            FinantialDocumentType finantialDocumentType = (reimbursementNote) ? FinantialDocumentType
-                    .findForReimbursementNote() : FinantialDocumentType.findForSettlementNote();
+            FinantialDocumentType finantialDocumentType =
+                    (reimbursementNote) ? FinantialDocumentType.findForReimbursementNote() : FinantialDocumentType.findForSettlementNote();
 
             Stream<DocumentNumberSeries> availableSeries =
                     DocumentNumberSeries.findActiveAndSelectableSeries(finantialDocumentType, this.finantialEntity)
@@ -677,6 +675,18 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
         return debitEntries.stream().filter(entry -> clazz.isAssignableFrom(entry.getClass())).map(obj -> clazz.cast(obj))
                 .collect(Collectors.toList());
+    }
+
+    public ISettlementInvoiceEntryBean getInvoiceEntryBean(InvoiceEntry invoiceEntry) {
+        if (invoiceEntry.isDebitNoteEntry()) {
+            return getDebitEntries().stream().filter(e -> e.isForDebitEntry() && e.getInvoiceEntry() == invoiceEntry).findFirst()
+                    .orElse(null);
+        } else if (invoiceEntry.isCreditNoteEntry()) {
+            return getCreditEntries().stream().filter(e -> e.isForCreditEntry() && e.getInvoiceEntry() == invoiceEntry)
+                    .findFirst().orElse(null);
+        }
+
+        return null;
     }
 
     public List<ISettlementInvoiceEntryBean> getDebitEntries() {
@@ -858,9 +868,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public boolean hasEntriesWithoutDocument() {
-        return getDebitEntriesByType(SettlementDebitEntryBean.class).stream()
-                .anyMatch(deb -> deb.isIncluded() && deb.getDebitEntry().getFinantialDocument() == null)
-                || virtualDebitEntries.stream().anyMatch(deb -> deb.isIncluded());
+        return getDebitEntriesByType(SettlementDebitEntryBean.class).stream().anyMatch(
+                deb -> deb.isIncluded() && deb.getDebitEntry().getFinantialDocument() == null) || virtualDebitEntries.stream()
+                .anyMatch(deb -> deb.isIncluded());
     }
 
     public String getFinantialTransactionReference() {
