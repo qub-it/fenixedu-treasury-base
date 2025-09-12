@@ -1,3 +1,4 @@
+14.4.0 (12-09-2025)
 - Refactor: Replace settlement note portuguese term [#qubIT-Fenix-7280]
 - Bug Fix: Correct the splitted credit unit amount [#qubIT-Fenix-7442]
 - Refactor: Add utility methods to calculate exemptions amount [#qubIT-Fenix-7442]
