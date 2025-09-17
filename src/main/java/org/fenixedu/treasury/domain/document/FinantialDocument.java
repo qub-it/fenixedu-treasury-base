@@ -53,11 +53,7 @@
 package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -185,8 +181,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             throw new TreasuryDomainException("error.FinantialDocument.documentDate.cannot.be.after.now");
         }
 
-        if (!Strings.isNullOrEmpty(getOriginDocumentNumber())
-                && !TreasuryConstants.isOriginDocumentNumberValid(getOriginDocumentNumber())) {
+        if (!Strings.isNullOrEmpty(getOriginDocumentNumber()) && !TreasuryConstants.isOriginDocumentNumberValid(
+                getOriginDocumentNumber())) {
             throw new TreasuryDomainException("error.FinantialDocument.originDocumentNumber.invalid");
         }
 
@@ -304,11 +300,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
 
         }
 
-        /* 
+        /*
          * 2017-02-03
          * Close date will be the certification date and not document date. Document date is used
          * when document is created.
-         * 
+         *
          */
         if (getCloseDate() == null) {
             setCloseDate(new DateTime());
@@ -337,6 +333,22 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
 
         if (getInstitutionForExportation() == null) {
             this.setInstitutionForExportation(this.getDocumentNumberSeries().getSeries().getFinantialInstitution());
+        }
+
+        String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        if (StringUtils.isNotEmpty(loggedUsername)) {
+
+            // ANIL 2025-09-16 (#qubIT-Fenix-7472)
+            //
+            // Sometimes is necessary to mark document to export but to make available for users, to need a log
+            // when document was marked to export
+
+            String when = new DateTime().toString("yyyyMMddHHmmss");
+            Map propertiesMap = new HashMap(TreasuryConstants.propertiesJsonToMap(getPropertiesJsonMap()));
+
+            propertiesMap.put("markDocumentToExport-responsible-" + when, loggedUsername);
+
+            setPropertiesJsonMap(TreasuryConstants.propertiesMapToJson(propertiesMap));
         }
 
         if (getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration().getActive()) {
@@ -508,8 +520,9 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
                 return "";
             }
 
-            final String[] lines = lastERPExportOperation.get().getErrorLog()
-                    .replaceAll("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z", "").split("\n");
+            final String[] lines =
+                    lastERPExportOperation.get().getErrorLog().replaceAll("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z", "")
+                            .split("\n");
 
             if (lines.length > 0) {
                 return lines[0].trim();
