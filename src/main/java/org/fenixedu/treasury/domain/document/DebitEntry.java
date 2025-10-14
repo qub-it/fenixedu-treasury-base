@@ -493,6 +493,10 @@ public class DebitEntry extends DebitEntry_Base {
         }
 
         if (isProcessedInClosedDebitNote()) {
+            if (Boolean.TRUE.equals(getDebtAccount().getFinantialInstitution().getSupportCreditTreasuryExemptions())) {
+                throw new TreasuryDomainException("error.DebitEntry.exemption.not.possible.due.to.closed.debit.note");
+            }
+
             BigDecimal netExemptedAmount = treasuryExemption.getNetExemptedAmount();
 
             DateTime now = new DateTime();
@@ -509,7 +513,6 @@ public class DebitEntry extends DebitEntry_Base {
             creditEntryFromExemption.getFinantialDocument().setDocumentObservations(
                     String.format("[%s] - %s", treasuryExemption.getTreasuryExemptionType().getName().getContent(),
                             treasuryExemption.getReason()));
-
         } else {
             BigDecimal netExemptedAmount = treasuryExemption.getNetExemptedAmount();
             setNetExemptedAmount(getNetExemptedAmount().add(netExemptedAmount));
