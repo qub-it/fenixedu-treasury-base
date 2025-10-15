@@ -1,4 +1,4 @@
-- Bug Fix: Hinder creation of exemptions after debit entry is closed in debit note, if the support for exemptions credit is active [#qubIT-Fenix-7559]
+- Bug Fix: Prevent the creation of exemptions after debit entry is closed in debit note, if the support for exemptions credit is active [#qubIT-Fenix-7559]
 
 14.4.1 (17-09-2025)
 - Improvement: Save log in finantial document, when document is marked to export [#qubIT-Fenix-7472]
