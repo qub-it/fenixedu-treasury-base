@@ -545,6 +545,13 @@ public class DebitEntry extends DebitEntry_Base {
 
         }
 
+        // ANIL #qubIT-Fenix-7577 (2025-10-16)
+        //
+        // The reference codes should be annulled because the amount declared is
+        // not equal and can lead to excess payment credit amount
+
+        annulAllActiveSibsPaymentRequests();
+
         checkRules();
 
         return true;
