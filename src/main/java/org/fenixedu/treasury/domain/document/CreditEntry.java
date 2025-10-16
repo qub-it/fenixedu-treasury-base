@@ -245,8 +245,12 @@ public class CreditEntry extends CreditEntry_Base {
                 .collect(Collectors.toMap(e -> e.getKey(), e -> Currency.getValueWithScale(
                         TreasuryConstants.defaultScale(e.getValue()).multiply(ratioBetweenOldAndNewAmounts))));
 
-        Map<TreasuryExemption, BigDecimal> exemptionsMapForNewCreditEntry = getCreditedExemptionsMap().entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey(),
+        Map<TreasuryExemption, BigDecimal> exemptionsMapForNewCreditEntry =
+                getCreditedExemptionsMap().entrySet().stream().filter(e -> {
+                    BigDecimal newCreditAmount = e.getValue().subtract(exemptionsMapForCurrentCreditEntry.get(e.getKey()));
+
+                    return !TreasuryConstants.isZero(newCreditAmount);
+                }).collect(Collectors.toMap(e -> e.getKey(),
                         e -> e.getValue().subtract(exemptionsMapForCurrentCreditEntry.get(e.getKey()))));
 
         // ANIL 2025-09-10 (#qubIT-Fenix-7457)

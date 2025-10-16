@@ -1,3 +1,5 @@
+- Bug Fix: Fix the split of credits which envolve credits over exemptions, in which one of the splitted amounts are zero [#qubIT-Fenix-7643]
+
 14.4.2 (15-10-2025)
 - Bug Fix: Prevent the creation of exemptions after debit entry is closed in debit note, if the support for exemptions credit is active [#qubIT-Fenix-7559]
 
