@@ -422,6 +422,10 @@ public class PaymentPlan extends PaymentPlan_Base {
         return FenixFramework.getDomainRoot().getPaymentPlansSet().stream();
     }
 
+    public static Stream<PaymentPlan> findOpen() {
+        return findAll().filter(p -> p.getState() != null && p.getState().isOpen());
+    }
+
     public static Stream<PaymentPlan> findByPaymentPlanId(String paymentPlanId) {
         return findAll().filter(p -> paymentPlanId.equals(p.getPaymentPlanId()));
     }
