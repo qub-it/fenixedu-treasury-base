@@ -507,10 +507,16 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 if (!forwardPayment.isInRequestedState()) {
                     // Most probably this forward payment was processed in the webhook
                     // Nothing to process, just return
+                    log.markAsDuplicatedTransaction();
                     return;
                 }
 
                 if (bean.isInPayedState()) {
+                    if (PaymentTransaction.isTransactionDuplicate(bean.getTransactionId())) {
+                        log.markAsDuplicatedTransaction();
+                        return;
+                    }
+
                     forwardPayment.advanceToPaidState(bean.getStatusCode(), bean.getPayedAmount(), bean.getTransactionDate(),
                             bean.getTransactionId(), justification);
                 } else if (bean.isInRejectedState()) {

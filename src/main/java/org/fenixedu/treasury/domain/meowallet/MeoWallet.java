@@ -1166,6 +1166,7 @@ public class MeoWallet extends MeoWallet_Base
             log.setTransactionWithPayment(forwardPayment.getState().isPayed());
             log.setOperationCode("processDuplicated");
             log.setOperationSuccess(true);
+            log.markAsDuplicatedTransaction();
             return;
         }
 

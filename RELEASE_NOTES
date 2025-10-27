@@ -1,3 +1,5 @@
+- Improvement: Mark forward payment transaction notification as duplicated, if the forward payment is already processed [#qubIT-Fenix-7685]
+
 14.5.0 (20-10-2025)
 - Improvement: Annul active payment reference codes, when an exemption is created [#qubIT-Fenix-7577]
 - Refactor: Method to read all open payment plans [#qubIT-Fenix-7649]
