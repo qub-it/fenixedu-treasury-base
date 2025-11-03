@@ -246,14 +246,18 @@ public class PaymentPlan extends PaymentPlan_Base {
                         .getCustomer() : entry.getDebtAccount().getCustomer()).collect(Collectors.toSet());
     }
 
-    private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result) {
+    // ANIL 2025-11-03 (#qubIT-Fenix-7718)
+    // Debit entries might be associated with payor customer, so the payment plan
+    // emolument and interests must be associated with payor customer
+    private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result, DebtAccount payorDebtAccount) {
         DocumentNumberSeries defaultDocumentNumberSeries =
                 DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(),
                         paymentPlanBean.getFinantialEntity());
 
-        return DebitNote.create(paymentPlanBean.getFinantialEntity(), paymentPlanBean.getDebtAccount(), null,
-                defaultDocumentNumberSeries, result.getCreationDate().toDateTimeAtStartOfDay(), result.getCreationDate(), null,
-                Collections.emptyMap(), null, null);
+        return DebitNote.create(paymentPlanBean.getFinantialEntity(), paymentPlanBean.getDebtAccount(),
+                payorDebtAccount != paymentPlanBean.getDebtAccount() ? payorDebtAccount : null, defaultDocumentNumberSeries,
+                result.getCreationDate().toDateTimeAtStartOfDay(), result.getCreationDate(), null, Collections.emptyMap(), null,
+                null);
     }
 
     // ANIL 2025-05-21 (#qubIT-Fenix-6963)
@@ -267,10 +271,17 @@ public class PaymentPlan extends PaymentPlan_Base {
     }
 
     private Map<ISettlementInvoiceEntryBean, DebitEntry> createDebitEntriesMap(PaymentPlanBean paymentPlanBean) {
+        if (paymentPlanBean.getPayorCustomers().size() != 1) {
+            throw new IllegalStateException("error.PaymentPlan.createDebitEntriesMap.payorCustomers.not.unique");
+        }
+
         Map<ISettlementInvoiceEntryBean, DebitEntry> result = new HashMap<ISettlementInvoiceEntryBean, DebitEntry>();
         DebtAccount debtAccount = paymentPlanBean.getDebtAccount();
         LocalDate creationDate = paymentPlanBean.getCreationDate();
         LocalDate endDate = paymentPlanBean.getEndDate();
+        Customer payorCustomer = paymentPlanBean.getPayorCustomers().iterator().next();
+        DebtAccount payorDebtAccount =
+                payorCustomer.getDebtAccountFor(paymentPlanBean.getDebtAccount().getFinantialInstitution());
 
         //DebitEntries (DebitEntries)
         paymentPlanBean.getSettlementInvoiceEntryBeans().stream().filter(pendingBean -> pendingBean.isForDebitEntry())
@@ -283,7 +294,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .forEach(bean -> {
                     PendingDebitEntryBean debitEntryBean = (PendingDebitEntryBean) bean;
 
-                    DebitNote debitNote = createDebitNote(paymentPlanBean, this);
+                    DebitNote debitNote = createDebitNote(paymentPlanBean, this, payorDebtAccount);
                     Product product = debitEntryBean.getProduct();
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
@@ -299,7 +310,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                 .forEach(bean -> {
                     SettlementInterestEntryBean interestEntryBean = (SettlementInterestEntryBean) bean;
 
-                    DebitNote debitNote = createDebitNote(paymentPlanBean, this);
+                    DebitNote debitNote = createDebitNote(paymentPlanBean, this, payorDebtAccount);
                     Product product = TreasurySettings.getInstance().getInterestProduct();
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);

@@ -56,9 +56,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -102,6 +104,14 @@ public class PaymentPlanBean {
         updateDebits();
     }
 
+    public Set<Customer> getPayorCustomers() {
+        return this.settlementInvoiceEntryBeans.stream()
+                .filter(s -> s.getPaymentCustomer() != null)
+                .flatMap(s -> s.getPaymentCustomer().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
     public void updateFinantialEntity(FinantialEntity finantialEntity) {
         if (this.finantialEntity != finantialEntity) {
             this.settlementInvoiceEntryBeans = new HashSet<ISettlementInvoiceEntryBean>();
@@ -118,13 +128,12 @@ public class PaymentPlanBean {
         this.allDebits = this.debtAccount.getPendingInvoiceEntriesSet().stream()
                 .filter(f -> f.isDebitNoteEntry() && !((DebitEntry) f).isInOpenPaymentPlan()).map((debitEntry) -> {
                     SettlementDebitEntryBean debitEntryBean = new SettlementDebitEntryBean((DebitEntry) debitEntry);
-                    debitEntryBean
-                            .setSettledAmount(((DebitEntry) debitEntry).getOpenAmountWithInterestsAtDate(this.creationDate));
+                    debitEntryBean.setSettledAmount(
+                            ((DebitEntry) debitEntry).getOpenAmountWithInterestsAtDate(this.creationDate));
                     return debitEntryBean;
                 }) //
-                .filter(f -> this.finantialEntity == null || !f.isForDebitEntry()
-                        || f.getInvoiceEntry().getFinantialEntity() == null
-                        || f.getInvoiceEntry().getFinantialEntity() == this.finantialEntity) //
+                .filter(f -> this.finantialEntity == null || !f.isForDebitEntry() || f.getInvoiceEntry()
+                        .getFinantialEntity() == null || f.getInvoiceEntry().getFinantialEntity() == this.finantialEntity) //
                 .collect(Collectors.toList());
     }
 
