@@ -2,16 +2,14 @@ package org.fenixedu.treasury.domain.tariff;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
+import org.fenixedu.treasury.domain.document.CreditEntry;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.dto.InterestRateBean;
@@ -43,14 +41,15 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
 
     protected void checkRules() {
         super.checkRules();
-        
-        if(findAll().count() > 1) {
+
+        if (findAll().count() > 1) {
             throw new TreasuryDomainException("error.GlobalInterestRateType.already.exists");
         }
     }
 
     @Override
-    public List<InterestRateBean> calculateInterests(DebitEntry debitEntry, LocalDate paymentDate, boolean withAllInterestValues) {
+    public List<InterestRateBean> calculateInterests(DebitEntry debitEntry, LocalDate paymentDate,
+            boolean withAllInterestValues) {
         return calculateInterestAmount(debitEntry, withAllInterestValues, calculateEvents(debitEntry, paymentDate));
     }
 
@@ -78,8 +77,8 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
             BigDecimal partialInterestAmount = event.interestRate.multiply(amountPerDay).multiply(numberOfDays);
 
             result.addDetail(partialInterestAmount, key, eventDate.minusDays(1), amountPerDay, event.amountToPay,
-                    TreasuryConstants.defaultScale(event.interestRate).multiply(TreasuryConstants.HUNDRED_PERCENT).setScale(4,
-                            RoundingMode.HALF_UP));
+                    TreasuryConstants.defaultScale(event.interestRate).multiply(TreasuryConstants.HUNDRED_PERCENT)
+                            .setScale(4, RoundingMode.HALF_UP));
 
             totalInterestAmount = totalInterestAmount.add(partialInterestAmount);
             totalOfDays += numberOfDays.intValue();
@@ -149,8 +148,8 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         getInterestRateEntriesSet().stream().filter(r -> !r.getStartDate().isBefore(firstDayToChargeInterests))
                 .filter(r -> !r.getStartDate().isAfter(nextDayOfInterestsCharge)).forEach(r -> {
                     LocalDate eventDate = r.getStartDate();
-                    result.putIfAbsent(eventDate, new InterestCalculationEvent(
-                            amountInDebtAtDay(debitEntry, paymentsMap, eventDate), interestRateValue(eventDate)));
+                    result.putIfAbsent(eventDate, new InterestCalculationEvent(amountInDebtAtDay(debitEntry, paymentsMap, eventDate),
+                            interestRateValue(eventDate)));
                 });
 
         return result;
@@ -169,21 +168,39 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
             DateTime ignorePaymentsAfterDate) {
         NavigableMap<LocalDate, BigDecimal> result = new TreeMap<>();
 
+        // ANIL 2025-11-03 (#qubIT-Fenix-7720)
+        // The debit entry amount to calculate interest must not
+        // take into account the amount that was exempted by credit entry
+
+        Set<CreditEntry> creditEntriesByExemption =
+                debitEntry.getTreasuryExemptionsSet().stream().filter(te -> te.getCreditEntry() != null)
+                        .filter(te -> !te.getCreditEntry().isAnnulled()).map(te -> te.getCreditEntry())
+                        .collect(Collectors.toSet());
+
         debitEntry.getSettlementEntriesSet().stream() //
                 .filter(s -> !s.isAnnulled()) //
-                .forEach(s -> {
-                    if (ignorePaymentsAfterDate != null
-                            && s.getSettlementNote().getPaymentDate().isAfter(ignorePaymentsAfterDate)) {
+                .forEach(se -> {
+                    if (ignorePaymentsAfterDate != null && se.getSettlementNote().getPaymentDate()
+                            .isAfter(ignorePaymentsAfterDate)) {
                         return;
                     }
 
-                    LocalDate settlementPaymentDate = s.getSettlementNote().getPaymentDate().toLocalDate();
-                    result.putIfAbsent(settlementPaymentDate, BigDecimal.ZERO);
-                    result.put(settlementPaymentDate, result.get(settlementPaymentDate).add(s.getAmount()));
+                    // ANIL 2025-11-03 (#qubIT-Fenix-7720)
+                    BigDecimal amountToDiscountFromCreditEntriesByExemption =
+                            se.getSettlementNote().getSettlemetEntriesSet().stream()
+                                    .filter(sce -> creditEntriesByExemption.contains(sce.getInvoiceEntry()))
+                                    .map(sce -> sce.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    LocalDate settlementPaymentDate = se.getSettlementNote().getPaymentDate().toLocalDate();
+                    BigDecimal settledAmount =
+                            se.getAmount().subtract(amountToDiscountFromCreditEntriesByExemption).max(BigDecimal.ZERO);
+
+                    if (TreasuryConstants.isPositive(settledAmount)) {
+                        result.merge(settlementPaymentDate, settledAmount, BigDecimal::add);
+                    }
                 });
 
-        result.putIfAbsent(paymentDate, BigDecimal.ZERO);
-        result.put(paymentDate, result.get(paymentDate).add(debitEntry.getOpenAmount()));
+        result.merge(paymentDate, debitEntry.getOpenAmount(), BigDecimal::add);
 
         return result;
     }
@@ -218,14 +235,25 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
 
     private BigDecimal amountInDebtAtDay(DebitEntry debitEntry, NavigableMap<LocalDate, BigDecimal> paymentsMap,
             LocalDate eventDate) {
-        BigDecimal amountToPay = debitEntry.getAmountWithVat();
+        Set<CreditEntry> creditEntriesByExemption =
+                debitEntry.getTreasuryExemptionsSet().stream().filter(te -> te.getCreditEntry() != null)
+                        .filter(te -> !te.getCreditEntry().isAnnulled()).map(te -> te.getCreditEntry())
+                        .collect(Collectors.toSet());
+
+        BigDecimal sumOfCreditEntriesByExemption =
+                creditEntriesByExemption.stream().map(CreditEntry::getAmountWithVat).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ANIL 2025-11-03 (#qubIT-Fenix-7720)
+        // Subtract the amount exempted by credit entry
+
+        BigDecimal amountToPay = debitEntry.getAmountWithVat().subtract(sumOfCreditEntriesByExemption);
 
         for (Entry<LocalDate, BigDecimal> entry : paymentsMap.entrySet()) {
             if (!entry.getKey().isBefore(eventDate)) {
                 break;
             }
 
-            amountToPay = amountToPay.subtract(entry.getValue());
+            amountToPay = amountToPay.subtract(entry.getValue()).max(BigDecimal.ZERO);
         }
 
         return amountToPay;
@@ -286,11 +314,11 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
     // 
     // SERVICES
     //
-    
+
     public static LocalizedString getPresentationName() {
         return TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description");
     }
-    
+
     public static GlobalInterestRateType create(LocalizedString description) {
         return new GlobalInterestRateType(description);
     }
@@ -299,7 +327,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         return FenixFramework.getDomainRoot().getInterestRateTypesSet().stream()
                 .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast);
     }
-    
+
     public static Optional<GlobalInterestRateType> findUnique() {
         return findAll().findFirst();
     }
