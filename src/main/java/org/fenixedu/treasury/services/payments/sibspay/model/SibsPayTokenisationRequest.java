@@ -1,6 +1,8 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -8,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2023-08-30T20:20:13.375686+01:00[Europe/Lisbon]")
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SibsPayTokenisationRequest   {
   @JsonProperty("tokeniseCard")
   private Boolean tokeniseCard = null;

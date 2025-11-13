@@ -1,11 +1,13 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SibsPayCancellationResponse {
 
     @JsonProperty("merchant")

@@ -2,6 +2,7 @@ package org.fenixedu.treasury.services.payments.sibspay.model;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.joda.time.LocalDate;
 
@@ -9,6 +10,7 @@ import org.joda.time.LocalDate;
  * Object that defines a Mandate
  */
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SibsPayMandate {
 
     @JsonProperty("mandateType")

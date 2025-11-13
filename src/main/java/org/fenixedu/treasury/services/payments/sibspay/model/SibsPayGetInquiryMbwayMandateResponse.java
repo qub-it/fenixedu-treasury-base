@@ -1,12 +1,14 @@
 package org.fenixedu.treasury.services.payments.sibspay.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.treasury.domain.sibspay.MbwayMandateState;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SibsPayGetInquiryMbwayMandateResponse {
 
     @JsonProperty("returnStatus")

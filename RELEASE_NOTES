@@ -1,3 +1,5 @@
+- Bug Fix: Ignore additional unknown properties in the payloads of SIBS Gateway SPG communication [#qubIT-Fenix-7762]
+
 14.5.1 (05-11-2025)
 - Improvement: Mark forward payment transaction notification as duplicated, if the forward payment is already processed [#qubIT-Fenix-7685]
 - Bug Fix: Set payor customer for generated debit entries for interests and payment plan emolument, when payment plan is created [#qubIT-Fenix-7718]
