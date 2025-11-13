@@ -1,3 +1,4 @@
+14.5.2 (13-11-2025)
 - Bug Fix: Ignore additional unknown properties in the payloads of SIBS Gateway SPG communication [#qubIT-Fenix-7762]
 
 14.5.1 (05-11-2025)
