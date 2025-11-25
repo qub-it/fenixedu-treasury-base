@@ -374,18 +374,19 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
-        init(debtAccount, reimbursementNote, excludeDebtsForPayorAccount, true);
+        FinantialEntity finantialEntity = FinantialEntity.findAll().filter(fe -> TreasuryAccessControlAPI.isFrontOfficeMember(
+                        TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername(), fe))
+                .filter(fe -> fe.getFinantialInstitution() == debtAccount.getFinantialInstitution()).findFirst().orElse(null);
+
+        init(finantialEntity, debtAccount, reimbursementNote, excludeDebtsForPayorAccount, true);
     }
 
-    private void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount,
+    private void init(FinantialEntity finantialEntity, DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount,
             boolean excludeTreasuryDebtProcessBlockingPayment) {
         init();
 
         this.debtAccount = debtAccount;
-        this.finantialEntity = FinantialEntity.findAll().filter(fe -> TreasuryAccessControlAPI.isFrontOfficeMember(
-                        TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername(), fe))
-                .filter(fe -> fe.getFinantialInstitution() == debtAccount.getFinantialInstitution()).findFirst().orElse(null);
-
+        this.finantialEntity = finantialEntity;
         this.reimbursementNote = reimbursementNote;
 
         List<InvoiceEntry> pendingInvoiceEntriesList = debtAccount.getPendingInvoiceEntriesSet().stream() //
@@ -1064,9 +1065,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     // Used by treasury debt processes
     // Invoice entries blocked are not excluded
-    public static SettlementNoteBean createForTreasuryDebtProcesses(DebtAccount debtAccount) {
+    public static SettlementNoteBean createForTreasuryDebtProcesses(FinantialEntity finantialEntity, DebtAccount debtAccount) {
         SettlementNoteBean result = new SettlementNoteBean();
-        result.init(debtAccount, false, false, false);
+        result.init(finantialEntity, debtAccount, false, false, false);
 
         return result;
     }

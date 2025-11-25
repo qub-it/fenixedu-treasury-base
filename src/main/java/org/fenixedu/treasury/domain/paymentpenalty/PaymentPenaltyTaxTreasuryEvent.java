@@ -126,7 +126,11 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
 
     @Override
     public LocalDate getTreasuryEventDate() {
-        return super.getOriginDebitEntry().getLastPaymentDate().toLocalDate();
+            if (super.getOriginDebitEntry().getLastPaymentDate() != null) {
+            return super.getOriginDebitEntry().getLastPaymentDate().toLocalDate();
+        }
+
+        return null;
     }
 
     @Override
