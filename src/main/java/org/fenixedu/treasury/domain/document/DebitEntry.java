@@ -702,7 +702,7 @@ public class DebitEntry extends DebitEntry_Base {
             creditEntry.getFinantialDocument().closeDocument();
         }
 
-        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
 
         final String reasonDescription = TreasuryConstants.treasuryBundle(TreasuryConstants.DEFAULT_LANGUAGE,
                 "label.TreasuryEvent.credit.by.annulAllDebitEntries.reason");

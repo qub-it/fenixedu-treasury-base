@@ -123,7 +123,7 @@ public class MbwayMandate extends MbwayMandate_Base {
         setAuthorizationDate(new DateTime());
 
         setCancelReason(reason);
-        setCancelResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setCancelResponsible(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
 
         checkRules();
     }
@@ -137,7 +137,7 @@ public class MbwayMandate extends MbwayMandate_Base {
         setState(MbwayMandateState.CANCELED);
 
         setCancelReason(reason);
-        setCancelResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setCancelResponsible(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
 
         // Cancel any active schedules
         getMbwayMandatePaymentSchedulesSet().stream().filter(s -> s.isInProgress()).forEach(s -> s.cancel(reason));

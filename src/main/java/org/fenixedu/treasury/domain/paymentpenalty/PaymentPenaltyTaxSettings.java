@@ -64,6 +64,7 @@ import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 
+import org.fenixedu.treasury.util.TreasuryConstants;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
 
@@ -77,13 +78,13 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
         setCreatePaymentCode(false);
         setApplyPenaltyOnDebitsWithoutInterest(false);
     }
-    
+
     public PaymentPenaltyTaxSettings(FinantialEntity finantialEntity, Product penaltyProduct) {
         this();
-        
+
         this.setFinantialEntity(finantialEntity);
         this.setPenaltyProduct(penaltyProduct);
-        
+
         checkRules();
     }
 
@@ -92,10 +93,10 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
             throw new IllegalStateException("error.PaymentPenaltyTaxSettings.domainRoot.required");
         }
 
-        if(getFinantialEntity() == null) {
+        if (getFinantialEntity() == null) {
             throw new IllegalStateException("error.PaymentPenaltyTaxSettings.finantialEntity.required");
         }
-        
+
         if (super.getActive() == null) {
             throw new IllegalStateException("error.PaymentPenaltyTaxSettings.active.required");
         }
@@ -120,7 +121,7 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
 
     public LocalizedString buildEmolumentDescription(DebitEntry originDebitEntry) {
         LocalizedString result = new LocalizedString();
-        for (Locale locale : TreasuryPlataformDependentServicesFactory.implementation().availableLocales()) {
+        for (Locale locale : TreasuryConstants.getAvailableLocales()) {
             Map<String, String> valueMap = new HashMap<String, String>();
             valueMap.put("debitEntryDescription", originDebitEntry.getDescription());
             valueMap.put("penaltyProductName", getPenaltyProduct().getName().getContent(locale));
@@ -136,7 +137,7 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
         setDomainRoot(null);
         setFinantialEntity(null);
         setPenaltyProduct(null);
-        
+
         getTargetProductsSet().clear();
 
         super.deleteDomainObject();
@@ -170,7 +171,7 @@ public class PaymentPenaltyTaxSettings extends PaymentPenaltyTaxSettings_Base {
     public static Stream<PaymentPenaltyTaxSettings> findActive() {
         return findAll().filter(s -> Boolean.TRUE.equals(s.getActive()));
     }
-    
+
     public static Stream<PaymentPenaltyTaxSettings> findActiveForOriginDebitEntry(DebitEntry originDebitEntry) {
         return findActive().filter(s -> s.getTargetProductsSet().contains(originDebitEntry.getProduct()));
     }

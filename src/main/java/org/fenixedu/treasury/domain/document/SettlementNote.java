@@ -398,11 +398,10 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         if (bean.getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
-            ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-            // Instead of creating an advanced payment credit note, 
+            // Instead of creating an advanced payment credit note,
             // create a debit note with the excess payment and settle it
             final String comments = String.format("%s [%s]",
-                    treasuryBundleI18N("label.SettlementNote.excessPayment").getContent(services.defaultLocale()),
+                    treasuryBundleI18N("label.SettlementNote.excessPayment").getContent(TreasuryConstants.getDefaultLocale()),
                     getPaymentDate().toString(TreasuryConstants.DATE_FORMAT));
 
             createExcessPaymentDebitNote(bean, availableAmount, comments, getUiDocumentNumber());
@@ -671,7 +670,7 @@ public class SettlementNote extends SettlementNote_Base {
             setAnnulledReason(anulledReason);
             setAnnullmentDate(new DateTime());
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
             // Settlement note can never free entries
@@ -1080,7 +1079,7 @@ public class SettlementNote extends SettlementNote_Base {
         if (settlementNote.getExcessPaymentDebitNote() != null) {
             settlementNote.getExcessPaymentDebitNote().setOriginDocumentNumber(settlementNote.getUiDocumentNumber());
             String comments = treasuryBundleI18N("label.SettlementNote.excessPayment")
-                    .getContent(TreasuryPlataformDependentServicesFactory.implementation().defaultLocale());
+                    .getContent(TreasuryConstants.getDefaultLocale());
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
 
             CreditNote excessCreditNote = settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next();

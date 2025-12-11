@@ -2,6 +2,8 @@ package org.fenixedu.treasury.services.payments.sibspay.webhook;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
@@ -17,6 +19,7 @@ import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotification;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationResponse;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationWrapper;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pt.ist.fenixframework.Atomic;
@@ -149,7 +152,7 @@ public class SibsPayWebhookLogic {
             return Response.serverError().build();
         } finally {
             if (this.mockedUser) {
-                TreasuryPlataformDependentServicesFactory.implementation().removeCurrentApplicationUser();
+                Authenticate.unmock();
 
                 logger.debug("Unmocked user");
             }
@@ -404,18 +407,26 @@ public class SibsPayWebhookLogic {
     }
 
     private void mockUserIfNecessary() {
-        ITreasuryPlatformDependentServices treasuryServices = TreasuryPlataformDependentServicesFactory.implementation();
-
         boolean needToMockUser = StringUtils.isEmpty(
-                TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername()) && StringUtils.isNotEmpty(
+                TreasuryConstants.getAuthenticatedUsername()) && StringUtils.isNotEmpty(
                 configurationToUse.getApplicationUsernameForAutomaticOperations());
 
         if (needToMockUser) {
-            treasuryServices.setCurrentApplicationUser(configurationToUse.getApplicationUsernameForAutomaticOperations());
+            mockApplicationUser(configurationToUse.getApplicationUsernameForAutomaticOperations());
             this.mockedUser = true;
 
             logger.debug("Mocked user with " + configurationToUse.getApplicationUsernameForAutomaticOperations());
         }
+    }
+
+    private void mockApplicationUser(String username) {
+        User user = User.findByUsername(username);
+
+        if (user == null) {
+            throw new IllegalArgumentException("user not found: " + username);
+        }
+
+        Authenticate.mock(user, "TODO: CHANGE ME");
     }
 
     private String decrypt(String aesSecretKey, String ivFromHttpHeader, String authTagFromHttpHeader, String encryptedBody)

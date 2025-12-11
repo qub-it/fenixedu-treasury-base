@@ -67,6 +67,9 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.bennu.core.security.Authenticate;
+import org.fenixedu.bennu.core.util.CoreConfiguration;
+import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -88,6 +91,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+// Split into two classes, one with constants and the other with the utility methods
 public class TreasuryConstants {
 
     private static final int SCALE = 20;
@@ -164,11 +168,11 @@ public class TreasuryConstants {
     }
 
     // @formatter:off
+
     /**************
      * MATH UTILS *
      **************/
     // @formatter:on
-
     public static boolean isNegative(final BigDecimal value) {
         return !isZero(value) && !isPositive(value);
     }
@@ -214,11 +218,11 @@ public class TreasuryConstants {
     }
 
     // @formatter:off
+
     /**************
      * DATE UTILS *
      **************/
     // @formatter:on
-
     public static int numberOfDaysInYear(final int year) {
 
         if (new LocalDate(year, 1, 1).year().isLeap()) {
@@ -238,8 +242,8 @@ public class TreasuryConstants {
 
     public static boolean isDateBetween(final LocalDate beginDate, final LocalDate endDate, final LocalDate when) {
         return new Interval(beginDate.toDateTimeAtStartOfDay(),
-                endDate != null ? endDate.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1) : INFINITY_DATE)
-                        .contains(when.toDateTimeAtStartOfDay());
+                endDate != null ? endDate.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1) : INFINITY_DATE).contains(
+                when.toDateTimeAtStartOfDay());
     }
 
     public static boolean isDateBetween(final LocalDate beginDate, final LocalDate endDate, final DateTime when) {
@@ -272,9 +276,10 @@ public class TreasuryConstants {
     }
 
     public static int countNumberOfWorkDaysBetween(LocalDate startDate, LocalDate endDate) {
-        Predicate<LocalDate> isWeekend = date -> date.getDayOfWeek() == DateTimeConstants.SATURDAY
-                || date.getDayOfWeek() == DateTimeConstants.SUNDAY || getHolidays().stream().anyMatch(h -> h.isMatch(date));
-        
+        Predicate<LocalDate> isWeekend =
+                date -> date.getDayOfWeek() == DateTimeConstants.SATURDAY || date.getDayOfWeek() == DateTimeConstants.SUNDAY || getHolidays().stream()
+                        .anyMatch(h -> h.isMatch(date));
+
         return IntStream.rangeClosed(0, Days.daysBetween(startDate, endDate).getDays())
                 .map(d -> isWeekend.test(startDate.plusDays(d)) ? 0 : 1).reduce(0, (a, b) -> a + b);
     }
@@ -282,36 +287,35 @@ public class TreasuryConstants {
     public static class LocalDateInterval {
         private LocalDate beginDate;
         private LocalDate endDate;
-        
+
         public LocalDateInterval(LocalDate beginDate, LocalDate endDate) {
             this.beginDate = beginDate;
             this.endDate = endDate;
         }
-        
+
         public LocalDate getBeginDate() {
             return beginDate;
         }
-        
+
         public LocalDate getEndDate() {
             return endDate;
         }
     }
-    
+
     public static List<LocalDateInterval> splitByYearIntervals(LocalDate beginDate, LocalDate endDate) {
-        if(beginDate.isAfter(endDate)) {
+        if (beginDate.isAfter(endDate)) {
             throw new RuntimeException("error");
         }
-        
-        if(beginDate.getYear() == endDate.getYear()) {
+
+        if (beginDate.getYear() == endDate.getYear()) {
             return Collections.singletonList(new LocalDateInterval(beginDate, endDate));
         }
-        
+
         List<LocalDate> dates = new ArrayList<>();
         dates.add(beginDate);
         dates.add(endDate);
-        
-        
-        for(int i = beginDate.getYear(); i < endDate.getYear(); i++) {
+
+        for (int i = beginDate.getYear(); i < endDate.getYear(); i++) {
             dates.add(new LocalDate(i, 12, 31));
             dates.add(new LocalDate(i + 1, 1, 1));
         }
@@ -319,21 +323,21 @@ public class TreasuryConstants {
         Collections.sort(dates);
 
         LocalDate[] datesArray = dates.toArray(new LocalDate[] {});
-        
+
         List<LocalDateInterval> result = new ArrayList<>();
-        for(int i = 0; i < dates.size() - 1; i += 2) {
-            result.add(new LocalDateInterval(datesArray[i], datesArray[i+1]));
+        for (int i = 0; i < dates.size() - 1; i += 2) {
+            result.add(new LocalDateInterval(datesArray[i], datesArray[i + 1]));
         }
-        
+
         return result;
     }
-    
+
     // @formatter:off
+
     /****************
      * STRING UTILS *
      ****************/
     // @formatter:on
-
     public static boolean stringNormalizedContains(final String text, final String compound) {
         final String textNormalized = Normalizer.normalize(text.toLowerCase(), Normalizer.Form.NFC);
         final String compoundNormalized = Normalizer.normalize(compound.toLowerCase(), Normalizer.Form.NFC);
@@ -395,11 +399,11 @@ public class TreasuryConstants {
     }
 
     // @formatter:off
+
     /**********
      * BUNDLE *
      **********/
     // @formatter:on
-
     public static String treasuryBundle(final String key, final String... args) {
         return TreasuryPlataformDependentServicesFactory.implementation().bundle(TreasuryConstants.BUNDLE, key, args);
     }
@@ -413,11 +417,11 @@ public class TreasuryConstants {
     }
 
     // @formatter:off
+
     /********
      * SIBS *
      ********/
     // @formatter:on
-
     public static final String sibsTransactionUniqueIdentifier(final String paymentCode, final DateTime whenOccured) {
         return String.format("%s%s", paymentCode, whenOccured.toString("yyyyMMddHHmm"));
     }
@@ -431,12 +435,12 @@ public class TreasuryConstants {
     }
 
     // @formatter:off
+
     /***********
      * JSON UTILS
      ***********
      */
     // @formatter:on
-
     public static String propertiesMapToJson(final Map<String, String> propertiesMap) {
         final GsonBuilder builder = new GsonBuilder();
 
@@ -459,6 +463,29 @@ public class TreasuryConstants {
         }.getType();
 
         return gson.fromJson(propertiesMapJson, stringStringMapType);
+    }
+
+    // 2025-12-10 (#qubIT-Fenix-7855)
+    public static String getAuthenticatedUsername() {
+        if (Authenticate.getUser() == null) {
+            return null;
+        }
+
+        return Authenticate.getUser().getUsername();
+    }
+
+    /* Locales */
+
+    public static Locale getDefaultLocale() {
+        return Locale.forLanguageTag(CoreConfiguration.getConfiguration().defaultLocale());
+    }
+
+    public static Locale getCurrentLocale() {
+        return I18N.getLocale();
+    }
+
+    public static Set<Locale> getAvailableLocales() {
+        return CoreConfiguration.supportedLocales();
     }
 
 }

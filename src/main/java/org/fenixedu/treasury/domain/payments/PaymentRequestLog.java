@@ -65,6 +65,7 @@ import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.FenixFramework;
@@ -81,7 +82,7 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
 
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
-        setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsibleUsername(TreasuryConstants.getAuthenticatedUsername());
 
         // ANIL 2024-11-14 (#qubIT-Fenix-5969)
         //

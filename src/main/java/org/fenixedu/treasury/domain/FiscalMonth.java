@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -27,7 +28,7 @@ public class FiscalMonth extends FiscalMonth_Base {
         super.setFiscalOperationsClosed(fiscalOperationsClosed);
 
         if (fiscalOperationsClosed) {
-            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            String loggedUsername = TreasuryConstants.getAuthenticatedUsername();
             super.setFiscalOperationsClosedResponsible(loggedUsername);
             super.setFiscalOperationsClosedSetDate(new DateTime());
         }
@@ -67,7 +68,7 @@ public class FiscalMonth extends FiscalMonth_Base {
     public void closeOperations() {
         super.setFiscalOperationsClosed(true);
 
-        String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        String loggedUsername = TreasuryConstants.getAuthenticatedUsername();
         super.setFiscalOperationsClosedResponsible(loggedUsername);
         super.setFiscalOperationsClosedSetDate(new DateTime());
     }

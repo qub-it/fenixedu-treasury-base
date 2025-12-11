@@ -116,7 +116,7 @@ public class MbwayMandatePaymentSchedule extends MbwayMandatePaymentSchedule_Bas
 
         setCancelReason(reason);
         setCancelDate(new DateTime());
-        setCancelResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setCancelResponsible(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
 
         checkRules();
     }

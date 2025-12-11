@@ -198,7 +198,7 @@ public class SIBSPaymentsImporter {
         try {
             fileInputStream = inputFile.getStream();
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
 
             final SibsIncommingPaymentFile sibsFile = SibsIncommingPaymentFile.parse(inputFile.getFilename(), fileInputStream);
 
@@ -279,7 +279,7 @@ public class SIBSPaymentsImporter {
     }
 
     private void processFile(SibsIncommingPaymentFile sibsFile, ProcessResult processResult) {
-        final String responsibleUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        final String responsibleUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
 
         processResult.addMessage("label.manager.SIBS.linesFound", String.valueOf(sibsFile.getDetailLines().size()));
         processResult.addMessage("label.manager.SIBS.startingProcess");

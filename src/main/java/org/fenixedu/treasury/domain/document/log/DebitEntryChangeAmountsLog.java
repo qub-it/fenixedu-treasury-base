@@ -19,7 +19,7 @@ public class DebitEntryChangeAmountsLog extends DebitEntryChangeAmountsLog_Base 
         setDomainRoot(FenixFramework.getDomainRoot());
 
         setChangeDate(new DateTime());
-        setResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsible(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
     }
 
     public DebitEntryChangeAmountsLog(String reason) {

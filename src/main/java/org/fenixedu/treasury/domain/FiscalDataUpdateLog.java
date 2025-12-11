@@ -54,6 +54,7 @@ package org.fenixedu.treasury.domain;
 
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
@@ -75,7 +76,7 @@ public class FiscalDataUpdateLog extends FiscalDataUpdateLog_Base {
 
         this.setCustomer(customer);
         this.setWhenUpdated(new DateTime());
-        this.setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        this.setResponsibleUsername(TreasuryConstants.getAuthenticatedUsername());
         this.setOldFiscalCountry(oldFiscalCountry);
         this.setOldFiscalNumber(oldFiscalNumber);
 

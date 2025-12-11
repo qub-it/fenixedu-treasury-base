@@ -375,7 +375,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
     public void init(DebtAccount debtAccount, boolean reimbursementNote, boolean excludeDebtsForPayorAccount) {
         FinantialEntity finantialEntity = FinantialEntity.findAll().filter(fe -> TreasuryAccessControlAPI.isFrontOfficeMember(
-                        TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername(), fe))
+                        org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername(), fe))
                 .filter(fe -> fe.getFinantialInstitution() == debtAccount.getFinantialInstitution()).findFirst().orElse(null);
 
         init(finantialEntity, debtAccount, reimbursementNote, excludeDebtsForPayorAccount, true);

@@ -221,7 +221,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         if (getCreditEntry() != null) {
             getCreditEntry().getCreditNote().setState(FinantialDocumentStateType.ANNULED);
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
 
             String reason =
                     TreasuryConstants.treasuryBundle("label.TreasuryExemption.revertExemption.credit.note.annulment.message");

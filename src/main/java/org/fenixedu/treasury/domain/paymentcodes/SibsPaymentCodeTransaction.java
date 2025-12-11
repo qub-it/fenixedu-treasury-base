@@ -73,7 +73,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     public SibsPaymentCodeTransaction() {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
-        setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsibleUsername(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
         setCreationDate(new DateTime());
     }
 

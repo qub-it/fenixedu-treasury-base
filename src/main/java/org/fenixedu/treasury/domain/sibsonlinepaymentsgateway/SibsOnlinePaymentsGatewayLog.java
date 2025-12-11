@@ -85,7 +85,7 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
         this();
 
         setCreationDate(new DateTime());
-        setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsibleUsername(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
         setOperationCode(operationCode);
     }
 
@@ -94,7 +94,7 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
         this();
 
         setCreationDate(new DateTime());
-        setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsibleUsername(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
 
         setSibsOnlinePaymentsGateway(sibsOnlinePaymentsGateway);
         setOperationCode(operationCode);

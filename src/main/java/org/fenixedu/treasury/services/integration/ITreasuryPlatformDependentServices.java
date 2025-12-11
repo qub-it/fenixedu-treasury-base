@@ -123,16 +123,26 @@ public interface ITreasuryPlatformDependentServices {
 
     /* User */
 
+    @Deprecated
+    // Remove
     String getLoggedUsername();
 
+    @Deprecated
+    // Remove
     default Customer getLoggedActiveCustomer() {
         return null;
     }
 
+    @Deprecated
+    // Remove
     String getCustomerEmail(Customer customer);
 
+    @Deprecated
+    // Remove
     void setCurrentApplicationUser(String username);
 
+    @Deprecated
+    // Remove
     void removeCurrentApplicationUser();
 
     /* Locales */

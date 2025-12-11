@@ -99,7 +99,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
 
         setDomainRoot(FenixFramework.getDomainRoot());
         setRequestDate(new DateTime());
-        setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsibleUsername(TreasuryConstants.getAuthenticatedUsername());
     }
 
     protected void init(DigitalPaymentPlatform platform, DebtAccount debtAccount, Set<DebitEntry> debitEntries,

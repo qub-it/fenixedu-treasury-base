@@ -173,7 +173,7 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
                         entityReferenceCode);
             }
 
-            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             SibsInputFile sibsInputFile = new SibsInputFile(whenProcessedBySibs, filename, sibsContent, loggedUsername);
 
             return sibsInputFile;

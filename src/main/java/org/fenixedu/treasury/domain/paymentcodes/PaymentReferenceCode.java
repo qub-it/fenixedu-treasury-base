@@ -392,7 +392,7 @@ public class PaymentReferenceCode extends PaymentReferenceCode_Base {
                 log.markAsDuplicatedTransaction();
             });
         } else {
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
 
             final Set<SettlementNote> settlementNotes =
                     processPayment(StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown", amount, paymentDate,

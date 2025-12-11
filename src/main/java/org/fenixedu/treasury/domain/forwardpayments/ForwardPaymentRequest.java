@@ -159,7 +159,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     private void updateState(ForwardPaymentStateType state) {
         super.setState(state);
         super.setLastStateDate(new DateTime());
-        super.setLastStateResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        super.setLastStateResponsible(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
     }
 
     @Override

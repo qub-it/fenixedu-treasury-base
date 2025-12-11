@@ -29,7 +29,7 @@ public class PaymentInvoiceEntriesGroup extends PaymentInvoiceEntriesGroup_Base 
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
-        setResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsible(TreasuryConstants.getAuthenticatedUsername());
     }
 
     protected PaymentInvoiceEntriesGroup(FinantialEntity finantialEntity, DebtAccount debtAccount,

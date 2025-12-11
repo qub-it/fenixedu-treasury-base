@@ -70,7 +70,7 @@ public class PaymentTransaction extends PaymentTransaction_Base {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setCreationDate(new DateTime());
-        setResponsibleUsername(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        setResponsibleUsername(TreasuryConstants.getAuthenticatedUsername());
     }
 
     protected PaymentTransaction(PaymentRequest paymentRequest, String transactionId, DateTime paymentDate, BigDecimal paidAmount,

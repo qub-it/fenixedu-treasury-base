@@ -2308,7 +2308,7 @@ public class SAPExporter implements IERPExporter {
         creditNoteToAnnul.setAnnulledReason(annuledReason);
         creditNoteToAnnul.setAnnullmentDate(new DateTime());
 
-        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
         creditNoteToAnnul.setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
         final CreditNote result = createCreditNote(creditNoteToAnnul);

@@ -561,7 +561,7 @@ public class SibsPayAPIService {
             return customer.getPersonalEmail();
         }
 
-        return TreasuryPlataformDependentServicesFactory.implementation().getCustomerEmail(customer);
+        return customer.getEmail();
     }
 
     private static final int MAX_NAME_SIZE = 45;

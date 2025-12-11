@@ -335,7 +335,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             this.setInstitutionForExportation(this.getDocumentNumberSeries().getSeries().getFinantialInstitution());
         }
 
-        String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
         if (StringUtils.isNotEmpty(loggedUsername)) {
 
             // ANIL 2025-09-16 (#qubIT-Fenix-7472)
@@ -361,7 +361,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
 
-            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 
@@ -378,7 +378,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getInstitutionForExportation() != null) {
             this.setInstitutionForExportation(null);
 
-            String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             final String username = StringUtils.isNotEmpty(loggedUsername) ? loggedUsername : "unknown";
             final DateTime now = new DateTime();
 

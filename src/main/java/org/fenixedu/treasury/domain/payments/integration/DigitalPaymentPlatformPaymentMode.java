@@ -65,12 +65,14 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 
+import org.fenixedu.treasury.util.TreasuryConstants;
 import pt.ist.fenixframework.FenixFramework;
 
 public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPaymentMode_Base {
 
     public final static Comparator<DigitalPaymentPlatformPaymentMode> COMPARE_BY_ORDER =
-            Comparator.comparing(DigitalPaymentPlatformPaymentMode::getPaymentModeOrder).thenComparing(DigitalPaymentPlatformPaymentMode::getExternalId);
+            Comparator.comparing(DigitalPaymentPlatformPaymentMode::getPaymentModeOrder)
+                    .thenComparing(DigitalPaymentPlatformPaymentMode::getExternalId);
 
     public DigitalPaymentPlatformPaymentMode() {
         super();
@@ -81,8 +83,7 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     public DigitalPaymentPlatformPaymentMode(DigitalPaymentPlatform platform, PaymentMethod paymentMethod) {
         this();
 
-        List<DigitalPaymentPlatformPaymentMode> orderedPaymentModesList =
-                platform.getOrderedPaymentModesList();
+        List<DigitalPaymentPlatformPaymentMode> orderedPaymentModesList = platform.getOrderedPaymentModesList();
 
         setDigitalPaymentPlatform(platform);
         setPaymentMethod(paymentMethod);
@@ -133,9 +134,8 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     }
 
     public LocalizedString getDigitalPaymentPlatformPaymentMethodDesignation() {
-        ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
         LocalizedString result = new LocalizedString();
-        for (Locale locale : services.availableLocales()) {
+        for (Locale locale : TreasuryConstants.getAvailableLocales()) {
             result.with(locale, String.format("[%s] %s", getDigitalPaymentPlatform().getName(),
                     getPaymentMethod().getName().getContent(locale)));
         }
@@ -164,7 +164,7 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     }
 
     public void orderUp() {
-        if(isFirstInPaymentOrder()) {
+        if (isFirstInPaymentOrder()) {
             // Already the first
             return;
         }
@@ -185,7 +185,7 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
     }
 
     public void orderDown() {
-        if(isLastInPaymentOrder()) {
+        if (isLastInPaymentOrder()) {
             // already the last
             return;
         }

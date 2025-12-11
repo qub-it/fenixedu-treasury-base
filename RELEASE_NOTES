@@ -1,3 +1,5 @@
+- Refactor: Remove or change invocation calls of some methods of ITreasuryPlatformDependentServices [#qubIT-Fenix-7855]
+
 15.1.0 (25-11-2025)
 - Bug Fix: Check if DebitEntry::getLastPayment is null when returing the treasury event date [#qubIT-Fenix-7813]
 - Refactor: Allow tax debt process to fill the finantial entity in SettlementNoteBean [#qubIT-Fenix-7799]

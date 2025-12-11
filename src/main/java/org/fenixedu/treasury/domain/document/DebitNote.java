@@ -468,7 +468,7 @@ public class DebitNote extends DebitNote_Base {
             setAnnulledReason(reason);
             setAnnullmentDate(new DateTime());
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
         } else if (isPreparing()) {
@@ -509,7 +509,7 @@ public class DebitNote extends DebitNote_Base {
             setAnnulledReason(reason);
             setAnnullmentDate(new DateTime());
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else {
             throw new TreasuryDomainException("error.DebitNote.cannot.anull.is.empty");
@@ -711,7 +711,7 @@ public class DebitNote extends DebitNote_Base {
         setAnnulledReason(reason);
         setAnnullmentDate(new DateTime());
 
-        final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+        final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
         setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
 
         TreasuryPlataformDependentServicesFactory.implementation().annulCertifiedDocument(this);

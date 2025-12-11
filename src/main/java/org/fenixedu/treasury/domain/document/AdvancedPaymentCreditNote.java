@@ -122,7 +122,7 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
             setAnnulledReason(reason);
             setAnnullmentDate(new DateTime());
 
-            final String loggedUsername = TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername();
+            final String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
             setAnnullmentResponsible(!Strings.isNullOrEmpty(loggedUsername) ? loggedUsername : "unknown");
         } else {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));

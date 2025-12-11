@@ -64,6 +64,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.meowallet.MeoWallet;
@@ -73,6 +75,7 @@ import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.dto.meowallet.MeoWalletCallbackBean;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,10 +102,9 @@ public class MeoWalletWebhooksController {
 
         FenixFramework.atomic(() -> log.saveRequest(body));
 
-        Gson s = new GsonBuilder()
-                .registerTypeAdapter(DateTime.class,
-                        (JsonDeserializer<DateTime>) (json, typeOfT, context) -> new DateTime(json.getAsString()))
-                .setPrettyPrinting().create();
+        Gson s = new GsonBuilder().registerTypeAdapter(DateTime.class,
+                        (JsonDeserializer<DateTime>) (json, typeOfT, context) -> new DateTime(json.getAsString())).setPrettyPrinting()
+                .create();
 
         MeoWalletCallbackBean bean = s.fromJson(body, MeoWalletCallbackBean.class);
 
@@ -216,7 +218,7 @@ public class MeoWalletWebhooksController {
 
         } finally {
             if (mockedUser) {
-                TreasuryPlataformDependentServicesFactory.implementation().removeCurrentApplicationUser();
+                Authenticate.unmock();
 
                 logger.debug("Unmocked user");
             }
@@ -224,19 +226,27 @@ public class MeoWalletWebhooksController {
     }
 
     private boolean mockUserIfNeeded(MeoWallet digitalPaymentPlatform) {
-        ITreasuryPlatformDependentServices treasuryServices = TreasuryPlataformDependentServicesFactory.implementation();
-        boolean needToMockUser =
-                StringUtils.isEmpty(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername())
-                        && StringUtils.isNotEmpty(digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
+        boolean needToMockUser = StringUtils.isEmpty(TreasuryConstants.getAuthenticatedUsername()) && StringUtils.isNotEmpty(
+                digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
 
         if (needToMockUser) {
-            treasuryServices.setCurrentApplicationUser(digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
+            mockApplicationUser(digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
             logger.debug("Mocked user with " + digitalPaymentPlatform.getApplicationUsernameForAutomaticOperations());
 
             return true;
         }
 
         return false;
+    }
+
+    private void mockApplicationUser(String username) {
+        User user = User.findByUsername(username);
+
+        if (user == null) {
+            throw new IllegalArgumentException("user not found: " + username);
+        }
+
+        Authenticate.mock(user, "TODO: CHANGE ME");
     }
 
     @Atomic(mode = TxMode.WRITE)

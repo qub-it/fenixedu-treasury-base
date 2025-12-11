@@ -199,7 +199,7 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
     private void updateState(PaymentReferenceCodeStateType state) {
         super.setState(state);
         super.setLastStateDate(new DateTime());
-        super.setLastStateResponsible(TreasuryPlataformDependentServicesFactory.implementation().getLoggedUsername());
+        super.setLastStateResponsible(org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername());
     }
 
     public void anull() {

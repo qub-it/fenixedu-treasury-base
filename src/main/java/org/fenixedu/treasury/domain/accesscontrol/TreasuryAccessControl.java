@@ -64,6 +64,7 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 public class TreasuryAccessControl {
 
@@ -75,33 +76,23 @@ public class TreasuryAccessControl {
     }
 
     public boolean isFrontOfficeMember() {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
-        return isFrontOfficeMember(services.getLoggedUsername());
+        return isFrontOfficeMember(TreasuryConstants.getAuthenticatedUsername());
     }
 
     public boolean isBackOfficeMember() {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
-        return isBackOfficeMember(services.getLoggedUsername());
+        return isBackOfficeMember(TreasuryConstants.getAuthenticatedUsername());
     }
 
     public boolean isFrontOfficeMember(FinantialInstitution finantialInstitution) {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
-        return isFrontOfficeMember(services.getLoggedUsername(), finantialInstitution);
+        return isFrontOfficeMember(TreasuryConstants.getAuthenticatedUsername(), finantialInstitution);
     }
 
     public boolean isBackOfficeMember(FinantialInstitution finantialInstitution) {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
-        return isBackOfficeMember(services.getLoggedUsername(), finantialInstitution);
+        return isBackOfficeMember(TreasuryConstants.getAuthenticatedUsername(), finantialInstitution);
     }
 
     public boolean isManager() {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
-        return isManager(services.getLoggedUsername());
+        return isManager(TreasuryConstants.getAuthenticatedUsername());
     }
 
     public boolean isFrontOfficeMember(final String username) {
