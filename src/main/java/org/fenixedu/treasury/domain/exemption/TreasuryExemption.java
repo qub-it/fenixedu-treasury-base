@@ -64,6 +64,7 @@ import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -72,6 +73,7 @@ import com.google.common.base.Strings;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.core.AbstractDomainObject;
 
 public class TreasuryExemption extends TreasuryExemption_Base {
 
@@ -79,12 +81,9 @@ public class TreasuryExemption extends TreasuryExemption_Base {
             Comparator.comparing(TreasuryExemption::getTreasuryExemptionType, TreasuryExemptionType.COMPARE_BY_NAME)
                     .thenComparing(TreasuryExemption::getExternalId);
 
-    public static Comparator<TreasuryExemption> COMPARE_BY_CREATION_DATE = (o1, o2) -> {
-        int c = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o1)
-                .compareTo(TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o2));
-
-        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-    };
+    public static Comparator<TreasuryExemption> COMPARE_BY_CREATION_DATE =
+            Comparator.comparing((TreasuryExemption o) -> FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(o))
+                    .thenComparing(AbstractDomainObject::getExternalId);
 
     public TreasuryExemption() {
         super();

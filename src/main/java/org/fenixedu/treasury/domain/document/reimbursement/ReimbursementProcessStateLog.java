@@ -52,18 +52,16 @@
  */
 package org.fenixedu.treasury.domain.document.reimbursement;
 
-import java.util.Comparator;
-import java.util.stream.Stream;
-
+import com.google.common.base.Strings;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.joda.time.DateTime;
-
-import com.google.common.base.Strings;
-
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 public class ReimbursementProcessStateLog extends ReimbursementProcessStateLog_Base {
 
@@ -72,8 +70,8 @@ public class ReimbursementProcessStateLog extends ReimbursementProcessStateLog_B
 
                 @Override
                 public int compare(final ReimbursementProcessStateLog o1, final ReimbursementProcessStateLog o2) {
-                    int c = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o1)
-                            .compareTo(TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o2));
+                    int c = FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(o1)
+                            .compareTo(FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(o2));
                     return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
                 }
             };

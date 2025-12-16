@@ -52,16 +52,13 @@
  */
 package org.fenixedu.treasury.domain.exceptions;
 
-
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import javax.ws.rs.core.Response.Status;
-
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import com.google.gson.JsonObject;
+import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
-import com.google.gson.JsonObject;
+import javax.ws.rs.core.Response.Status;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class TreasuryDomainException extends RuntimeException {
 
@@ -99,7 +96,7 @@ public class TreasuryDomainException extends RuntimeException {
     }
 
     public String getLocalizedMessage() {
-        return TreasuryPlataformDependentServicesFactory.implementation().bundle(this.bundle, this.key, this.args);
+        return BundleUtil.getString(this.bundle, this.key, this.args);
     }
 
     public Status getResponseStatus() {

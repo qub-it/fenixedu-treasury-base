@@ -52,36 +52,6 @@
  */
 package org.fenixedu.treasury.util;
 
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.IntStream;
-
-import org.apache.commons.lang.StringUtils;
-import org.fenixedu.bennu.core.security.Authenticate;
-import org.fenixedu.bennu.core.util.CoreConfiguration;
-import org.fenixedu.commons.i18n.I18N;
-import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.Days;
-import org.joda.time.Interval;
-import org.joda.time.LocalDate;
-import org.joda.time.Partial;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -90,6 +60,25 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang.StringUtils;
+import org.fenixedu.bennu.core.i18n.BundleUtil;
+import org.fenixedu.bennu.core.security.Authenticate;
+import org.fenixedu.bennu.core.util.CoreConfiguration;
+import org.fenixedu.commons.i18n.I18N;
+import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.document.InvoiceEntry;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.joda.time.*;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.Normalizer;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 // Split into two classes, one with constants and the other with the utility methods
 public class TreasuryConstants {
@@ -405,15 +394,15 @@ public class TreasuryConstants {
      **********/
     // @formatter:on
     public static String treasuryBundle(final String key, final String... args) {
-        return TreasuryPlataformDependentServicesFactory.implementation().bundle(TreasuryConstants.BUNDLE, key, args);
+        return BundleUtil.getString(TreasuryConstants.BUNDLE, key, args);
     }
 
     public static String treasuryBundle(final Locale locale, final String key, final String... args) {
-        return TreasuryPlataformDependentServicesFactory.implementation().bundle(locale, TreasuryConstants.BUNDLE, key, args);
+        return BundleUtil.getString(TreasuryConstants.BUNDLE, locale, key, args);
     }
 
     public static LocalizedString treasuryBundleI18N(final String key, final String... args) {
-        return TreasuryPlataformDependentServicesFactory.implementation().bundleI18N(TreasuryConstants.BUNDLE, key, args);
+        return BundleUtil.getLocalizedString(TreasuryConstants.BUNDLE, key, args);
     }
 
     // @formatter:off

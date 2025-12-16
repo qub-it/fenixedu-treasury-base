@@ -52,35 +52,28 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
-import org.fenixedu.treasury.domain.document.Invoice;
 import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
 import pt.ist.fenixframework.Atomic;
+
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 @Deprecated
 public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
@@ -178,7 +171,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
     }
 
     public DateTime getPaymentRequestDate() {
-        return TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(this);
+        return FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(this);
     }
 
     public String getPaymentRequestStateDescription() {

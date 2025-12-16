@@ -1,17 +1,9 @@
 package org.fenixedu.treasury.services.integration;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.Set;
-
-import javax.servlet.http.HttpSession;
-
+import com.google.common.base.Strings;
+import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceAuthenticationLevel;
+import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceClientConfiguration;
+import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceConfiguration;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -26,12 +18,8 @@ import org.fenixedu.bennu.scheduler.TaskRunner;
 import org.fenixedu.bennu.scheduler.domain.SchedulerSystem;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.treasury.domain.*;
 import org.fenixedu.treasury.domain.Currency;
-import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.FinantialEntity;
-import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.Product;
-import org.fenixedu.treasury.domain.TreasuryFile;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -45,31 +33,23 @@ import org.fenixedu.treasury.services.integration.erp.IERPExporter;
 import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.fenixedu.treasury.services.integration.erp.ISaftExporterConfiguration;
 import org.fenixedu.treasury.services.integration.erp.tasks.ERPExportSingleDocumentsTask;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.Address;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.Buyer;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.Details;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.DoWebPaymentRequest;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.DoWebPaymentResponse;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.GetWebPaymentDetailsRequest;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.GetWebPaymentDetailsResponse;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.Order;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.OrderDetail;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.Payment;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.*;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.Partial;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-
-import com.google.common.base.Strings;
-import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceAuthenticationLevel;
-import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceClientConfiguration;
-import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceConfiguration;
-
 import pt.ist.fenixWebFramework.servlets.filters.contentRewrite.GenericChecksumRewriter;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.DomainObject;
+
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
 
 public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatformDependentServices {
 
@@ -260,26 +240,37 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     }
 
     @Override
+    @Deprecated
     public <T> String versioningCreatorUsername(T obj) {
-        return readVersioningCreatorUsername(obj);
+        return getVersioningCreatorUsername(obj);
     }
 
     @Override
+    @Deprecated
     public <T> DateTime versioningCreationDate(T obj) {
-        return readVersioningCreationDate(obj);
+        return getVersioningCreationDate(obj);
     }
 
     @Override
+    @Deprecated
     public <T> String versioningUpdatorUsername(T obj) {
-        return readVersioningUpdatorUsername(obj);
+        return getVersioningUpdatorUsername(obj);
     }
 
     @Override
+    @Deprecated
     public <T> DateTime versioningUpdateDate(T obj) {
-        return readVersioningUpdateDate(obj);
+        return getVersioningUpdateDate(obj);
     }
 
+    // Remove
+    @Deprecated
     public static <T> String readVersioningCreatorUsername(T obj) {
+        return getVersioningCreatorUsername(obj);
+    }
+
+        // MAINTAIN THIS METHOD
+    public static <T> String getVersioningCreatorUsername(T obj) {
         try {
             String username = (String) PropertyUtils.getProperty(obj, "versioningCreator");
 
@@ -289,7 +280,14 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
         }
     }
 
+    // Remove
+    @Deprecated
     public static <T> DateTime readVersioningCreationDate(T obj) {
+        return getVersioningCreationDate(obj);
+    }
+
+    // MAINTAIN THIS METHOD
+    public static <T> DateTime getVersioningCreationDate(T obj) {
         try {
             DateTime creationDate = (DateTime) PropertyUtils.getProperty(obj, "versioningCreationDate");
 
@@ -299,7 +297,14 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
         }
     }
 
+    // Remove
+    @Deprecated
     public static <T> String readVersioningUpdatorUsername(T obj) {
+        return getVersioningUpdatorUsername(obj);
+    }
+
+        // MAINTAIN THIS METHOD
+    public static <T> String getVersioningUpdatorUsername(T obj) {
         try {
             Object versioningUpdatedBy = PropertyUtils.getProperty(obj, "versioningUpdatedBy");
 
@@ -313,7 +318,14 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
         }
     }
 
+    // Remove
+    @Deprecated
     public static <T> DateTime readVersioningUpdateDate(T obj) {
+        return getVersioningUpdateDate(obj);
+    }
+
+    // MAINTAIN THIS METHOD
+    public static <T> DateTime getVersioningUpdateDate(T obj) {
         try {
             Object versioningUpdateDate = PropertyUtils.getProperty(obj, "versioningUpdateDate");
 
@@ -325,7 +337,6 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
     @Override
@@ -415,6 +426,8 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     }
 
     @Override
+    @Deprecated
+    // Remove
     public PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest) {
         final DateTimeFormatter DATE_TIME_PATTERN = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
 
@@ -462,6 +475,8 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     }
 
     @Override
+    @Deprecated
+    // Remove
     public PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl,
             String cancelUrl) {
         final int PAYLINE_MAX_PHONE_SIZE = 14;
@@ -497,7 +512,7 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
         order.setRef(String.valueOf(forwardPaymentRequest.getOrderNumber()));
         order.setAmount(formattedAmount);
         order.setCurrency(EURO_CURRENCY);
-        order.setDate(TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(forwardPaymentRequest)
+        order.setDate(FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(forwardPaymentRequest)
                 .toString("dd/MM/yyyy HH:mm"));
         order.setCountry(PT);
 
@@ -582,6 +597,8 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     }
 
     @Override
+    @Deprecated
+    // Remove
     public void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration) {
         if (WebServiceConfiguration.readByImplementationClass(
                 "org.fenixedu.treasury.domain.forwardpayments.implementations.PaylineWebServiceClient") == null) {
@@ -601,11 +618,14 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     /* Web */
 
     @Override
+    @Deprecated
+    // Remove
     public String calculateURLChecksum(String urlToChecksum, HttpSession session) {
         return GenericChecksumRewriter.calculateChecksum(urlToChecksum, session);
     }
 
     @Override
+    // Review
     public String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
             boolean isException) {
         throw new RuntimeException("not supported");

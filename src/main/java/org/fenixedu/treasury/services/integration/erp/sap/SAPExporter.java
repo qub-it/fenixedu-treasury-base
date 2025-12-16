@@ -52,8 +52,53 @@
  */
 package org.fenixedu.treasury.services.integration.erp.sap;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
+import org.fenixedu.treasury.domain.Customer;
+import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.Product;
+import org.fenixedu.treasury.domain.Vat;
+import org.fenixedu.treasury.domain.debt.DebtAccount;
+import org.fenixedu.treasury.domain.document.*;
+import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
+import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.integration.*;
+import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.generated.sources.saft.sap.*;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.AdvancedPaymentCredit;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.Line.SourceDocumentID;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.ReimbursementProcess;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.AdvancedPayment;
+import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.Line.Metadata;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
+import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.services.integration.erp.ERPExternalServiceImplementation.ReimbursementStateBean;
+import org.fenixedu.treasury.services.integration.erp.IERPExporter;
+import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
+import org.fenixedu.treasury.services.integration.erp.SaftConfig;
+import org.fenixedu.treasury.services.integration.erp.dto.DocumentStatusWS;
+import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationInput;
+import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationOutput;
+import org.fenixedu.treasury.util.TreasuryConstants;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -63,99 +108,12 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeConstants;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
-
-import org.apache.commons.lang.StringUtils;
-import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.FinantialInstitution;
-import org.fenixedu.treasury.domain.Product;
-import org.fenixedu.treasury.domain.Vat;
-import org.fenixedu.treasury.domain.debt.DebtAccount;
-import org.fenixedu.treasury.domain.document.AdvancedPaymentCreditNote;
-import org.fenixedu.treasury.domain.document.CreditEntry;
-import org.fenixedu.treasury.domain.document.CreditNote;
-import org.fenixedu.treasury.domain.document.DebitEntry;
-import org.fenixedu.treasury.domain.document.DebitNote;
-import org.fenixedu.treasury.domain.document.ERPCustomerFieldsBean;
-import org.fenixedu.treasury.domain.document.FinantialDocument;
-import org.fenixedu.treasury.domain.document.FinantialDocumentEntry;
-import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
-import org.fenixedu.treasury.domain.document.Invoice;
-import org.fenixedu.treasury.domain.document.InvoiceEntry;
-import org.fenixedu.treasury.domain.document.PaymentEntry;
-import org.fenixedu.treasury.domain.document.ReimbursementEntry;
-import org.fenixedu.treasury.domain.document.ReimbursementUtils;
-import org.fenixedu.treasury.domain.document.SettlementEntry;
-import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.document.reimbursement.ReimbursementProcessStatusType;
-import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.domain.integration.ERPConfiguration;
-import org.fenixedu.treasury.domain.integration.ERPExportOperation;
-import org.fenixedu.treasury.domain.integration.ERPImportOperation;
-import org.fenixedu.treasury.domain.integration.IntegrationOperationLogBean;
-import org.fenixedu.treasury.domain.integration.OperationFile;
-import org.fenixedu.treasury.domain.settings.TreasurySettings;
-import org.fenixedu.treasury.generated.sources.saft.sap.AddressStructure;
-import org.fenixedu.treasury.generated.sources.saft.sap.AddressStructurePT;
-import org.fenixedu.treasury.generated.sources.saft.sap.AuditFile;
-import org.fenixedu.treasury.generated.sources.saft.sap.Header;
-import org.fenixedu.treasury.generated.sources.saft.sap.MovementTax;
-import org.fenixedu.treasury.generated.sources.saft.sap.OrderReferences;
-import org.fenixedu.treasury.generated.sources.saft.sap.PaymentMethod;
-import org.fenixedu.treasury.generated.sources.saft.sap.ReimbursementStatusType;
-import org.fenixedu.treasury.generated.sources.saft.sap.SAFTPTMovementTaxType;
-import org.fenixedu.treasury.generated.sources.saft.sap.SAFTPTPaymentType;
-import org.fenixedu.treasury.generated.sources.saft.sap.SAFTPTSettlementType;
-import org.fenixedu.treasury.generated.sources.saft.sap.SAFTPTSourceBilling;
-import org.fenixedu.treasury.generated.sources.saft.sap.SAFTPTSourcePayment;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.AdvancedPaymentCredit;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.Line.SourceDocumentID;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.Payments.Payment.ReimbursementProcess;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.AdvancedPayment;
-import org.fenixedu.treasury.generated.sources.saft.sap.SourceDocuments.WorkingDocuments.WorkDocument.Line.Metadata;
-import org.fenixedu.treasury.generated.sources.saft.sap.Tax;
-import org.fenixedu.treasury.generated.sources.saft.sap.TaxTableEntry;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.fenixedu.treasury.services.integration.erp.IERPExporter;
-import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
-import org.fenixedu.treasury.services.integration.erp.SaftConfig;
-import org.fenixedu.treasury.services.integration.erp.ERPExternalServiceImplementation.ReimbursementStateBean;
-import org.fenixedu.treasury.services.integration.erp.dto.DocumentStatusWS;
-import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationInput;
-import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationOutput;
-import org.fenixedu.treasury.util.TreasuryConstants;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 // ******************************************************************************************************************************
 // http://info.portaldasfinancas.gov.pt/NR/rdonlyres/3B4FECDB-2380-45D7-9019-ABCA80A7E99E/0/Comunicacao_Dados_Doc_Transporte.pdf
@@ -458,13 +416,12 @@ public class SAPExporter implements IERPExporter {
             payment.setPaymentRefNo(document.getUiDocumentNumber());
 
             // Finantial Transaction Reference
-            payment.setFinantialTransactionReference(
-                    !Strings.isNullOrEmpty(document.getFinantialTransactionReference()) ? document
-                            .getFinantialTransactionReference() : "");
+            payment.setFinantialTransactionReference(!Strings.isNullOrEmpty(
+                    document.getFinantialTransactionReference()) ? document.getFinantialTransactionReference() : "");
 
             //OriginDocumentNumber
             {
-                String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
+                String creator = FenixEDUTreasuryPlatformDependentServices.getVersioningCreatorUsername(document);
                 String sourceId =
                         !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : " ";
                 payment.setSourceID(sourceId);
@@ -490,13 +447,12 @@ public class SAPExporter implements IERPExporter {
                 status.setPaymentStatus("N");
             }
 
-            DateTime versioningUpdateDate =
-                    TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(document);
+            DateTime versioningUpdateDate = FenixEDUTreasuryPlatformDependentServices.getVersioningUpdateDate(document);
             if (versioningUpdateDate != null) {
                 status.setPaymentStatusDate(convertToXMLDateTime(dataTypeFactory, versioningUpdateDate));
                 // Utilizador responsável pelo estado atual do docu-mento.
                 String versioningUpdatorUsername =
-                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document);
+                        FenixEDUTreasuryPlatformDependentServices.getVersioningUpdatorUsername(document);
                 String sourceId = versioningUpdatorUsername != null ? Splitter.fixedLength(MAX_SOURCE_ID)
                         .splitToList(versioningUpdatorUsername).get(0) : " ";
                 status.setSourceID(sourceId);
@@ -512,8 +468,8 @@ public class SAPExporter implements IERPExporter {
 
             // Deve ser preenchido com:
             // 'P' - Documento produzido na aplicacao;
-            if (Boolean.TRUE.equals(document.getDocumentNumberSeries().getSeries().getExternSeries())
-                    || Boolean.TRUE.equals(document.getDocumentNumberSeries().getSeries().getLegacy())) {
+            if (Boolean.TRUE.equals(document.getDocumentNumberSeries().getSeries().getExternSeries()) || Boolean.TRUE.equals(
+                    document.getDocumentNumberSeries().getSeries().getLegacy())) {
                 status.setSourcePayment(SAFTPTSourcePayment.I);
             } else {
                 status.setSourcePayment(SAFTPTSourcePayment.P);
@@ -547,9 +503,8 @@ public class SAPExporter implements IERPExporter {
                     method.setPaymentDate(convertToXMLDate(dataTypeFactory, calculatePaymentDate(document)));
 
                     method.setPaymentMechanism(convertToSAFTPaymentMechanism(reimbursmentEntry.getPaymentMethod()));
-                    method.setPaymentMethodReference(
-                            !Strings.isNullOrEmpty(reimbursmentEntry.getReimbursementMethodId()) ? reimbursmentEntry
-                                    .getReimbursementMethodId() : "");
+                    method.setPaymentMethodReference(!Strings.isNullOrEmpty(
+                            reimbursmentEntry.getReimbursementMethodId()) ? reimbursmentEntry.getReimbursementMethodId() : "");
 
                     payment.getPaymentMethod().add(method);
                     payment.setSettlementType(SAFTPTSettlementType.NR);
@@ -581,8 +536,9 @@ public class SAPExporter implements IERPExporter {
             //Lines
             BigInteger i = BigInteger.ONE;
 
-            final List<SettlementEntry> settlementEntriesList = document.getSettlemetEntriesSet().stream()
-                    .sorted(SettlementEntry.COMPARATOR_BY_ENTRY_ORDER).collect(Collectors.toList());
+            final List<SettlementEntry> settlementEntriesList =
+                    document.getSettlemetEntriesSet().stream().sorted(SettlementEntry.COMPARATOR_BY_ENTRY_ORDER)
+                            .collect(Collectors.toList());
 
             if (settlementEntriesList.size() != document.getSettlemetEntriesSet().size()) {
                 throw new RuntimeException("error");
@@ -700,8 +656,7 @@ public class SAPExporter implements IERPExporter {
             baseCustomers.put(customerBean.getCustomerId(), customerBean);
         }
 
-        if (document instanceof AdvancedPaymentCreditNote
-                && ((AdvancedPaymentCreditNote) document).getAdvancedPaymentSettlementNote() != null) {
+        if (document instanceof AdvancedPaymentCreditNote && ((AdvancedPaymentCreditNote) document).getAdvancedPaymentSettlementNote() != null) {
             AdvancedPayment advancedPayment = new AdvancedPayment();
             advancedPayment.setDescription("");
             advancedPayment.setOriginatingON(
@@ -763,8 +718,7 @@ public class SAPExporter implements IERPExporter {
             // CustomerID
             workDocument.setCustomerID(document.getDebtAccount().getCustomer().getCode());
 
-            if (document.isCreditNote() && !((CreditNote) document).isAdvancePayment()
-                    && !((CreditNote) document).isExportedInLegacyERP()) {
+            if (document.isCreditNote() && !((CreditNote) document).isAdvancePayment() && !((CreditNote) document).isExportedInLegacyERP()) {
                 final CreditNote creditNote = (CreditNote) document;
                 if (creditNote.getDebitNote() == null || creditNote.getDebitNote().isExportedInLegacyERP()) {
                     workDocument.setForceCertification(true);
@@ -791,13 +745,12 @@ public class SAPExporter implements IERPExporter {
                 status.setWorkStatus("N");
             }
 
-            final DateTime versioningUpdateDate =
-                    TreasuryPlataformDependentServicesFactory.implementation().versioningUpdateDate(document);
+            final DateTime versioningUpdateDate = FenixEDUTreasuryPlatformDependentServices.getVersioningUpdateDate(document);
             if (versioningUpdateDate != null) {
                 status.setWorkStatusDate(convertToXMLDateTime(dataTypeFactory, versioningUpdateDate));
                 // Utilizador responsável pelo estado atual do docu-mento.
                 String versioningUpdatorUsername =
-                        TreasuryPlataformDependentServicesFactory.implementation().versioningUpdatorUsername(document);
+                        FenixEDUTreasuryPlatformDependentServices.getVersioningUpdatorUsername(document);
                 String sourceId = versioningUpdatorUsername != null ? Splitter.fixedLength(MAX_SOURCE_ID)
                         .splitToList(versioningUpdatorUsername).get(0) : " ";
                 status.setSourceID(sourceId);
@@ -809,8 +762,8 @@ public class SAPExporter implements IERPExporter {
             // status.setReason("");
             // Deve ser preenchido com:
             // 'P' - Documento produzido na aplicacao;
-            if (Boolean.TRUE.equals(document.getDocumentNumberSeries().getSeries().getExternSeries())
-                    || Boolean.TRUE.equals(document.getDocumentNumberSeries().getSeries().getLegacy())) {
+            if (Boolean.TRUE.equals(document.getDocumentNumberSeries().getSeries().getExternSeries()) || Boolean.TRUE.equals(
+                    document.getDocumentNumberSeries().getSeries().getLegacy())) {
                 status.setSourceBilling(SAFTPTSourceBilling.I);
             } else {
                 status.setSourceBilling(SAFTPTSourceBilling.P);
@@ -859,7 +812,7 @@ public class SAPExporter implements IERPExporter {
             workDocument.setPeriod(document.getDocumentDate().getMonthOfYear());
 
             // SourceID
-            String creator = TreasuryPlataformDependentServicesFactory.implementation().versioningCreatorUsername(document);
+            String creator = FenixEDUTreasuryPlatformDependentServices.getVersioningCreatorUsername(document);
             String sourceId =
                     !Strings.isNullOrEmpty(creator) ? Splitter.fixedLength(MAX_SOURCE_ID).splitToList(creator).get(0) : "";
             workDocument.setSourceID(sourceId);
@@ -968,8 +921,9 @@ public class SAPExporter implements IERPExporter {
                             reference.setOriginatingON(debitNote.getLegacyERPCertificateDocumentReference());
                         }
                     } else {
-                        if (!creditEntry.getFinantialDocument().isExportedInLegacyERP() && !institution
-                                .getErpIntegrationConfiguration().isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled()) {
+                        if (!creditEntry.getFinantialDocument()
+                                .isExportedInLegacyERP() && !institution.getErpIntegrationConfiguration()
+                                .isCreditsOfLegacyDebitWithoutLegacyInvoiceExportEnabled()) {
                             throw new TreasuryDomainException(
                                     "error.ERPExporter.credit.note.of.legacy.debit.note.without.legacyERPCertificateDocumentReference",
                                     debitNote.getUiDocumentNumber(), creditEntry.getFinantialDocument().getUiDocumentNumber());
@@ -1018,8 +972,8 @@ public class SAPExporter implements IERPExporter {
          * a zero. Deve ser referido o preceito legal aplic?vel. . . . . . . . .
          * . Texto 60
          */
-        if (TreasuryConstants.isEqual(line.getTax().getTaxPercentage(), BigDecimal.ZERO) || (line.getTax().getTaxAmount() != null
-                && TreasuryConstants.isEqual(line.getTax().getTaxAmount(), BigDecimal.ZERO))) {
+        if (TreasuryConstants.isEqual(line.getTax().getTaxPercentage(), BigDecimal.ZERO) || (line.getTax()
+                .getTaxAmount() != null && TreasuryConstants.isEqual(line.getTax().getTaxAmount(), BigDecimal.ZERO))) {
             if (product.getVatExemptionReason() != null) {
                 line.setTaxExemptionReason(
                         product.getVatExemptionReason().getCode() + "-" + product.getVatExemptionReason().getName().getContent());
@@ -1076,8 +1030,9 @@ public class SAPExporter implements IERPExporter {
         entry.setTaxCode(vat.getVatType().getName().getContent());
         if (finantialInstitution.getFiscalNumber() != null) {
             entry.setTaxCountryRegion(finantialInstitution.getFiscalCountryRegion().getFiscalCode());
-            entry.setDescription(finantialInstitution.getFiscalCountryRegion().getName().getContent() + "-"
-                    + vat.getVatType().getName().getContent());
+            entry.setDescription(
+                    finantialInstitution.getFiscalCountryRegion().getName().getContent() + "-" + vat.getVatType().getName()
+                            .getContent());
         } else {
             entry.setTaxCountryRegion("PT");
             entry.setDescription("");
@@ -1112,9 +1067,9 @@ public class SAPExporter implements IERPExporter {
             AddressStructurePT companyAddress = null;
             //TODOJN Locale por resolver
             companyAddress = convertFinantialInstitutionAddressToAddressPT(finantialInstitution.getAddress(),
-                    finantialInstitution.getZipCode(), finantialInstitution.getMunicipality() != null ? finantialInstitution
-                            .getMunicipality().getLocalizedName(new Locale("pt")) : "---",
-                    finantialInstitution.getAddress());
+                    finantialInstitution.getZipCode(),
+                    finantialInstitution.getMunicipality() != null ? finantialInstitution.getMunicipality()
+                            .getLocalizedName(new Locale("pt")) : "---", finantialInstitution.getAddress());
             header.setCompanyAddress(companyAddress);
 
             // CompanyID
@@ -1386,8 +1341,8 @@ public class SAPExporter implements IERPExporter {
         address.setCountry(!Strings.isNullOrEmpty(customer.getCustomerAddressCountryCode()) ? translateCountryCodeForExceptions(
                 customer.getCustomerAddressCountryCode()) : MORADA_DESCONHECIDO);
 
-        address.setAddressDetail(!Strings.isNullOrEmpty(customer.getCustomerAddressDetail()) ? customer
-                .getCustomerAddressDetail() : MORADA_DESCONHECIDO);
+        address.setAddressDetail(!Strings.isNullOrEmpty(
+                customer.getCustomerAddressDetail()) ? customer.getCustomerAddressDetail() : MORADA_DESCONHECIDO);
 
         address.setCity(!Strings.isNullOrEmpty(customer.getCustomerCity()) ? customer.getCustomerCity() : MORADA_DESCONHECIDO);
 
@@ -1513,8 +1468,9 @@ public class SAPExporter implements IERPExporter {
         }
         IERPExternalService service = erpIntegrationConfiguration.getERPExternalServiceImplementation();
 
-        List<String> documentNumbers = institution.getFinantialDocumentsPendingForExportationSet().stream()
-                .map(doc -> doc.getUiDocumentNumber()).collect(Collectors.toList());
+        List<String> documentNumbers =
+                institution.getFinantialDocumentsPendingForExportationSet().stream().map(doc -> doc.getUiDocumentNumber())
+                        .collect(Collectors.toList());
         List<DocumentStatusWS> integrationStatusFor =
                 service.getIntegrationStatusFor(institution.getFiscalNumber(), documentNumbers);
         for (DocumentStatusWS documentStatus : integrationStatusFor) {
@@ -1544,7 +1500,8 @@ public class SAPExporter implements IERPExporter {
         }
 
         final IERPExternalService service = TreasuryPlataformDependentServicesFactory.implementation()
-                .getERPExternalServiceImplementation(erpIntegrationConfiguration);;
+                .getERPExternalServiceImplementation(erpIntegrationConfiguration);
+        ;
         logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.sending.inforation"));
 
         DocumentsInformationInput input = new DocumentsInformationInput();
@@ -1574,17 +1531,21 @@ public class SAPExporter implements IERPExporter {
                                 status.getSapDocumentNumber());
                     } else {
                         success = false;
-                        logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.error.integrating.document",
-                                status.getDocumentNumber(), status.getErrorDescription()));
-                        logBean.appendErrorLog(treasuryBundle("info.ERPExporter.error.integrating.document",
-                                status.getDocumentNumber(), status.getErrorDescription()));
+                        logBean.appendIntegrationLog(
+                                treasuryBundle("info.ERPExporter.error.integrating.document", status.getDocumentNumber(),
+                                        status.getErrorDescription()));
+                        logBean.appendErrorLog(
+                                treasuryBundle("info.ERPExporter.error.integrating.document", status.getDocumentNumber(),
+                                        status.getErrorDescription()));
                     }
                 } else {
                     success = false;
-                    logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.error.integrating.document",
-                            status.getDocumentNumber(), status.getErrorDescription()));
-                    logBean.appendErrorLog(treasuryBundle("info.ERPExporter.error.integrating.document",
-                            status.getDocumentNumber(), status.getErrorDescription()));
+                    logBean.appendIntegrationLog(
+                            treasuryBundle("info.ERPExporter.error.integrating.document", status.getDocumentNumber(),
+                                    status.getErrorDescription()));
+                    logBean.appendErrorLog(
+                            treasuryBundle("info.ERPExporter.error.integrating.document", status.getDocumentNumber(),
+                                    status.getErrorDescription()));
 
                 }
             }
@@ -1635,8 +1596,8 @@ public class SAPExporter implements IERPExporter {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        String fileName = operation.getFinantialInstitution().getFiscalNumber() + "_"
-                + operation.getExecutionDate().toString("ddMMyyyy_hhmm") + ".xml";
+        String fileName = operation.getFinantialInstitution().getFiscalNumber() + "_" + operation.getExecutionDate()
+                .toString("ddMMyyyy_hhmm") + ".xml";
         OperationFile binaryStream = new OperationFile(fileName, bytes);
         if (operation.getFile() != null) {
             operation.getFile().delete();
@@ -1684,8 +1645,8 @@ public class SAPExporter implements IERPExporter {
             if (finantialDocument.isSettlementNote()) {
                 final SettlementNote settlementNote = (SettlementNote) finantialDocument;
 
-                if (settlementNote.getAdvancedPaymentCreditNote() != null
-                        && !result.contains(settlementNote.getAdvancedPaymentCreditNote())) {
+                if (settlementNote.getAdvancedPaymentCreditNote() != null && !result.contains(
+                        settlementNote.getAdvancedPaymentCreditNote())) {
                     result.add(settlementNote.getAdvancedPaymentCreditNote());
                 }
 
@@ -1889,11 +1850,12 @@ public class SAPExporter implements IERPExporter {
         IERPExternalService service = erpIntegrationConfiguration.getERPExternalServiceImplementation();
         List<String> documentsList = new ArrayList<String>();
         documentsList.add(document.getUiDocumentNumber());
-        List<DocumentStatusWS> integrationStatusFor = service
-                .getIntegrationStatusFor(document.getDebtAccount().getFinantialInstitution().getFiscalNumber(), documentsList);
+        List<DocumentStatusWS> integrationStatusFor =
+                service.getIntegrationStatusFor(document.getDebtAccount().getFinantialInstitution().getFiscalNumber(),
+                        documentsList);
         for (DocumentStatusWS documentStatus : integrationStatusFor) {
-            if (documentStatus.getDocumentNumber().equals(document.getUiDocumentNumber())
-                    && documentStatus.isIntegratedWithSuccess()) {
+            if (documentStatus.getDocumentNumber()
+                    .equals(document.getUiDocumentNumber()) && documentStatus.isIntegratedWithSuccess()) {
                 final String message =
                         treasuryBundle("info.ERPExporter.sucess.integrating.document", document.getUiDocumentNumber());
 
@@ -2002,9 +1964,9 @@ public class SAPExporter implements IERPExporter {
     public boolean isCustomerWithFinantialDocumentsIntegratedInPreviousERP(final Customer customer) {
         for (final DebtAccount debtAccount : customer.getDebtAccountsSet()) {
 
-            if (debtAccount.getFinantialInstitution().getErpIntegrationConfiguration() != null
-                    && debtAccount.getFinantialInstitution().getErpIntegrationConfiguration()
-                            .isAllowFiscalFixWithLegacyDocsExportedLegacyERP()) {
+            if (debtAccount.getFinantialInstitution()
+                    .getErpIntegrationConfiguration() != null && debtAccount.getFinantialInstitution()
+                    .getErpIntegrationConfiguration().isAllowFiscalFixWithLegacyDocsExportedLegacyERP()) {
                 continue;
             }
 
@@ -2071,14 +2033,15 @@ public class SAPExporter implements IERPExporter {
     @Override
     public List<FinantialDocument> filterDocumentsToExport(final Stream<? extends FinantialDocument> finantialDocumentsStream) {
 
-        List<? extends FinantialDocument> tempList = finantialDocumentsStream.filter(d -> d.isDocumentToExport())
-                .filter(d -> !d.isCreditNote()).filter(d -> d.isAnnulled() || d.isClosed())
-                .filter(d -> d.isDocumentSeriesNumberSet()).filter(x -> x.getCloseDate() != null)
-                .filter(x -> x.isDebitNote()
-                        || (x.isSettlementNote() && !x.getCloseDate().isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)))
-                // TODO Anil Review comparator COMPARE_BY_DOCUMENT_TYPE which is buggy, for now do not sort
-                // .sorted(COMPARE_BY_DOCUMENT_TYPE)
-                .collect(Collectors.<FinantialDocument> toList());
+        List<? extends FinantialDocument> tempList =
+                finantialDocumentsStream.filter(d -> d.isDocumentToExport()).filter(d -> !d.isCreditNote())
+                        .filter(d -> d.isAnnulled() || d.isClosed()).filter(d -> d.isDocumentSeriesNumberSet())
+                        .filter(x -> x.getCloseDate() != null)
+                        .filter(x -> x.isDebitNote() || (x.isSettlementNote() && !x.getCloseDate()
+                                .isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)))
+                        // TODO Anil Review comparator COMPARE_BY_DOCUMENT_TYPE which is buggy, for now do not sort
+                        // .sorted(COMPARE_BY_DOCUMENT_TYPE)
+                        .collect(Collectors.<FinantialDocument> toList());
 
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             // If there is restriction on mixing payments exported in legacy ERP, then filter documents exported in legacy ERP
@@ -2120,13 +2083,13 @@ public class SAPExporter implements IERPExporter {
             throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
         }
 
-        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null
-                && !reimbursementStatus.isAfter(reimbursementNote.getCurrentReimbursementProcessStatus())) {
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null && !reimbursementStatus.isAfter(
+                reimbursementNote.getCurrentReimbursementProcessStatus())) {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.next.status.invalid");
         }
 
-        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null
-                && reimbursementNote.getCurrentReimbursementProcessStatus().isFinalStatus()) {
+        if (reimbursementNote.getCurrentReimbursementProcessStatus() != null && reimbursementNote.getCurrentReimbursementProcessStatus()
+                .isFinalStatus()) {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.current.status.is.final");
         }
 
@@ -2271,8 +2234,9 @@ public class SAPExporter implements IERPExporter {
 
             writeContentToExportOperation(xml, operation);
 
-            boolean success = sendDocumentsInformationToIntegration(debtAccount.getFinantialInstitution(),
-                    xml.getBytes(SAFT_PT_ENCODING), logBean);
+            boolean success =
+                    sendDocumentsInformationToIntegration(debtAccount.getFinantialInstitution(), xml.getBytes(SAFT_PT_ENCODING),
+                            logBean);
             logBean.appendIntegrationLog(treasuryBundle("label.ERPExporter.finished.customers.integration"));
 
             operation.setSuccess(success);

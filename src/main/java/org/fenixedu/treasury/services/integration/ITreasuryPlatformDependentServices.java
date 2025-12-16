@@ -124,7 +124,7 @@ public interface ITreasuryPlatformDependentServices {
     /* User */
 
     @Deprecated
-    // Remove
+        // Remove
     String getLoggedUsername();
 
     @Deprecated
@@ -134,46 +134,68 @@ public interface ITreasuryPlatformDependentServices {
     }
 
     @Deprecated
-    // Remove
+        // Remove
     String getCustomerEmail(Customer customer);
 
     @Deprecated
-    // Remove
+        // Remove
     void setCurrentApplicationUser(String username);
 
     @Deprecated
-    // Remove
+        // Remove
     void removeCurrentApplicationUser();
 
     /* Locales */
 
     // TODO: provide the default locale of the platform
+    @Deprecated
+    // Remove
     Locale defaultLocale();
 
+    @Deprecated
+        // Remove
     Locale currentLocale();
 
+    @Deprecated
+        // Remove
     Set<Locale> availableLocales();
 
     /* Bundles */
 
+    @Deprecated
+        // Remove
     String bundle(final String bundleName, final String key, final String... args);
 
+    @Deprecated
+        // Remove
     String bundle(final Locale locale, final String bundleName, final String key, final String... args);
 
+    @Deprecated
+        // Remove
     LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
-
+    // Review as it is implemented in fenixedu-customers-base because the API is in fenixedu-base
     boolean isDynamicApplicationMessageDefined(String key);
+
+    // Review as it is implemented in fenixedu-customers-base because the API is in fenixedu-base
     LocalizedString getDynamicApplicationMessage(String key);
 
     /* Versioning Information */
 
+    @Deprecated
+    // REMOVE
     <T> String versioningCreatorUsername(final T obj);
 
+    @Deprecated
+    // REMOVE
     <T> DateTime versioningCreationDate(final T obj);
 
+    @Deprecated
+    // REMOVE
     <T> String versioningUpdatorUsername(final T obj);
 
+    @Deprecated
+    // REMOVE
     <T> DateTime versioningUpdateDate(final T obj);
 
     /* Web Services */

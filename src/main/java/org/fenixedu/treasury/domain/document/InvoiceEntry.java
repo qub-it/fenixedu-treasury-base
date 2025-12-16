@@ -71,6 +71,7 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.paymentcodes.MultipleEntriesPaymentCode;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.MbwayPaymentRequest;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -578,7 +579,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
             TreasuryExemption t = getAssociatedTreasuryExemptions().stream()
                     .sorted(TreasuryExemption.COMPARE_BY_CREATION_DATE.reversed()).findFirst().get();
 
-            result = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(t);
+            result = FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(t);
         }
 
         if (result == null && isDebitNoteEntry()) {
@@ -587,7 +588,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         }
 
         if (result == null) {
-            result = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(this);
+            result = FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(this);
         }
 
         return result;

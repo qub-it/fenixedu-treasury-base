@@ -57,6 +57,7 @@ import java.util.Comparator;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
@@ -69,8 +70,8 @@ public class TreasuryOperationLog extends TreasuryOperationLog_Base {
 
         @Override
         public int compare(TreasuryOperationLog o1, TreasuryOperationLog o2) {
-            DateTime o1CreationDate = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o1);
-            DateTime o2CreationDate = TreasuryPlataformDependentServicesFactory.implementation().versioningCreationDate(o2);
+            DateTime o1CreationDate = FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(o1);
+            DateTime o2CreationDate = FenixEDUTreasuryPlatformDependentServices.getVersioningCreationDate(o2);
             if (o1CreationDate.isBefore(o2CreationDate)) {
                 return -1;
             }
