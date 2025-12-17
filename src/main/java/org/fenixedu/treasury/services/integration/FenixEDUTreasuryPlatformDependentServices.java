@@ -382,6 +382,8 @@ public class FenixEDUTreasuryPlatformDependentServices implements ITreasuryPlatf
     /* ERP Integration */
     // TODO: Check the difference between this method and scheduleSingleDocument
     @Override
+    @Deprecated
+    // Remove
     public void scheduleDocumentForExportation(final FinantialDocument finantialDocument) {
         FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
 

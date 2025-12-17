@@ -81,8 +81,12 @@ import pt.ist.fenixframework.DomainObject;
 public interface ITreasuryPlatformDependentServices {
 
     /* ERP Integration */
+    @Deprecated
+    // Remove
     void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
 
+    @Deprecated
+    // Remove
     IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
 
     /* File */
@@ -200,21 +204,34 @@ public interface ITreasuryPlatformDependentServices {
 
     /* Web Services */
 
+    @Deprecated
+        // Remove
     PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
 
+    @Deprecated
+    // Remove
     PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl,
             String cancelUrl);
 
+    @Deprecated
+    // Remove
     void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
 
     /* Web */
+    // Remove
     String calculateURLChecksum(String urlToChecksum, HttpSession session);
 
     /* Domain entities events */
+    @Deprecated
+    // Remove
     void signalsRegisterHandlerForKey(String signalKey, Object handler);
 
+    @Deprecated
+        // Remove
     void signalsUnregisterHandlerForKey(String signalKey, Object handler);
 
+    @Deprecated
+        // Remove
     void signalsEmitForObject(String signalKey, DomainObject obj);
 
     String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,

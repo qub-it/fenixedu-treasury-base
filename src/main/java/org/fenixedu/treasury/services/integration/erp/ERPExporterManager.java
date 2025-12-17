@@ -69,6 +69,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.bennu.scheduler.TaskRunner;
+import org.fenixedu.bennu.scheduler.domain.SchedulerSystem;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
@@ -85,12 +87,14 @@ import org.fenixedu.treasury.domain.integration.ERPConfiguration;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
 import org.fenixedu.treasury.domain.integration.IntegrationOperationLogBean;
 import org.fenixedu.treasury.domain.integration.OperationFile;
+import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.ERPExternalServiceImplementation.ReimbursementStateBean;
 import org.fenixedu.treasury.services.integration.erp.dto.DocumentStatusWS;
 import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationInput;
 import org.fenixedu.treasury.services.integration.erp.dto.DocumentsInformationOutput;
+import org.fenixedu.treasury.services.integration.erp.tasks.ERPExportSingleDocumentsTask;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -308,8 +312,50 @@ public class ERPExporterManager {
     }
 
     public static void scheduleSingleDocument(final FinantialDocument finantialDocument) {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-        services.scheduleDocumentForExportation(finantialDocument);
+        scheduleDocumentForExportation(finantialDocument);
+    }
+
+    private static void scheduleDocumentForExportation(final FinantialDocument finantialDocument) {
+        FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
+
+        if (finantialInstitution.getErpIntegrationConfiguration() == null) {
+            return;
+        }
+
+        if (StringUtils.isEmpty(finantialInstitution.getErpIntegrationConfiguration().getImplementationClassName())) {
+            return;
+        }
+
+        IERPExporter erpExporter =
+                finantialInstitution.getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
+
+        if (erpExporter == null) {
+            return;
+        }
+
+        final List<FinantialDocument> documentsToExport =
+                erpExporter.filterDocumentsToExport(Collections.singletonList(finantialDocument).stream());
+
+        if (documentsToExport.isEmpty()) {
+            return;
+        }
+
+        final String externalId = documentsToExport.iterator().next().getExternalId();
+
+        new Thread() {
+
+            @Override
+            @Atomic
+            public void run() {
+                try {
+                    Thread.sleep(WAIT_TRANSACTION_TO_FINISH_MS);
+                } catch (InterruptedException e) {
+                }
+
+                SchedulerSystem.queue(new TaskRunner(new ERPExportSingleDocumentsTask(externalId)));
+            };
+
+        }.start();
     }
 
     @Atomic(mode = TxMode.WRITE)

@@ -1499,8 +1499,7 @@ public class SAPExporter implements IERPExporter {
             return false;
         }
 
-        final IERPExternalService service = TreasuryPlataformDependentServicesFactory.implementation()
-                .getERPExternalServiceImplementation(erpIntegrationConfiguration);
+        final IERPExternalService service = erpIntegrationConfiguration.getERPExternalServiceImplementation();
         ;
         logBean.appendIntegrationLog(treasuryBundle("info.ERPExporter.sending.inforation"));
 
@@ -1508,8 +1507,7 @@ public class SAPExporter implements IERPExporter {
         if (contents.length <= erpIntegrationConfiguration.getMaxSizeBytesToExportOnline()) {
             input.setData(contents);
             DocumentsInformationOutput sendInfoOnlineResult = service.sendInfoOnline(institution, input);
-            TreasuryPlataformDependentServicesFactory.implementation()
-                    .getERPExternalServiceImplementation(erpIntegrationConfiguration);
+            erpIntegrationConfiguration.getERPExternalServiceImplementation();
             logBean.appendIntegrationLog(
                     treasuryBundle("info.ERPExporter.sucess.sending.inforation.online", sendInfoOnlineResult.getRequestId()));
             logBean.setErpOperationId(sendInfoOnlineResult.getRequestId());

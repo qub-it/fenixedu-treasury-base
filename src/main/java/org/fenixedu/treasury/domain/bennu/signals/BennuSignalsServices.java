@@ -52,23 +52,26 @@
  */
 package org.fenixedu.treasury.domain.bennu.signals;
 
+import org.fenixedu.bennu.core.signals.DomainObjectEvent;
+import org.fenixedu.bennu.core.signals.Signal;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import pt.ist.fenixframework.DomainObject;
 
 public class BennuSignalsServices {
 
     public static final String SETTLEMENT_EVENT = "SETTLEMENT_EVENT";
 
     public static void emitSignalForSettlement(final SettlementNote settlementNote) {
-        TreasuryPlataformDependentServicesFactory.implementation().signalsEmitForObject(SETTLEMENT_EVENT, settlementNote);
+        Signal.emit(SETTLEMENT_EVENT, new DomainObjectEvent<>(settlementNote));
     }
 
     public static void registerSettlementEventHandler(final Object handler) {
-        TreasuryPlataformDependentServicesFactory.implementation().signalsRegisterHandlerForKey(SETTLEMENT_EVENT, handler);
+        Signal.register(SETTLEMENT_EVENT, handler);
     }
 
     public static void unregisterSettlementEventHandler(final Object handler) {
-        TreasuryPlataformDependentServicesFactory.implementation().signalsUnregisterHandlerForKey(SETTLEMENT_EVENT, handler);
+        Signal.unregister(SETTLEMENT_EVENT, handler);
     }
 
 }

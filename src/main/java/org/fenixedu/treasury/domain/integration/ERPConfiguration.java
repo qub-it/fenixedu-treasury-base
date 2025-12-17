@@ -54,6 +54,8 @@ package org.fenixedu.treasury.domain.integration;
 
 import java.util.Collection;
 
+import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceClientConfiguration;
+import com.qubit.solution.fenixedu.bennu.webservices.domain.webservice.WebServiceConfiguration;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -183,7 +185,21 @@ public class ERPConfiguration extends ERPConfiguration_Base {
     }
 
     public IERPExternalService getERPExternalServiceImplementation() {
-        return TreasuryPlataformDependentServicesFactory.implementation().getERPExternalServiceImplementation(this);
+        final String className = this.getImplementationClassName();
+
+        try {
+
+            //force the "invocation" of class name
+            Class cl = Class.forName(className);
+            WebServiceClientConfiguration clientConfiguration = WebServiceConfiguration.readByImplementationClass(className);
+
+            IERPExternalService client = clientConfiguration.getClient();
+
+            return client;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new TreasuryDomainException("error.ERPConfiguration.invalid.external.service");
+        }
     }
 
 }

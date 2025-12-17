@@ -1,3 +1,6 @@
+- Refactor: Move FenixEDUTreasuryPlatformDependentServices implementations for ERP document scheduler to ERP related classes [#qubIT-Fenix-7855]
+- Refactor: Replace invocation for methods of ITreasuryPlatformDependentServices related to Bennu Signals [#qubIT-Fenix-7855]
+
 15.2.1 (16-12-2025)
 - Refactor: Replace ITreasuryPlatformDependentServices#versioning* methods by static FenixEDUTreasuryPlatformDependentServices#getVersioning* [#qubIT-Fenix-7855]
 - Refactor: Replace ITreasuryPlatformDependentServices#bundle invocations by Bennu BundleUtil [#qubIT-Fenix-7855]

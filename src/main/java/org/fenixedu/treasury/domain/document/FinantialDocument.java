@@ -352,6 +352,18 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         }
 
         if (getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration().getActive()) {
+            // ANIL 2025-12-16 (#qubIT-Fenix-7855)
+            //
+            // The method Finantial#markDocumentToExport is called by the FinantialDocument#closeDocument
+            // and SettlementNote#annulDocument
+            //
+            // If it is called by FinantialDocument#closeDocument will not have any effect
+            // since the FinantialDocument#closeDate property is not set and is filtered
+            // by the two implementations of ERPExportManager.
+            // After closing the document, it will be exported by the periodic task and
+            // not immediately . Since this is not very well understood, when the document
+            // is integration, many this invocation should be removed and rely only on
+            // the periodic task to integrate the documents
             ERPExporterManager.scheduleSingleDocument(this);
         }
     }
