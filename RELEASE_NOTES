@@ -1,3 +1,5 @@
+- Improvement: Return the adhoc customer fiscal number as business identification, if identification number is not filled [#qubIT-Fenix-7856]
+
 15.2.2 (17-12-2025)
 - Refactor: Move FenixEDUTreasuryPlatformDependentServices implementations for ERP document scheduler to ERP related classes [#qubIT-Fenix-7855]
 - Refactor: Replace invocation for methods of ITreasuryPlatformDependentServices related to Bennu Signals [#qubIT-Fenix-7855]

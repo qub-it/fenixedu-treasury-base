@@ -61,6 +61,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
@@ -324,7 +325,11 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
     @Override
     public String getBusinessIdentification() {
-        return this.getIdentificationNumber();
+        if(StringUtils.isNotEmpty(getIdentificationNumber())) {
+            return getIdentificationNumber();
+        }
+
+        return getUiFiscalNumber();
     }
 
     @Override
