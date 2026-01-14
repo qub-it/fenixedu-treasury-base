@@ -72,6 +72,7 @@ import org.joda.time.*;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -475,6 +476,22 @@ public class TreasuryConstants {
 
     public static Set<Locale> getAvailableLocales() {
         return CoreConfiguration.supportedLocales();
+    }
+
+    /* Quality or development mode */
+
+    public static boolean isPlatformInQualityOrDevelopmentMode() {
+        return CoreConfiguration.getConfiguration().developmentMode() || isPlatformInQualityMode();
+    }
+
+    private static boolean isPlatformInQualityMode() {
+        try {
+            final Properties properties = new Properties();
+            properties.load(TreasuryConstants.class.getResourceAsStream("/configuration.properties"));
+            return Boolean.valueOf(properties.getProperty("quality.mode", "true"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

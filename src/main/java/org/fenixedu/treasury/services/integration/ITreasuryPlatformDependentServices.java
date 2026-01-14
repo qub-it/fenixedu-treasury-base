@@ -179,9 +179,11 @@ public interface ITreasuryPlatformDependentServices {
     LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
     // Review as it is implemented in fenixedu-customers-base because the API is in fenixedu-base
+    // For now maintain
     boolean isDynamicApplicationMessageDefined(String key);
 
     // Review as it is implemented in fenixedu-customers-base because the API is in fenixedu-base
+    // For now maintain
     LocalizedString getDynamicApplicationMessage(String key);
 
     /* Versioning Information */
@@ -219,6 +221,7 @@ public interface ITreasuryPlatformDependentServices {
 
     /* Web */
     // Remove
+    @Deprecated
     String calculateURLChecksum(String urlToChecksum, HttpSession session);
 
     /* Domain entities events */
@@ -234,22 +237,32 @@ public interface ITreasuryPlatformDependentServices {
         // Remove
     void signalsEmitForObject(String signalKey, DomainObject obj);
 
+    @Deprecated
+    // remove
     String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
             boolean isException);
 
     /* Web Docs */
 
+    @Deprecated
+    // remove
     InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, FinantialEntity finantialEntity,
             LocalDate documentDateFrom, LocalDate documentDateTo, String username);
 
+    @Deprecated
+    // remove
     String exportDocumentFileExtension();
 
+    @Deprecated
+    // remove
     InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
 
+    // Needs to be maintained
     ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration);
 
     /* Holidays */
 
+    // Maintain
     Set<Partial> getHolidays();
 
     /* Tax Authority Certification */
