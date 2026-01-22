@@ -20,6 +20,7 @@ import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.sibsonlinepaymentsgateway.SibsBillingAddressBean;
+import org.fenixedu.treasury.domain.sibspay.SibsPayPlatform;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibspay.model.*;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -166,6 +167,8 @@ public class SibsPayAPIService {
 
     private SibsPayRequestCheckout createRequestCheckout(ForwardPaymentRequest forwardPayment,
             SibsBillingAddressBean billingAddressBean) {
+        SibsPayPlatform platform = (SibsPayPlatform) forwardPayment.getDigitalPaymentPlatform();
+
         SibsPayRequestCheckout result = new SibsPayRequestCheckout();
 
         result.setMerchant(new SibsPayMerchant());
@@ -193,6 +196,12 @@ public class SibsPayAPIService {
             address.setCountry(billingAddressBean.getAddressCountryCode());
             address.setPostcode(zipCodeText != null ? Splitter.fixedLength(MAX_POSTCODE_LENGTH).splitToList(zipCodeText).get(0) : null);
             address.setStreet1(addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
+
+            if(Boolean.TRUE.equals(platform.getFillAddressFieldsIfEmpty())) {
+                address.setCity(StringUtils.isNotEmpty(address.getCity()) ? address.getCity() : "-");
+                address.setPostcode(StringUtils.isNotEmpty(address.getPostcode()) ? address.getPostcode() : "-");
+                address.setStreet1(StringUtils.isNotEmpty(address.getStreet1()) ? address.getStreet1() : "-");
+            }
         }
 
         // result.getCustomer().getCustomerInfo().setShippingAddress(address);

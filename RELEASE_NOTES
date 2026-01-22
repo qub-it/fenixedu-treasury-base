@@ -1,3 +1,5 @@
+- Improvement: Add property to SIBS Pay payment platform entity to control filling address fields if empty [#qubIT-Fenix-7679]
+
 15.2.3 (14-01-2026)
 - Improvement: Return the adhoc customer fiscal number as business identification, if identification number is not filled [#qubIT-Fenix-7856]
 - Refactor: Move ForwadPaymentController to fenixedu-qub-treasury-ui module [#qubIT-Fenix-7855]

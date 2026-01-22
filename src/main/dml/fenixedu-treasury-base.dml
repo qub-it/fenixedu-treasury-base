@@ -3805,6 +3805,10 @@ class sibspay.SibsPayPlatform extends payments.integration.DigitalPaymentPlatfor
 	int mbwayMandateDaysToChargePayment;
 
 	DateTime lastMbwayPaymentScheduleExecution;
+
+    // ANIL 2026-01-22 (#qubIT-Fenix-7679)
+    // Temporary fix over address empty fields but are required to be sent
+	Boolean fillAddressFieldsIfEmpty;
 }
 
     relation SibsPayMbwayMandatePossibleProductsToCharge {
