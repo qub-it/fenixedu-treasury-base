@@ -73,6 +73,13 @@ public class FiscalMonth extends FiscalMonth_Base {
         super.setFiscalOperationsClosedSetDate(new DateTime());
     }
 
+    public boolean containsDate(LocalDate when) {
+        int year = when.getYear();
+        int month = when.getMonthOfYear();
+
+        return getFiscalYear().getYear() == year && getMonth() == month;
+    }
+
     /* Services */
 
     public static Stream<FiscalMonth> findAll() {
@@ -132,4 +139,13 @@ public class FiscalMonth extends FiscalMonth_Base {
     public static FiscalMonth getOrCreateFiscalMonth(FiscalYear fiscalYear, int month) {
         return findUnique(fiscalYear, month).orElseGet(() -> create(fiscalYear, month));
     }
+
+    public static FiscalMonth getOrCreateFiscalMonth(FinantialInstitution finantialInstitution, LocalDate when) {
+        int year = when.getYear();
+        int monthOfYear = when.getMonthOfYear();
+
+        FiscalYear fiscalYear = FiscalYear.getOrCreateFiscalYear(finantialInstitution, year);
+        return FiscalMonth.getOrCreateFiscalMonth(fiscalYear, monthOfYear);
+    }
+
 }

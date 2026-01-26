@@ -62,6 +62,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.FinantialEntity;
+import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -88,6 +89,11 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         setAmount(amount);
         setDescription(description);
         setEntryDateTime(entryDateTime);
+
+        // ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        setFiscalMonth(
+                FiscalMonth.getOrCreateFiscalMonth(finantialEntity.getFinantialInstitution(), entryDateTime.toLocalDate()));
+
         super.setCode(String.format("FF-%s-FE-%d", debtAccount.getCustomer().getCode(),
                 debtAccount.getCustomer().nextFinantialDocumentEntryNumber()));
     }
@@ -134,10 +140,21 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
             throw new TreasuryDomainException("error.FinantialDocumentEntry.amount.less.than.zero");
         }
 
+        if (getEntryDateTime() == null) {
+            throw new TreasuryDomainException("error.FinantialDocumentEntry.entryDateTime.required");
+        }
+
         // TODO: Apply only when code is filled in all entries
 //        if (FinantialDocumentEntry.findByCode(getDebtAccount(), getCode()).count() > 1) {
 //            throw new TreasuryDomainException("error.FinantialDocumentEntry.code.must.be.unique");
 //        }
+
+        // TODO ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        //
+        // Remove the check getFiscalMonth() != null as soon as fiscal month set is confirmed
+        if(getFiscalMonth() != null && !getFiscalMonth().containsDate(getEntryDateTime().toLocalDate())) {
+            throw new TreasuryDomainException("error.FinantialDocument.fiscalMonth.mismatch.with.entryDateTime");
+        }
     }
 
     public boolean isFinantialDocumentRequired() {
@@ -164,6 +181,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
 
         setFinantialDocument(null);
         setFinantialEntryType(null);
+        setFiscalMonth(null);
 
         deleteDomainObject();
     }

@@ -197,10 +197,13 @@ public class SibsPayAPIService {
             address.setPostcode(zipCodeText != null ? Splitter.fixedLength(MAX_POSTCODE_LENGTH).splitToList(zipCodeText).get(0) : null);
             address.setStreet1(addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
 
+            // ANIL 2026-01-26 (#qubIT-Fenix-7679)
             if(Boolean.TRUE.equals(platform.getFillAddressFieldsIfEmpty())) {
                 address.setCity(StringUtils.isNotEmpty(address.getCity()) ? address.getCity() : "-");
-                address.setPostcode(StringUtils.isNotEmpty(address.getPostcode()) ? address.getPostcode() : "-");
                 address.setStreet1(StringUtils.isNotEmpty(address.getStreet1()) ? address.getStreet1() : "-");
+
+                // Sugestion from SIBS
+                address.setPostcode(StringUtils.isNotEmpty(address.getPostcode()) ? address.getPostcode() : "000000");
             }
         }
 

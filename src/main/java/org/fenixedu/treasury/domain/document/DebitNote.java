@@ -65,6 +65,7 @@ import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
@@ -169,6 +170,9 @@ public class DebitNote extends DebitNote_Base {
         if (isPreparing()) {
             setDocumentDate(documentDate.toDateTimeAtStartOfDay());
             setDocumentDueDate(documentDueDate);
+
+            setFiscalMonth(
+                FiscalMonth.getOrCreateFiscalMonth(getDebtAccount().getFinantialInstitution(), documentDate));
         }
 
         setOriginDocumentNumber(originDocumentNumber);

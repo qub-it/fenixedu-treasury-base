@@ -60,6 +60,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.integration.ERPExportOperation;
@@ -124,6 +125,11 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setDocumentNumber("000000000");
         setDocumentDate(documentDate);
         setDocumentDueDate(documentDate.toLocalDate());
+
+        // ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        setFiscalMonth(
+            FiscalMonth.getOrCreateFiscalMonth(finantialEntity.getFinantialInstitution(), documentDate.toLocalDate()));
+
         setCurrency(debtAccount.getFinantialInstitution().getCurrency());
         setState(FinantialDocumentStateType.PREPARING);
         setAddress(debtAccount.getCustomer().getAddress());
@@ -197,6 +203,12 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         }
 
+        // TODO ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        //
+        // Remove the check getFiscalMonth() != null as soon as fiscal month set is confirmed
+        if(getFiscalMonth() != null && !getFiscalMonth().containsDate(getDocumentDate().toLocalDate())) {
+            throw new TreasuryDomainException("error.FinantialDocument.fiscalMonth.mismatch.with.finantialDocument");
+        }
     }
 
     protected boolean isDocumentEmpty() {
@@ -435,6 +447,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setDebtAccount(null);
         setFinantialDocumentType(null);
         setInstitutionForExportation(null);
+        setFiscalMonth(null);
         for (FinantialDocumentEntry entry : getFinantialDocumentEntriesSet()) {
             this.removeFinantialDocumentEntries(entry);
             if (deleteEntries) {

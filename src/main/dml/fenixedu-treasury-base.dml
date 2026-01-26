@@ -3139,6 +3139,32 @@ class FiscalMonth {
 			multiplicity *;
 		}
 	}
+
+	// ANIL 2026-01-26 (#qubIT-Fenix-7963)
+	//
+	// Index finantial document by fiscal month with document date as reference
+	relation FiscalMonthFinantialDocument {
+		FiscalMonth playsRole fiscalMonth {
+			multiplicity 0..1;
+		}
+
+        document.FinantialDocument playsRole finantialDocument {
+            multiplicity *;
+        }
+	}
+
+	// ANIL 2026-01-26 (#qubIT-Fenix-7963)
+	//
+	// Index finantial document entry with entry datetime
+	relation FiscalMonthFinantialDocumentEntry {
+	    FiscalMonth playsRole fiscalMonth {
+	        multiplicity 0..1;
+	    }
+
+	    document.FinantialDocumentEntry playsRole finantialDocumentEntry {
+	        multiplicity *;
+	    }
+	}
 	
 /* 
  * *************************

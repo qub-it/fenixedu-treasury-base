@@ -240,25 +240,7 @@ public class SettlementNote extends SettlementNote_Base {
     }
 
     @Atomic
-    public void edit(final FinantialDocumentType finantialDocumentType, final DebtAccount debtAccount,
-            final DocumentNumberSeries documentNumberSeries, final Currency currency, final java.lang.String documentNumber,
-            final org.joda.time.DateTime documentDate, final DateTime paymentDate, final java.lang.String originDocumentNumber,
-            final org.fenixedu.treasury.domain.document.FinantialDocumentStateType state) {
-        setFinantialDocumentType(finantialDocumentType);
-        setDebtAccount(debtAccount);
-        setDocumentNumberSeries(documentNumberSeries);
-        setCurrency(currency);
-        setDocumentNumber(documentNumber);
-        setDocumentDate(documentDate);
-        setDocumentDueDate(documentDate.toLocalDate());
-        setOriginDocumentNumber(originDocumentNumber);
-        setState(state);
-        setPaymentDate(paymentDate);
-        checkRules();
-    }
-
-    @Atomic
-    public void updateSettlementNote(java.lang.String originDocumentNumber, String documentObservations,
+    public void updateSettlementNote(String originDocumentNumber, String documentObservations,
             String documentTermsAndConditions) {
         setOriginDocumentNumber(originDocumentNumber);
         setDocumentObservations(documentObservations);

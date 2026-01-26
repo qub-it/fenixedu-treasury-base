@@ -223,31 +223,6 @@ public class CreditNote extends CreditNote_Base {
         TreasuryPlataformDependentServicesFactory.implementation().certifyDocument(this);
     }
 
-    /* Method is not used anywhere */
-    @Atomic
-    private void deprecatedEdit(final DebitNote debitNote, final DebtAccount payorDebtAccount,
-            final FinantialDocumentType finantialDocumentType, final DebtAccount debtAccount,
-            final DocumentNumberSeries documentNumberSeries, final Currency currency, final String documentNumber,
-            final org.joda.time.DateTime documentDate, final org.joda.time.LocalDate documentDueDate,
-            final String originDocumentNumber, final org.fenixedu.treasury.domain.document.FinantialDocumentStateType state) {
-        if (!isPreparing()) {
-            throw new TreasuryDomainException("error.CreditNote.edit.not.possible.on.closed.document");
-        }
-
-        setDebitNote(debitNote);
-        setFinantialDocumentType(finantialDocumentType);
-        setDebtAccount(debtAccount);
-        editPayorDebtAccount(payorDebtAccount);
-        setDocumentNumberSeries(documentNumberSeries);
-        setCurrency(currency);
-        setDocumentNumber(documentNumber);
-        setDocumentDate(documentDate);
-        setDocumentDueDate(documentDueDate);
-        setOriginDocumentNumber(originDocumentNumber);
-        setState(state);
-        checkRules();
-    }
-
     @Atomic
     public void updateCreditNote(String originDocumentNumber, String documentObservations, String documentTermsAndConditions) {
         setOriginDocumentNumber(originDocumentNumber);
