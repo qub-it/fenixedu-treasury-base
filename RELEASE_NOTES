@@ -1,3 +1,4 @@
+15.3.0 (27-01-2026)
 - Improvement: Add property to SIBS Pay payment platform entity to control filling address fields if empty [#qubIT-Fenix-7679]
 - Improvement: Index finantial documents and entries by fiscal month entry [#qubIT-Fenix-7963]
 - Refactor: Remove unused finantial edit methods [#qubIT-Fenix-7963]
