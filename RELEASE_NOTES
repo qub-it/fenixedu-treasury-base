@@ -1,3 +1,6 @@
+- Improvement: Fill only postal code with SIBS suggested dummy value if it is empty, for SIBS Pay payment with credit card [#qubIT-Fenix-7679]
+- Bug Fix: Set treasury event when splitting credit entry without associated debit entry [#qubIT-Fenix-7972]
+
 15.3.0 (27-01-2026)
 - Improvement: Add property to SIBS Pay payment platform entity to control filling address fields if empty [#qubIT-Fenix-7679]
 - Improvement: Index finantial documents and entries by fiscal month entry [#qubIT-Fenix-7963]

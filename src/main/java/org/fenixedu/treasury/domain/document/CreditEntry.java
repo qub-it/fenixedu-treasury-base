@@ -275,6 +275,8 @@ public class CreditEntry extends CreditEntry_Base {
         } else {
             newCreditEntry = create(getFinantialEntity(), newCreditNote, getDescription(), getProduct(), getVat(),
                     unitAmountOfNewCreditEntry, getEntryDateTime(), getQuantity());
+
+            newCreditEntry.setTreasuryEvent(getTreasuryEvent());
         }
 
         newCreditEntry.setFromExemption(isFromExemption());

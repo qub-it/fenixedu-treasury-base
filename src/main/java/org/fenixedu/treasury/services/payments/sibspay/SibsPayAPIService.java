@@ -198,11 +198,11 @@ public class SibsPayAPIService {
             address.setStreet1(addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
 
             // ANIL 2026-01-26 (#qubIT-Fenix-7679)
+            //
+            // The address country, city and street1 must be required, so they must previously validated in UI .
+            // The post code is optional because some countries don't have post code
             if(Boolean.TRUE.equals(platform.getFillAddressFieldsIfEmpty())) {
-                address.setCity(StringUtils.isNotEmpty(address.getCity()) ? address.getCity() : "-");
-                address.setStreet1(StringUtils.isNotEmpty(address.getStreet1()) ? address.getStreet1() : "-");
-
-                // Sugestion from SIBS
+                // Suggestion from SIBS
                 address.setPostcode(StringUtils.isNotEmpty(address.getPostcode()) ? address.getPostcode() : "000000");
             }
         }
