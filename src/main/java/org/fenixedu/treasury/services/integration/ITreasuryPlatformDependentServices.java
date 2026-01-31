@@ -80,14 +80,6 @@ import pt.ist.fenixframework.DomainObject;
 
 public interface ITreasuryPlatformDependentServices {
 
-    /* ERP Integration */
-    @Deprecated
-    // Remove
-    void scheduleDocumentForExportation(final FinantialDocument finantialDocument);
-
-    @Deprecated
-    // Remove
-    IERPExternalService getERPExternalServiceImplementation(final ERPConfiguration erpConfiguration);
 
     /* File */
 
@@ -125,58 +117,7 @@ public interface ITreasuryPlatformDependentServices {
 
     void deleteFile(String fileId);
 
-    /* User */
-
-    @Deprecated
-        // Remove
-    String getLoggedUsername();
-
-    @Deprecated
-    // Remove
-    default Customer getLoggedActiveCustomer() {
-        return null;
-    }
-
-    @Deprecated
-        // Remove
-    String getCustomerEmail(Customer customer);
-
-    @Deprecated
-        // Remove
-    void setCurrentApplicationUser(String username);
-
-    @Deprecated
-        // Remove
-    void removeCurrentApplicationUser();
-
-    /* Locales */
-
-    // TODO: provide the default locale of the platform
-    @Deprecated
-    // Remove
-    Locale defaultLocale();
-
-    @Deprecated
-        // Remove
-    Locale currentLocale();
-
-    @Deprecated
-        // Remove
-    Set<Locale> availableLocales();
-
     /* Bundles */
-
-    @Deprecated
-        // Remove
-    String bundle(final String bundleName, final String key, final String... args);
-
-    @Deprecated
-        // Remove
-    String bundle(final Locale locale, final String bundleName, final String key, final String... args);
-
-    @Deprecated
-        // Remove
-    LocalizedString bundleI18N(final String bundleName, final String key, final String... args);
 
     // Review as it is implemented in fenixedu-customers-base because the API is in fenixedu-base
     // For now maintain
@@ -186,76 +127,7 @@ public interface ITreasuryPlatformDependentServices {
     // For now maintain
     LocalizedString getDynamicApplicationMessage(String key);
 
-    /* Versioning Information */
-
-    @Deprecated
-    // REMOVE
-    <T> String versioningCreatorUsername(final T obj);
-
-    @Deprecated
-    // REMOVE
-    <T> DateTime versioningCreationDate(final T obj);
-
-    @Deprecated
-    // REMOVE
-    <T> String versioningUpdatorUsername(final T obj);
-
-    @Deprecated
-    // REMOVE
-    <T> DateTime versioningUpdateDate(final T obj);
-
-    /* Web Services */
-
-    @Deprecated
-        // Remove
-    PaylineWebServiceResponse paylineGetWebPaymentDetails(ForwardPaymentRequest forwardPaymentRequest);
-
-    @Deprecated
-    // Remove
-    PaylineWebServiceResponse paylineDoWebPayment(ForwardPaymentRequest forwardPaymentRequest, String returnUrl,
-            String cancelUrl);
-
-    @Deprecated
-    // Remove
-    void paylineConfigureWebservice(PaylineConfiguration paylineConfiguration);
-
-    /* Web */
-    // Remove
-    @Deprecated
-    String calculateURLChecksum(String urlToChecksum, HttpSession session);
-
-    /* Domain entities events */
-    @Deprecated
-    // Remove
-    void signalsRegisterHandlerForKey(String signalKey, Object handler);
-
-    @Deprecated
-        // Remove
-    void signalsUnregisterHandlerForKey(String signalKey, Object handler);
-
-    @Deprecated
-        // Remove
-    void signalsEmitForObject(String signalKey, DomainObject obj);
-
-    @Deprecated
-    // remove
-    String getForwardPaymentURL(String contextPath, Class screenClass, boolean isSuccess, String forwardPaymentId,
-            boolean isException);
-
     /* Web Docs */
-
-    @Deprecated
-    // remove
-    InputStream exportDocuments(String templateCode, FinantialInstitution finantialInstitution, FinantialEntity finantialEntity,
-            LocalDate documentDateFrom, LocalDate documentDateTo, String username);
-
-    @Deprecated
-    // remove
-    String exportDocumentFileExtension();
-
-    @Deprecated
-    // remove
-    InputStream exportPaymentReceipt(String templateCode, SettlementNote settlementNote);
 
     // Needs to be maintained
     ISaftExporterConfiguration getSaftExporterConfiguration(ERPConfiguration erpConfiguration);
@@ -269,8 +141,6 @@ public interface ITreasuryPlatformDependentServices {
 
     void certifyDocument(FinantialDocument finantialDocument);
 
-    void updateCertifiedDocument(FinantialDocument finantialDocument);
-
     void annulCertifiedDocument(FinantialDocument finantialDocument);
 
     boolean hasCertifiedDocument(FinantialDocument finantialDocument);
@@ -281,7 +151,4 @@ public interface ITreasuryPlatformDependentServices {
 
     boolean isProductCertified(Product product);
 
-    /* Development or quality mode */
-
-    boolean isQualityOrDevelopmentMode();
 }
