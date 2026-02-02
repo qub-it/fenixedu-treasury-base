@@ -1,3 +1,4 @@
+15.4.0 (02-02-2026)
 - Improvement: Fill only postal code with SIBS suggested dummy value if it is empty, for SIBS Pay payment with credit card [#qubIT-Fenix-7679]
 - Refactor: Remove deprecated methods from ITreasuryPlatformDependentServices [#qubIT-Fenix-7855]
 - Bug Fix: Set treasury event when splitting credit entry without associated debit entry [#qubIT-Fenix-7972]
