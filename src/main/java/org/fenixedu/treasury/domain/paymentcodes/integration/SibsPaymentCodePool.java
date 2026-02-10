@@ -725,7 +725,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
     @Override
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
-        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+        sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
         return true;
     }
 

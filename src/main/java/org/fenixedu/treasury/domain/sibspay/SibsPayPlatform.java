@@ -1046,18 +1046,25 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             if (responseInquiryWrapper.isDeclined()) {
                 // Just remove from the pending for annulment
                 FenixFramework.atomic(() -> {
-                    sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
-                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "DECLINED_REMOVE_FROM_PENDING",
-                            "declined, remove from pending", "", "").setOperationSuccess(true);
+                    sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
+                    PaymentRequestLog log =
+                            log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "DECLINED_REMOVE_FROM_PENDING",
+                                    "declined, remove from pending", "", "");
+                    log.setInternalMerchantTransactionId(sibsPaymentRequest.getMerchantTransactionId());
+                    log.setOperationSuccess(true);
+
                 });
 
                 return true;
             } else if (responseInquiryWrapper.isExpired()) {
                 // Just remove from the pending for annulment
                 FenixFramework.atomic(() -> {
-                    sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
-                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
-                            "expired, remove from pending", "", "").setOperationSuccess(true);
+                    sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
+                    PaymentRequestLog log =
+                            log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
+                                    "expired, remove from pending", "", "");
+                    log.setInternalMerchantTransactionId(sibsPaymentRequest.getMerchantTransactionId());
+                    log.setOperationSuccess(true);
                 });
 
                 return true;
@@ -1065,10 +1072,13 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 if (!sibsPaymentRequest.getPaymentTransactionsSet().isEmpty()) {
                     // The payment is processed, just remove from the pending for annulment
                     FenixFramework.atomic(() -> {
-                        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                        sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
 
-                        log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
-                                "paid, remove from pending", "", "").setOperationSuccess(true);
+                        PaymentRequestLog log =
+                                log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
+                                        "paid, remove from pending", "", "");
+                        log.setInternalMerchantTransactionId(sibsPaymentRequest.getMerchantTransactionId());
+                        log.setOperationSuccess(true);
                     });
 
                     return true;
@@ -1076,8 +1086,10 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                     // Do not remove and report that it was not processed
 
                     FenixFramework.atomic(() -> {
-                        log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_CHECK", "paid, check pending payment", "",
-                                "").setOperationSuccess(false);
+                        PaymentRequestLog log = log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_CHECK",
+                                "paid, check pending payment", "", "");
+                        log.setInternalMerchantTransactionId(sibsPaymentRequest.getMerchantTransactionId());
+                        log.setOperationSuccess(false);
                     });
 
                     return false;
@@ -1096,11 +1108,15 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 String statusMessage = cancellationResponse.getReturnStatus() != null ? cancellationResponse.getReturnStatus()
                         .getStatusDescription() : "";
 
+                String annulmentTransactionId = cancellationResponse.getTransactionID();
+
                 FenixFramework.atomic(() -> {
-                    sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
-                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", statusCode, statusMessage,
-                            cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog()).setOperationSuccess(
-                            true);
+                    sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(annulmentTransactionId);
+                    PaymentRequestLog log = log(sibsPaymentRequest, "annulPaymentRequestInPlatform", statusCode, statusMessage,
+                            cancellationResponse.getRequestLog(), cancellationResponse.getResponseLog());
+                    log.setInternalMerchantTransactionId(sibsPaymentRequest.getMerchantTransactionId());
+                    log.setExternalTransactionId(annulmentTransactionId);
+                    log.setOperationSuccess(true);
 
                 });
 
@@ -1109,9 +1125,11 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 // Unknown state
 
                 FenixFramework.atomic(() -> {
-                    log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "UNKNOWN_STATE",
+                    PaymentRequestLog log = log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "UNKNOWN_STATE",
                             "unknown payment result code, please check: " + responseInquiryWrapper.getPaymentResultCode(), "",
-                            "").setOperationSuccess(false);
+                            "");
+                    log.setInternalMerchantTransactionId(sibsPaymentRequest.getMerchantTransactionId());
+                    log.setOperationSuccess(false);
                 });
 
                 return false;

@@ -207,6 +207,11 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
         setDigitalPaymentPlatformPendingForAnnulment(getDigitalPaymentPlatform());
     }
 
+    public void clearPendingAnnulmentInDigitalPaymentPlatform(String annulmentTransactionId) {
+        setDigitalPaymentPlatformPendingForAnnulment(null);
+        setAnnulmentTransactionId(annulmentTransactionId);
+    }
+
     public String getDescription() {
         List<String> descriptions =
                 getOrderedDebitEntries().stream().map(DebitEntry::getDescription).collect(Collectors.toList());

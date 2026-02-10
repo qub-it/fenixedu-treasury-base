@@ -111,6 +111,7 @@ public class SibsPayWebhookLogic {
             mockUserIfNecessary();
 
             FenixFramework.atomic(() -> {
+                log.setInternalMerchantTransactionId(this.webhookNotificationWrapper.getMerchantTransactionId());
                 log.setExternalTransactionId(this.webhookNotificationWrapper.getTransactionId());
                 log.setStatusCode(this.webhookNotificationWrapper.getOperationStatusCode());
                 log.setStatusMessage(this.webhookNotificationWrapper.getOperationStatusMessage());
@@ -407,8 +408,7 @@ public class SibsPayWebhookLogic {
     }
 
     private void mockUserIfNecessary() {
-        boolean needToMockUser = StringUtils.isEmpty(
-                TreasuryConstants.getAuthenticatedUsername()) && StringUtils.isNotEmpty(
+        boolean needToMockUser = StringUtils.isEmpty(TreasuryConstants.getAuthenticatedUsername()) && StringUtils.isNotEmpty(
                 configurationToUse.getApplicationUsernameForAutomaticOperations());
 
         if (needToMockUser) {

@@ -1211,7 +1211,7 @@ public class MeoWallet extends MeoWallet_Base
                     if (!sibsPaymentRequest.getPaymentTransactionsSet().isEmpty()) {
                         // The payment is processed, just remove from the pending for annulment
                         FenixFramework.atomic(() -> {
-                            sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                            sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
                             log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "PAID_REMOVE_FROM_PENDING",
                                     "paid, remove from pending", "", "").setOperationSuccess(true);
                         });
@@ -1228,7 +1228,7 @@ public class MeoWallet extends MeoWallet_Base
                 } else if (paymentBean.isFailed() || paymentBean.isVoided()) {
                     // Just remove from the pending for annulment
                     FenixFramework.atomic(() -> {
-                        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                        sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
                         log(sibsPaymentRequest, "annulPaymentRequestInPlatform", "EXPIRED_REMOVE_FROM_PENDING",
                                 "expired, remove from pending", "", "").setOperationSuccess(true);
                     });
@@ -1240,7 +1240,7 @@ public class MeoWallet extends MeoWallet_Base
 
                     if (STATUS_COMPLETED.equals(meoWalletPaymentBean.getStatus())) {
                         FenixFramework.atomic(() -> {
-                            sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+                            sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
 
                             log(sibsPaymentRequest, "annulPaymentRequestInPlatform", meoWalletPaymentBean.getStatus(),
                                     meoWalletPaymentBean.getStatus(), meoWalletPaymentBean.getRequestLog(),

@@ -1366,7 +1366,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
-        sibsPaymentRequest.setDigitalPaymentPlatformPendingForAnnulment(null);
+        sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
         return true;
     }
 

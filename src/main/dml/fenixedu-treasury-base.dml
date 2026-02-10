@@ -1017,6 +1017,10 @@ class payments.PaymentRequest {
     // This is to known when the sibs payment requests are annuled
 	DateTime lastStateDate;
 	String lastStateResponsible;
+
+    // ANIL 2026-02-10 (#qubIT-Fenix-7993)
+    // Initially to track SIBS Pay annulment transaction id
+	String annulmentTransactionId;
 }
 
 	relation PaymentRequestDomainRoot {
