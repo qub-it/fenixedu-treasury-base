@@ -1,3 +1,4 @@
+15.5.0 (10-02-2026)
 - Improvement: Save immediately merchant transaction id in SIBS Pay webhook processing [#qubIT-Fenix-7993]
 - Improvement: Record the SIBS Pay reference code annulment to allow search of payment requests [#qubIT-Fenix-7993]
 - Bug Fix: Fix typo in bundle resources [#qubIT-Fenix-7993]
