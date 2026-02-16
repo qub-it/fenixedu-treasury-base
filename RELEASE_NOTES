@@ -1,3 +1,5 @@
+- Bug Fix: Revert debit entry annuled in debit entry if the preparing credit note is annuled [#qubIT-Fenix-8000]
+
 15.5.0 (10-02-2026)
 - Improvement: Save immediately merchant transaction id in SIBS Pay webhook processing [#qubIT-Fenix-7993]
 - Improvement: Record the SIBS Pay reference code annulment to allow search of payment requests [#qubIT-Fenix-7993]

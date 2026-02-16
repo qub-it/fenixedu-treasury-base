@@ -324,6 +324,13 @@ public class CreditNote extends CreditNote_Base {
             throw new TreasuryDomainException(treasuryBundle("error.FinantialDocumentState.invalid.state.change.request"));
         }
 
+        getCreditEntriesSet().stream()
+                .filter(ce -> ce.getDebitEntry() != null)
+                .filter(ce -> ce.getDebitEntry().isEventAnnuled())
+                .map(ce -> ce.getDebitEntry())
+                .filter(de -> de.getTreasuryEvent() != null && !de.isIncludedInEvent()) //
+                .forEach(ce -> ce.revertEventAnnuled());
+
         checkRules();
     }
 
