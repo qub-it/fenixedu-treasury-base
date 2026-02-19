@@ -526,6 +526,8 @@ class document.FinantialDocumentEntry {
 			BigDecimalT oldVatAmount;
 			BigDecimalT oldAmountWithVat;
 			LocalDate previousDueDate;
+
+			String oldDebtAccountFiscalNumber;
 		}
 		
 			relation DebitEntryChangeAmountsLogDomainRoot {

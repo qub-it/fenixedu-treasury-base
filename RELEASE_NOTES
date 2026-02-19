@@ -1,4 +1,5 @@
 - Improvement: Log changes in due date of debit entry [#qubIT-Fenix-8008]
+- Improvement: Log debit entry transfer between debt accounts [#qubIT-Fenix-8010]
 
 15.5.1 (16-02-2026)
 - Bug Fix: Revert debit entry annuled in debit entry if the preparing credit note is annuled [#qubIT-Fenix-8000]
