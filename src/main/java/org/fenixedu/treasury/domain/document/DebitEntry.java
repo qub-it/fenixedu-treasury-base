@@ -426,12 +426,19 @@ public class DebitEntry extends DebitEntry_Base {
     public void edit(final String description, final TreasuryEvent treasuryEvent, LocalDate dueDate,
             final boolean academicalActBlockingSuspension, final boolean blockAcademicActsOnDebt) {
 
+        LocalDate oldDueDate = getDueDate();
+
+        if(!dueDate.isEqual(oldDueDate)) {
+            DebitEntryChangeAmountsLog.log(this, "edit", TreasuryConstants.treasuryBundle("label.DebitEntry.edit.change.due.date"));
+        }
+
         this.setDescription(description);
         this.setTreasuryEvent(treasuryEvent);
         this.setDueDate(dueDate);
 
         this.setAcademicalActBlockingSuspension(academicalActBlockingSuspension);
         this.setBlockAcademicActsOnDebt(blockAcademicActsOnDebt);
+
 
         checkRules();
     }

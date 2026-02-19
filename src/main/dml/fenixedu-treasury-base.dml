@@ -525,6 +525,7 @@ class document.FinantialDocumentEntry {
 			BigDecimalT oldNetAmount;
 			BigDecimalT oldVatAmount;
 			BigDecimalT oldAmountWithVat;
+			LocalDate previousDueDate;
 		}
 		
 			relation DebitEntryChangeAmountsLogDomainRoot {

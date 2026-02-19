@@ -45,6 +45,7 @@ public class DebitEntryChangeAmountsLog extends DebitEntryChangeAmountsLog_Base 
         log.setOldExemptedAmount(debitEntry.getNetExemptedAmount());
         log.setOldVatAmount(debitEntry.getVatAmount());
         log.setOldAmountWithVat(debitEntry.getAmountWithVat());
+        log.setPreviousDueDate(debitEntry.getDueDate());
 
         return log;
     }
