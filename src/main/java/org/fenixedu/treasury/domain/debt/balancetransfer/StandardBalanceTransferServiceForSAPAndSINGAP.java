@@ -81,6 +81,7 @@ import org.fenixedu.treasury.domain.document.InvoiceEntry;
 import org.fenixedu.treasury.domain.document.Series;
 import org.fenixedu.treasury.domain.document.SettlementEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
+import org.fenixedu.treasury.domain.document.log.DebitEntryChangeAmountsLog;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
@@ -436,6 +437,12 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                         debitEntry.getInterestRate(), debitEntry.getEntryDateTime(),
                         debitEntry.isAcademicalActBlockingSuspension(), debitEntry.isBlockAcademicActsOnDebt(), destinyDebitNote);
 
+        String reason = TreasuryConstants.treasuryBundle(
+                "label.StandardBalanceTransferServiceForSAPAndSINGAP.transferred.from.other.debt.account");
+        String oldDebtAccountFiscalNumber = debitEntry.getDebtAccount().getCustomer().getUiFiscalNumber();
+        DebitEntryChangeAmountsLog.log(newDebitEntry, "transferBalance", reason)
+                .setOldDebtAccountFiscalNumber(oldDebtAccountFiscalNumber);
+
         return newDebitEntry;
     }
 
@@ -469,6 +476,12 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
                         treasuryExemption.getNetAmountToExempt(), newDebitEntry);
 
             });
+
+            String reason = TreasuryConstants.treasuryBundle(
+                    "label.StandardBalanceTransferServiceForSAPAndSINGAP.transferred.from.other.debt.account");
+            String oldDebtAccountFiscalNumber = debitEntry.getDebtAccount().getCustomer().getUiFiscalNumber();
+            DebitEntryChangeAmountsLog.log(newDebitEntry, "transferBalance", reason)
+                    .setOldDebtAccountFiscalNumber(oldDebtAccountFiscalNumber);
 
             //paymentPlan
             debitEntriesConversionMap.put(debitEntry, newDebitEntry);
