@@ -1,3 +1,4 @@
+15.6.1 (23-02-2026)
 - Bug Fix: Consider payment plan installment as non compliant in weekends or holidays, if in the previous day reached the limit for payment [#qubIT-Fenix-8019]
 
 15.6.0 (19-02-2026)
