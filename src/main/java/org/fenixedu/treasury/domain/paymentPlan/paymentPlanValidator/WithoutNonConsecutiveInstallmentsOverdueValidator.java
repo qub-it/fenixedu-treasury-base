@@ -84,9 +84,18 @@ public class WithoutNonConsecutiveInstallmentsOverdueValidator extends WithoutNo
     @Override
     public Boolean validate(LocalDate date, List<Installment> sortedInstallments) {
         return getNumberInstallments() > sortedInstallments.stream()
-                .filter(inst -> {
-                    int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(inst.getDueDate().plusDays(1), date);
-                    return inst.isOverdue(date) && numberOfWorkDaysBetween > getNumberDaysToTakeEffect();
+                .filter(installment -> {
+                    int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(installment.getDueDate().plusDays(1), date);
+
+                    // ANIL 2026-02-23 (#qubIT-Fenix-8019)
+                    // Count the number of days in the previous day of date, to compare if the limit was reached in the previous day
+                    int numberOfWorkDaysBetweenInThePreviousDays =
+                            TreasuryConstants.countNumberOfWorkDaysBetween(installment.getDueDate().plusDays(1), date.minusDays(1));
+
+                    boolean limitOfDaysExceeded = numberOfWorkDaysBetween > getNumberDaysToTakeEffect();
+                    boolean limitOfDaysReachedInThePreviousDay = numberOfWorkDaysBetweenInThePreviousDays >= getNumberDaysToTakeEffect();
+
+                    return installment.isOverdue(date) && (limitOfDaysExceeded || limitOfDaysReachedInThePreviousDay);
                 }).count();
     }
 
