@@ -123,7 +123,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
 	
  	relation SibsOutputFileTreasuryFile {
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
 		paymentcodes.SibsOutputFile playsRole {

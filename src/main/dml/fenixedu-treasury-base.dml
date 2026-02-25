@@ -1637,6 +1637,7 @@ class paymentcodes.SibsTransactionDetail  {
 		
 	class paymentcodes.SibsOutputFile /* implements IGenericFile */ {
 		String fileId;
+		String fileDescriptorId;
 		String errorLog;
 		String infoLog;
 		String printedPaymentCodes;

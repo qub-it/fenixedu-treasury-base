@@ -52,6 +52,8 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Set;
@@ -70,6 +72,10 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 
 public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile {
 
@@ -93,12 +99,12 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         // check sourceInstitutionId and destinationInstitutionId are the same
         String sourceInstitutionId = paymentCodePoolsToInclude.iterator().next().getSourceInstitutionId();
         String destinationInstitutionId = paymentCodePoolsToInclude.iterator().next().getDestinationInstitutionId();
-        
-        if(StringUtils.isEmpty(sourceInstitutionId)) {
+
+        if (StringUtils.isEmpty(sourceInstitutionId)) {
             throw new TreasuryDomainException("error.SibsOutputFile.sourceInstitutionId.required");
         }
-        
-        if(StringUtils.isEmpty(destinationInstitutionId)) {
+
+        if (StringUtils.isEmpty(destinationInstitutionId)) {
             throw new TreasuryDomainException("error.SibsOutputFile.destinationInstitutionId.required");
         }
 
@@ -116,8 +122,9 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
             throw new TreasuryDomainException("error.SibsOutputFile.selected.paymentCodePools.entityReferenceCode.differ");
         }
 
-        SibsOutgoingPaymentFile sibsOutgoingPaymentFile = new SibsOutgoingPaymentFile(sourceInstitutionId,
-                destinationInstitutionId, entityReferenceCode, lastSuccessfulSentDateTime);
+        SibsOutgoingPaymentFile sibsOutgoingPaymentFile =
+                new SibsOutgoingPaymentFile(sourceInstitutionId, destinationInstitutionId, entityReferenceCode,
+                        lastSuccessfulSentDateTime);
 
         for (SibsReferenceCode referenceCode : getNotPaidReferenceCodes(paymentCodePoolsToInclude, errorsBuilder)) {
             addCalculatedPaymentCodesFromEvent(sibsOutgoingPaymentFile, referenceCode, errorsBuilder);
@@ -133,8 +140,9 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         SibsPaymentCodePool pool = SibsPaymentCodePool.find(finantialInstitution)
                 .filter(p -> sibsEntityReferenceCode.equals(p.getEntityReferenceCode())).findFirst().get();
 
-        SibsOutgoingPaymentFile sibsOutgoingPaymentFile = new SibsOutgoingPaymentFile(pool.getSourceInstitutionId(),
-                pool.getDestinationInstitutionId(), sibsEntityReferenceCode, lastSuccessfulSentDateTime);
+        SibsOutgoingPaymentFile sibsOutgoingPaymentFile =
+                new SibsOutgoingPaymentFile(pool.getSourceInstitutionId(), pool.getDestinationInstitutionId(),
+                        sibsEntityReferenceCode, lastSuccessfulSentDateTime);
 
         for (SibsReferenceCode referenceCode : getNotPaidReferenceCodes(finantialInstitution, sibsEntityReferenceCode,
                 errorsBuilder)) {
@@ -251,17 +259,20 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
     @Deprecated
     public static SibsOutputFile create(FinantialInstitution finantialInstitution, String sibsEntityReferenceCode,
             DateTime lastSuccessfulSentDateTime) {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        final FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         SibsOutputFile file = new SibsOutputFile();
 
         try {
             StringBuilder errorsBuilder = new StringBuilder();
-            byte[] paymentFileContents = file
-                    .createPaymentFile(finantialInstitution, sibsEntityReferenceCode, lastSuccessfulSentDateTime, errorsBuilder)
-                    .getBytes("ASCII");
+            byte[] paymentFileContents =
+                    file.createPaymentFile(finantialInstitution, sibsEntityReferenceCode, lastSuccessfulSentDateTime,
+                            errorsBuilder).getBytes("ASCII");
 
-            services.createFile(file, file.outgoingFilename(), CONTENT_TYPE, paymentFileContents);
+            FileDescriptor fileDescriptor =
+                    fileManager.createFile(file.outgoingFilename(), paymentFileContents.length, CONTENT_TYPE,
+                            paymentFileContents);
+            file.setFileDescriptorId(fileDescriptor.getId());
 
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);
             file.setErrorLog(errorsBuilder.toString());
@@ -272,7 +283,8 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
                 builder.append(el.toString()).append("\n");
             }
 
-            services.createFile(file, file.outgoingFilename(), CONTENT_TYPE, new byte[0]);
+            FileDescriptor fileDescriptor = fileManager.createFile(file.outgoingFilename(), 0, CONTENT_TYPE, new byte[0]);
+            file.setFileDescriptorId(fileDescriptor.getId());
 
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);
             file.setErrorLog(builder.toString());
@@ -283,15 +295,19 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
 
     public static SibsOutputFile create(Set<SibsPaymentCodePool> paymentCodePoolsToInclude, DateTime lastSuccessfulSentDateTime) {
         try {
-            final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+            final FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
             SibsOutputFile file = new SibsOutputFile();
 
             StringBuilder errorsBuilder = new StringBuilder();
-            byte[] paymentFileContents = file
-                    .createPaymentFile(paymentCodePoolsToInclude, lastSuccessfulSentDateTime, errorsBuilder).getBytes("ASCII");
+            byte[] paymentFileContents =
+                    file.createPaymentFile(paymentCodePoolsToInclude, lastSuccessfulSentDateTime, errorsBuilder)
+                            .getBytes("ASCII");
 
-            services.createFile(file, file.outgoingFilename(), CONTENT_TYPE, paymentFileContents);
+            FileDescriptor fileDescriptor =
+                    fileManager.createFile(file.outgoingFilename(), paymentFileContents.length, CONTENT_TYPE,
+                            paymentFileContents);
+            file.setFileDescriptorId(fileDescriptor.getId());
 
             file.setLastSuccessfulExportation(lastSuccessfulSentDateTime);
             file.setErrorLog(errorsBuilder.toString());
@@ -300,6 +316,65 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public byte[] getContent() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContent();
+        }
+
+        return IGenericFile.super.getContent();
+    }
+
+    @Override
+    public long getSize() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getSize();
+        }
+
+        return IGenericFile.super.getSize();
+    }
+
+    @Override
+    public String getFilename() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getName();
+        }
+
+        return IGenericFile.super.getFilename();
+    }
+
+    @Override
+    public String getContentType() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContentType();
+        }
+
+        return IGenericFile.super.getContentType();
+    }
+
+    @Override
+    public InputStream getStream() {
+        FileDescriptor fd = getFileDescriptor();
+
+        if (fd != null) {
+            return fd.getReadStream();
+        }
+
+        return IGenericFile.super.getStream();
+    }
+
+    private FileDescriptor getFileDescriptor() {
+        if (StringUtils.isNotBlank(getFileDescriptorId())) {
+            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+        }
+
+        return null;
     }
 
 }

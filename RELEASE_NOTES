@@ -1,3 +1,5 @@
+- Refactor: Declare file descriptor id in SibsOutputFile to migrate files from GenericFile to FileManager [#qubIT-Fenix-8025]
+
 15.6.1 (23-02-2026)
 - Bug Fix: Consider payment plan installment as non compliant in weekends or holidays, if in the previous day reached the limit for payment [#qubIT-Fenix-8019]
 
