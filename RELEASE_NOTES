@@ -1,3 +1,4 @@
+15.6.2 (25-02-2026)
 - Refactor: Declare file descriptor id in SibsOutputFile to migrate files from GenericFile to FileManager [#qubIT-Fenix-8025]
 
 15.6.1 (23-02-2026)
