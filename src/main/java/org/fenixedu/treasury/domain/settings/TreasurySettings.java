@@ -72,6 +72,7 @@ public class TreasurySettings extends TreasurySettings_Base {
         super();
         setDomainRoot(FenixFramework.getDomainRoot());
         setForwardPaymentOrderNumberCounter(0l);
+        setGlobalFiscalNumberValidatorRegex("^[a-zA-Z0-9.\\-_ ]*$");
     }
 
     public Long incrementAndGetForwardPaymentOrderNumber() {
