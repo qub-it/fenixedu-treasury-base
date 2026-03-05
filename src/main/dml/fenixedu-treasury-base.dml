@@ -1838,6 +1838,11 @@ class settings.TreasurySettings {
 	
 	// Just used in view debt account in backoffice and student portals
 	Boolean displayNegativeAmountsForCreditEntries;
+
+    // 2026-03-05 (#qubIT-Fenix-8074)
+    // Restrict fiscal number to basic characters to avoid
+    // errors in SAFT submission
+	String globalFiscalNumberValidatorRegex;
 }
 
 	relation TreasurySettingsBennu {

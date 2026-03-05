@@ -1,3 +1,5 @@
+- Improvement: Configuration regex property to restrict the fiscal number characters [#qubIT-Fenix-8074]
+
 15.6.2 (25-02-2026)
 - Refactor: Declare file descriptor id in SibsOutputFile to migrate files from GenericFile to FileManager [#qubIT-Fenix-8025]
 
