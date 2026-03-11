@@ -771,12 +771,10 @@ public class DebitNote extends DebitNote_Base {
                     "error.DebitNote.updatePayorDebtAccount.debitEntry.is.in.payment.invoice.entry.group");
         }
 
-        if (isClosed()) {
-            // Check if debit entries has settlement entries
-            for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
-                if (debitEntry.getSettlementEntriesSet().stream().filter(s -> !s.isAnnulled()).count() > 0) {
-                    throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.debit.entries.has.settlements");
-                }
+        // Check if debit entries has settlement entries
+        for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
+            if (debitEntry.getSettlementEntriesSet().stream().filter(s -> !s.isAnnulled()).count() > 0) {
+                throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.debit.entries.has.settlements");
             }
         }
 
@@ -796,6 +794,25 @@ public class DebitNote extends DebitNote_Base {
         }
 
         return updatingDebitNote;
+    }
+
+    public boolean isAbleToUpdatePayorDebtAccount() {
+        if (getDebitEntriesSet().stream().anyMatch(entry -> entry.isInOpenPaymentPlan())) {
+            return false;
+        }
+
+        if (getDebitEntriesSet().stream().anyMatch(e -> !e.getPaymentInvoiceEntriesGroupsSet().isEmpty())) {
+            return false;
+        }
+
+        // Check if debit entries has settlement entries
+        for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
+            if (debitEntry.getSettlementEntriesSet().stream().filter(s -> !s.isAnnulled()).count() > 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private DebitNote anullAndCopyDebitNote(final String reason) {
