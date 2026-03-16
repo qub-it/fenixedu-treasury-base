@@ -1,3 +1,4 @@
+15.7.1 (16-03-2026)
 - Refactor: Declare method in DebitNote to check if payor entity debt account can be changed [#qubIT-Fenix-8056]
 
 15.7.0 (05-03-2026)
