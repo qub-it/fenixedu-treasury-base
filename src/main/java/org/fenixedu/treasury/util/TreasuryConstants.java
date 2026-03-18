@@ -253,6 +253,20 @@ public class TreasuryConstants {
         return dateTimePattern.parseLocalDate(strValue);
     }
 
+    public static List<LocalDate> getMonthsBetween(LocalDate beginDate, LocalDate endDate) {
+        List<LocalDate> monthList = new ArrayList<>();
+
+        YearMonth startMonth = new YearMonth(beginDate.getYear(), beginDate.getMonthOfYear());
+        YearMonth endMonth = new YearMonth(endDate.getYear(), endDate.getMonthOfYear());
+
+        while (!startMonth.isAfter(endMonth)) {
+            monthList.add(startMonth.toLocalDate(1));
+            startMonth = startMonth.plusMonths(1);
+        }
+
+        return monthList;
+    }
+
     public static Set<Partial> getHolidays() {
         return TreasuryPlataformDependentServicesFactory.implementation().getHolidays();
     }

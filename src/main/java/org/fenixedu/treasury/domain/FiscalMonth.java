@@ -1,6 +1,8 @@
 package org.fenixedu.treasury.domain;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -94,8 +96,21 @@ public class FiscalMonth extends FiscalMonth_Base {
         return find(fiscalYear).filter(f -> f.getMonth() == month);
     }
 
+    public static Stream<FiscalMonth> findByInterval(FinantialInstitution finantialInstitution, LocalDate beginDate,
+            LocalDate endDate) {
+        return TreasuryConstants.getMonthsBetween(beginDate, endDate).stream()
+                .map(when -> findUnique(finantialInstitution, when).orElse(null)).filter(Objects::nonNull);
+    }
+
     public static Optional<FiscalMonth> findUnique(FiscalYear fiscalYear, int month) {
         return find(fiscalYear, month).findFirst();
+    }
+
+    public static Optional<FiscalMonth> findUnique(FinantialInstitution finantialInstitution, LocalDate when) {
+        int year = when.getYear();
+        int monthOfYear = when.getMonthOfYear();
+
+        return FiscalYear.find(finantialInstitution, year).flatMap(fiscalYear -> find(fiscalYear, monthOfYear)).findAny();
     }
 
     public static boolean isFiscalOperationsOpenNow(FinantialInstitution finantialInstitution) {
@@ -147,5 +162,4 @@ public class FiscalMonth extends FiscalMonth_Base {
         FiscalYear fiscalYear = FiscalYear.getOrCreateFiscalYear(finantialInstitution, year);
         return FiscalMonth.getOrCreateFiscalMonth(fiscalYear, monthOfYear);
     }
-
 }
