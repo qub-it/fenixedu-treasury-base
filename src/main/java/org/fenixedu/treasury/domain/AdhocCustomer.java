@@ -492,4 +492,8 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         return findAll().filter(i -> code.equalsIgnoreCase(i.getCode()));
     }
 
+    public static Stream<AdhocCustomer> findByUiFiscalNumber(final String uiFiscalNumber) {
+        return findAll().filter(i -> uiFiscalNumber.equalsIgnoreCase(i.getUiFiscalNumber()));
+    }
+
 }

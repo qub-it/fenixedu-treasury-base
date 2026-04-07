@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
@@ -60,7 +59,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -231,7 +230,16 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         setFinantialInstitution(null);
 
         setDomainRoot(null);
-        services.deleteFile(this);
+
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
+
+        if(StringUtils.isNotEmpty(getFileDescriptorId())) {
+            fileManager.delete(getFileDescriptorId());
+        }
+
+        if (getTreasuryFile() != null) {
+            services.deleteFile(this);
+        }
 
         super.deleteDomainObject();
     }

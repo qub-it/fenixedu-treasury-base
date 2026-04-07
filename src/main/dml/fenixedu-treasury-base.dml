@@ -268,6 +268,7 @@ class document.TreasuryDocumentTemplate {
 
 class document.TreasuryDocumentTemplateFile /* implements IGenericFile */ {
 	String fileId;
+    String fileDescriptorId;
 	boolean active;
 	DateTime creationDate;
 	String creator;
@@ -1211,6 +1212,7 @@ class payments.PaymentRequestLog {
 
 class payments.PaymentRequestLogFile /* implements IGenericFile */  {
 	String fileId;
+    String fileDescriptorId;
 	DateTime creationDate;
 	String creator;
 }
@@ -1554,6 +1556,7 @@ class paymentcodes.SibsTransactionDetail  {
 
 	class paymentcodes.SibsReportFile /* implements IGenericFile */ {
 		String fileId;
+		String fileDescriptorId;
 		DateTime whenProcessedBySibs;
 		BigDecimalT transactionsTotalAmount;
 		BigDecimalT totalCost;
@@ -1606,6 +1609,7 @@ class paymentcodes.SibsTransactionDetail  {
 
 	class paymentcodes.SibsInputFile /* implements IGenericFile */ {
 		String fileId;
+		String fileDescriptorId;
 		DateTime whenProcessedBySibs;
 		String uploaderUsername;
 		DateTime creationDate;
@@ -1693,6 +1697,7 @@ class integration.IntegrationOperation
 
 class integration.OperationFile /* implements IGenericFile */  {
 	String fileId;
+    String fileDescriptorId;
 	DateTime creationDate;
 	String creator;
 }
@@ -2861,6 +2866,7 @@ class forwardpayments.ForwardPaymentConfiguration {
 
 class forwardpayments.ForwardPaymentConfigurationFile /* implements IGenericFile */ {
 	String fileId;
+    String fileDescriptorId;
 	DateTime creationDate;
 	String creator;
 }
@@ -3013,6 +3019,7 @@ class forwardpayments.ForwardPaymentLog {
 	
 class forwardpayments.ForwardPaymentLogFile /* implements IGenericFile */ {
 	String fileId;
+    String fileDescriptorId;
 	DateTime creationDate;
 	String creator;
 }
@@ -3060,6 +3067,7 @@ class forwardpayments.ForwardPaymentLogFile /* implements IGenericFile */ {
 
 class forwardpayments.PostForwardPaymentsReportFile /* implements IGenericFile */ {
 	String fileId;
+    String fileDescriptorId;
 	DateTime postForwardPaymentsExecutionDate;
 	DateTime beginDate;
 	DateTime endDate;

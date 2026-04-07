@@ -52,15 +52,19 @@
  */
 package org.fenixedu.treasury.domain.forwardpayments;
 
-import java.util.stream.Stream;
-
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
-
 import pt.ist.fenixframework.FenixFramework;
+
+import java.io.InputStream;
+import java.util.stream.Stream;
 
 @Deprecated
 public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements IGenericFile {
@@ -76,8 +80,10 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
     private ForwardPaymentLogFile(final String fileName, final byte[] content) {
         this();
 
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-        services.createFile(this, fileName, CONTENT_TYPE, content);
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
+
+        FileDescriptor fileDescriptor = fileManager.createFile(fileName, content.length, CONTENT_TYPE, content);
+        setFileDescriptorId(fileDescriptor.getId());
     }
 
     @Override
@@ -96,12 +102,19 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
     @Override
     public void delete() {
         final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         this.setDomainRoot(null);
         this.setForwardPaymentLogsForRequest(null);
         this.setForwardPaymentLogsForResponse(null);
 
-        services.deleteFile(this);
+        if(StringUtils.isNotEmpty(getFileDescriptorId())) {
+            fileManager.delete(getFileDescriptorId());
+        }
+
+        if (getTreasuryFile() != null) {
+            services.deleteFile(this);
+        }
 
         super.deleteDomainObject();
     }
@@ -114,31 +127,78 @@ public class ForwardPaymentLogFile extends ForwardPaymentLogFile_Base implements
     // @formatter:on
 
     public static ForwardPaymentLogFile createForRequestBody(final ForwardPaymentLog log, final byte[] content) {
-        final ForwardPaymentLogFile logFile = new ForwardPaymentLogFile(
-                String.format("requestBody_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), log.getExternalId()), content);
-        logFile.setForwardPaymentLogsForRequest(log);
-
-        return logFile;
+        throw new RuntimeException("not supported");
     }
 
     public static ForwardPaymentLogFile createForResponseBody(final ForwardPaymentLog log, final byte[] content) {
-        final ForwardPaymentLogFile logFile = new ForwardPaymentLogFile(
-                String.format("responseBody_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), log.getExternalId()), content);
-        logFile.setForwardPaymentLogsForResponse(log);
-
-        return logFile;
+        throw new RuntimeException("not supported");
     }
 
     public static ForwardPaymentLogFile createForException(final ForwardPaymentLog log, final byte[] content) {
-        final ForwardPaymentLogFile logFile = new ForwardPaymentLogFile(
-                String.format("exceptionLog_%s_%s.txt", new DateTime().toString("yyyyMMddHHmmss"), log.getExternalId()), content);
-        logFile.setForwardPaymentLogsForException(log);
-
-        return logFile;
+        throw new RuntimeException("not supported");
     }
 
     public static Stream<ForwardPaymentLogFile> findAll() {
         return FenixFramework.getDomainRoot().getForwardPaymentLogFilesSet().stream();
+    }
+
+    @Override
+    public byte[] getContent() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContent();
+        }
+
+        return IGenericFile.super.getContent();
+    }
+
+    @Override
+    public long getSize() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getSize();
+        }
+
+        return IGenericFile.super.getSize();
+    }
+
+    @Override
+    public String getFilename() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getName();
+        }
+
+        return IGenericFile.super.getFilename();
+    }
+
+    @Override
+    public String getContentType() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContentType();
+        }
+
+        return IGenericFile.super.getContentType();
+    }
+
+    @Override
+    public InputStream getStream() {
+        FileDescriptor fd = getFileDescriptor();
+
+        if (fd != null) {
+            return fd.getReadStream();
+        }
+
+        return IGenericFile.super.getStream();
+    }
+
+    private FileDescriptor getFileDescriptor() {
+        if (StringUtils.isNotBlank(getFileDescriptorId())) {
+            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+        }
+
+        return null;
     }
 
 }

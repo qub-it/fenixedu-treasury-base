@@ -54,7 +54,11 @@ package org.fenixedu.treasury.domain.payments;
 
 import java.io.InputStream;
 
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -75,9 +79,10 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     protected PaymentRequestLogFile(String filename, byte[] content) {
         this();
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
-        services.createFile(this, filename, CONTENT_TYPE, content);
+        FileDescriptor fileDescriptor = fileManager.createFile(filename, content.length, CONTENT_TYPE, content);
+        setFileDescriptorId(fileDescriptor.getId());
     }
 
     @Override
@@ -96,10 +101,31 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     @Override
     public void delete() {
         setDomainRoot(null);
+        setPaymentRequestLogForRequest(null);
+        setPaymentRequestLogForException(null);
+        setPaymentRequestLogForResponse(null);
+
+        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
+
+        if (StringUtils.isNotEmpty(getFileDescriptorId())) {
+            fileManager.delete(getFileDescriptorId());
+        }
+
+        if (getTreasuryFile() != null) {
+            services.deleteFile(this);
+        }
+
+        super.deleteDomainObject();
     }
 
     @Override
     public byte[] getContent() {
+        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContent();
+        }
+
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
                 Object file = PropertyUtils.getProperty(this, "treasuryFile");
@@ -117,6 +143,11 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     @Override
     public long getSize() {
+        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getSize();
+        }
+
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
                 Object file = PropertyUtils.getProperty(this, "treasuryFile");
@@ -133,24 +164,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     }
 
     @Override
-    public DateTime getCreationDate() {
-        try {
-            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                Object file = PropertyUtils.getProperty(this, "treasuryFile");
-
-                if (file != null) {
-                    return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
-                }
-            }
-            
-            return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(getFileId());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     public String getFilename() {
+        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getName();
+        }
+
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
                 Object file = PropertyUtils.getProperty(this, "treasuryFile");
@@ -168,6 +187,12 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     @Override
     public InputStream getStream() {
+        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
+
+        if (fd != null) {
+            return fd.getReadStream();
+        }
+
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
                 Object file = PropertyUtils.getProperty(this, "treasuryFile");
@@ -185,6 +210,11 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     @Override
     public String getContentType() {
+        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContentType();
+        }
+
         try {
             if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
                 Object file = PropertyUtils.getProperty(this, "treasuryFile");
@@ -211,5 +241,13 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     public static PaymentRequestLogFile create(String filename, byte[] content) {
         return new PaymentRequestLogFile(filename, content);
+    }
+
+    private com.qubit.terra.framework.services.fileSupport.FileDescriptor getFileDescriptor() {
+        if (StringUtils.isNotBlank(getFileDescriptorId())) {
+            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+        }
+
+        return null;
     }
 }

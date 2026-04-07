@@ -2,6 +2,7 @@ package org.fenixedu.treasury.domain.forwardpayments;
 
 import org.fenixedu.bennu.core.domain.User;
 
+@Deprecated
 public class TreasuryFileForForwardPaymentConfigurationFile extends TreasuryFileForForwardPaymentConfigurationFile_Base {
     
     public TreasuryFileForForwardPaymentConfigurationFile() {

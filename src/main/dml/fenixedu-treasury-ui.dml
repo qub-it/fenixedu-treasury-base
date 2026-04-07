@@ -73,7 +73,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation TreasuryDocumentTemplateFileTreasuryFile {
 		
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
 	    document.TreasuryDocumentTemplateFile playsRole {
@@ -90,7 +90,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation SibsReportFileTreasuryFile {
  		
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
  		paymentcodes.SibsReportFile playsRole {
@@ -107,7 +107,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation SibsInputFileTreasuryFile {
  	
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
  		paymentcodes.SibsInputFile playsRole {
@@ -140,7 +140,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation ForwardPaymentConfigurationFileTreasuryFile {
 
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
 		 	
        forwardpayments.ForwardPaymentConfigurationFile playsRole {
@@ -158,7 +158,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation OperationFileTreasuryFile {
  		
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
 		integration.OperationFile playsRole {
@@ -176,7 +176,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation ForwardPaymentLogFileTreasuryFile {
  	
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
 		forwardpayments.ForwardPaymentLogFile playsRole {
@@ -193,7 +193,7 @@ class TreasuryFile extends .org.fenixedu.bennu.io.domain.GenericFile {
  	relation PostForwardPaymentsReportFileTreasuryFile {
  		
 		TreasuryFile playsRole treasuryFile {
-			multiplicity 1..1;
+			multiplicity 0..1;
 		}
  		
 		forwardpayments.PostForwardPaymentsReportFile playsRole {

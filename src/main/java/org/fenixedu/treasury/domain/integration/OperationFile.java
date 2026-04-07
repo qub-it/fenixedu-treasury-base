@@ -52,19 +52,20 @@
  */
 package org.fenixedu.treasury.domain.integration;
 
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
-
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
-
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+
+import java.io.InputStream;
+import java.util.stream.Stream;
 
 public class OperationFile extends OperationFile_Base implements IGenericFile {
 
@@ -79,9 +80,11 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
 
     public OperationFile(final String fileName, final byte[] content) {
         this();
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
 
-        services.createFile(this, fileName, CONTENT_TYPE, content);
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
+
+        FileDescriptor fileDescriptor = fileManager.createFile(fileName, content.length, CONTENT_TYPE, content);
+        setFileDescriptorId(fileDescriptor.getId());
 
         checkRules();
     }
@@ -102,6 +105,7 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
     @Atomic
     public void delete() {
         final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.OperationFile.cannot.delete");
@@ -111,7 +115,13 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
         this.setLogIntegrationOperation(null);
         this.setIntegrationOperation(null);
 
-        services.deleteFile(this);
+        if (StringUtils.isNotEmpty(getFileDescriptorId())) {
+            fileManager.delete(getFileDescriptorId());
+        }
+
+        if (getTreasuryFile() != null) {
+            services.deleteFile(this);
+        }
 
         super.deleteDomainObject();
     }
@@ -125,8 +135,7 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
     }
 
     @Atomic
-    public static OperationFile createLog(final String fileName, final byte[] content,
-            final IntegrationOperation operation) {
+    public static OperationFile createLog(final String fileName, final byte[] content, final IntegrationOperation operation) {
         final OperationFile operationFile = new OperationFile(fileName, content);
         operationFile.setLogIntegrationOperation(operation);
 
@@ -137,4 +146,62 @@ public class OperationFile extends OperationFile_Base implements IGenericFile {
         return FenixFramework.getDomainRoot().getOperationFilesSet().stream();
     }
 
+    @Override
+    public byte[] getContent() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContent();
+        }
+
+        return IGenericFile.super.getContent();
+    }
+
+    @Override
+    public long getSize() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getSize();
+        }
+
+        return IGenericFile.super.getSize();
+    }
+
+    @Override
+    public String getFilename() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getName();
+        }
+
+        return IGenericFile.super.getFilename();
+    }
+
+    @Override
+    public String getContentType() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContentType();
+        }
+
+        return IGenericFile.super.getContentType();
+    }
+
+    @Override
+    public InputStream getStream() {
+        FileDescriptor fd = getFileDescriptor();
+
+        if (fd != null) {
+            return fd.getReadStream();
+        }
+
+        return IGenericFile.super.getStream();
+    }
+
+    private FileDescriptor getFileDescriptor() {
+        if (StringUtils.isNotBlank(getFileDescriptorId())) {
+            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+        }
+
+        return null;
+    }
 }

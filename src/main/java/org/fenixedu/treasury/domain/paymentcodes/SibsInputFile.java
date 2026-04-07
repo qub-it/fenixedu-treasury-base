@@ -52,9 +52,14 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
+import java.io.InputStream;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
+import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
@@ -68,16 +73,14 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+import pt.ist.fenixframework.core.AbstractDomainObject;
 
 public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     public static final String CONTENT_TYPE = "text/plain";
 
-    public static final Comparator<SibsInputFile> COMPARATOR_BY_DATE = (o1, o2) -> {
-        int c = o1.getCreationDate().compareTo(o2.getCreationDate());
-
-        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-    };
+    public static final Comparator<SibsInputFile> COMPARATOR_BY_DATE =
+            Comparator.comparing((SibsInputFile o) -> o.getCreationDate()).thenComparing(AbstractDomainObject::getExternalId);
 
     protected SibsInputFile() {
         super();
@@ -91,7 +94,10 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
     }
 
     protected void init(DateTime whenProcessedBySIBS, String filename, byte[] content, final String uploader) {
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, filename, CONTENT_TYPE, content);
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
+
+        FileDescriptor fileDescriptor = fileManager.createFile(filename, content.length, CONTENT_TYPE, content);
+        setFileDescriptorId(fileDescriptor.getId());
 
         setWhenProcessedBySibs(whenProcessedBySIBS);
         setUploaderUsername(uploader);
@@ -127,6 +133,7 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
     @Atomic
     public void delete() {
         final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.SibsInputFile.cannot.delete");
@@ -135,7 +142,13 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
         setDomainRoot(null);
         setFinantialInstitution(null);
 
-        services.deleteFile(this);
+        if (StringUtils.isNotEmpty(getFileDescriptorId())) {
+            fileManager.delete(getFileDescriptorId());
+        }
+
+        if (getTreasuryFile() != null) {
+            services.deleteFile(this);
+        }
 
         super.deleteDomainObject();
     }
@@ -187,6 +200,65 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
     public static Stream<SibsInputFile> findAll() {
         return FenixFramework.getDomainRoot().getSibsInputFilesSet().stream();
+    }
+
+    @Override
+    public byte[] getContent() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContent();
+        }
+
+        return IGenericFile.super.getContent();
+    }
+
+    @Override
+    public long getSize() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getSize();
+        }
+
+        return IGenericFile.super.getSize();
+    }
+
+    @Override
+    public String getFilename() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getName();
+        }
+
+        return IGenericFile.super.getFilename();
+    }
+
+    @Override
+    public String getContentType() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContentType();
+        }
+
+        return IGenericFile.super.getContentType();
+    }
+
+    @Override
+    public InputStream getStream() {
+        FileDescriptor fd = getFileDescriptor();
+
+        if (fd != null) {
+            return fd.getReadStream();
+        }
+
+        return IGenericFile.super.getStream();
+    }
+
+    private FileDescriptor getFileDescriptor() {
+        if (StringUtils.isNotBlank(getFileDescriptorId())) {
+            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+        }
+
+        return null;
     }
 
 }

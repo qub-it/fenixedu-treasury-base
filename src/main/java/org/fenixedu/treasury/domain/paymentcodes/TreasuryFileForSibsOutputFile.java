@@ -2,6 +2,7 @@ package org.fenixedu.treasury.domain.paymentcodes;
 
 import org.fenixedu.bennu.core.domain.User;
 
+@Deprecated
 public class TreasuryFileForSibsOutputFile extends TreasuryFileForSibsOutputFile_Base {
     
     public TreasuryFileForSibsOutputFile() {

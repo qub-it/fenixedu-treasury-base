@@ -52,12 +52,10 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
-
-import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.stream.Stream;
-
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
@@ -69,9 +67,15 @@ import org.fenixedu.treasury.util.streaming.spreadsheet.ExcelSheet;
 import org.fenixedu.treasury.util.streaming.spreadsheet.Spreadsheet;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.stream.Stream;
+
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
 
 public class SibsReportFile extends SibsReportFile_Base implements IGenericFile {
 
@@ -101,7 +105,10 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
     protected void init(String sibsEntityCode, DateTime whenProcessedBySibs, BigDecimal transactionsTotalAmount,
             BigDecimal totalCost, String displayName, String fileName, byte[] content) {
 
-        TreasuryPlataformDependentServicesFactory.implementation().createFile(this, fileName, CONTENT_TYPE, content);
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
+
+        FileDescriptor fileDescriptor = fileManager.createFile(fileName, content.length, CONTENT_TYPE, content);
+        setFileDescriptorId(fileDescriptor.getId());
 
         setSibsEntityCode(sibsEntityCode);
         setWhenProcessedBySibs(whenProcessedBySibs);
@@ -131,13 +138,21 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
     @Atomic
     public void delete() {
         final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         if (!isDeletable()) {
             throw new TreasuryDomainException("error.SibsReportFile.cannot.delete");
         }
 
         setDomainRoot(null);
-        services.deleteFile(this);
+
+        if(StringUtils.isNotEmpty(getFileDescriptorId())) {
+            fileManager.delete(getFileDescriptorId());
+        }
+
+        if (getTreasuryFile() != null) {
+            services.deleteFile(this);
+        }
 
         super.deleteDomainObject();
     }
@@ -222,4 +237,62 @@ public class SibsReportFile extends SibsReportFile_Base implements IGenericFile 
         return result;
     }
 
+    @Override
+    public byte[] getContent() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContent();
+        }
+
+        return IGenericFile.super.getContent();
+    }
+
+    @Override
+    public long getSize() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getSize();
+        }
+
+        return IGenericFile.super.getSize();
+    }
+
+    @Override
+    public String getFilename() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getName();
+        }
+
+        return IGenericFile.super.getFilename();
+    }
+
+    @Override
+    public String getContentType() {
+        FileDescriptor fd = getFileDescriptor();
+        if (fd != null) {
+            return fd.getContentType();
+        }
+
+        return IGenericFile.super.getContentType();
+    }
+
+    @Override
+    public InputStream getStream() {
+        FileDescriptor fd = getFileDescriptor();
+
+        if (fd != null) {
+            return fd.getReadStream();
+        }
+
+        return IGenericFile.super.getStream();
+    }
+
+    private FileDescriptor getFileDescriptor() {
+        if (StringUtils.isNotBlank(getFileDescriptorId())) {
+            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+        }
+
+        return null;
+    }
 }
