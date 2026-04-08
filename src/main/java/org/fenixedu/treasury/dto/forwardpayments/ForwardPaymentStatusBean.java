@@ -56,6 +56,7 @@ import java.math.BigDecimal;
 
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType;
+import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.joda.time.DateTime;
 
 public class ForwardPaymentStatusBean {
@@ -67,6 +68,7 @@ public class ForwardPaymentStatusBean {
     private String authorizationNumber;
     private DateTime authorizationDate;
 
+    private String merchantTransactionId;
     private String transactionId;
     private DateTime transactionDate;
     private BigDecimal payedAmount;
@@ -90,7 +92,9 @@ public class ForwardPaymentStatusBean {
         this.responseBody = responseBody;
     }
 
-    public void editTransactionDetails(String transactionId, DateTime transactionDate, BigDecimal payedAmount) {
+    public void editTransactionDetails(String merchantTransactionId, String transactionId, DateTime transactionDate,
+            BigDecimal payedAmount) {
+        this.merchantTransactionId = merchantTransactionId;
         this.transactionId = transactionId;
         this.transactionDate = transactionDate;
         this.payedAmount = payedAmount;
@@ -110,7 +114,8 @@ public class ForwardPaymentStatusBean {
     }
 
     public boolean isAbleToRegisterPostPayment(ForwardPaymentRequest forwardPayment) {
-        return forwardPayment.isInStateToPostProcessPayment() && getStateType() != null && getStateType().isPayed();
+        return forwardPayment.isInStateToPostProcessPayment() && getStateType() != null && getStateType().isPayed() && !PaymentTransaction.isTransactionDuplicate(
+                getTransactionId());
     }
 
     public void defineSibsOnlinePaymentBrands(String paymentBrands) {
@@ -138,6 +143,10 @@ public class ForwardPaymentStatusBean {
 
     public DateTime getAuthorizationDate() {
         return authorizationDate;
+    }
+
+    public String getMerchantTransactionId() {
+        return this.merchantTransactionId;
     }
 
     public String getTransactionId() {

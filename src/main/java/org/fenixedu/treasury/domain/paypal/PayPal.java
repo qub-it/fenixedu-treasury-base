@@ -132,17 +132,15 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             DateTime requestSendDate = new DateTime();
 
             List<Item> items = new ArrayList<>();
-            forwardPayment.getDebitEntriesSet().stream()
-                    .forEach(d -> items.add(new Item().name(d.getDescription())
-                            .unitAmount(new Money().currencyCode(d.getCurrency().getIsoCode())
+            forwardPayment.getDebitEntriesSet().stream().forEach(d -> items.add(new Item().name(d.getDescription()).unitAmount(
+                            new Money().currencyCode(d.getCurrency().getIsoCode())
                                     .value(Currency.getValueWithScale(d.getOpenAmountWithInterests()).toString()))
-                            .quantity(d.getQuantity().toString())));
+                    .quantity(d.getQuantity().toString())));
 
             forwardPayment.getInstallmentsSet().stream().forEach(d -> items.add(new Item().name(d.getDescription().getContent())
-                    .unitAmount(new Money()
-                            .currencyCode(d.getSortedOpenInstallmentEntries().get(0).getDebitEntry().getCurrency().getCode())
-                            .value(Currency.getValueWithScale(d.getOpenAmount()).toString()))
-                    .quantity("1")));
+                    .unitAmount(new Money().currencyCode(
+                                    d.getSortedOpenInstallmentEntries().get(0).getDebitEntry().getCurrency().getCode())
+                            .value(Currency.getValueWithScale(d.getOpenAmount()).toString())).quantity("1")));
 
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.checkoutPaymentIntent("CAPTURE");
@@ -155,11 +153,10 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
             List<PurchaseUnitRequest> purchaseUnitRequests = new ArrayList<PurchaseUnitRequest>();
             PurchaseUnitRequest purchaseUnitRequest = new PurchaseUnitRequest();
-            purchaseUnitRequest
-                    .amountWithBreakdown(new AmountWithBreakdown().currencyCode(items.get(0).unitAmount().currencyCode())
-                            .value(forwardPayment.getPayableAmount().toString())
-                            .amountBreakdown(new AmountBreakdown()
-                                    .itemTotal(new Money().currencyCode(items.get(0).unitAmount().currencyCode())
+            purchaseUnitRequest.amountWithBreakdown(
+                    new AmountWithBreakdown().currencyCode(items.get(0).unitAmount().currencyCode())
+                            .value(forwardPayment.getPayableAmount().toString()).amountBreakdown(new AmountBreakdown().itemTotal(
+                                    new Money().currencyCode(items.get(0).unitAmount().currencyCode())
                                             .value(forwardPayment.getPayableAmount().toString()))));
 
             purchaseUnitRequest.items(items);
@@ -201,8 +198,9 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
                     log.setRequestReceiveDate(requestReceiveDate);
 
                 } else {
-                    PayPalLog log = (PayPalLog) forwardPayment.advanceToRequestState("prepareCheckout", order.status(),
-                            order.status(), requestLog, responseLog);
+                    PayPalLog log =
+                            (PayPalLog) forwardPayment.advanceToRequestState("prepareCheckout", order.status(), order.status(),
+                                    requestLog, responseLog);
 
                     log.setOperationSuccess(result.isOperationSuccess());
                     log.setRequestSendDate(requestSendDate);
@@ -293,7 +291,7 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             final ForwardPaymentStatusBean result =
                     new ForwardPaymentStatusBean(true, stateType, order.status(), order.status(), requestLog, responseLog);
 
-            result.editTransactionDetails(order.id(),
+            result.editTransactionDetails(paymentRequest.getMerchantTransactionId(), order.id(),
                     DateTime.parse(order.updateTime() == null ? order.createTime() : order.updateTime()),
                     order.purchaseUnits().stream().map(unit -> new BigDecimal(unit.amountWithBreakdown().value()))
                             .reduce(BigDecimal.ZERO, BigDecimal::add));
@@ -356,10 +354,11 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
             final ForwardPaymentStateType stateType = translateForwardPaymentStateType(resultOrder.status());
 
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType, resultOrder.status(),
-                    resultOrder.status(), requestLog, responseLog);
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, resultOrder.status(), resultOrder.status(), requestLog,
+                            responseLog);
 
-            result.editTransactionDetails(resultOrder.id(),
+            result.editTransactionDetails(forwardPayment.getMerchantTransactionId(), resultOrder.id(),
                     DateTime.parse(order.updateTime() == null ? order.createTime() : order.updateTime()),
                     getOrderAmount(resultOrder));
 
@@ -433,8 +432,9 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
 
         forwardPayment.setTransactionId(result.getTransactionId());
         if (result.isInPayedState()) {
-            PaymentTransaction paymentTransaction = forwardPayment.advanceToPaidState(result.getStatusCode(),
-                    result.getPayedAmount(), result.getTransactionDate(), result.getTransactionId(), null);
+            PaymentTransaction paymentTransaction =
+                    forwardPayment.advanceToPaidState(result.getStatusCode(), result.getPayedAmount(),
+                            result.getTransactionDate(), result.getTransactionId(), null);
 
             log.setOperationCode("advanceToPaidState");
             log.setOperationSuccess(true);
@@ -486,7 +486,8 @@ public class PayPal extends PayPal_Base implements IForwardPaymentPlatformServic
             final ForwardPaymentStatusBean result =
                     new ForwardPaymentStatusBean(true, stateType, resultOrder.status(), resultOrder.status(), "", "");
 
-            result.editTransactionDetails(resultOrder.id(), bean.getPaymentDate(), bean.getAmount());
+            result.editTransactionDetails(forwardPayment.getMerchantTransactionId(), resultOrder.id(), bean.getPaymentDate(),
+                    bean.getAmount());
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
                     .contains(result.getStateType())) {
                 // Do nothing

@@ -348,8 +348,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     paymentStateBean.getPaymentGatewayResultCode(), paymentStateBean.getPaymentGatewayResultDescription(),
                     requestLog, responseLog);
 
-            statusBean.editTransactionDetails(paymentStateBean.getTransactionId(), paymentStateBean.getPaymentDate(),
-                    paymentStateBean.getAmount());
+            statusBean.editTransactionDetails(forwardPayment.getMerchantTransactionId(), paymentStateBean.getTransactionId(),
+                    paymentStateBean.getPaymentDate(), paymentStateBean.getAmount());
 
             return statusBean;
         } catch (final Exception e) {
@@ -397,8 +397,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     paymentStateBean.getPaymentGatewayResultCode(), paymentStateBean.getPaymentGatewayResultDescription(),
                     requestLog, responseLog);
 
-            bean.editTransactionDetails(paymentStateBean.getTransactionId(), paymentStateBean.getPaymentDate(),
-                    paymentStateBean.getAmount());
+            bean.editTransactionDetails(forwardPayment.getMerchantTransactionId(), paymentStateBean.getTransactionId(),
+                    paymentStateBean.getPaymentDate(), paymentStateBean.getAmount());
 
             return bean;
         } catch (final Exception e) {
@@ -474,8 +474,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     paymentStateBean.getPaymentGatewayResultCode(), paymentStateBean.getPaymentGatewayResultDescription(),
                     requestLog, responseLog);
 
-            bean.editTransactionDetails(paymentStateBean.getTransactionId(), paymentStateBean.getPaymentDate(),
-                    paymentStateBean.getAmount());
+            bean.editTransactionDetails(forwardPayment.getMerchantTransactionId(), paymentStateBean.getTransactionId(),
+                    paymentStateBean.getPaymentDate(), paymentStateBean.getAmount());
 
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
                     .contains(bean.getStateType())) {
@@ -1270,7 +1270,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
                     new ForwardPaymentStatusBean(true, stateType, bean.getPaymentGatewayResultCode(),
                             bean.getPaymentGatewayResultDescription(), "", "");
 
-            result.editTransactionDetails(bean.getTransactionId(), bean.getPaymentDate(), bean.getAmount());
+            result.editTransactionDetails(forwardPayment.getMerchantTransactionId(), bean.getTransactionId(),
+                    bean.getPaymentDate(), bean.getAmount());
 
             if (forwardPayment.getState().isPayed() || forwardPayment.getState().isRejected()) {
                 FenixFramework.atomic(() -> {

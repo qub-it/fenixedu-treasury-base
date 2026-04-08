@@ -204,7 +204,7 @@ public class MeoWallet extends MeoWallet_Base
 
         String merchantTransactionId = generateNewMerchantTransactionId();
 
-        MeoWalletLog log = createLogForMbwayPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());;
+        MeoWalletLog log = createLogForMbwayPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());
 
         List<MeoWalletPaymentItemBean> items = new ArrayList<>();
         debitEntries.stream()
@@ -217,8 +217,9 @@ public class MeoWallet extends MeoWallet_Base
 
         try {
             MbwayRequest mbwayPaymentRequest = FenixFramework.atomic(() -> {
-                MbwayRequest request = MbwayRequest.create(this, debtAccount, debitEntries, installments, localPhoneNumber,
-                        payableAmount, merchantTransactionId);
+                MbwayRequest request =
+                        MbwayRequest.create(this, debtAccount, debitEntries, installments, localPhoneNumber, payableAmount,
+                                merchantTransactionId);
                 log.logRequestSendDate();
                 log.setPaymentRequest(request);
                 return request;
@@ -259,8 +260,8 @@ public class MeoWallet extends MeoWallet_Base
             if (e instanceof TreasuryDomainException) {
                 throw (TreasuryDomainException) e;
             } else {
-                final String message = "error.MeoWallet.generateNewCodeFor."
-                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                final String message =
+                        "error.MeoWallet.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                 throw new TreasuryDomainException(e, message);
             }
@@ -273,9 +274,10 @@ public class MeoWallet extends MeoWallet_Base
         Set<DebitEntry> debitEntries =
                 settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.getInvoiceEntry() != null)
                         .map(s -> s.getInvoiceEntry()).map(DebitEntry.class::cast).collect(Collectors.toSet());
-        Set<Installment> installments = settlementNoteBean.getIncludedInvoiceEntryBeans().stream()
-                .filter(s -> s.isForInstallment()).map(s -> ((InstallmentPaymenPlanBean) s).getInstallment())
-                .map(Installment.class::cast).collect(Collectors.toSet());
+        Set<Installment> installments =
+                settlementNoteBean.getIncludedInvoiceEntryBeans().stream().filter(s -> s.isForInstallment())
+                        .map(s -> ((InstallmentPaymenPlanBean) s).getInstallment()).map(Installment.class::cast)
+                        .collect(Collectors.toSet());
 
         if (PaymentRequest.getReferencedCustomers(debitEntries, installments).size() > 1) {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
@@ -294,7 +296,7 @@ public class MeoWallet extends MeoWallet_Base
         String merchantTransactionId = generateNewMerchantTransactionId();
 
         DebtAccount debtAccount = settlementNoteBean.getDebtAccount();
-        MeoWalletLog log = createLogForMbwayPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());;
+        MeoWalletLog log = createLogForMbwayPaymentRequest(merchantTransactionId, debtAccount.getCustomer().getExternalId());
 
         List<MeoWalletPaymentItemBean> items = new ArrayList<>();
         debitEntries.stream()
@@ -307,8 +309,9 @@ public class MeoWallet extends MeoWallet_Base
 
         try {
             MbwayRequest mbwayPaymentRequest = FenixFramework.atomic(() -> {
-                MbwayRequest request = MbwayRequest.create(this, debtAccount, debitEntries, installments, localPhoneNumber,
-                        payableAmount, merchantTransactionId);
+                MbwayRequest request =
+                        MbwayRequest.create(this, debtAccount, debitEntries, installments, localPhoneNumber, payableAmount,
+                                merchantTransactionId);
                 log.logRequestSendDate();
                 log.setPaymentRequest(request);
                 return request;
@@ -349,8 +352,8 @@ public class MeoWallet extends MeoWallet_Base
             if (e instanceof TreasuryDomainException) {
                 throw (TreasuryDomainException) e;
             } else {
-                final String message = "error.MeoWallet.generateNewCodeFor."
-                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                final String message =
+                        "error.MeoWallet.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                 throw new TreasuryDomainException(e, message);
             }
@@ -402,10 +405,12 @@ public class MeoWallet extends MeoWallet_Base
                         log.setStateCode(PaymentReferenceCodeStateType.PROCESSED.name());
                         log.savePaymentInfo(paidAmount, paymentDate);
 
-                        final Set<SettlementNote> settlementNotes = request.processPayment(paidAmount, paymentDate,
-                                bean.getTransactionId(), bean.getMerchantTransactionId());
-                        PaymentTransaction paymentTransaction = PaymentTransaction.create(request, bean.getTransactionId(),
-                                paymentDate, paidAmount, settlementNotes);
+                        final Set<SettlementNote> settlementNotes =
+                                request.processPayment(paidAmount, paymentDate, bean.getTransactionId(),
+                                        bean.getMerchantTransactionId());
+                        PaymentTransaction paymentTransaction =
+                                PaymentTransaction.create(request, bean.getTransactionId(), paymentDate, paidAmount,
+                                        settlementNotes);
 
                         log.setPaymentTransaction(paymentTransaction);
 
@@ -512,8 +517,7 @@ public class MeoWallet extends MeoWallet_Base
             map.addAll(installments.stream().map(i -> i.getDueDate()).collect(Collectors.toSet()));
             validTo = map.stream().max(LocalDate::compareTo).orElse(now);
 
-            if (settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate()
-                    && settlementNoteBean.getCustomSibsPaymentRequestDueDate() == null) {
+            if (settlementNoteBean.isLimitSibsPaymentRequestToCustomDueDate() && settlementNoteBean.getCustomSibsPaymentRequestDueDate() == null) {
                 throw new IllegalArgumentException("customSibsPaymentRequestDueDate is null");
             }
 
@@ -534,8 +538,9 @@ public class MeoWallet extends MeoWallet_Base
     @Override
     public SibsPaymentRequest createSibsPaymentRequestWithInterests(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments, LocalDate interestsCalculationDate) {
-        BigDecimal payableAmountDebitEntries = debitEntries.stream()
-                .map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountDebitEntries =
+                debitEntries.stream().map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmountInstallments =
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
@@ -621,9 +626,10 @@ public class MeoWallet extends MeoWallet_Base
             }
 
             SibsPaymentRequest sibsPaymentRequest = FenixFramework.atomic(() -> {
-                SibsPaymentRequest request = SibsPaymentRequest.create(MeoWallet.this, debtAccount, debitEntries, installments,
-                        payableAmount, paymentBean.getMb().getEntity(), paymentBean.getMb().getRef(), merchantTransactionId,
-                        sibsReferenceId);
+                SibsPaymentRequest request =
+                        SibsPaymentRequest.create(MeoWallet.this, debtAccount, debitEntries, installments, payableAmount,
+                                paymentBean.getMb().getEntity(), paymentBean.getMb().getRef(), merchantTransactionId,
+                                sibsReferenceId);
                 log.setPaymentRequest(request);
 
                 if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
@@ -783,8 +789,9 @@ public class MeoWallet extends MeoWallet_Base
 
         ForwardPaymentRequest forwardPaymentRequest = null;
         try {
-            forwardPaymentRequest = ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(),
-                    debitEntries, installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
+            forwardPaymentRequest =
+                    ForwardPaymentRequest.create(bean.getDigitalPaymentPlatform(), bean.getDebtAccount(), debitEntries,
+                            installments, bean.getTotalAmountToPay(), successUrlFunction, insuccessUrlFunction);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -841,10 +848,11 @@ public class MeoWallet extends MeoWallet_Base
                     .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription().getContent(), d.getOpenAmount())));
             MeoWalletPaymentBean paymentBean = MeoWalletPaymentBean.createForwardPaymentBean(forwardPayment.getPayableAmount(),
                     forwardPayment.getDebtAccount().getCustomer().getName(), items);
-            MeoWalletCheckoutBean checkoutBean = new MeoWalletCheckoutBean(paymentBean,
-                    forwardPayment.getForwardPaymentSuccessUrl(), forwardPayment.getForwardPaymentInsuccessUrl(),
-                    merchantTransactionId, forwardPayment.getDebtAccount().getCustomer().getExternalId(),
-                    getMeoWalletService().getMethodsExceptIncluded(getIncludeMethod().split(",")));
+            MeoWalletCheckoutBean checkoutBean =
+                    new MeoWalletCheckoutBean(paymentBean, forwardPayment.getForwardPaymentSuccessUrl(),
+                            forwardPayment.getForwardPaymentInsuccessUrl(), merchantTransactionId,
+                            forwardPayment.getDebtAccount().getCustomer().getExternalId(),
+                            getMeoWalletService().getMethodsExceptIncluded(getIncludeMethod().split(",")));
 
             final MeoWalletCheckoutBean resultCheckoutBean = getMeoWalletService().prepareOnlinePaymentCheckout(checkoutBean);
             FenixFramework.atomic(() -> {
@@ -855,15 +863,17 @@ public class MeoWallet extends MeoWallet_Base
 
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(resultCheckoutBean.getPayment().getStatus());
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType,
-                    resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
-                    resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, resultCheckoutBean.getPayment().getStatus(),
+                            resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getRequestLog(),
+                            resultCheckoutBean.getResponseLog());
 
             FenixFramework.atomic(() -> {
                 if (!result.isOperationSuccess() || (result.getStateType() == ForwardPaymentStateType.REJECTED)) {
-                    MeoWalletLog log = (MeoWalletLog) forwardPayment.reject("prepareCheckout",
-                            resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
-                            resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
+                    MeoWalletLog log =
+                            (MeoWalletLog) forwardPayment.reject("prepareCheckout", resultCheckoutBean.getPayment().getStatus(),
+                                    resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getRequestLog(),
+                                    resultCheckoutBean.getResponseLog());
 
                     log.setRequestSendDate(requestSendDate);
                     log.setRequestReceiveDate(requestReceiveDate);
@@ -934,12 +944,13 @@ public class MeoWallet extends MeoWallet_Base
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(resultCheckoutBean.getPayment().getStatus());
 
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType,
-                    resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
-                    resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, resultCheckoutBean.getPayment().getStatus(),
+                            resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getRequestLog(),
+                            resultCheckoutBean.getResponseLog());
 
-            result.editTransactionDetails(resultCheckoutBean.getId(), resultCheckoutBean.getPayment().getModified_date(),
-                    resultCheckoutBean.getPayment().getAmount());
+            result.editTransactionDetails(forwardPayment.getMerchantTransactionId(), resultCheckoutBean.getId(),
+                    resultCheckoutBean.getPayment().getModified_date(), resultCheckoutBean.getPayment().getAmount());
 
             return result;
         } catch (final Exception e) {
@@ -982,11 +993,12 @@ public class MeoWallet extends MeoWallet_Base
             final ForwardPaymentStateType stateType =
                     translateForwardPaymentStateType(resultCheckoutBean.getPayment().getStatus());
 
-            final ForwardPaymentStatusBean result = new ForwardPaymentStatusBean(true, stateType,
-                    resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getPayment().getStatus(),
-                    resultCheckoutBean.getRequestLog(), resultCheckoutBean.getResponseLog());
+            final ForwardPaymentStatusBean result =
+                    new ForwardPaymentStatusBean(true, stateType, resultCheckoutBean.getPayment().getStatus(),
+                            resultCheckoutBean.getPayment().getStatus(), resultCheckoutBean.getRequestLog(),
+                            resultCheckoutBean.getResponseLog());
 
-            result.editTransactionDetails(resultCheckoutBean.getPayment().getId(),
+            result.editTransactionDetails(forwardPayment.getMerchantTransactionId(), resultCheckoutBean.getPayment().getId(),
                     resultCheckoutBean.getPayment().getModified_date(), resultCheckoutBean.getPayment().getAmount());
 
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
@@ -1121,7 +1133,8 @@ public class MeoWallet extends MeoWallet_Base
             final ForwardPaymentStatusBean result =
                     new ForwardPaymentStatusBean(true, stateType, bean.getOperation_status(), bean.getOperation_status(), "", "");
 
-            result.editTransactionDetails(bean.getOperation_id(), bean.getModified_date(), bean.getAmount());
+            result.editTransactionDetails(forwardPayment.getMerchantTransactionId(), bean.getOperation_id(),
+                    bean.getModified_date(), bean.getAmount());
             if (Lists.newArrayList(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED)
                     .contains(result.getStateType())) {
                 // Do nothing
@@ -1172,8 +1185,9 @@ public class MeoWallet extends MeoWallet_Base
 
         forwardPayment.setTransactionId(result.getTransactionId());
         if (result.isInPayedState()) {
-            PaymentTransaction paymentTransaction = forwardPayment.advanceToPaidState(result.getStatusCode(),
-                    result.getPayedAmount(), result.getTransactionDate(), result.getTransactionId(), null);
+            PaymentTransaction paymentTransaction =
+                    forwardPayment.advanceToPaidState(result.getStatusCode(), result.getPayedAmount(),
+                            result.getTransactionDate(), result.getTransactionId(), null);
 
             log.setOperationCode("advanceToPaidState");
             log.setOperationSuccess(true);
@@ -1235,8 +1249,9 @@ public class MeoWallet extends MeoWallet_Base
 
                     return true;
                 } else if (paymentBean.isPending()) {
-                    MeoWalletPaymentBean meoWalletPaymentBean = getMeoWalletService().deleteMBPaymentReference(
-                            sibsPaymentRequest.getEntityReferenceCode(), sibsPaymentRequest.getReferenceCode());
+                    MeoWalletPaymentBean meoWalletPaymentBean =
+                            getMeoWalletService().deleteMBPaymentReference(sibsPaymentRequest.getEntityReferenceCode(),
+                                    sibsPaymentRequest.getReferenceCode());
 
                     if (STATUS_COMPLETED.equals(meoWalletPaymentBean.getStatus())) {
                         FenixFramework.atomic(() -> {

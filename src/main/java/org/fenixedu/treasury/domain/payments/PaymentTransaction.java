@@ -56,6 +56,7 @@ import java.math.BigDecimal;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
@@ -113,6 +114,10 @@ public class PaymentTransaction extends PaymentTransaction_Base {
 
         if (!TreasuryConstants.isPositive(getPaidAmount())) {
             throw new TreasuryDomainException("error.PaymentTransaction.paidAmount.invalid");
+        }
+
+        if(StringUtils.isEmpty(getTransactionId())) {
+            throw new TreasuryDomainException("error.PaymentTransaction.transactionId.required");
         }
 
         if (findByTransactionId(getTransactionId()).count() > 1) {

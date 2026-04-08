@@ -185,7 +185,7 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                         response.getJsonRequest(), response.getJsonResponse());
 
         bean.editAuthorizationDetails(authorizationNumber, authorizationDate);
-        bean.editTransactionDetails(transactionId, transactionDate, payedAmount);
+        bean.editTransactionDetails(null, transactionId, transactionDate, payedAmount);
 
         return bean;
     }

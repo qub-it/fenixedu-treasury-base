@@ -481,8 +481,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             // We will assume that the payment date is the request date of the forward payment, which
             // is a reasonable assumption.
 
-            bean.editTransactionDetails(responseInquiryWrapper.getTransactionId(), forwardPayment.getRequestDate(),
-                    responseInquiryWrapper.getAmount());
+            bean.editTransactionDetails(forwardPayment.getMerchantTransactionId(), responseInquiryWrapper.getTransactionId(),
+                    forwardPayment.getRequestDate(), responseInquiryWrapper.getAmount());
 
             if (List.of(ForwardPaymentStateType.CREATED, ForwardPaymentStateType.REQUESTED).contains(bean.getStateType())) {
                 // Do nothing
@@ -614,8 +614,8 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             // We will assume that the payment date is the request date of the forward payment, which
             // is a reasonable assumption.
 
-            bean.editTransactionDetails(responseInquiryWrapper.getTransactionId(), request.getRequestDate(),
-                    responseInquiryWrapper.getAmount());
+            bean.editTransactionDetails(request.getMerchantTransactionId(), responseInquiryWrapper.getTransactionId(),
+                    request.getRequestDate(), responseInquiryWrapper.getAmount());
 
             return bean;
         } catch (final Exception e) {
