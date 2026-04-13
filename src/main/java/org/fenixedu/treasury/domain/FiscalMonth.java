@@ -1,5 +1,6 @@
 package org.fenixedu.treasury.domain;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -14,6 +15,10 @@ import org.joda.time.LocalDate;
 import pt.ist.fenixframework.FenixFramework;
 
 public class FiscalMonth extends FiscalMonth_Base {
+
+    public static final Comparator<FiscalMonth> COMPARE_BY_YEAR_MONTH =
+            Comparator.comparing((FiscalMonth fm) -> fm.getFiscalYear().getYear()).thenComparingInt(FiscalMonth::getMonth)
+                    .thenComparing(FiscalMonth::getExternalId);
 
     public FiscalMonth() {
         super();
