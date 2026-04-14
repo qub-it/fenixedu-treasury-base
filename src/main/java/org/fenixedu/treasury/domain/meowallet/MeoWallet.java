@@ -212,8 +212,9 @@ public class MeoWallet extends MeoWallet_Base
         installments.stream()
                 .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription().getContent(), d.getOpenAmount())));
 
+        String customerName = getCustomerName(debtAccount);
         MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMbwayPaymentBean(payableAmount, merchantTransactionId,
-                debtAccount.getCustomer().getExternalId(), debtAccount.getCustomer().getName(), localPhoneNumber, items);
+                debtAccount.getCustomer().getExternalId(), customerName, localPhoneNumber, items);
 
         try {
             MbwayRequest mbwayPaymentRequest = FenixFramework.atomic(() -> {
@@ -304,8 +305,9 @@ public class MeoWallet extends MeoWallet_Base
         installments.stream()
                 .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription().getContent(), d.getOpenAmount())));
 
+        String customerName = getCustomerName(debtAccount);
         MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMbwayPaymentBean(payableAmount, merchantTransactionId,
-                debtAccount.getCustomer().getExternalId(), debtAccount.getCustomer().getName(), localPhoneNumber, items);
+                debtAccount.getCustomer().getExternalId(), customerName, localPhoneNumber, items);
 
         try {
             MbwayRequest mbwayPaymentRequest = FenixFramework.atomic(() -> {
@@ -585,8 +587,9 @@ public class MeoWallet extends MeoWallet_Base
         installments.stream()
                 .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription().getContent(), d.getOpenAmount())));
 
+        String customerName = getCustomerName(debtAccount);
         MeoWalletPaymentBean payment = MeoWalletPaymentBean.createMBPaymentBean(payableAmount, merchantTransactionId,
-                debtAccount.getCustomer().getExternalId(), debtAccount.getCustomer().getName(), items);
+                debtAccount.getCustomer().getExternalId(), customerName, items);
 
         if (Boolean.TRUE.equals(getSibsPaymentExpiryStrategy().getNewModeApplied())) {
             payment.setExpires(validTo.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1));
@@ -663,6 +666,20 @@ public class MeoWallet extends MeoWallet_Base
             }
         }
 
+    }
+
+    // 2026-04-14 (#qubIT-Fenix-8270)
+    //
+    // Limit the name to not overflow the value allowed by the MeoWallet API
+    private static String getCustomerName(DebtAccount debtAccount) {
+        String name = debtAccount.getCustomer().getName();
+        String[] parts = name.split("\\s+");
+
+        if (parts.length >= 2) {
+            return parts[0] + " " + parts[parts.length - 1];
+        }
+
+        return name;
     }
 
     @Override
@@ -846,8 +863,9 @@ public class MeoWallet extends MeoWallet_Base
                     .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription(), d.getOpenAmountWithInterests())));
             forwardPayment.getInstallmentsSet().stream()
                     .forEach(d -> items.add(new MeoWalletPaymentItemBean(1, d.getDescription().getContent(), d.getOpenAmount())));
-            MeoWalletPaymentBean paymentBean = MeoWalletPaymentBean.createForwardPaymentBean(forwardPayment.getPayableAmount(),
-                    forwardPayment.getDebtAccount().getCustomer().getName(), items);
+            String customerName = getCustomerName(forwardPayment);
+            MeoWalletPaymentBean paymentBean =
+                    MeoWalletPaymentBean.createForwardPaymentBean(forwardPayment.getPayableAmount(), customerName, items);
             MeoWalletCheckoutBean checkoutBean =
                     new MeoWalletCheckoutBean(paymentBean, forwardPayment.getForwardPaymentSuccessUrl(),
                             forwardPayment.getForwardPaymentInsuccessUrl(), merchantTransactionId,
@@ -908,6 +926,10 @@ public class MeoWallet extends MeoWallet_Base
                     "error.SibsOnlinePaymentsGateway.getPaymentStatusBySibsTransactionId.communication.error");
         }
 
+    }
+
+    private static String getCustomerName(ForwardPaymentRequest forwardPayment) {
+        return getCustomerName(forwardPayment.getDebtAccount());
     }
 
     private ForwardPaymentStateType translateForwardPaymentStateType(final String operationResultType) {

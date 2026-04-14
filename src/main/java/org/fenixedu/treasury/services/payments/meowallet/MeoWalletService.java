@@ -143,9 +143,11 @@ public class MeoWalletService {
     public MeoWalletPaymentBean generateMBPaymentReference(MeoWalletPaymentBean payment)
             throws OnlinePaymentsGatewayCommunicationException, IOException {
 
-        int days = Days.daysBetween(DateTime.now(), payment.getExpires()).getDays();
-        if (payment.getExpires() != null && days < 2) {
-            payment.setExpires(payment.getExpires().plusDays(2 - days));
+        DateTime expires = payment.getExpires() != null ? payment.getExpires() : DateTime.now();
+
+        int days = Days.daysBetween(DateTime.now(), expires).getDays();
+        if (expires != null && days < 2) {
+            payment.setExpires(expires.plusDays(2 - days));
         }
 
         // TODO: Put this in the getGson()
