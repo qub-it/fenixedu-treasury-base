@@ -1,3 +1,5 @@
+- Refactor: Associate PaymentRequest with FiscalMonth for indexation [#qubIT-Fenix-8267]
+
 15.7.4 (13-04-2026)
 - Refactor: Ensure PaymentTransaction#transactionId is not empty [#qubIT-Fenix-8239]
 - Refactor: Declare merchantTransactionId in ForwardPaymentStatusBean [#qubIT-Fenix-8239]

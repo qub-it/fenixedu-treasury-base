@@ -330,6 +330,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
         super.getInstallmentsSet().clear();
         super.getPaymentRequestLogsSet().clear();
         super.getPaymentTransactionsSet().forEach(t -> t.delete());
+        super.setFiscalMonth(null);
 
         super.deleteDomainObject();
     }

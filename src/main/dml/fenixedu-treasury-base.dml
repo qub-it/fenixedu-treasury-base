@@ -1086,7 +1086,7 @@ class payments.PaymentRequest {
 			multiplicity *;
 		}
 	}
-	
+
 	/* It is used by script to annul payment request in the platform */
 	relation PendingAnnuledPaymentRequest {
 		payments.integration.DigitalPaymentPlatform playsRole digitalPaymentPlatformPendingForAnnulment {
@@ -3140,7 +3140,7 @@ class FiscalMonth {
 		}
 	}
 	
-	// ANIL 2024-11-14 (#qubIT-Fenix-5969)
+	// 2024-11-14 (#qubIT-Fenix-5969)
 	//
 	// This association is only to improve the search
 	// and avoid the reading all payment request logs,
@@ -3161,7 +3161,7 @@ class FiscalMonth {
 		}
 	}
 
-	// ANIL 2026-01-26 (#qubIT-Fenix-7963)
+	// 2026-01-26 (#qubIT-Fenix-7963)
 	//
 	// Index finantial document by fiscal month with document date as reference
 	relation FiscalMonthFinantialDocument {
@@ -3174,7 +3174,7 @@ class FiscalMonth {
         }
 	}
 
-	// ANIL 2026-01-26 (#qubIT-Fenix-7963)
+	// 2026-01-26 (#qubIT-Fenix-7963)
 	//
 	// Index finantial document entry with entry datetime
 	relation FiscalMonthFinantialDocumentEntry {
@@ -3186,7 +3186,19 @@ class FiscalMonth {
 	        multiplicity *;
 	    }
 	}
-	
+
+    // 2026-04-14 (#qubIT-Fenix-8267)
+
+	relation PaymentRequestFiscalMonth {
+		FiscalMonth playsRole fiscalMonth {
+			multiplicity 0..1;
+		}
+
+		payments.PaymentRequest playsRole paymentRequests {
+			multiplicity *;
+		}
+	}
+
 /* 
  * *************************
  * SibsOnlinePaymentsGateway

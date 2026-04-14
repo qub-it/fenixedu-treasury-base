@@ -60,10 +60,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.PaymentMethod;
-import org.fenixedu.treasury.domain.PaymentMethodReference;
-import org.fenixedu.treasury.domain.Product;
+import org.fenixedu.treasury.domain.*;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
@@ -166,6 +163,9 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         getInstallmentsSet().addAll(installments);
         setPayableAmount(payableAmount);
         setPaymentMethod(paymentMethod);
+
+        setFiscalMonth(
+                FiscalMonth.getOrCreateFiscalMonth(platform.getFinantialEntity().getFinantialInstitution(), getRequestDate().toLocalDate()));
     }
 
     protected void checkRules() {
