@@ -1,5 +1,4 @@
 - Refactor: Associate PaymentRequest with FiscalMonth for indexation [#qubIT-Fenix-8267]
-- Refactor: Limit the name to not overflow the value allowed by the MeoWallet API [#qubIT-Fenix-8270]
 
 15.7.4 (13-04-2026)
 - Refactor: Ensure PaymentTransaction#transactionId is not empty [#qubIT-Fenix-8239]
