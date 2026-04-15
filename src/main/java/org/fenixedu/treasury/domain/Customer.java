@@ -262,12 +262,18 @@ public abstract class Customer extends Customer_Base {
         final String nameClear =
                 Normalizer.normalize(getName().toLowerCase(), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
 
-        return TreasuryConstants.matchNames(nameClear,
-                searchFieldClear) || getIdentificationNumber() != null && getIdentificationNumber().contains(
-                searchFieldClear) || getFiscalNumber() != null && getFiscalNumber().toLowerCase()
-                .contains(searchFieldClear) || getCode() != null && getCode().contains(
-                searchFieldClear) || getBusinessIdentification() != null && getBusinessIdentification().contains(
-                searchFieldClear) || getUsername() != null && getUsername().contains(searchFieldClear);
+        boolean searchByNamesResult = TreasuryConstants.matchNames(nameClear, searchFieldClear);
+        boolean searchByIdentificationNumberResult =
+                getIdentificationNumber() != null && getIdentificationNumber().contains(searchFieldClear);
+        boolean searchByFiscalNumberResult =
+                getFiscalNumber() != null && getFiscalNumber().toLowerCase().contains(searchFieldClear);
+        boolean searchByCodeResult = getCode() != null && getCode().contains(searchFieldClear);
+        boolean searchByBusinessIdentificationResult =
+                getBusinessIdentification() != null && getBusinessIdentification().contains(searchFieldClear);
+        boolean searchByUsernameResult = getUsername() != null && getUsername().contains(searchFieldClear);
+        boolean searchByUiFiscalNumberResult = getUiFiscalNumber() != null && getUiFiscalNumber().toLowerCase().contains(searchFieldClear);
+
+        return searchByNamesResult || searchByIdentificationNumberResult || searchByFiscalNumberResult || searchByCodeResult || searchByBusinessIdentificationResult || searchByUsernameResult || searchByUiFiscalNumberResult;
     }
 
     public Set<FinantialInstitution> getFinantialInstitutions() {
