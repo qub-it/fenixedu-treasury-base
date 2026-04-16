@@ -1,3 +1,4 @@
+15.7.5 (16-04-2026)
 - Improvement: Support search customer with fiscal address country code and fiscal number format [#qubIT-Fenix-8240]
 - Refactor: Associate PaymentRequest with FiscalMonth for indexation [#qubIT-Fenix-8267]
 
