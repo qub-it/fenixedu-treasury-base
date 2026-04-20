@@ -116,6 +116,10 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
             throw new TreasuryDomainException("error.MbwayPaymentRequest.processMbwayTransaction.invalid.payment.date");
         }
 
+        if (!bean.isPaid()) {
+            throw new TreasuryDomainException("error.SibsPayPlatform.processMbwayTransaction.transaction.is.not.paid");
+        }
+
         if (PaymentTransaction.isTransactionDuplicate(bean.getTransactionId())) {
             FenixFramework.atomic(() -> log.markAsDuplicatedTransaction());
             return null;
@@ -131,6 +135,43 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                 return transaction;
             });
         } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @Atomic(mode = TxMode.READ)
+    public DigitalPlatformResultBean postProcessMbwayPayment(MbwayRequest mbwayRequest) {
+        if (!List.of(PaymentReferenceCodeStateType.UNUSED, PaymentReferenceCodeStateType.USED)
+                .contains(mbwayRequest.getCurrentState())) {
+            throw new RuntimeException("error.SibsPayPlatform.postProcessMbwayPayment.invalid.state");
+        }
+
+        SibsPayAPIService sibsPayService =
+                new SibsPayAPIService(getEndpointUrl(), getAssetsEndpointUrl(), getClientId(), getBearerToken(), getTerminalId(),
+                        getEntityReferenceCode());
+
+        try {
+            SibsPayResponseInquiryWrapper bean =
+                    sibsPayService.getPaymentStatusBySibsTransactionId(mbwayRequest.getTransactionId());
+
+            PaymentRequestLog log = log(mbwayRequest, "postProcessMbwayPayment", bean.getOperationStatusCode(),
+                    bean.getOperationStatusDescription(), bean.getRequestLog(), bean.getResponseLog());
+
+            FenixFramework.atomic(() -> fillLogForWebhookNotification(log, bean));
+
+            if(!bean.isOperationSuccess()) {
+                throw new RuntimeException("error.SibsPayPlatform.postProcessMbwayPayment.getPaymentStatusBySibsTransactionId.not.successful");
+            }
+
+            if (bean.isPaid()) {
+                processMbwayTransaction(log, bean);
+            } else if (bean.isDeclined() || bean.isExpired()) {
+                FenixFramework.atomic(() -> mbwayRequest.anull());
+            }
+
+            return bean;
+        } catch (OnlinePaymentsGatewayCommunicationException e) {
             throw new RuntimeException(e);
         }
     }

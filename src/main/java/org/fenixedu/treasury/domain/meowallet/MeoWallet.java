@@ -438,6 +438,11 @@ public class MeoWallet extends MeoWallet_Base
         }
     }
 
+    @Override
+    public DigitalPlatformResultBean postProcessMbwayPayment(MbwayRequest mbwayRequest) {
+        throw new RuntimeException("error.MeoWallet.postProcessMbwayPayment.not.supported");
+    }
+
     /**
      * SibsPaymentRequest
      */

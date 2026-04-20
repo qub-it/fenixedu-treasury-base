@@ -53,18 +53,17 @@
 package org.fenixedu.treasury.domain.sibspaymentsgateway;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentStateType;
 import org.fenixedu.treasury.domain.paymentPlan.Installment;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentReferenceCodeStateType;
 import org.fenixedu.treasury.domain.payments.IMbwayPaymentPlatformService;
@@ -181,6 +180,11 @@ public class MbwayRequest extends MbwayRequest_Base {
 
     public static Stream<MbwayRequest> findAll() {
         return PaymentRequest.findAll().filter(p -> p instanceof MbwayRequest).map(MbwayRequest.class::cast);
+    }
+
+    public static Stream<MbwayRequest> findAllByStateType(final PaymentReferenceCodeStateType... stateTypes) {
+        List<PaymentReferenceCodeStateType> t = Lists.newArrayList(stateTypes);
+        return findAll().filter(r -> t.contains(r.getCurrentState()));
     }
 
     public static Stream<MbwayRequest> findBySibsGatewayMerchantTransactionId(String sibsGatewayMerchantTransactionId) {

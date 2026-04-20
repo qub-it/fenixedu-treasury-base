@@ -68,10 +68,12 @@ import org.joda.time.DateTime;
 
 public interface IMbwayPaymentPlatformService {
 
-    public PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean);
+    PaymentTransaction processMbwayTransaction(PaymentRequestLog log, DigitalPlatformResultBean bean);
+
+    DigitalPlatformResultBean postProcessMbwayPayment(MbwayRequest mbwayRequest);
 
     @Deprecated
-    public MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
+    MbwayRequest createMbwayRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries, Set<Installment> installments,
             String countryPrefix, String localPhoneNumber);
 
     @Deprecated
@@ -82,36 +84,36 @@ public interface IMbwayPaymentPlatformService {
      *
      */ public PaymentRequestLog createLogForWebhookNotification();
 
-    public void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
+    void fillLogForWebhookNotification(PaymentRequestLog log, DigitalPlatformResultBean bean);
 
-    public MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
+    MbwayRequest createMbwayRequest(SettlementNoteBean settlementNoteBean, String countryPrefix, String localPhoneNumber);
 
-    public MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber);
+    MbwayMandate requestMbwayMandateAuthorization(DebtAccount debtAccount, String countryPrefix, String localPhoneNumber);
 
-    public MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate);
+    MbwayMandateBean checkMbwayMandateStateInDigitalPaymentPlatform(MbwayMandate mbwayMandate);
 
-    public void updateMbwayMandateState(MbwayMandate mbwayMandate);
+    void updateMbwayMandateState(MbwayMandate mbwayMandate);
 
-    public MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
+    MbwayRequest createMbwayRequest(MbwayMandatePaymentSchedule mbwayMandatePaymentSchedule, Set<DebitEntry> debitEntries,
             Set<Installment> installments);
 
-    public void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason);
+    void cancelMbwayMandateInDigitalPaymentPlatform(MbwayMandate mbwayMandate, String reason);
 
-    public void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate);
+    void requestMbwayMandateCancellationInPlatform(MbwayMandate mbwayMandate);
 
-    public boolean isMbwayAuthorizedPaymentsActive();
+    boolean isMbwayAuthorizedPaymentsActive();
 
-    public int getMbwayMandateDaysToScheduleDebts();
+    int getMbwayMandateDaysToScheduleDebts();
 
-    public int getMbwayMandateDaysToSendNotification();
+    int getMbwayMandateDaysToSendNotification();
 
-    public int getMbwayMandateDaysToChargePayment();
+    int getMbwayMandateDaysToChargePayment();
 
-    public int getMaximumTimeForAuthorizationInMinutes();
+    int getMaximumTimeForAuthorizationInMinutes();
 
-    public DateTime getLastMbwayPaymentScheduleExecution();
+    DateTime getLastMbwayPaymentScheduleExecution();
 
-    public void updateLastMbwayPaymentScheduleExecution();
+    void updateLastMbwayPaymentScheduleExecution();
 
-    public Set<Product> getMbwayMandatePossibleProductsToChargeSet();
+    Set<Product> getMbwayMandatePossibleProductsToChargeSet();
 }

@@ -1189,6 +1189,11 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         return processMbwayTransaction((SibsPaymentsGatewayLog) log, (PaymentStateBean) bean);
     }
 
+    @Override
+    public DigitalPlatformResultBean postProcessMbwayPayment(MbwayRequest mbwayRequest) {
+        throw new RuntimeException("error.SibsPaymentsGateway.postProcessMbwayPayment.not.supported");
+    }
+
     @Atomic(mode = TxMode.WRITE)
     private static SibsPaymentsGatewayLog createLog(String sibsGatewayMerchantTransactionId) {
         return SibsPaymentsGatewayLog.createForMbwayPaymentRequest(sibsGatewayMerchantTransactionId);
