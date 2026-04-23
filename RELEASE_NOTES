@@ -1,3 +1,5 @@
+- Improvement: In SIBS SPG, if request is not found throw specific exception to signal request is inexistent in platform [#qubIT-Fenix-8308]
+
 15.8.0 (20-04-2026)
 - Improvement: Support post payment prosessing with runtime task of MB WAY requests [#qubIT-Fenix-7932]
 

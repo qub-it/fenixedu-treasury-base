@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response.Status.Family;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
+import org.fenixedu.onlinepaymentsgateway.exceptions.PaymentRequestNotFoundException;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
@@ -194,14 +195,16 @@ public class SibsPayAPIService {
 
             address.setCity(cityText != null ? Splitter.fixedLength(MAX_CITY_LENGTH).splitToList(cityText).get(0) : null);
             address.setCountry(billingAddressBean.getAddressCountryCode());
-            address.setPostcode(zipCodeText != null ? Splitter.fixedLength(MAX_POSTCODE_LENGTH).splitToList(zipCodeText).get(0) : null);
-            address.setStreet1(addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
+            address.setPostcode(
+                    zipCodeText != null ? Splitter.fixedLength(MAX_POSTCODE_LENGTH).splitToList(zipCodeText).get(0) : null);
+            address.setStreet1(
+                    addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
 
             // ANIL 2026-01-26 (#qubIT-Fenix-7679)
             //
             // The address country, city and street1 must be required, so they must previously validated in UI .
             // The post code is optional because some countries don't have post code
-            if(Boolean.TRUE.equals(platform.getFillAddressFieldsIfEmpty())) {
+            if (Boolean.TRUE.equals(platform.getFillAddressFieldsIfEmpty())) {
                 // Suggestion from SIBS
                 address.setPostcode(StringUtils.isNotEmpty(address.getPostcode()) ? address.getPostcode() : "000000");
             }
@@ -266,8 +269,13 @@ public class SibsPayAPIService {
             Response response = builder.get();
 
             if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-                throw new OnlinePaymentsGatewayCommunicationException(null, response.readEntity(String.class),
-                        "unsuccessful request");
+                if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                    throw new PaymentRequestNotFoundException(null, response.readEntity(String.class),
+                            "unsuccessful request");
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(null, response.readEntity(String.class),
+                            "unsuccessful request");
+                }
             }
 
             responseLog = response.readEntity(String.class);
@@ -305,7 +313,11 @@ public class SibsPayAPIService {
             logger.debug(responseLog);
 
             if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-                throw new OnlinePaymentsGatewayCommunicationException(null, responseLog, "unsuccessful request");
+                if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                    throw new PaymentRequestNotFoundException(null, responseLog, "unsuccessful request");
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(null, responseLog, "unsuccessful request");
+                }
             }
 
             SibsPayResponseInquiry responseInquiry = objectMapper.readValue(responseLog, SibsPayResponseInquiry.class);
@@ -350,8 +362,13 @@ public class SibsPayAPIService {
             Response response = builder.post(Entity.entity(requestLog, MediaType.APPLICATION_JSON));
 
             if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-                throw new OnlinePaymentsGatewayCommunicationException(requestLog, response.readEntity(String.class),
-                        "unsuccessful processSibsPaymentRequestCheckout");
+                if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                    throw new PaymentRequestNotFoundException(requestLog, response.readEntity(String.class),
+                            "unsuccessful processSibsPaymentRequestCheckout");
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(requestLog, response.readEntity(String.class),
+                            "unsuccessful processSibsPaymentRequestCheckout");
+                }
             }
 
             responseLog = response.readEntity(String.class);
@@ -458,8 +475,13 @@ public class SibsPayAPIService {
             logger.debug(responseLog);
 
             if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-                throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog,
-                        "unsuccessful generateSibsPaymentRequestTransaction");
+                if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                    throw new PaymentRequestNotFoundException(requestLog, responseLog,
+                            "unsuccessful generateSibsPaymentRequestTransaction");
+                } else {
+                    throw new OnlinePaymentsGatewayCommunicationException(requestLog, responseLog,
+                            "unsuccessful generateSibsPaymentRequestTransaction");
+                }
             }
 
             SibsPayCancellationResponse cancellationResponse =
@@ -569,7 +591,7 @@ public class SibsPayAPIService {
     }
 
     private String getEmail(Customer customer) {
-        if(!StringUtils.isBlank(customer.getPersonalEmail())) {
+        if (!StringUtils.isBlank(customer.getPersonalEmail())) {
             return customer.getPersonalEmail();
         }
 
@@ -900,8 +922,8 @@ public class SibsPayAPIService {
         }
     }
 
-    public SibsPayCancelMbwayMandateResponse cancelMandate(String transactionId, String merchantTransactionId, String countryPrefix, String localPhoneNumber)
-            throws OnlinePaymentsGatewayCommunicationException {
+    public SibsPayCancelMbwayMandateResponse cancelMandate(String transactionId, String merchantTransactionId,
+            String countryPrefix, String localPhoneNumber) throws OnlinePaymentsGatewayCommunicationException {
         SibsPayCancelMbwayMandateRequest request = new SibsPayCancelMbwayMandateRequest();
 
         request.setMerchant(new SibsPayMerchant());
