@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response.Status.Family;
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.onlinepaymentsgateway.exceptions.OnlinePaymentsGatewayCommunicationException;
 import org.fenixedu.onlinepaymentsgateway.exceptions.PaymentRequestNotFoundException;
+import org.fenixedu.onlinepaymentsgateway.exceptions.PaymentRequestTimeoutException;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
@@ -270,8 +271,9 @@ public class SibsPayAPIService {
 
             if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                    throw new PaymentRequestNotFoundException(null, response.readEntity(String.class),
-                            "unsuccessful request");
+                    throw new PaymentRequestNotFoundException(null, response.readEntity(String.class), "unsuccessful request");
+                } else if (response.getStatus() == Response.Status.REQUEST_TIMEOUT.getStatusCode()) {
+                    throw new PaymentRequestTimeoutException(null, response.readEntity(String.class), "unsuccessful request");
                 } else {
                     throw new OnlinePaymentsGatewayCommunicationException(null, response.readEntity(String.class),
                             "unsuccessful request");
@@ -315,6 +317,8 @@ public class SibsPayAPIService {
             if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                     throw new PaymentRequestNotFoundException(null, responseLog, "unsuccessful request");
+                } else if (response.getStatus() == Response.Status.REQUEST_TIMEOUT.getStatusCode()) {
+                    throw new PaymentRequestTimeoutException(null, response.readEntity(String.class), "unsuccessful request");
                 } else {
                     throw new OnlinePaymentsGatewayCommunicationException(null, responseLog, "unsuccessful request");
                 }
