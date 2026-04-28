@@ -1,4 +1,5 @@
 - Improvement: In SIBS SPG, throw a specific exception to signal if request was timeout in platform [#qubIT-Fenix-8308]
+- Bug Fix: Support debt balance transfer compensation over advance payments with payor fiscal debt account [#UL-FD-2348]
 
 15.8.1 (23-04-2026)
 - Improvement: In SIBS SPG, if request is not found throw specific exception to signal request is inexistent in platform [#qubIT-Fenix-8308]

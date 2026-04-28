@@ -59,6 +59,10 @@ public class BalanceTransferForSAPAndSINGAPWithCompensationForAdvancePaymentCred
 
         SettlementNote settlementNote = SettlementNote.createSettlementNote(settlementNoteBean);
 
+        if (creditEntry.getCreditNote().isForPayorDebtAccount()) {
+            settlementNote.getAdvancedPaymentCreditNote().setPayorDebtAccount(creditEntry.getCreditNote().getPayorDebtAccount());
+        }
+
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             if (creditEntry.getFinantialDocument().isExportedInLegacyERP()
                     || (creditEntry.getFinantialDocument().getCloseDate() != null
@@ -80,7 +84,7 @@ public class BalanceTransferForSAPAndSINGAPWithCompensationForAdvancePaymentCred
                 DocumentNumberSeries.find(FinantialDocumentType.findForReimbursementNote(), defaultSeries);
         DateTime entryDateTime = new DateTime();
 
-        SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this.fromDebtAccount, true, true);
+        SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this.fromDebtAccount, true, false);
         settlementNoteBean.setDate(entryDateTime);
         settlementNoteBean.setDocNumSeries(reimbursementNoteSeries);
         settlementNoteBean.setFinantialEntity(finantialEntity);
