@@ -285,6 +285,10 @@ public class DebtAccount extends DebtAccount_Base {
         deleteDomainObject();
     }
 
+    public BigDecimal getPendingInterestAmount() {
+        return calculatePendingInterestAmount();
+    }
+
     public BigDecimal calculatePendingInterestAmount() {
         return calculatePendingInterestAmount(new DateTime().toLocalDate());
     }
