@@ -111,6 +111,11 @@ public class FiscalMonth extends FiscalMonth_Base {
         return find(fiscalYear, month).findFirst();
     }
 
+    public static Optional<FiscalMonth> findUnique(FinantialInstitution finantialInstitution, int year, int month) {
+        return FiscalYear.findUnique(finantialInstitution, year).map(fiscalYear -> findUnique(fiscalYear, month))
+                .orElse(Optional.empty());
+    }
+
     public static Optional<FiscalMonth> findUnique(FinantialInstitution finantialInstitution, LocalDate when) {
         int year = when.getYear();
         int monthOfYear = when.getMonthOfYear();

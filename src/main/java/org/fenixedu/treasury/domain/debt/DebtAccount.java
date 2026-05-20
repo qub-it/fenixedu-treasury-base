@@ -157,11 +157,11 @@ public class DebtAccount extends DebtAccount_Base {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public BigDecimal getDueDateInDebtWithInterests() {
-        return getDueDateInDebtWithInterests(new LocalDate());
+    public BigDecimal getDueInDebtWithInterests() {
+        return getDueInDebtWithInterests(new LocalDate());
     }
 
-    public BigDecimal getDueDateInDebtWithInterests(LocalDate when) {
+    public BigDecimal getDueInDebtWithInterests(LocalDate when) {
         return this.getPendingInvoiceEntriesSet().stream() //
                 .filter(de -> de.isDebitNoteEntry()) //
                 .map(DebitEntry.class::cast) //

@@ -1,3 +1,6 @@
+- Refactor: Fix method name for DebtAccount#getDueDateInDebtWithInterests [#UL-IE-1904]
+- Refactor: Utility method to get fiscal month with year and month integer type [#qubIT-Fenix-8024]
+
 15.8.3 (06-05-2026)
 - Improvement: Display pending interests in the debt account [#UL-IE-1904]
 
