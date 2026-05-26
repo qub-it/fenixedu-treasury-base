@@ -87,7 +87,7 @@ public abstract class Tariff extends Tariff_Base {
         setFixedDueDate(fixedDueDate);
         setNumberOfDaysAfterCreationForDueDate(numberOfDaysAfterCreationForDueDate);
         setApplyInterests(applyInterests);
-        
+
         if (getApplyInterests()) {
             InterestRate.createForTariff(this, interestRateType, numberOfDaysAfterDueDate, applyInFirstWorkday,
                     maximumDaysToApplyPenalty, interestFixedAmount, rate);
@@ -115,19 +115,16 @@ public abstract class Tariff extends Tariff_Base {
             throw new TreasuryDomainException("error.Tariff.dueDateCalculationType.required");
         }
 
-        if ((getDueDateCalculationType().isFixedDate() || getDueDateCalculationType().isBestOfFixedDateAndDaysAfterCreation())
-                && getFixedDueDate() == null) {
+        if ((getDueDateCalculationType().isFixedDate() || getDueDateCalculationType().isBestOfFixedDateAndDaysAfterCreation()) && getFixedDueDate() == null) {
             throw new TreasuryDomainException("error.Tariff.fixedDueDate.required");
         }
 
-        if (getFixedDueDate() != null
-                && getFixedDueDate().toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1).isBefore(getBeginDate())) {
+        if (getFixedDueDate() != null && getFixedDueDate().toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1)
+                .isBefore(getBeginDate())) {
             throw new TreasuryDomainException("error.Tariff.fixedDueDate.must.be.after.or.equal.beginDate");
         }
 
-        if ((getDueDateCalculationType().isDaysAfterCreation()
-                || getDueDateCalculationType().isBestOfFixedDateAndDaysAfterCreation())
-                && getNumberOfDaysAfterCreationForDueDate() < 0) {
+        if ((getDueDateCalculationType().isDaysAfterCreation() || getDueDateCalculationType().isBestOfFixedDateAndDaysAfterCreation()) && getNumberOfDaysAfterCreationForDueDate() < 0) {
             throw new TreasuryDomainException("error.Tariff.numberOfDaysAfterCreationForDueDate.must.be.positive");
         }
 
@@ -172,6 +169,10 @@ public abstract class Tariff extends Tariff_Base {
         checkRules();
     }
 
+    public void closeTariff(final DateTime endDate) {
+        super.setEndDate(endDate);
+    }
+
     public boolean isDeletable() {
         return true;
     }
@@ -198,17 +199,17 @@ public abstract class Tariff extends Tariff_Base {
     /**
      * Return if the tariff is specificed without any additional parameters for matching like degreeType, degree, cycle, and so
      * on...
-     * 
+     *
      * @return
      */
     public abstract boolean isBroadTariffForFinantialEntity();
 
     // @formatter: off
+
     /************
      * UTILS *
      ************/
     // @formatter: on
-
     protected boolean isNegative(final BigDecimal value) {
         return !isZero(value) && !isPositive(value);
     }
@@ -254,11 +255,11 @@ public abstract class Tariff extends Tariff_Base {
     }
 
     // @formatter: off
+
     /************
      * SERVICES *
      ************/
     // @formatter: on
-
     public static Stream<? extends Tariff> findAll() {
         return FenixFramework.getDomainRoot().getTariffsSet().stream();
     }
