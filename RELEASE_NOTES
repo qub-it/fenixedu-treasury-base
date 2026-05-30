@@ -1,3 +1,5 @@
+- Refactor: Add method to close tariff at given date [#qubIT-Fenix-8316]
+
 15.8.4 (20-05-2026)
 - Refactor: Fix method name for DebtAccount#getDueDateInDebtWithInterests [#UL-IE-1904]
 - Refactor: Utility method to get fiscal month with year and month integer type [#qubIT-Fenix-8024]
