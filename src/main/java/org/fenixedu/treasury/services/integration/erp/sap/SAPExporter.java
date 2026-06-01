@@ -404,7 +404,7 @@ public class SAPExporter implements IERPExporter {
             // SystemEntryDate
             payment.setSystemEntryDate(convertToXMLDateTime(dataTypeFactory, documentDate));
 
-            /* ANIL: 2015/10/20 converted from dateTime to Date */
+            /* 2015/10/20 converted from dateTime to Date */
 
             // TODO: For now fill with real payment date
             payment.setTransactionDate(convertToXMLDate(dataTypeFactory, paymentDate));
@@ -484,7 +484,7 @@ public class SAPExporter implements IERPExporter {
                     PaymentMethod method = new PaymentMethod();
                     method.setPaymentAmount(paymentEntry.getPayedAmount().setScale(2, RoundingMode.HALF_EVEN));
 
-                    /* ANIL: 2015/10/20 converted from dateTime to Date */
+                    /* 2015/10/20 converted from dateTime to Date */
                     method.setPaymentDate(convertToXMLDate(dataTypeFactory, calculatePaymentDate(document)));
 
                     method.setPaymentMechanism(convertToSAFTPaymentMechanism(paymentEntry.getPaymentMethod()));
@@ -499,7 +499,7 @@ public class SAPExporter implements IERPExporter {
                     PaymentMethod method = new PaymentMethod();
                     method.setPaymentAmount(reimbursmentEntry.getReimbursedAmount().setScale(2, RoundingMode.HALF_EVEN));
 
-                    /* ANIL: 2015/10/20 converted from dateTime to Date */
+                    /* 2015/10/20 converted from dateTime to Date */
                     method.setPaymentDate(convertToXMLDate(dataTypeFactory, calculatePaymentDate(document)));
 
                     method.setPaymentMechanism(convertToSAFTPaymentMechanism(reimbursmentEntry.getPaymentMethod()));
@@ -520,7 +520,7 @@ public class SAPExporter implements IERPExporter {
                 PaymentMethod voidMethod = new PaymentMethod();
                 voidMethod.setPaymentAmount(BigDecimal.ZERO);
 
-                /* ANIL: 2015/10/20 converted from dateTime to Date */
+                /* 2015/10/20 converted from dateTime to Date */
                 voidMethod.setPaymentDate(convertToXMLDate(dataTypeFactory, calculatePaymentDate(document)));
 
                 voidMethod.setPaymentMechanism("OU");
@@ -552,7 +552,7 @@ public class SAPExporter implements IERPExporter {
                 sourceDocument.setLineNumber(BigInteger.valueOf(settlementEntry.getInvoiceEntry().getEntryOrder().intValue()));
                 sourceDocument.setOriginatingON(settlementEntry.getInvoiceEntry().getFinantialDocument().getUiDocumentNumber());
 
-                /* ANIL: 2015/10/20 converted from dateTime to Date */
+                /* 2015/10/20 converted from dateTime to Date */
                 sourceDocument.setInvoiceDate(convertToXMLDate(dataTypeFactory,
                         settlementEntry.getInvoiceEntry().getFinantialDocument().getDocumentDate()));
 
@@ -703,13 +703,13 @@ public class SAPExporter implements IERPExporter {
 
             workDocument.setDueDate(convertToXMLDate(dataTypeFactory, document.getDocumentDueDate().toDateTimeAtStartOfDay()));
 
-            /* Anil: 14/06/2016: Fill with 0's the Hash element */
+            /* 14/06/2016: Fill with 0's the Hash element */
             workDocument.setHash(Strings.repeat("0", 172));
 
             // SystemEntryDate
             workDocument.setSystemEntryDate(convertToXMLDateTime(dataTypeFactory, documentDate));
 
-            /* ANIL: 2015/10/20 converted from dateTime to Date */
+            /* 2015/10/20 converted from dateTime to Date */
             workDocument.setWorkDate(convertToXMLDate(dataTypeFactory, documentDate));
 
             // DocumentNumber
@@ -863,7 +863,7 @@ public class SAPExporter implements IERPExporter {
             DatatypeFactory dataTypeFactory = DatatypeFactory.newInstance();
             DateTime documentDate = entry.getFinantialDocument().getDocumentDate();
 
-            /* ANIL: 2015/10/20 converted from dateTime to Date */
+            /* 2015/10/20 converted from dateTime to Date */
             documentDateCalendar = convertToXMLDate(dataTypeFactory, documentDate);
 
         } catch (DatatypeConfigurationException e) {
@@ -1091,7 +1091,7 @@ public class SAPExporter implements IERPExporter {
             // DateCreated
             DateTime now = new DateTime();
 
-            /* ANIL: 2015/10/20 converted from dateTime to Date */
+            /* 2015/10/20 converted from dateTime to Date */
             header.setDateCreated(convertToXMLDate(dataTypeFactory, now));
 
             // Email
@@ -1099,7 +1099,7 @@ public class SAPExporter implements IERPExporter {
 
             // EndDate
 
-            /* ANIL: 2015/10/20 converted from dateTime to Date */
+            /* 2015/10/20 converted from dateTime to Date */
             header.setEndDate(convertToXMLDate(dataTypeFactory, endDate));
 
             // Fax
@@ -2037,7 +2037,7 @@ public class SAPExporter implements IERPExporter {
                         .filter(x -> x.getCloseDate() != null)
                         .filter(x -> x.isDebitNote() || (x.isSettlementNote() && !x.getCloseDate()
                                 .isBefore(SAPExporter.ERP_INTEGRATION_START_DATE)))
-                        // TODO Anil Review comparator COMPARE_BY_DOCUMENT_TYPE which is buggy, for now do not sort
+                        // TODO Review comparator COMPARE_BY_DOCUMENT_TYPE which is buggy, for now do not sort
                         // .sorted(COMPARE_BY_DOCUMENT_TYPE)
                         .collect(Collectors.<FinantialDocument> toList());
 

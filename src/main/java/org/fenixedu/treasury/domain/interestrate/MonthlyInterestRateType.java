@@ -57,7 +57,7 @@ public class MonthlyInterestRateType extends MonthlyInterestRateType_Base {
 
             @Override
             public boolean isPostponePaymentLimitDateToFirstWorkDate() {
-                // TODO ANIL 2023-06-16: Create a property for this
+                // TODO 2023-06-16: Create a property for this
                 // The property applyInFirstWorkday should be used in the cases where the
                 // the first day to apply penalty should be in a work day, not in holiday or weekend
 

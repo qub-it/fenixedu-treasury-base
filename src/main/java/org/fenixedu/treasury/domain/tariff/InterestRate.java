@@ -116,13 +116,13 @@ public class InterestRate extends InterestRate_Base {
     }
 
     @Deprecated
-    // TODO ANIL 2023-05-05: read the comments in ::getMaximumDaysToApplyPenaltyApplied
+    // TODO 2023-05-05: read the comments in ::getMaximumDaysToApplyPenaltyApplied
     public boolean isMaximumDaysToApplyPenaltyApplied() {
         return getMaximumDaysToApplyPenalty() > 0;
     }
 
     @Deprecated
-    // TODO ANIL 2023-05-05: read the comments in ::applyInFirstWorkday
+    // TODO 2023-05-05: read the comments in ::applyInFirstWorkday
     public boolean isApplyInFirstWorkday() {
         return getApplyInFirstWorkday();
     }
@@ -188,7 +188,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO ANIL 2023-05-05: In the constructor and ::edit method it is being set as 1
+     * TODO 2023-05-05: In the constructor and ::edit method it is being set as 1
      * Check if it is used and consider removal
      */
     public int getNumberOfDaysAfterDueDate() {
@@ -199,7 +199,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     *  TODO ANIL 2023-05-05: read comments in ::NumberOfDaysAfterDueDate
+     *  TODO 2023-05-05: read comments in ::NumberOfDaysAfterDueDate
      */
     public void setNumberOfDaysAfterDueDate(int numberOfDaysAfterDueDate) {
         // TODO Auto-generated method stub
@@ -209,7 +209,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO ANIL 2023-05-05: I think it is not being used. Check and consider removal
+     * TODO 2023-05-05: I think it is not being used. Check and consider removal
      */
     public int getMaximumDaysToApplyPenalty() {
         return super.getMaximumDaysToApplyPenalty();
@@ -218,7 +218,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO ANIL 2023-05-05: read comments of ::setMaximumDaysToApplyPenalty
+     * TODO 2023-05-05: read comments of ::setMaximumDaysToApplyPenalty
      */
     public void setMaximumDaysToApplyPenalty(int maximumDaysToApplyPenalty) {
         // TODO Auto-generated method stub
@@ -228,7 +228,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO: ANIL 2023-05-05: I think it is not being used. The global interest rate type used it's own 
+     * TODO: 2023-05-05: I think it is not being used. The global interest rate type used it's own
      * rate table entry configuration, and fixed amount does not use
      */
     public boolean getApplyInFirstWorkday() {
@@ -239,7 +239,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO: ANIL 2023-05-05: read the comments of ::getApplyInFirstWorkday
+     * TODO: 2023-05-05: read the comments of ::getApplyInFirstWorkday
      */
     public void setApplyInFirstWorkday(boolean applyInFirstWorkday) {
         // TODO Auto-generated method stub
@@ -249,7 +249,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO: ANIL 2023-05-05: I think it is not being used. The global interest rate type used it's own 
+     * TODO: 2023-05-05: I think it is not being used. The global interest rate type used it's own
      * rate table entry configuration, and fixed amount does not use
      */
     public BigDecimal getRate() {
@@ -259,7 +259,7 @@ public class InterestRate extends InterestRate_Base {
     @Override
     @Deprecated
     /*
-     * TODO: ANIL 2023-05-05: read the comments of ::getRate
+     * TODO: 2023-05-05: read the comments of ::getRate
      */
     public void setRate(BigDecimal rate) {
         super.setRate(rate);

@@ -253,7 +253,7 @@ public class CreditEntry extends CreditEntry_Base {
                 }).collect(Collectors.toMap(e -> e.getKey(),
                         e -> e.getValue().subtract(exemptionsMapForCurrentCreditEntry.get(e.getKey()))));
 
-        // ANIL 2025-09-10 (#qubIT-Fenix-7457)
+        // 2025-09-10 (#qubIT-Fenix-7457)
         //
         // The unitAmount must also have the netExemptedAmount
         BigDecimal sumOfExemptionsMapForCurrentCreditEntry =

@@ -493,7 +493,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             if (bean.isInPayedState()) {
                 FenixFramework.atomic(() -> {
-                    // ANIL 2024-11-20 (#qubIT-Fenix-6113)
+                    // 2024-11-20 (#qubIT-Fenix-6113)
                     //
                     // The processing of registering settlement notes, are acomplished
                     // by the customer returning from the payment platform into FenixEdu,
@@ -1321,7 +1321,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
             if (bean.isPaid()) {
                 FenixFramework.atomic(() -> {
-                    // ANIL 2024-11-20 (#qubIT-Fenix-6113)
+                    // 2024-11-20 (#qubIT-Fenix-6113)
                     //
                     // The processing of registering settlement notes, are acomplished
                     // by the customer returning from the payment platform into FenixEdu,

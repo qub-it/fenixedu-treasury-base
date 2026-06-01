@@ -199,7 +199,7 @@ public class DebitNote extends DebitNote_Base {
 
         // VAT RECALCULATION
         //
-        // TODO ANIL 2022-11-18: For now comment the following code, until we have a decision about this
+        // TODO 2022-11-18: For now comment the following code, until we have a decision about this
 //        if (getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
 //            // Recalculate the vat rates for all debit entries
 //            // This is done to avoid the case where a debit note
@@ -252,7 +252,7 @@ public class DebitNote extends DebitNote_Base {
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, LocalDate documentDueDate, String originNumber,
             Map<String, String> propertiesMap, String documentObservations, String documentTermsAndConditions) {
 
-        // ANIL 2024-08-02
+        // 2024-08-02
         //
         // Validate document number series against finantial entity or finantial institution
 
@@ -284,7 +284,7 @@ public class DebitNote extends DebitNote_Base {
         return note;
     }
 
-    // ANIL 2024-08-02
+    // 2024-08-02
     //
     // It is necessary to not validate the document number series againsts finantial entity or finantial institution
     public static DebitNote createForImportation(FinantialEntity finantialEntity, DebtAccount debtAccount,
@@ -326,7 +326,7 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Atomic
-    // TODO ANIL 2024-08-07
+    // TODO 2024-08-07
     //
     // This receive a Set instead of a List
     public void addDebitNoteEntries(List<DebitEntry> debitEntries) {
@@ -483,7 +483,7 @@ public class DebitNote extends DebitNote_Base {
             if (anullGeneratedInterests) {
                 //Annul open interest debit entry
 
-                // ANIL 2024-09-27 (#qubIT-Fenix-5852) **README**
+                // 2024-09-27 (#qubIT-Fenix-5852) **README**
                 // 
                 // discard only those that are annuled but not those
                 // that the availableNetAmountForCredit is not positive

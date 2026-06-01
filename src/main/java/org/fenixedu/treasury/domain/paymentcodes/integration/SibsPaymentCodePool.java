@@ -414,7 +414,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
         LocalDate now = new LocalDate();
 
-        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 2024-08-06 (#qubIT-Fenix-5597)
         // 
 
         SibsReferenceCode pregeneratedReference =
@@ -485,7 +485,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
             throw new RuntimeException("not check digit sibs platform");
         }
 
-        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 2024-08-06 (#qubIT-Fenix-5597)
         // 
 
         SibsReferenceCode pregeneratedReference = findAndUsePregeneratedReference(debtAccount, payableAmount, validTo);
@@ -587,7 +587,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
     public SibsReferenceCode findAndUsePregeneratedReference(DebtAccount debtAccount, BigDecimal payableAmount,
             LocalDate validTo) {
-        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 2024-08-06 (#qubIT-Fenix-5597)
 
         SibsReferenceCode pregeneratedReferenceCode = findPregeneratedReference(debtAccount, payableAmount, validTo);
         if (pregeneratedReferenceCode == null) {
@@ -611,7 +611,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     public static Stream<SibsReferenceCode> getStreamForFindPregeneratedReference(Stream<SibsReferenceCode> stream,
             BigDecimal payableAmount, LocalDate validTo) {
 
-        // ANIL 2024-08-28 (#qubIT-Fenix-5597)
+        // 2024-08-28 (#qubIT-Fenix-5597)
         //
         // This method is an helper to generate the necessary and missing pre references,
         // in order to not create more than what is necessary
@@ -624,7 +624,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
     private SibsReferenceCode findPregeneratedReference(DebtAccount debtAccount, BigDecimal payableAmount, LocalDate validTo) {
 
-        // ANIL 2024-08-06 (#qubIT-Fenix-5597)
+        // 2024-08-06 (#qubIT-Fenix-5597)
         // 
         // a) First search pre generated reference that is associated with some customer
         // b) the pregenerated must have the same payable amount and valid date interval for validTo

@@ -249,7 +249,7 @@ public class Series extends Series_Base {
         return finantialEntity.getSeriesSet();
     }
 
-    // ANIL 2024-07-05 
+    // 2024-07-05
     //
     // Code should be unique regardless the finantial institution or other entity aggregator
     public static Series findByCode(final String code) {
@@ -270,7 +270,7 @@ public class Series extends Series_Base {
         return result;
     }
 
-    // ANIL 2024-07-05 
+    // 2024-07-05
     //
     // Like the code, the series name should be unique regardless the finantial institution or other entity aggregator
     public static Series findByName(String name) {

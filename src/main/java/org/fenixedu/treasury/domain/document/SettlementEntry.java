@@ -202,14 +202,14 @@ public class SettlementEntry extends SettlementEntry_Base {
 
     @Override
     @Deprecated
-    // TODO ANIL 2024-01-25: The netAmount should not be used and should be removed
+    // TODO 2024-01-25: The netAmount should not be used and should be removed
     // The amount always includes VAT
     public BigDecimal getNetAmount() {
         return this.getAmount();
     }
 
     /*
-     * ANIL 2024-01-25 :  This method must only be used only in UI or reports
+     * 2024-01-25 :  This method must only be used only in UI or reports
      *
      */
     public BigDecimal getUiAmount() {
@@ -222,7 +222,7 @@ public class SettlementEntry extends SettlementEntry_Base {
     }
 
     /*
-     * ANIL 2024-01-25 :  This method must only be used only in UI or reports
+     * 2024-01-25 :  This method must only be used only in UI or reports
      *
      */
     public BigDecimal getUiTotalAmount() {

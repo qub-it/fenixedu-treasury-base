@@ -144,7 +144,7 @@ public class InterestRateBean implements ITreasuryBean, Serializable {
     private String description;
     
     /**
-     * README ANIL 2023-05-12: This field is not required but it might be necessary
+     * README 2023-05-12: This field is not required but it might be necessary
      * in cases where there is a need to know if a particular interest entry (of multiple interests entries)
      * is created or not
      */

@@ -193,7 +193,7 @@ public class ForwardPaymentRequest extends ForwardPaymentRequest_Base {
     /*
      * Log should be created outside
      * 
-     * TODO ANIL 2023-08-31: Replace by #advanceToRequestState(String operationCode, PaymentRequestLog log)
+     * TODO 2023-08-31: Replace by #advanceToRequestState(String operationCode, PaymentRequestLog log)
      */
     public PaymentRequestLog advanceToRequestState(String operationCode, String statusCode, String statusMessage,
             String requestBody, String responseBody) {

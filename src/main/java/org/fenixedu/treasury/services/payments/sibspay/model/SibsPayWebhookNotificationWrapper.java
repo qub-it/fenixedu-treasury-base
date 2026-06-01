@@ -17,7 +17,7 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
         this.webhookNotification = webhookNotification;
     }
 
-    // ANIL 2024-11-14  (#qubIT-Fenix-6095)
+    // 2024-11-14  (#qubIT-Fenix-6095)
     //
     // If the notification is paid and the data of structure paymentReference is present,
     // check if the paymentReference status is "PAID" . If it is not throw an exception
@@ -50,7 +50,7 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     @Override
     public DateTime getPaymentDate() {
-        // ANIL 2024-06-14 #UCP-FENIXEDU-93
+        // 2024-06-14 #UCP-FENIXEDU-93
         //
         // The transactionDateTime, if present, is in UTC, which is fine when
         // the timezone for Lisbon in winter.
@@ -139,7 +139,7 @@ public class SibsPayWebhookNotificationWrapper implements DigitalPlatformResultB
 
     @Override
     public boolean isPaid() {
-        // ANIL 2024-11-15 (#qubIT-Fenix-6101)
+        // 2024-11-15 (#qubIT-Fenix-6101)
         //
         // The notification of annulment of SIBS payment requests are sent with the 
         // paymentStatus or #getPaymentResultCode() equal to "Success" .

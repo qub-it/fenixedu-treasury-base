@@ -90,7 +90,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         setDescription(description);
         setEntryDateTime(entryDateTime);
 
-        // ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        // 2026-01-26 (#qubIT-Fenix-7963)
         setFiscalMonth(
                 FiscalMonth.getOrCreateFiscalMonth(finantialEntity.getFinantialInstitution(), entryDateTime.toLocalDate()));
 
@@ -98,7 +98,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
                 debtAccount.getCustomer().nextFinantialDocumentEntryNumber()));
     }
 
-    // TODO ANIL 2023-01-30: Replace all references of setFinantialDocument(FinantialDocument) by
+    // TODO 2023-01-30: Replace all references of setFinantialDocument(FinantialDocument) by
     // this method
     public void addToFinantialDocument(FinantialDocument finantialDocument) {
         if (getFinantialDocument() != null && !getFinantialDocument().isPreparing()) {
@@ -149,7 +149,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
 //            throw new TreasuryDomainException("error.FinantialDocumentEntry.code.must.be.unique");
 //        }
 
-        // TODO ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        // TODO 2026-01-26 (#qubIT-Fenix-7963)
         //
         // Remove the check getFiscalMonth() != null as soon as fiscal month set is confirmed
         if(getFiscalMonth() != null && !getFiscalMonth().containsDate(getEntryDateTime().toLocalDate())) {

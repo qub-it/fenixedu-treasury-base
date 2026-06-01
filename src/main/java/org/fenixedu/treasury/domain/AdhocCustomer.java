@@ -127,7 +127,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
         checkRules();
 
-        // ANIL 2024-10-10 (qubIT-Fenix-5910)
+        // 2024-10-10 (qubIT-Fenix-5910)
         //
         // Apply pluggable validation of customer creation in order to 
         // apply specific requirements over fiscal numbers attribution
@@ -147,7 +147,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
                     String.valueOf(SAFT_CUSTOMER_COMPANY_NAME_MAX_LENGTH));
         }
 
-        // ANIL 2024-05-21
+        // 2024-05-21
         //
         // Validate only of the customer is active
         if (isActive()) {
@@ -205,7 +205,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         final boolean changeFiscalNumberConfirmed = bean.isChangeFiscalNumberConfirmed();
         final boolean withFinantialDocumentsIntegratedInERP = isWithFinantialDocumentsIntegratedInERP();
 
-        // 2023-02-12 ANIL: The platform no longer check if there are logs with ERP client
+        // 2023-02-12: The platform no longer check if there are logs with ERP client
         // This was removed because it hinders the tests in quality or development servers, due to
         // lack of log files
         //
@@ -435,7 +435,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
                 addressCountryCode, identificationNumber, finantialInstitutions);
     }
 
-    // ANIL 2024-03-11: Bypass checkrules in order to import customers with duplicated fiscal number
+    // 2024-03-11: Bypass checkrules in order to import customers with duplicated fiscal number
     public static AdhocCustomer createForImportation(String code, CustomerType customerType, String fiscalNumber, String name,
             String address, String districtSubdivision, String region, String zipCode, String addressCountryCode,
             String identificationNumber, List<FinantialInstitution> finantialInstitutions) {

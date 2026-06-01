@@ -171,7 +171,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
     private static Stream<SibsPaymentCodeTransaction> find(String entityReferenceCode, String referenceCode,
             DateTime paymentDate) {
         return findAll().filter(x -> {
-            // ANIL 2024-06-14
+            // 2024-06-14
             // 
             // The paymentDate cannot be compared with milliseconds, which must be discarded
             // Also we must use DateTime#compareTo() instead of DateTime#equals() due to
@@ -189,7 +189,7 @@ public class SibsPaymentCodeTransaction extends SibsPaymentCodeTransaction_Base 
         return findAll().filter(i -> sibsTransactionId.equalsIgnoreCase(i.getSibsTransactionId()));
     }
 
-    // TODO ANIL 2024-05-17 
+    // TODO 2024-05-17
     //
     // Replace this by PaymentTransaction#isTransactionDuplicate and test it very well
     @Deprecated

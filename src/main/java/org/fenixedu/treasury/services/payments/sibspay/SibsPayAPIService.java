@@ -96,7 +96,7 @@ public class SibsPayAPIService {
 
         this.client.register(LoggingFeature.class);
 
-        // ANIL 2025-05-04 (#qubIT-Fenix-6885)
+        // 2025-05-04 (#qubIT-Fenix-6885)
         //
         // The path should be totally retrieved from database until the /payments
         // Instead of client.target(sibsEndpoint).path("sibs/spg/v2") , just invoke
@@ -182,7 +182,7 @@ public class SibsPayAPIService {
         result.setCustomer(new SibsPayCustomer());
         result.getCustomer().setCustomerInfo(new SibsPayCustomerInfo());
 
-        // ANIL 2025-02-28 (#qubIT-Fenix-6683)
+        // 2025-02-28 (#qubIT-Fenix-6683)
         //
         // THe customer name must be limited to 45 characters
 
@@ -201,7 +201,7 @@ public class SibsPayAPIService {
             address.setStreet1(
                     addressText != null ? Splitter.fixedLength(MAX_STREET_LENGTH).splitToList(addressText).get(0) : null);
 
-            // ANIL 2026-01-26 (#qubIT-Fenix-7679)
+            // 2026-01-26 (#qubIT-Fenix-7679)
             //
             // The address country, city and street1 must be required, so they must previously validated in UI .
             // The post code is optional because some countries don't have post code
@@ -558,7 +558,7 @@ public class SibsPayAPIService {
         result.setCustomer(new SibsPayCustomer());
         result.getCustomer().setCustomerInfo(new SibsPayCustomerInfo());
 
-        // ANIL 2025-02-28 (#qubIT-Fenix-6683)
+        // 2025-02-28 (#qubIT-Fenix-6683)
         //
         // THe customer name must be limited to 45 characters
 
@@ -604,7 +604,7 @@ public class SibsPayAPIService {
 
     private static final int MAX_NAME_SIZE = 45;
 
-    // ANIL 2025-02-28 (#qubIT-Fenix-6683)
+    // 2025-02-28 (#qubIT-Fenix-6683)
     //
     // The customer name must be limited to 45 characters
     private String limitCustomerName(String name) {

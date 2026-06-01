@@ -195,7 +195,7 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         this.finantialEntity = paymentRequest.getFinantialEntity();
         this.reimbursementNote = false;
 
-        // ANIL 2024-08-01
+        // 2024-08-01
         //
         // In automatic payments, isReimbursementNote is always false
         // It is safe to only consider the finantial document type for settlement note

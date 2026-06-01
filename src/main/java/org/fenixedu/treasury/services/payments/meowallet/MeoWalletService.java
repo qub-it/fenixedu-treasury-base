@@ -315,7 +315,7 @@ public class MeoWalletService {
 
     private String processDelete(String path, String requestLog) {
         /*
-         * ANIL 2024-02-20 : JAXRS does not allow invoke DELETE method with body
+         * 2024-02-20 : JAXRS does not allow invoke DELETE method with body
          * 
          * To workaround, pass the suppressHttpComplianceValidation property
          */

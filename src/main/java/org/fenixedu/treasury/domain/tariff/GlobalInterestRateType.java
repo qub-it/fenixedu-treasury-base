@@ -168,7 +168,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
             DateTime ignorePaymentsAfterDate) {
         NavigableMap<LocalDate, BigDecimal> result = new TreeMap<>();
 
-        // ANIL 2025-11-03 (#qubIT-Fenix-7720)
+        // 2025-11-03 (#qubIT-Fenix-7720)
         // The debit entry amount to calculate interest must not
         // take into account the amount that was exempted by credit entry
 
@@ -185,7 +185,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
                         return;
                     }
 
-                    // ANIL 2025-11-03 (#qubIT-Fenix-7720)
+                    // 2025-11-03 (#qubIT-Fenix-7720)
                     BigDecimal amountToDiscountFromCreditEntriesByExemption =
                             se.getSettlementNote().getSettlemetEntriesSet().stream()
                                     .filter(sce -> creditEntriesByExemption.contains(sce.getInvoiceEntry()))
@@ -243,7 +243,7 @@ public class GlobalInterestRateType extends GlobalInterestRateType_Base {
         BigDecimal sumOfCreditEntriesByExemption =
                 creditEntriesByExemption.stream().map(CreditEntry::getAmountWithVat).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // ANIL 2025-11-03 (#qubIT-Fenix-7720)
+        // 2025-11-03 (#qubIT-Fenix-7720)
         // Subtract the amount exempted by credit entry
 
         BigDecimal amountToPay = debitEntry.getAmountWithVat().subtract(sumOfCreditEntriesByExemption);

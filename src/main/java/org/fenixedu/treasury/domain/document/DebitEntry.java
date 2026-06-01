@@ -552,7 +552,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         }
 
-        // ANIL #qubIT-Fenix-7577 (2025-10-16)
+        // #qubIT-Fenix-7577 (2025-10-16)
         //
         // The reference codes should be annulled because the amount declared is
         // not equal and can lead to excess payment credit amount
@@ -648,7 +648,7 @@ public class DebitEntry extends DebitEntry_Base {
         return creditEntry;
     }
 
-    // ANIL 2023-11-29 
+    // 2023-11-29
     //
     // I changed the visibility of this method to 'package protected', it is only
     // called by DebitNote#anullDebitNoteWithCreditNote and this class. If it is needed in some script, just copy the
@@ -662,7 +662,7 @@ public class DebitEntry extends DebitEntry_Base {
                 DocumentNumberSeries.find(FinantialDocumentType.findForSettlementNote(),
                         this.getFinantialDocument().getDocumentNumberSeries().getSeries());
 
-        // ANIL 2023-11-29: Ensure the associated finantial document is in closed state
+        // 2023-11-29: Ensure the associated finantial document is in closed state
 
         if (!getDebitNote().isClosed()) {
             throw new IllegalStateException("error.DebitEntry.closeCreditEntryIfPossible.invalid.debitNote.state");
@@ -765,7 +765,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         BigDecimal amountToPay = getAmountWithVat();
         for (final SettlementEntry settlementEntry : entries) {
-            // ANIL 2024-10-10 (qubIT-Fenix-5932)
+            // 2024-10-10 (qubIT-Fenix-5932)
             //
             // The only settlements that must be considered are those closed (and not open)
             // Also only before the paymentDate . The return value must be the amount in debt at the start of day
@@ -987,7 +987,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         recalculateAmountValues();
 
-        // ANIL 2025-04-09 (#qubIT-Fenix-6814)
+        // 2025-04-09 (#qubIT-Fenix-6814)
         getSibsPaymentRequests().stream().filter(r -> r.isInCreatedState() || r.isInRequestedState()).forEach(r -> r.anull());
 
         checkRules();
@@ -1034,7 +1034,7 @@ public class DebitEntry extends DebitEntry_Base {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+    // 2025-09-03 (#qubIT-Fenix-7442)
     public BigDecimal getAvailableNetExemptedAmountForCredit(TreasuryExemptionType treasuryExemptionType) {
         return getTreasuryExemptionsSet().stream() //
                 .filter(e -> e.getTreasuryExemptionType() == treasuryExemptionType) //
@@ -1133,7 +1133,7 @@ public class DebitEntry extends DebitEntry_Base {
         annulDebitEntry(reason, true);
     }
 
-    /* ANIL 2025-03-03 (#qubIT-Fenix-6662)
+    /* 2025-03-03 (#qubIT-Fenix-6662)
      *
      * There are some cases, like tuition recalculation, in which
      * we cannot annul the interests, if the installment must be
@@ -1172,7 +1172,7 @@ public class DebitEntry extends DebitEntry_Base {
         annulOnlyThisDebitEntryAndInterestsInBusinessContext(reason, true);
     }
 
-    /* ANIL 2025-03-03 (#qubIT-Fenix-6662)
+    /* 2025-03-03 (#qubIT-Fenix-6662)
      *
      * There are some cases, like tuition recalculation, in which
      * we cannot annul the interests, if the installment must be
@@ -1193,7 +1193,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         annulOnEvent();
 
-        // ANIL 2024-09-26 (#qubIT-Fenix-5852)
+        // 2024-09-26 (#qubIT-Fenix-5852)
         //
         // Before this date, it was being applied this condition besides isAnnulled() :
         //
@@ -1241,7 +1241,7 @@ public class DebitEntry extends DebitEntry_Base {
             throw new IllegalArgumentException("netAmountToCredit is less than availableNetAmountForCredit");
         }
 
-        // ANIL 2024-09-26 (#qubIT-Fenix-5852)
+        // 2024-09-26 (#qubIT-Fenix-5852)
         // 
         // If the netAmountToCredit and the getAvailableNetAmountForCredit() are both zero,
         // then the ratio should be one
@@ -1255,7 +1255,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         BigDecimal ratio = calculatedRatio;
 
-        // ANIL 2024-09-26 (#qubIT-Fenix-5852) **README**
+        // 2024-09-26 (#qubIT-Fenix-5852) **README**
         // 
         // If the multiplication by ratio is not positive, then discard
 
@@ -1270,7 +1270,7 @@ public class DebitEntry extends DebitEntry_Base {
         return result;
     }
 
-    // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+    // 2025-09-03 (#qubIT-Fenix-7442)
     public Map<TreasuryExemption, BigDecimal> calculateNetExemptedAmountsToCreditMapBasedInExplicitAmounts(
             Map<TreasuryExemptionType, BigDecimal> amountDistributionMap, boolean raiseErrorIfAmountLeftForDistribution) {
         final Map<TreasuryExemption, BigDecimal> result = new HashMap<>();
@@ -1436,7 +1436,7 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
-    // TODO ANIL 2024-01-23: Replace this method to #getActiveSibsPaymentRequests
+    // TODO 2024-01-23: Replace this method to #getActiveSibsPaymentRequests
     @Deprecated
     public Set<SibsPaymentRequest> getActiveSibsPaymentRequestsOfPendingDebitEntries() {
         return getActiveSibsPaymentRequests();
@@ -1474,7 +1474,7 @@ public class DebitEntry extends DebitEntry_Base {
         return null;
     }
 
-    // ANIL 2023-12-10: This consumers allows to establish the relation connections when
+    // 2023-12-10: This consumers allows to establish the relation connections when
     // splitting a debit entry. This should be registered in other modules than treasury
     private static List<BiConsumer<DebitEntry, DebitEntry>> CONNECT_RELATIONS_WHEN_SPLITTING_DEBIT_ENTRY_CONSUMERS_LIST =
             new ArrayList<>();
@@ -1503,7 +1503,7 @@ public class DebitEntry extends DebitEntry_Base {
 
         annulAllActiveSibsPaymentRequests();
 
-        // README ANIL 2023-12-26
+        // README 2023-12-26
         //
         // This method will create a new debit entry the amount argument
         // supplied, which is the total amount with vat.
@@ -1657,7 +1657,7 @@ public class DebitEntry extends DebitEntry_Base {
             }
         });
 
-        // ANIL 2025-04-03 (#qubIT-Fenix-6786)
+        // 2025-04-03 (#qubIT-Fenix-6786)
         //
         // The new partitioned new debit entry must be in the same payment groups
         // of the old debit entry
@@ -1799,7 +1799,7 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
 //    @Deprecated
-//    // TODO ANIL 2023-12-28: Replace with the extended version of this method
+//    // TODO 2023-12-28: Replace with the extended version of this method
 //    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
 //            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
 //            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {

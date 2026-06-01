@@ -126,7 +126,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setDocumentDate(documentDate);
         setDocumentDueDate(documentDate.toLocalDate());
 
-        // ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        // 2026-01-26 (#qubIT-Fenix-7963)
         setFiscalMonth(
             FiscalMonth.getOrCreateFiscalMonth(finantialEntity.getFinantialInstitution(), documentDate.toLocalDate()));
 
@@ -203,7 +203,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
             }
         }
 
-        // TODO ANIL 2026-01-26 (#qubIT-Fenix-7963)
+        // TODO 2026-01-26 (#qubIT-Fenix-7963)
         //
         // Remove the check getFiscalMonth() != null as soon as fiscal month set is confirmed
         if(getFiscalMonth() != null && !getFiscalMonth().containsDate(getDocumentDate().toLocalDate())) {
@@ -350,7 +350,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
         if (StringUtils.isNotEmpty(loggedUsername)) {
 
-            // ANIL 2025-09-16 (#qubIT-Fenix-7472)
+            // 2025-09-16 (#qubIT-Fenix-7472)
             //
             // Sometimes is necessary to mark document to export but to make available for users, to need a log
             // when document was marked to export
@@ -364,7 +364,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         }
 
         if (getDebtAccount().getFinantialInstitution().getErpIntegrationConfiguration().getActive()) {
-            // ANIL 2025-12-16 (#qubIT-Fenix-7855)
+            // 2025-12-16 (#qubIT-Fenix-7855)
             //
             // The method Finantial#markDocumentToExport is called by the FinantialDocument#closeDocument
             // and SettlementNote#annulDocument

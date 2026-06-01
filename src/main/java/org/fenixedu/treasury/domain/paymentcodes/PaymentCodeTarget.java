@@ -135,7 +135,7 @@ public abstract class PaymentCodeTarget extends PaymentCodeTarget_Base {
     }
 
     public String fillPaymentEntryMethodId() {
-        // ANIL (2017-09-13) Required by used ERP at this date
+        // (2017-09-13) Required by used ERP at this date
         return String.format("COB PAG SERV %s", getPaymentReferenceCode().getPaymentCodePool().getEntityReferenceCode());
     }
 

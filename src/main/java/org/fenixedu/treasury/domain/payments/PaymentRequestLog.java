@@ -84,7 +84,7 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
         setCreationDate(new DateTime());
         setResponsibleUsername(TreasuryConstants.getAuthenticatedUsername());
 
-        // ANIL 2024-11-14 (#qubIT-Fenix-5969)
+        // 2024-11-14 (#qubIT-Fenix-5969)
         //
         // The association with fiscal month is only to avoid
         // reading all instances of this entity, which in some

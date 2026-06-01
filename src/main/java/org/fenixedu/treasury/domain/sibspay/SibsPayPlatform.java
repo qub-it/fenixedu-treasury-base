@@ -512,7 +512,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                     responseInquiryWrapper.getPaymentResultCode(), responseInquiryWrapper.getPaymentResultDescription(),
                     requestLog, responseLog);
 
-            // README ANIL 2023-10-23: 
+            // README 2023-10-23:
             // 
             // There is no payment date or transaction date, return by the API of SIBS
             // According to SIBS Onboarding team, the payment date in a credit card is considered
@@ -645,7 +645,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
                             responseInquiryWrapper.getPaymentResultCode(), responseInquiryWrapper.getPaymentResultDescription(),
                             requestLog, responseLog);
 
-            // README ANIL 2023-10-23: 
+            // README 2023-10-23:
             // 
             // There is no payment date or transaction date, return by the API of SIBS
             // According to SIBS Onboarding team, the payment date in a credit card is considered
@@ -914,7 +914,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
     private DateTime calculateSibsValidTo(DateTime sibsValidFrom, LocalDate validTo) {
         DateTime sibsValidTo = validTo.plusDays(1).toDateTimeAtStartOfDay().minusSeconds(1);
 
-        // ANIL 2024-07-16
+        // 2024-07-16
         //
         // If the period between sibsValidFrom and sibsValidTo, is only one hour, 
         // give a little more time to not return  error from SIBS
@@ -949,7 +949,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         return processPaymentReferenceCodeTransaction(log, bean, paymentDate);
     }
 
-    // ANIL 2024-10-31 (#qubIT-Fenix-6029)
+    // 2024-10-31 (#qubIT-Fenix-6029)
     //
     // Extends this method to receive a custom payment date
     //
@@ -1270,7 +1270,7 @@ public class SibsPayPlatform extends SibsPayPlatform_Base
         return MbwayMandate.create(this, debtAccount, merchantTransactionId, countryPrefix, localPhoneNumber);
     }
 
-    // ANIL (2025-04-16) (#qubIT-Fenix-5465)
+    // (2025-04-16) (#qubIT-Fenix-5465)
     //
     // When there is the intent to cancel a mandate, it is important to mark
     // as cancelled in the FenixEdu, and only then cancel the mandate in the

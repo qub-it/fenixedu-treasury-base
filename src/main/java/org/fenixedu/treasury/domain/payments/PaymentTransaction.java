@@ -135,7 +135,7 @@ public class PaymentTransaction extends PaymentTransaction_Base {
         super.deleteDomainObject();
     }
 
-    // ANIL 2024-05-17
+    // 2024-05-17
     //
     // This method exists to apply different logic in
     // SibsPaymentCodeTransaction

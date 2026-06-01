@@ -88,7 +88,7 @@ public class SibsPayResponseInquiryWrapper implements DigitalPlatformResultBean 
 
     @Override
     public boolean isPaid() {
-        // ANIL 2024-11-15 (#qubIT-Fenix-6101)
+        // 2024-11-15 (#qubIT-Fenix-6101)
         //
         // The notification of annulment of SIBS payment requests are sent with the 
         // paymentStatus or #getPaymentResultCode() equal to "Success" .

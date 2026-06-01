@@ -474,7 +474,7 @@ public class SettlementNote extends SettlementNote_Base {
                         "partial payment (system)");
             } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument() != null
                     && debitEntry.getFinantialDocument().isPreparing()) {
-                // ANIL 2024-08-07 (#qubIT-Fenix-5710)
+                // 2024-08-07 (#qubIT-Fenix-5710)
                 //
                 // Check if there are other debit entries, which are not being settled 
                 // but need to be separated from this current settled debit note
@@ -1025,7 +1025,7 @@ public class SettlementNote extends SettlementNote_Base {
         return settlementNote;
     }
 
-    // ANIL 2024-08-02
+    // 2024-08-02
     //
     // Add this method factory to not validate the document number series against the finantial entity
     // or finantial institution

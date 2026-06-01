@@ -283,7 +283,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         super.setValueToExempt(value);
     }
 
-    // ANIL 2023-09-17 : The exemptions can be retrieved with the associated active debit entries of
+    // 2023-09-17 : The exemptions can be retrieved with the associated active debit entries of
     // this treasury event. No need for a relation
     public TreasuryEvent getTreasuryEvent() {
         return super.getDebitEntry().getTreasuryEvent();
@@ -305,7 +305,7 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     public static Stream<TreasuryExemption> find(final TreasuryEvent treasuryEvent) {
-        // ANIL 2023-09-01
+        // 2023-09-01
         //
         // This statement was replaced by this
         // FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream().filter(t -> t.getTreasuryEvent() == treasuryEvent)

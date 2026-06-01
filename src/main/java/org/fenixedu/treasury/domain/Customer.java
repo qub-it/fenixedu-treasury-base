@@ -191,7 +191,7 @@ public abstract class Customer extends Customer_Base {
             throw new TreasuryDomainException("error.Customer.customerType.required");
         }
 
-        // ANIL 2024-05-21
+        // 2024-05-21
         //
         // Validate only of the customer is active
         if (isActive()) {

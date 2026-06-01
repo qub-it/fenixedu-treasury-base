@@ -288,7 +288,7 @@ public class SibsPayWebhookLogic {
                 return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
 
-            // ANIL 2024-11-14 (#qubIT-Fenix-6095)
+            // 2024-11-14 (#qubIT-Fenix-6095)
             //
             // For payments by credit card (ForwardPaymentRequest) or MB-WAY (MbwayRequest)
             // if the current state is not in created state or in requested state, then
@@ -306,7 +306,7 @@ public class SibsPayWebhookLogic {
                         "The notification is a successful payment but the paymentRequest is already processed or annuled. Please check");
             }
 
-            // ANIL 2024-11-14  (#qubIT-Fenix-6095)
+            // 2024-11-14  (#qubIT-Fenix-6095)
             //
             // Check comments in the called method
             this.webhookNotificationWrapper.checkIfNotificationIsPaidAndPaymentReferenceIsAlsoInPaidStatus();

@@ -170,7 +170,7 @@ public class ERPIntegrationService extends BennuWebService {
     @WebMethod
     @Deprecated
     /*
-     * ANIL 2023-05-11: Not used anymore
+     * 2023-05-11: Not used anymore
      */
     public InterestRequestValueOuptut getInterestValueFor(InterestRequestValueInput interestRequest) {
         throw new RuntimeException("deprecated");

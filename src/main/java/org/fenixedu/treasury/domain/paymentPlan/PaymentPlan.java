@@ -246,7 +246,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                         .getCustomer() : entry.getDebtAccount().getCustomer()).collect(Collectors.toSet());
     }
 
-    // ANIL 2025-11-03 (#qubIT-Fenix-7718)
+    // 2025-11-03 (#qubIT-Fenix-7718)
     // Debit entries might be associated with payor customer, so the payment plan
     // emolument and interests must be associated with payor customer
     private static DebitNote createDebitNote(PaymentPlanBean paymentPlanBean, PaymentPlan result, DebtAccount payorDebtAccount) {
@@ -260,7 +260,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                 null);
     }
 
-    // ANIL 2025-05-21 (#qubIT-Fenix-6963)
+    // 2025-05-21 (#qubIT-Fenix-6963)
     // The method now receives a treasury event to associate interests of the
     // origin debit entry
     private static DebitEntry createDebitEntry(FinantialEntity finantialEntity, DebtAccount debtAccount, String description,
@@ -315,7 +315,7 @@ public class PaymentPlan extends PaymentPlan_Base {
                     Vat vat = Vat.findActiveUnique(product.getVatType(), debtAccount.getFinantialInstitution(), new DateTime())
                             .orElse(null);
 
-                    // ANIL 2025-05-21 (#qubIT-Fenix-6963)
+                    // 2025-05-21 (#qubIT-Fenix-6963)
                     // The interest debit entry must be associated with the treasury event of
                     // the origin debit entry
                     DebitEntry debitEntry =

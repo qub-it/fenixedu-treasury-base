@@ -208,7 +208,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return result;
     }
 
-    // ANIL 2024-10-15 (#qubIT-Fenix-5929)
+    // 2024-10-15 (#qubIT-Fenix-5929)
     //
     // This method produces a map with the amountWithVat by product including interests.
     // If the caller of this method does not want to deal with interests, then he
@@ -275,7 +275,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return result;
     }
 
-    // ANIL 2024-10-15 (#qubIT-Fenix-5929)
+    // 2024-10-15 (#qubIT-Fenix-5929)
     //
     // This method produces a map with the netAmount by product including interests.
     // If the caller of this method does not want to deal with interests, then he
@@ -408,7 +408,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     public BigDecimal getInterestsCreditAmount(final Product product) {
         final Product interestProduct = TreasurySettings.getInstance().getInterestProduct();
 
-        // ANIL 2024-12-12 (#qubIT-Fenix-6345)
+        // 2024-12-12 (#qubIT-Fenix-6345)
         //
         // Exclude credit entries that are not associated with a debit entry
         // That credit entries were created in migration but have to be associated
@@ -468,14 +468,14 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return result;
     }
 
-    // ANIL 2024-10-15 (#qubIT-Fenix-5929)
+    // 2024-10-15 (#qubIT-Fenix-5929)
     //
     // This method produces a map with the netExemptedAmount by product including interests.
     // If the caller of this method does not want to deal with interests, then he
     // must skip it from the resulting map
     public Map<Product, BigDecimal> getNetExemptedAmountByProductMap() {
 
-        // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+        // 2025-09-03 (#qubIT-Fenix-7442)
         //
         // Using DebitEntry::getNetExemptedAmount does not give accurate result, because
         // TreasuryExemptions can be credited in their exempted amount
@@ -493,7 +493,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap() {
-        // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+        // 2025-09-03 (#qubIT-Fenix-7442)
         //
         // TreasuryExemption#getNetExemptedAmount does not give accurate exempted amount, because the
         // exemption might be credited in the exemption
@@ -506,7 +506,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
     }
 
     public Map<TreasuryExemptionType, BigDecimal> getNetExemptedAmountsMap(Product product) {
-        // ANIL 2025-09-03 (#qubIT-Fenix-7442)
+        // 2025-09-03 (#qubIT-Fenix-7442)
         //
         // TreasuryExemption#getNetExemptedAmount does not give accurate exempted amount, because the
         // exemption might be credited in the exemption
@@ -683,7 +683,7 @@ public abstract class TreasuryEvent extends TreasuryEvent_Base {
         return new LocalizedString();
     }
 
-    // ANIL 2023-09-17 : The exemptions can be retrieved with the associated active debit entries of
+    // 2023-09-17 : The exemptions can be retrieved with the associated active debit entries of
     // this treasury event. No need for a relation
     public Set<TreasuryExemption> getTreasuryExemptionsSet() {
         return DebitEntry.findActive(this).flatMap(d -> d.getTreasuryExemptionsSet().stream()).collect(Collectors.toSet());

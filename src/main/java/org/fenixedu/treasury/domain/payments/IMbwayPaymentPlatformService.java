@@ -78,7 +78,7 @@ public interface IMbwayPaymentPlatformService {
 
     @Deprecated
     /*
-     * TODO ANIL 2023-10-25: There are many ways to create a payment request log,
+     * TODO 2023-10-25: There are many ways to create a payment request log,
      * which is confusing. There should be a cleanup in the various methods to
      * create a payment request log (and in derivate classes)
      *

@@ -159,7 +159,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
             }
         }
 
-        // TODO ANIL 2023-06-19 : The numberOfDaysAfterDueDate is declared in the InterestRate::numberOfDaysAfterDueDate
+        // TODO 2023-06-19 : The numberOfDaysAfterDueDate is declared in the InterestRate::numberOfDaysAfterDueDate
         // but it shouldn't . Generally number of days after due date is one, but if it is necessary, it should be declared
         // in the interest rate entry. Add this property only if it is necessary
         //
@@ -243,7 +243,7 @@ public abstract class InterestRateType extends InterestRateType_Base {
 //                .filter(type -> type instanceof GlobalInterestRateType).map(GlobalInterestRateType.class::cast).findFirst();
 //    }
 
-    // TODO ANIL 2025-06-17: Should be renamed to getActiveInterestRateTypesSortedByName
+    // TODO 2025-06-17: Should be renamed to getActiveInterestRateTypesSortedByName
     public static List<? extends InterestRateType> getAvailableInterestRateTypesSortedByName() {
         return TreasurySettings.getInstance().getAvailableInterestRateTypesSet().stream().sorted(InterestRateType.COMPARE_BY_NAME)
                 .collect(Collectors.toList());

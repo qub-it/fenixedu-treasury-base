@@ -215,7 +215,7 @@ public class DebtAccount extends DebtAccount_Base {
 
         Customer activeCustomer = getCustomer().getActiveCustomer();
         if (activeCustomer == null) {
-            // ANIL 2024-12-14 (#qubIT-Fenix-6386)
+            // 2024-12-14 (#qubIT-Fenix-6386)
             //
             // If there is not active customer, then something is not right
             // with the data and relations with associated person

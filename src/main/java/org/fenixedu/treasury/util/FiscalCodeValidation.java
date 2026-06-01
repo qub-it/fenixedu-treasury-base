@@ -64,7 +64,7 @@ import eu.europa.ec.taxud.tin.algorithm.TINValid;
 
 public class FiscalCodeValidation {
 
-    // TODO ANIL 2024-06-18
+    // TODO 2024-06-18
     //
     // removed the "IT" country code, because is throwing 
     // java.lang.NoClassDefFoundError: org/apache/log4j/Logger
@@ -106,7 +106,7 @@ public class FiscalCodeValidation {
 
     private static boolean customValidation(String countryCode, String fiscalNumber) {
         /*
-         * ANIL 2022-06-02
+         *  2022-06-02
          * 
          * This custom validation is to give response to some cases where
          * it is not being possible to validate but the fiscalNumber is valid

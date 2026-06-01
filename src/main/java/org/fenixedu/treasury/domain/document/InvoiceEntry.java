@@ -540,7 +540,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
         return getNotAnnuledSettlementEntries().stream().map(se -> se.getSettlementNote()).collect(Collectors.toSet());
     }
 
-    // ANIL 2024-06-04
+    // 2024-06-04
     //
     // It is not being possible in reporting tool, to descent at third level
     // of relations

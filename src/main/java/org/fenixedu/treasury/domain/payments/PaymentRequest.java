@@ -119,7 +119,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
             throw new TreasuryDomainException("error.PaymentRequest.referencedCustomers.only.one.allowed");
         }
 
-        // ANIL 2024-06-03
+        // 2024-06-03
         //
         // Check if the debts are blocking for backoffice
         debitEntries.forEach(de -> {
@@ -476,7 +476,7 @@ public abstract class PaymentRequest extends PaymentRequest_Base {
         return result;
     }
 
-    // TODO ANIL 2025-07-11
+    // TODO 2025-07-11
     // The order should not be reversed
     public List<? extends PaymentRequestLog> getOrderedPaymentLogs() {
         return getPaymentRequestLogsSet().stream().sorted(PaymentRequestLog.COMPARE_BY_CREATION_DATE.reversed())

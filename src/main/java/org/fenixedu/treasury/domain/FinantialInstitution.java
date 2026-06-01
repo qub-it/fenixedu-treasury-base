@@ -320,7 +320,7 @@ public class FinantialInstitution extends FinantialInstitution_Base {
     }
 
     @Override
-    // ANIL 2024-07-05
+    // 2024-07-05
     //
     // Ensure the finantial institution is the same
     public void setRegulationSeries(Series regulationSeries) {

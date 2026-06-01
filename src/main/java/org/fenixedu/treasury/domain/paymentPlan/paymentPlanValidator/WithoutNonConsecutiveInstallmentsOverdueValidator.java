@@ -87,7 +87,7 @@ public class WithoutNonConsecutiveInstallmentsOverdueValidator extends WithoutNo
                 .filter(installment -> {
                     int numberOfWorkDaysBetween = TreasuryConstants.countNumberOfWorkDaysBetween(installment.getDueDate().plusDays(1), date);
 
-                    // ANIL 2026-02-23 (#qubIT-Fenix-8019)
+                    // 2026-02-23 (#qubIT-Fenix-8019)
                     // Count the number of days in the previous day of date, to compare if the limit was reached in the previous day
                     int numberOfWorkDaysBetweenInThePreviousDays =
                             TreasuryConstants.countNumberOfWorkDaysBetween(installment.getDueDate().plusDays(1), date.minusDays(1));

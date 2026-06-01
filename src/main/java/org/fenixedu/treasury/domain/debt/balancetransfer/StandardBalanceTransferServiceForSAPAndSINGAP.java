@@ -501,7 +501,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
     }
 
     @Deprecated
-    // TODO ANIL 2024-01-17 : This is to be discontinued
+    // TODO 2024-01-17 : This is to be discontinued
     private static CreditEntry createBalanceTransferCredit(final DebtAccount debtAccount, final DateTime documentDate,
             final String originNumber, final Product product, final BigDecimal amountWithVat, final DebtAccount payorDebtAccount,
             String entryDescription, FinantialEntity finantialEntity) {
@@ -534,7 +534,7 @@ public class StandardBalanceTransferServiceForSAPAndSINGAP implements BalanceTra
     }
 
     @Deprecated
-    // TODO ANIL 2024-01-17 : This is to be discontinued
+    // TODO 2024-01-17 : This is to be discontinued
     private static DebitEntry createBalanceTransferDebit(FinantialEntity finantialEntity, final DebtAccount debtAccount,
             final DateTime entryDate, final LocalDate dueDate, final String originNumber, final Product product,
             final BigDecimal amountWithVat, final DebtAccount payorDebtAccount, String entryDescription,
