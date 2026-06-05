@@ -1069,6 +1069,9 @@ public class SettlementNote extends SettlementNote_Base {
             if (excessCreditNote.isPreparing()) {
                 excessCreditNote.closeDocument();
             }
+        } else if(settlementNote.getAdvancedPaymentCreditNote() != null) {
+            // 2026-06-05 #qubIT-Fenix-8831
+            settlementNote.getAdvancedPaymentCreditNote().setOriginDocumentNumber(settlementNote.getUiDocumentNumber());
         }
 
         return settlementNote;
