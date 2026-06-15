@@ -1,3 +1,4 @@
+15.8.7 (15-06-2026)
 - Refactor: Static method to get MB WAY requests by state type [#qubIT-Fenix-8835]
 - Refactor: Method to transfer debit entry to another treasury event, which also transfer the interests [#qubIT-Fenix-8022]
 
