@@ -1,3 +1,6 @@
+- Refactor: Static method to get MB WAY requests by state type [#qubIT-Fenix-8835]
+- Refactor: Method to transfer debit entry to another treasury event, which also transfer the interests [#qubIT-Fenix-8022]
+
 15.8.6 (08-06-2026)
 - Improvement: Fill the origin document number of advanced payment credit note with the number of settlement note after being closed [#UL-REIT-4847]
 

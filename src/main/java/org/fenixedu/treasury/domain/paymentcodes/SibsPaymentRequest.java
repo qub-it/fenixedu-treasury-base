@@ -63,6 +63,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitEntry;
@@ -75,6 +76,7 @@ import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatform;
 import org.fenixedu.treasury.domain.payments.integration.IPaymentRequestState;
 import org.fenixedu.treasury.domain.settings.TreasurySettings;
+import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
@@ -314,6 +316,11 @@ public class SibsPaymentRequest extends SibsPaymentRequest_Base {
 
     public static Stream<SibsPaymentRequest> findAll() {
         return PaymentRequest.findAll().filter(p -> p instanceof SibsPaymentRequest).map(SibsPaymentRequest.class::cast);
+    }
+
+    public static Stream<SibsPaymentRequest> findAllByStateType(final PaymentReferenceCodeStateType... stateTypes) {
+        List<PaymentReferenceCodeStateType> t = Lists.newArrayList(stateTypes);
+        return findAll().filter(r -> t.contains(r.getCurrentState()));
     }
 
     public static Stream<SibsPaymentRequest> find(String entityReferenceCode, String referenceCode) {

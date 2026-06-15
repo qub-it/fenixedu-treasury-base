@@ -443,6 +443,13 @@ public class DebitEntry extends DebitEntry_Base {
         checkRules();
     }
 
+    public void transferToOtherTreasuryEvent(TreasuryEvent treasuryEvent) {
+        setTreasuryEvent(treasuryEvent);
+        getInterestDebitEntriesSet().forEach(i -> i.transferToOtherTreasuryEvent(treasuryEvent));
+
+        checkRules();
+    }
+
     // TRUE - Do not block academical acts when dueDate is expired
     // FALSE - Block academical acts when dueDate is expired
     public boolean isAcademicalActBlockingSuspension() {
