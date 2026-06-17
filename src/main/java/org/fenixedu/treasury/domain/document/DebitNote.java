@@ -537,18 +537,22 @@ public class DebitNote extends DebitNote_Base {
 
         for (DebitEntry entry : this.getDebitEntriesSet()) {
             //Get the amount for credit without tax, and considering the credit quantity FOR ONE
-            BigDecimal amountForCreditWithoutVat = entry.getAvailableNetAmountForCredit();
+            BigDecimal netAmountForCredit = entry.getAvailableNetAmountForCredit();
 
-            if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !entry.getTreasuryExemptionsSet().isEmpty()) {
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
+                    entry.calculateDefaultNetExemptedAmountsToCreditMap(netAmountForCredit);
+
+            // 2026-06-16 (#qubIT-Fenix-8797)
+            //
+            // if the netAmountForCredit (and the sum of creditExemptionsMap is zero), there's nothing to credit for
+            // Just skip
+            if(isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(entry, netAmountForCredit, creditExemptionsMap)) {
                 continue;
             }
 
-            Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
-                    entry.calculateDefaultNetExemptedAmountsToCreditMap(amountForCreditWithoutVat);
-
             final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(),
                     finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null,
-                    amountForCreditWithoutVat, null, creditNote, creditExemptionsMap);
+                    netAmountForCredit, null, creditNote, creditExemptionsMap);
 
             creditEntry.setInternalComments(reason);
 
@@ -572,18 +576,22 @@ public class DebitNote extends DebitNote_Base {
                     continue;
                 }
 
-                final BigDecimal amountForCreditWithoutVat = interestEntry.getAvailableNetAmountForCredit();
+                final BigDecimal netAmountForCredit = interestEntry.getAvailableNetAmountForCredit();
 
-                if (TreasuryConstants.isZero(amountForCreditWithoutVat) && !interestEntry.getTreasuryExemptionsSet().isEmpty()) {
+                Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
+                        interestEntry.calculateDefaultNetExemptedAmountsToCreditMap(netAmountForCredit);
+
+                // 2026-06-16 (#qubIT-Fenix-8797)
+                //
+                // if the netAmountForCredit or the sum of creditExemptionsMap is zero, there's nothing to credit for
+                // Just skip
+                if(isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(interestEntry, netAmountForCredit, creditExemptionsMap)) {
                     continue;
                 }
 
-                Map<TreasuryExemption, BigDecimal> creditExemptionsMap =
-                        interestEntry.calculateDefaultNetExemptedAmountsToCreditMap(amountForCreditWithoutVat);
-
                 CreditEntry interestsCreditEntry = interestEntry.createCreditEntry(documentDate, interestEntry.getDescription(),
                         finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null,
-                        amountForCreditWithoutVat, null, null, creditExemptionsMap);
+                        netAmountForCredit, null, null, creditExemptionsMap);
 
                 interestsCreditEntry.setInternalComments(reason);
 
@@ -596,6 +604,24 @@ public class DebitNote extends DebitNote_Base {
                 }
             }
         }
+    }
+
+    private boolean isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(DebitEntry entry, BigDecimal netAmountForCredit,
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
+        FinantialInstitution finantialInstitution = entry.getDebtAccount().getFinantialInstitution();
+
+        if (finantialInstitution.isSupportForCreditExemptionsActive()) {
+            if (!TreasuryConstants.isPositive(netAmountForCredit) && !TreasuryConstants.isPositive(
+                    creditExemptionsMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add))) {
+                return true;
+            }
+        } else {
+            if (!TreasuryConstants.isPositive(netAmountForCredit)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void createCreditNote(String reason, Map<DebitEntry, BigDecimal> creditDebitEntriesMap,
