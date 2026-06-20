@@ -195,18 +195,19 @@ public class PaymentPenaltyTaxTreasuryEvent extends PaymentPenaltyTaxTreasuryEve
                 PaymentPenaltyTaxSettings.findActiveForOriginDebitEntry(originDebitEntry).findFirst().orElse(null);
 
         Tariff tariff = null;
+        Product penaltyProduct = settings.getPenaltyProduct();
         if (originDebitEntry.getTreasuryEvent() != null) {
             tariff = originDebitEntry.getTreasuryEvent()
-                    .findMatchTariff(settings.getFinantialEntity(), settings.getPenaltyProduct(), lastPaymentDate).orElse(null);
+                    .findMatchTariff(settings.getFinantialEntity(), penaltyProduct, lastPaymentDate).orElse(null);
         } else {
-            tariff = Tariff.find(settings.getPenaltyProduct(), lastPaymentDate.toDateTimeAtStartOfDay())
+            tariff = Tariff.find(penaltyProduct, lastPaymentDate.toDateTimeAtStartOfDay())
                     .filter(t -> t.getFinantialEntity() == settings.getFinantialEntity())
                     .filter(t -> t.isBroadTariffForFinantialEntity()).findFirst().orElse(null);
         }
 
         if (tariff == null) {
             throw new TreasuryDomainException(
-                    "error.PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax.tariff.not.found");
+                    "error.PaymentPenaltyTaxTreasuryEvent.checkAndCreatePaymentPenaltyTax.tariff.not.found", penaltyProduct.getCode(), penaltyProduct.getName().getContent());
         }
 
         if (tariff.getFinantialEntity().getFinantialInstitution() != originDebitEntry.getDebtAccount()

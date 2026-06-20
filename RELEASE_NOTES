@@ -1,4 +1,5 @@
 - Bug Fix: When creating a credit note for a debit note, skip the debit entries which are totally credited or credited exempted [#UL-FBA-2177]
+- Bug Fix: Translate penalty tax tariff not found message [#qubIT-Fenix-8102]
 
 15.8.7 (15-06-2026)
 - Refactor: Static method to get MB WAY requests by state type [#qubIT-Fenix-8835]
