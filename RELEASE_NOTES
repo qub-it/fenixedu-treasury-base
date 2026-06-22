@@ -1,3 +1,4 @@
+15.8.8 (22-06-2026)
 - Bug Fix: When creating a credit note for a debit note, skip the debit entries which are totally credited or credited exempted [#UL-FBA-2177]
 - Bug Fix: Translate penalty tax tariff not found message [#qubIT-Fenix-8102]
 
