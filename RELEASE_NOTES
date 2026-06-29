@@ -1,3 +1,4 @@
+15.9.0 (29-06-2026)
 - Refactor: Convert SIBS DPG webhook into JAX RS webservice [#qubIT-Fenix-8910]
 - Bug Fix: Only validate fiscal number of default country in AdhocCustomer change fiscal number operation [#qubIT-Fenix-8912]
 
