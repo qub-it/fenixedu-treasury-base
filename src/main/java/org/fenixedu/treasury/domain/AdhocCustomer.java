@@ -118,8 +118,8 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
         setIdentificationNumber(identificationNumber);
 
-        if (TreasuryConstants.isDefaultCountry(getAddressCountryCode())
-                && !FiscalCodeValidation.isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber())) {
+        if (TreasuryConstants.isDefaultCountry(getAddressCountryCode()) && !FiscalCodeValidation.isValidFiscalNumber(
+                getAddressCountryCode(), getFiscalNumber())) {
             throw new TreasuryDomainException("error.Customer.fiscal.information.invalid");
         }
 
@@ -151,8 +151,8 @@ public class AdhocCustomer extends AdhocCustomer_Base {
         //
         // Validate only of the customer is active
         if (isActive()) {
-            if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode())
-                    || !DEFAULT_FISCAL_NUMBER.equals(getFiscalNumber())) {
+            if (!TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || !DEFAULT_FISCAL_NUMBER.equals(
+                    getFiscalNumber())) {
                 final Set<Customer> customers = findByFiscalInformation(getAddressCountryCode(), getFiscalNumber()) //
                         .filter(c -> c.isAdhocCustomer()) //
                         .filter(c -> c.isActive()) //
@@ -246,7 +246,10 @@ public class AdhocCustomer extends AdhocCustomer_Base {
             throw new TreasuryDomainException("error.Customer.changeFiscalNumber.documents.integrated.erp");
         }
 
-        if (!FiscalCodeValidation.isValidFiscalNumber(addressCountryCode, fiscalNumber)) {
+        // 2026-06-29 (#qubIT-Fenix-8912)
+        // Only apply fiscal validation for the default country
+        if (isFiscalCodeValidatedForCountryInAdhocCustomer(addressCountryCode) && !FiscalCodeValidation.isValidFiscalNumber(
+                addressCountryCode, fiscalNumber)) {
             throw new TreasuryDomainException("error.Customer.fiscal.information.invalid");
         }
 
@@ -267,13 +270,17 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
     @Override
     public boolean isFiscalCodeValid() {
-        return !TreasuryConstants.isDefaultCountry(getAddressCountryCode())
-                || isValidFiscalNumber(getAddressCountryCode(), getFiscalNumber());
+        return !TreasuryConstants.isDefaultCountry(getAddressCountryCode()) || isValidFiscalNumber(getAddressCountryCode(),
+                getFiscalNumber());
     }
 
     @Override
     public boolean isFiscalValidated() {
-        return TreasuryConstants.isDefaultCountry(getAddressCountryCode());
+        return isFiscalCodeValidatedForCountryInAdhocCustomer(getAddressCountryCode());
+    }
+
+    private static boolean isFiscalCodeValidatedForCountryInAdhocCustomer(String countryCode) {
+        return TreasuryConstants.isDefaultCountry(countryCode);
     }
 
     @Override
@@ -325,7 +332,7 @@ public class AdhocCustomer extends AdhocCustomer_Base {
 
     @Override
     public String getBusinessIdentification() {
-        if(StringUtils.isNotEmpty(getIdentificationNumber())) {
+        if (StringUtils.isNotEmpty(getIdentificationNumber())) {
             return getIdentificationNumber();
         }
 

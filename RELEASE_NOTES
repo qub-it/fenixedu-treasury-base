@@ -1,4 +1,5 @@
 - Refactor: Convert SIBS DPG webhook into JAX RS webservice [#qubIT-Fenix-8910]
+- Bug Fix: Only validate fiscal number of default country in AdhocCustomer change fiscal number operation [#qubIT-Fenix-8912]
 
 15.8.8 (22-06-2026)
 - Bug Fix: When creating a credit note for a debit note, skip the debit entries which are totally credited or credited exempted [#UL-FBA-2177]
