@@ -31,7 +31,7 @@ public class SibsPaymentsGatewayWebhookForwardServlet extends HttpServlet {
         Optional<SibsPaymentsGateway> gateway = SibsPaymentsGateway.findAll().filter(g -> g.isActive()).findFirst();
 
         if (gateway.isPresent()) {
-            return gateway.get().getEnviromentMode() == SibsOnlinePaymentsGatewayEnviromentMode.TEST_MODE_INTERNAL;
+            return Boolean.TRUE.equals(gateway.get().getForwardWebhooksToNewController());
         }
 
         return false;

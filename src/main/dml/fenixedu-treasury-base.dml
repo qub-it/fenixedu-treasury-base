@@ -3214,6 +3214,10 @@ class sibspaymentsgateway.integration.SibsPaymentsGateway extends payments.integ
 	SibsOnlinePaymentsGatewayEnviromentMode enviromentMode;
 	int numberOfMonthsToExpirePaymentReferenceCode;
 	boolean sendBillingDataInOnlinePayment;
+
+	// 2026-06-30 (#qubIT-Fenix-8910)
+	// This is a temporary setting
+	Boolean forwardWebhooksToNewController;
 }
 
 class sibsonlinepaymentsgateway.SibsOnlinePaymentsGateway {
