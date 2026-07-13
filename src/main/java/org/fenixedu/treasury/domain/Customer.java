@@ -206,8 +206,7 @@ public abstract class Customer extends Customer_Base {
                     final Set<String> otherCustomers =
                             customers.stream().filter(c -> c != self).map(c -> c.getName()).collect(Collectors.<String> toSet());
 
-                    throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists",
-                            Joiner.on(", ").join(otherCustomers));
+                    throw new TreasuryDomainException("error.Customer.customer.with.fiscal.information.exists");
                 }
             }
         }

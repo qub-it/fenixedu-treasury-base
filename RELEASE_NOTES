@@ -1,3 +1,7 @@
+- Bug Fix: Set read timeout in invocation of SIBS SPG API [#qubIT-Fenix-8984]
+- Bug Fix: Improve error message of existing customer with the same fiscal number [#qubIT-Fenix-8990]
+- Bug Fix: Translate missing resource bundle messages in english [#UL-ISEG-9902]
+
 15.10.0 (06-07-2026)
 - Refactor: Servlet to forward requests of old webhook Spring controller to new JAX RS controller [#qubIT-Fenix-8910]
 

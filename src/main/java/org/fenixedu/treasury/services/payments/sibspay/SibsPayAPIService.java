@@ -3,6 +3,7 @@ package org.fenixedu.treasury.services.payments.sibspay;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
@@ -90,9 +91,10 @@ public class SibsPayAPIService {
         this.terminalId = terminalId;
         this.sibsEntityCode = sibsEntityCode;
 
-        this.client = ClientBuilder.newClient()
+        // 2026-07-09 (#qubIT-Fenix-8984) - Set timeout
+        this.client = ClientBuilder.newBuilder().readTimeout(30, TimeUnit.SECONDS)
                 .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
-                .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, "FINEST");
+                .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, "FINEST").build();
 
         this.client.register(LoggingFeature.class);
 
