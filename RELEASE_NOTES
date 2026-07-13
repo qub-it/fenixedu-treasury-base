@@ -1,3 +1,4 @@
+15.10.1 (13-07-2026)
 - Bug Fix: Set read timeout in invocation of SIBS SPG API [#qubIT-Fenix-8984]
 - Bug Fix: Improve error message of existing customer with the same fiscal number [#qubIT-Fenix-8990]
 - Bug Fix: Translate missing resource bundle messages in english [#UL-ISEG-9902]
