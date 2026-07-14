@@ -55,6 +55,7 @@ package org.fenixedu.treasury.services.payments.meowallet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.ws.rs.WebApplicationException;
@@ -107,7 +108,10 @@ public class MeoWalletService {
     public MeoWalletService(String endpointUrl, String token) {
         this.feature = new LoggingFeature(java.util.logging.Logger.getLogger(SIBSOnlinePaymentsGatewayService.class.getName()),
                 Level.FINEST, (Verbosity) null, (Integer) null);
-        this.client = ClientBuilder.newBuilder().register(this.feature).build();
+
+        // 2026-07-14 (#qubIT-Fenix-8984)
+        // Apply read timeout
+        this.client = ClientBuilder.newBuilder().readTimeout(30, TimeUnit.SECONDS).register(this.feature).build();
         if (endpointUrl != null) {
             this.webTargetBase = this.client.target(endpointUrl);
         }
@@ -320,7 +324,10 @@ public class MeoWalletService {
          * To workaround, pass the suppressHttpComplianceValidation property
          */
 
+        // 2026-07-14 (#qubIT-Fenix-8984)
+        // Apply read timeout
         Client client = ClientBuilder.newBuilder() //
+                .readTimeout(30, TimeUnit.SECONDS)
                 .property("jersey.config.client.suppressHttpComplianceValidation", true) //
                 .register(this.feature).build();
 

@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
@@ -55,7 +56,10 @@ public class SIBSOnlinePaymentsGatewayService {
     private static Logger logger = LoggerFactory.getLogger(SIBSOnlinePaymentsGatewayService.class);
     private Feature feature = new LoggingFeature(
             java.util.logging.Logger.getLogger(SIBSOnlinePaymentsGatewayService.class.getName()), Level.FINEST, null, null);
-    private Client client = ClientBuilder.newBuilder().register(feature).build();
+
+    // 2026-07-14 (#qubIT-Fenix-8984)
+    // Apply read timeout
+    private Client client = ClientBuilder.newBuilder().readTimeout(30, TimeUnit.SECONDS).register(feature).build();
     private WebTarget webTargetBase;
     private SIBSInitializeServiceBean initializeServiceBean;
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ssZ");

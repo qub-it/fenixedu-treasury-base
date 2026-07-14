@@ -1,3 +1,5 @@
+- Refactor: Apply read timeout in SIBS DPG 1 and MeoWallet communications [#qubIT-Fenix-8984]
+
 15.10.1 (13-07-2026)
 - Bug Fix: Set read timeout in invocation of SIBS SPG API [#qubIT-Fenix-8984]
 - Bug Fix: Improve error message of existing customer with the same fiscal number [#qubIT-Fenix-8990]
