@@ -1,3 +1,4 @@
+- New feature: Add merge method to SibsPaymentCodePool for fusing two pools [#qubIT-Fenix-9116]
 - Refactor: Apply read timeout in SIBS DPG 1 and MeoWallet communications [#qubIT-Fenix-8984]
 
 15.10.1 (13-07-2026)
