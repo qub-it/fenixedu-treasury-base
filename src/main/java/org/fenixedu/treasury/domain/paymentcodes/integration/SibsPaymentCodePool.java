@@ -205,6 +205,70 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         checkRules();
     }
 
+    public void merge(SibsPaymentCodePool targetPool) {
+        if (targetPool == null) {
+            throw new TreasuryDomainException("error.SibsPaymentCodePool.merge.targetPool.required");
+        }
+
+        if (targetPool == this) {
+            throw new TreasuryDomainException("error.SibsPaymentCodePool.merge.cannot.merge.with.self");
+        }
+
+        if (!this.getEntityReferenceCode().equals(targetPool.getEntityReferenceCode())) {
+            throw new TreasuryDomainException("error.SibsPaymentCodePool.merge.entityReferenceCode.mismatch");
+        }
+
+        if (this.isUseCheckDigit() != targetPool.isUseCheckDigit()) {
+            throw new TreasuryDomainException("error.SibsPaymentCodePool.merge.useCheckDigit.mismatch");
+        }
+
+        // Transfer all SibsReferenceCode from this pool to target pool
+        while (!getSibsReferenceCodesSet().isEmpty()) {
+            SibsReferenceCode ref = getSibsReferenceCodesSet().iterator().next();
+            ref.setDigitalPaymentPlatform(targetPool);
+            ref.checkRules();
+        }
+
+        // Transfer all SibsPaymentRequest from this pool to target pool
+        while (!getAssociatedPaymentRequestsSet().isEmpty()) {
+            SibsPaymentRequest req =
+                    (SibsPaymentRequest) getAssociatedPaymentRequestsSet().iterator().next();
+            req.setDigitalPaymentPlatform(targetPool);
+            req.checkRules();
+        }
+
+        // Adjust target pool properties to encompass both pools
+        targetPool.setMinReferenceCode(
+                Math.min(this.getMinReferenceCode(), targetPool.getMinReferenceCode()));
+        targetPool.setMaxReferenceCode(
+                Math.max(this.getMaxReferenceCode(), targetPool.getMaxReferenceCode()));
+
+        targetPool.setMinAmount(
+                this.getMinAmount().compareTo(targetPool.getMinAmount()) < 0
+                        ? this.getMinAmount() : targetPool.getMinAmount());
+        targetPool.setMaxAmount(
+                this.getMaxAmount().compareTo(targetPool.getMaxAmount()) > 0
+                        ? this.getMaxAmount() : targetPool.getMaxAmount());
+
+        targetPool.setValidFrom(
+                this.getValidFrom().isBefore(targetPool.getValidFrom())
+                        ? this.getValidFrom() : targetPool.getValidFrom());
+        targetPool.setValidTo(
+                this.getValidTo().isAfter(targetPool.getValidTo())
+                        ? this.getValidTo() : targetPool.getValidTo());
+
+        // Update nextReferenceCode on target if needed
+        if (targetPool.getNextReferenceCode() > targetPool.getMaxReferenceCode()) {
+            targetPool.setNextReferenceCode(targetPool.getMinReferenceCode());
+        }
+
+        targetPool.checkRules();
+
+        // Mark this (source) pool for deletion
+        setName(getName() + " - PARA APAGAR");
+        setActive(false);
+    }
+
     @Override
     public SibsPaymentRequest createSibsPaymentRequest(DebtAccount debtAccount, Set<DebitEntry> debitEntries,
             Set<Installment> installments) {
