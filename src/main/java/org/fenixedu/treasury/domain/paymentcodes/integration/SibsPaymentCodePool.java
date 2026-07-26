@@ -130,7 +130,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         super.checkRules();
 
         if (StringUtils.isEmpty(getName())) {
@@ -294,8 +294,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
             validTo = now;
         }
 
-        BigDecimal payableAmountDebitEntries = debitEntries.stream()
-                .map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate)).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal payableAmountDebitEntries =
+                debitEntries.stream().map(d -> d.getOpenAmountWithInterestsAtDate(interestsCalculationDate))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmountInstallments =
                 installments.stream().map(Installment::getOpenAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal payableAmount = payableAmountDebitEntries.add(payableAmountInstallments);
@@ -363,8 +364,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
             throw new RuntimeException("payment code pool not active");
         }
 
-        if (SibsPaymentRequest.findRequestedByDebitEntriesSet(debitEntries).count() > 0
-                || SibsPaymentRequest.findCreatedByDebitEntriesSet(debitEntries).count() > 0) {
+        if (SibsPaymentRequest.findRequestedByDebitEntriesSet(debitEntries)
+                .count() > 0 || SibsPaymentRequest.findCreatedByDebitEntriesSet(debitEntries).count() > 0) {
             throw new TreasuryDomainException("error.SibsPaymentCodePool.paymentCode.already.exists.for.selected.debit.entries");
         }
 
@@ -383,8 +384,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         for (DebitEntry debitEntry : debitEntries) {
             long numActiveSibsPaymentRequests =
                     debitEntry.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
-                                    || r.getState() == PaymentReferenceCodeStateType.USED)
+                            .map(SibsPaymentRequest.class::cast)
+                            .filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED || r.getState() == PaymentReferenceCodeStateType.USED)
                             .count();
 
             if (numActiveSibsPaymentRequests >= 2) {
@@ -395,8 +396,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         for (Installment installment : installments) {
             long numActiveSibsPaymentRequests =
                     installment.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
-                                    || r.getState() == PaymentReferenceCodeStateType.USED)
+                            .map(SibsPaymentRequest.class::cast)
+                            .filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED || r.getState() == PaymentReferenceCodeStateType.USED)
                             .count();
 
             if (numActiveSibsPaymentRequests >= 2) {
@@ -440,8 +441,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
                         .filter(p -> !TreasuryConstants.isLessThan(payableAmount, p.getMinAmount())) //
                         .filter(p -> p.getSibsPaymentRequest() == null) //
                         .filter(p -> p.getPregeneratedReferenceDebtAccount() == null) //
-                        .filter(p -> p.getValidInterval()
-                                .contains(validTo.isAfter(now) ? validTo.toDateTimeAtStartOfDay() : now.toDateTimeAtStartOfDay())) //
+                        .filter(p -> p.getValidInterval().contains(
+                                validTo.isAfter(now) ? validTo.toDateTimeAtStartOfDay() : now.toDateTimeAtStartOfDay())) //
                         .findAny();
 
         if (possiblePaymentCode.isPresent()) {
@@ -497,10 +498,12 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
             }
 
             // Check that the check digit is the same
-            String sequentialNumberPadded = StringUtils.leftPad(pregeneratedReference.getReferenceCode().substring(0, 7),
-                    NUM_SEQUENTIAL_NUMBERS, CODE_FILLER);
-            final String referenceCodeString = CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(),
-                    sequentialNumberPadded, payableAmount);
+            String sequentialNumberPadded =
+                    StringUtils.leftPad(pregeneratedReference.getReferenceCode().substring(0, 7), NUM_SEQUENTIAL_NUMBERS,
+                            CODE_FILLER);
+            final String referenceCodeString =
+                    CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(), sequentialNumberPadded,
+                            payableAmount);
 
             if (!pregeneratedReference.getReferenceCode().equals(referenceCodeString)) {
                 throw new RuntimeException("pregenerated reference check digit mismatch");
@@ -520,8 +523,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
         String sequentialNumberPadded =
                 StringUtils.leftPad(String.valueOf("" + nextReferenceCode), NUM_SEQUENTIAL_NUMBERS, CODE_FILLER);
-        final String referenceCodeString = CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(),
-                sequentialNumberPadded, payableAmount);
+        final String referenceCodeString =
+                CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(), sequentialNumberPadded,
+                        payableAmount);
 
         if (getValidTo().isBefore(validTo)) {
             throw new TreasuryDomainException("error.SequentialPaymentCodeGenerator.generateNewCodeFor.cannot.generate.new.code");
@@ -552,8 +556,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
             String sequentialNumberPadded =
                     StringUtils.leftPad(String.valueOf("" + nextReferenceCode), NUM_SEQUENTIAL_NUMBERS, CODE_FILLER);
-            final String referenceCodeString = CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(),
-                    sequentialNumberPadded, payableAmount);
+            final String referenceCodeString =
+                    CheckDigitGenerator.generateReferenceCodeWithCheckDigit(getEntityReferenceCode(), sequentialNumberPadded,
+                            payableAmount);
 
             return SibsReferenceCode.createPregeneratedReference(this, debtAccount, referenceCodeString, payableAmount);
         } else {
@@ -631,8 +636,9 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         // c) the pregenerated ref mb must not have a payment request associated
         // d) if the pregenerated ref is found, then dissociate from the customer
 
-        SibsReferenceCode pregeneratedReferenceCode = getStreamForFindPregeneratedReference(debtAccount, payableAmount, validTo) //
-                .findFirst().orElse(null);
+        SibsReferenceCode pregeneratedReferenceCode =
+                getStreamForFindPregeneratedReference(debtAccount, payableAmount, validTo) //
+                        .findFirst().orElse(null);
 
         return pregeneratedReferenceCode;
     }
@@ -645,8 +651,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
     }
 
     private Stream<SibsReferenceCode> getStreamForFindPregeneratedReference(DebtAccount debtAccount) {
-        return debtAccount.getCustomer().getAllCustomers().stream()
-                .flatMap(c -> c.getDebtAccountsSet().stream()
+        return debtAccount.getCustomer().getAllCustomers().stream().flatMap(c -> c.getDebtAccountsSet().stream()
                         .filter(d -> d.getFinantialInstitution() == debtAccount.getFinantialInstitution())) //
                 .flatMap(d -> d.getPregeneratedSibsReferenceCodesSet().stream()) //
                 .filter(p -> p.getDigitalPaymentPlatform() == this);
