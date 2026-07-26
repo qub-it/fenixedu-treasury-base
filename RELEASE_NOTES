@@ -1,5 +1,6 @@
 - Refactor: Declare SibsPaymentCodePool#checkRules as public [#qubIT-Fenix-9116]
 - Refactor: Apply read timeout in SIBS DPG 1 and MeoWallet communications [#qubIT-Fenix-8984]
+- Bug Fix: Try to settle the credit notes from the interest debit entries when debit note is annuled [#UL-IE-1958]
 
 15.10.1 (13-07-2026)
 - Bug Fix: Set read timeout in invocation of SIBS SPG API [#qubIT-Fenix-8984]

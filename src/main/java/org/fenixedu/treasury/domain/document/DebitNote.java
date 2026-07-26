@@ -171,8 +171,7 @@ public class DebitNote extends DebitNote_Base {
             setDocumentDate(documentDate.toDateTimeAtStartOfDay());
             setDocumentDueDate(documentDueDate);
 
-            setFiscalMonth(
-                FiscalMonth.getOrCreateFiscalMonth(getDebtAccount().getFinantialInstitution(), documentDate));
+            setFiscalMonth(FiscalMonth.getOrCreateFiscalMonth(getDebtAccount().getFinantialInstitution(), documentDate));
         }
 
         setOriginDocumentNumber(originDocumentNumber);
@@ -422,6 +421,11 @@ public class DebitNote extends DebitNote_Base {
 
             if (anullGeneratedInterests) {
                 //Annul open interest debit entry
+
+                // 2026-07-27 (#UL-IE-1958)
+                //
+                // Here only the preparing interest debit entries are annuled
+                // In the call of #createEquivalentCreditNote, the closed interest debit entries are credited
                 getDebitEntries().flatMap(entry -> entry.getInterestDebitEntriesSet().stream())
                         .filter(interest -> interest.getFinantialDocument() == null || interest.getFinantialDocument()
                                 .isPreparing()).forEach(interest -> {
@@ -462,6 +466,14 @@ public class DebitNote extends DebitNote_Base {
                 // Also remove from treasury event
                 if (debitEntry.getTreasuryEvent() != null) {
                     debitEntry.annulOnEvent();
+                }
+
+                if (anullGeneratedInterests) {
+                    // 2026-07-27 (#UL-IE-1958)
+                    //
+                    // Annul on event, the interest debit entries
+                    debitEntry.getInterestDebitEntriesSet().stream().filter(ide -> ide.getTreasuryEvent() != null)
+                            .forEach(ide -> ide.annulOnEvent());
                 }
 
                 debitEntry.getCreditEntriesSet().stream().filter(e -> !e.isAnnulled()).forEach(c -> {
@@ -546,13 +558,14 @@ public class DebitNote extends DebitNote_Base {
             //
             // if the netAmountForCredit (and the sum of creditExemptionsMap is zero), there's nothing to credit for
             // Just skip
-            if(isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(entry, netAmountForCredit, creditExemptionsMap)) {
+            if (isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(entry, netAmountForCredit,
+                    creditExemptionsMap)) {
                 continue;
             }
 
             final CreditEntry creditEntry = entry.createCreditEntry(documentDate, entry.getDescription(),
-                    finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null,
-                    netAmountForCredit, null, creditNote, creditExemptionsMap);
+                    finantialInstitution.isInvoiceRegistrationByTreasuryCertification() ? null : reason, null, netAmountForCredit,
+                    null, creditNote, creditExemptionsMap);
 
             creditEntry.setInternalComments(reason);
 
@@ -585,7 +598,8 @@ public class DebitNote extends DebitNote_Base {
                 //
                 // if the netAmountForCredit or the sum of creditExemptionsMap is zero, there's nothing to credit for
                 // Just skip
-                if(isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(interestEntry, netAmountForCredit, creditExemptionsMap)) {
+                if (isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(interestEntry, netAmountForCredit,
+                        creditExemptionsMap)) {
                     continue;
                 }
 
@@ -602,12 +616,18 @@ public class DebitNote extends DebitNote_Base {
                     interestsCreditEntry.getFinantialDocument()
                             .setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
                 }
+
+                // 2026-07-27 (#UL-IE-1958)
+                //
+                // Try to close the credit with the interest debit entry, which might have
+                // some open amount to settle
+                interestEntry.closeCreditEntryIfPossible(reason, DateTime.now(), interestsCreditEntry);
             }
         }
     }
 
-    private boolean isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(DebitEntry entry, BigDecimal netAmountForCredit,
-            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
+    private boolean isCreationOfCreditEntryForDebitShouldBeSkippedDueToNoAmountsToCredit(DebitEntry entry,
+            BigDecimal netAmountForCredit, Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         FinantialInstitution finantialInstitution = entry.getDebtAccount().getFinantialInstitution();
 
         if (finantialInstitution.isSupportForCreditExemptionsActive()) {
