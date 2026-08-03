@@ -62,6 +62,7 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.debt.balancetransfer.BalanceTransferService;
@@ -72,7 +73,10 @@ import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentPlan.PaymentPlan;
 import org.fenixedu.treasury.domain.paymentcodes.PaymentCodeTarget;
 import org.fenixedu.treasury.domain.paymentcodes.SibsPaymentRequest;
+import org.fenixedu.treasury.dto.ISettlementInvoiceEntryBean;
 import org.fenixedu.treasury.dto.InterestRateBean;
+import org.fenixedu.treasury.dto.SettlementNoteBean;
+import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -118,6 +122,7 @@ public class DebtAccount extends DebtAccount_Base {
         }
     }
 
+    // total but without interests
     public BigDecimal getTotalInDebt() {
         BigDecimal amount = BigDecimal.ZERO;
         for (InvoiceEntry entry : this.getPendingInvoiceEntriesSet()) {
@@ -128,9 +133,10 @@ public class DebtAccount extends DebtAccount_Base {
             }
         }
 
-        return getFinantialInstitution().getCurrency().getValueWithScale(amount);
+        return Currency.getValueWithScale(amount);
     }
 
+    // total with interests
     public BigDecimal getTotalInDebtWithInterests() {
         BigDecimal amount = BigDecimal.ZERO;
         for (InvoiceEntry entry : this.getPendingInvoiceEntriesSet()) {
@@ -141,7 +147,28 @@ public class DebtAccount extends DebtAccount_Base {
             }
         }
 
-        return getFinantialInstitution().getCurrency().getValueWithScale(amount);
+        return Currency.getValueWithScale(amount);
+    }
+
+    // 2026-07-31 (#qubIT-Fenix-9182)
+    //
+    // Like #getTotalInDebtWithInterests() but use calculated virtualDebitEntries to including interests and penalty tax (or other)
+    public BigDecimal getTotalInDebtIncludingVirtualDebitEntries() {
+        SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this, false, false);
+        settlementNoteBean.setDate(DateTime.now());
+
+        settlementNoteBean.getDebitEntries().stream().filter(ISettlementInvoiceEntryBean::isForDebitEntry)
+                .forEach(de -> de.setIncluded(true));
+
+        settlementNoteBean.getCreditEntries().forEach(ce -> ce.setIncluded(true));
+
+        settlementNoteBean.calculateVirtualDebitEntries();
+
+        // Exclude the virtual debit entries that are negative (ex. discounts)
+        settlementNoteBean.getVirtualDebitEntries().stream().filter(de -> TreasuryConstants.isNegative(de.getSettledAmount()))
+                .forEach(de -> de.setIncluded(false));
+
+        return settlementNoteBean.getDebtAmountWithVat();
     }
 
     public BigDecimal getDueInDebt() {
@@ -168,6 +195,30 @@ public class DebtAccount extends DebtAccount_Base {
                 .filter(de -> de.isDueDateExpired(when)) //
                 .map(de -> de.getOpenAmountWithInterestsAtDate(when)) //
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // 2026-07-31 (#qubIT-Fenix-9182)
+    //
+    // Like #getDueInDebtWithInterests() but use calculated virtualDebitEntries to including interests and penalty tax (or other)
+    public BigDecimal getDueInDebtIncludingVirtualDebitEntries() {
+        SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this, false, false);
+        settlementNoteBean.setDate(DateTime.now());
+
+        LocalDate now = new LocalDate();
+        settlementNoteBean.getDebitEntries().stream().filter(ISettlementInvoiceEntryBean::isForDebitEntry)
+                .filter(de -> ((DebitEntry) de.getInvoiceEntry()).isDueDateExpired(now))
+                .forEach(de -> de.setIncluded(true));
+
+        // this is very important, we don't want to include credits
+        settlementNoteBean.getCreditEntries().forEach(ce -> ce.setIncluded(false));
+
+        settlementNoteBean.calculateVirtualDebitEntries();
+
+        // Exclude the virtual debit entries that are negative (ex. discounts)
+        settlementNoteBean.getVirtualDebitEntries().stream().filter(de -> TreasuryConstants.isNegative(de.getSettledAmount()))
+                .forEach(de -> de.setIncluded(false));
+
+        return settlementNoteBean.getDebtAmountWithVat();
     }
 
     public BigDecimal getTotalInDebtForAllDebtAccountsOfSameFinantialInstitution() {
@@ -320,6 +371,26 @@ public class DebtAccount extends DebtAccount_Base {
             }
         }
         return interestAmount;
+    }
+
+    // 2026-07-31 (#qubIT-Fenix-9182)
+    //
+    // Like #getPendingInterestAmount but use calculated virtualDebitEntries to including interests and penalty tax (or other)
+    public BigDecimal getPendingVirtualDebitEntriesAmount() {
+        SettlementNoteBean settlementNoteBean = new SettlementNoteBean(this, false, false);
+        settlementNoteBean.setDate(DateTime.now());
+
+        settlementNoteBean.getDebitEntries().stream().filter(ISettlementInvoiceEntryBean::isForDebitEntry)
+                .forEach(de -> de.setIncluded(true));
+
+        // this is very important, we don't want to include credits
+        settlementNoteBean.getCreditEntries().forEach(ce -> ce.setIncluded(false));
+
+        settlementNoteBean.calculateVirtualDebitEntries();
+        return settlementNoteBean.getVirtualDebitEntries().stream()
+                .filter(de -> TreasuryConstants.isPositive(de.getSettledAmount()))
+                .map(ISettlementInvoiceEntryBean::getSettledAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public Stream<InvoiceEntry> getActiveInvoiceEntries() {

@@ -1,3 +1,5 @@
+- Improvement: Methods to calculate total amount to pay with interests and other penalties [#UL-ISEG-7511]
+
 15.10.2 (27-07-2026)
 - Refactor: Declare SibsPaymentCodePool#checkRules as public [#qubIT-Fenix-9116]
 - Refactor: Apply read timeout in SIBS DPG 1 and MeoWallet communications [#qubIT-Fenix-8984]

@@ -721,6 +721,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         return lowerDate;
     }
 
+    // TODO 2026-07-31 (#qubIT-Fenix-9179)
+    // Should be replaced with getDebtAmountWithVat
+    @Deprecated
     public BigDecimal getDebtAmount() {
         BigDecimal sum = BigDecimal.ZERO;
         for (ISettlementInvoiceEntryBean debitEntryBean : getDebitEntries()) {
@@ -735,6 +738,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
         for (SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
+
+                // TODO 2026-07-31 (#qubIT-Fenix-9179)
+                // Should change to creditEntryBean.getSettledAmount()
                 sum = sum.subtract(creditEntryBean.getCreditAmount());
             }
         }
@@ -756,6 +762,8 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
         }
         for (SettlementCreditEntryBean creditEntryBean : getCreditEntries()) {
             if (creditEntryBean.isIncluded()) {
+                // TODO 2026-07-31 (#qubIT-Fenix-9179)
+                // Should change to creditEntryBean.getSettledAmount()
                 sum = sum.subtract(creditEntryBean.getCreditAmountWithVat());
             }
         }
@@ -763,6 +771,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
     }
 
     public BigDecimal getVatAmount() {
+        // TODO 2026-07-31 (#qubIT-Fenix-9179)
+        // This is odd... #getDebtAmountWithVat and #getDebtAmount are almost identical
+        // except for the creditEntryBean.getCreditAmount() and creditEntryBean.getCreditAmountWithVat()
         return getDebtAmountWithVat().subtract(getDebtAmount());
     }
 
