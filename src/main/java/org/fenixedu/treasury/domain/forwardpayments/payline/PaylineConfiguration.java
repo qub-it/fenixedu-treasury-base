@@ -98,6 +98,7 @@ import org.joda.time.DateTime;
 
 import com.google.common.collect.Lists;
 
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import pt.ist.fenixWebFramework.servlets.filters.contentRewrite.GenericChecksumRewriter;
@@ -490,7 +491,15 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         }
 
         if (response.getAuthorization() != null && !Strings.isNullOrEmpty(response.getAuthorization().getDate())) {
-            result.setAuthorizationDate(DATE_TIME_PATTERN.parseDateTime(response.getAuthorization().getDate()));
+
+            // 2026-08-06 (#qubIT-Fenix-9165)
+            //
+            // the parsed date does not have timezone information, but the parsed time must be in the
+            // UTC timezone, because the original date in text is in UTC, make the result of parseDateTime as UTC,
+            // but without changing the time
+            DateTime authorizationDate = DATE_TIME_PATTERN.parseDateTime(response.getAuthorization().getDate())
+                    .withZoneRetainFields(DateTimeZone.UTC);
+            result.setAuthorizationDate(authorizationDate);
         }
 
         if (response.getPayment() != null && !Strings.isNullOrEmpty(response.getPayment().getAmount())) {
@@ -502,7 +511,14 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
         }
 
         if (response.getTransaction() != null && !Strings.isNullOrEmpty(response.getTransaction().getDate())) {
-            result.setTransactionDate(DATE_TIME_PATTERN.parseDateTime(response.getTransaction().getDate()));
+            // 2026-08-06 (#qubIT-Fenix-9165)
+            //
+            // the parsed date does not have timezone information, but the parsed time must be in the
+            // UTC timezone, because the original date in text is in UTC, make the result of parseDateTime as UTC,
+            // but without changing the time
+            DateTime transactionDate = DATE_TIME_PATTERN.parseDateTime(response.getTransaction().getDate())
+                    .withZoneRetainFields(DateTimeZone.UTC);
+            result.setTransactionDate(transactionDate);
         }
 
         // 2024-09-19 (#qubIT-Fenix-5824)

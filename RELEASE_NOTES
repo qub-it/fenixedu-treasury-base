@@ -1,4 +1,5 @@
 - Refactor: Allow zero default percentage in Treasury Exemption Type [#qubIT-Fenix-9141]
+- Bug Fix: Read Payline payment authorization date and transaction date as UTC timezone [#qubIT-Fenix-9165]
 
 15.11.0 (03-08-2026)
 - Improvement: Methods to calculate total amount to pay with interests and other penalties [#UL-ISEG-7511]
