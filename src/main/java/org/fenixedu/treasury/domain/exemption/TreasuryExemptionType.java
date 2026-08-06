@@ -109,7 +109,7 @@ public class TreasuryExemptionType extends TreasuryExemptionType_Base {
             throw new TreasuryDomainException("error.TreasuryExemptionType.code.duplicated");
         }
 
-        if (!TreasuryConstants.isPositive(getDefaultExemptionPercentage())
+        if (TreasuryConstants.isNegative(getDefaultExemptionPercentage())
                 || TreasuryConstants.isGreaterThan(getDefaultExemptionPercentage(), TreasuryConstants.HUNDRED_PERCENT)) {
             throw new TreasuryDomainException("error.TreasuryExemptionType.defaultExemptionPercentage.invalid");
         }
