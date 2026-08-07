@@ -57,6 +57,9 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
@@ -216,17 +219,17 @@ public class PaymentRequestLog extends PaymentRequestLog_Base {
 
     public void saveWebhookNotificationData(String notificationInitializationVector, String notificationAuthenticationTag,
             String notificationEncryptedPayload) {
-        final ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
-
         setNotificationInitializationVector(notificationInitializationVector);
         setNotificationAuthTag(notificationAuthenticationTag);
 
         if (notificationEncryptedPayload != null) {
-            final String notificationEncryptedPayloadFileId = implementation.createFile(
-                    String.format("sibsOnlinePaymentsGatewayLog-notificationEncryptedPayload-%s.txt", getExternalId()),
-                    OCTECT_STREAM_CONTENT_TYPE, notificationEncryptedPayload.getBytes());
+            FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
-            setNotificationEncryptedPayloadFileId(notificationEncryptedPayloadFileId);
+            byte[] bytes = notificationEncryptedPayload.getBytes();
+            String fileName = String.format("sibsOnlinePaymentsGatewayLog-notificationEncryptedPayload-%s.txt", getExternalId());
+            FileDescriptor fileDescriptor = fileManager.createFile(fileName, bytes.length, OCTECT_STREAM_CONTENT_TYPE, bytes);
+
+            setNotificationEncryptedPayloadFileId(fileDescriptor.getId());
         }
     }
 
