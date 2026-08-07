@@ -57,6 +57,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.SettlementNote;
@@ -150,37 +153,39 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
     }
 
     public void saveRequestAndResponsePayload(final String requestPayload, final String responsePayload) {
-        final ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         if (requestPayload != null) {
-            final String requestPayloadFileId = implementation.createFile(
-                    String.format("sibsOnlinePaymentsGatewayLog-requestPayload-%s.txt", getExternalId()),
-                    PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, requestPayload.getBytes());
+            String fileName = String.format("sibsOnlinePaymentsGatewayLog-requestPayload-%s.txt", getExternalId());
+            byte[] content = requestPayload.getBytes();
+            FileDescriptor fileDescriptor = fileManager.createFile(fileName, content.length, PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, content);
 
-            setRequestPayloadFileId(requestPayloadFileId);
+            setRequestPayloadFileId(fileDescriptor.getId());
         }
 
         if (responsePayload != null) {
-            final String responsePayloadFileId = implementation.createFile(
-                    String.format("sibsOnlinePaymentsGatewayLog-responsePayload-%s.txt", getExternalId()),
-                    PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, responsePayload.getBytes());
+            String fileName = String.format("sibsOnlinePaymentsGatewayLog-responsePayload-%s.txt", getExternalId());
+            byte[] content = responsePayload.getBytes();
+            FileDescriptor fileDescriptor =
+                    fileManager.createFile(fileName, content.length, PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, content);
 
-            setResponsePayloadFileId(responsePayloadFileId);
+            setResponsePayloadFileId(fileDescriptor.getId());
         }
     }
 
     public void markExceptionOccuredAndSaveLog(final Exception e) {
-        final ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         final String exceptionLog = String.format("%s\n%s", e.getLocalizedMessage(), ExceptionUtils.getFullStackTrace(e));
 
         setExceptionOccured(true);
 
-        final String exceptionLogFileId =
-                implementation.createFile(String.format("sibsOnlinePaymentsGatewayLog-exception-%s.txt", getExternalId()),
-                        PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, exceptionLog.getBytes());
+        String fileName = String.format("sibsOnlinePaymentsGatewayLog-exception-%s.txt", getExternalId());
+        byte[] content = exceptionLog.getBytes();
+        FileDescriptor fileDescriptor =
+                fileManager.createFile(fileName, content.length, PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, content);
 
-        setExceptionLogFileId(exceptionLogFileId);
+        setExceptionLogFileId(fileDescriptor.getId());
     }
 
     public void savePaymentCode(final String paymentCode) {
@@ -197,17 +202,18 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
 
     public void saveWebhookNotificationData(final String notificationInitializationVector,
             final String notificationAuthenticationTag, final String notificationEncryptedPayload) {
-        final ITreasuryPlatformDependentServices implementation = TreasuryPlataformDependentServicesFactory.implementation();
+        FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         setNotificationInitializationVector(notificationInitializationVector);
         setNotificationAuthTag(notificationAuthenticationTag);
 
         if (notificationEncryptedPayload != null) {
-            final String notificationEncryptedPayloadFileId = implementation.createFile(
-                    String.format("sibsOnlinePaymentsGatewayLog-notificationEncryptedPayload-%s.txt", getExternalId()),
-                    PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, notificationEncryptedPayload.getBytes());
+            String fileName = String.format("sibsOnlinePaymentsGatewayLog-notificationEncryptedPayload-%s.txt", getExternalId());
+            byte[] content = notificationEncryptedPayload.getBytes();
+            FileDescriptor fileDescriptor =
+                    fileManager.createFile(fileName, content.length, PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, content);
 
-            setNotificationEncryptedPayloadFileId(notificationEncryptedPayloadFileId);
+            setNotificationEncryptedPayloadFileId(fileDescriptor.getId());
         }
 
     }
