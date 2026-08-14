@@ -1,4 +1,5 @@
 - Refactor: Replace ITreasuryPlatformDependentServices#createFile invocation by FileManager [#qubIT-Fenix-8024]
+- Refactor: Simplify reading the file in PaymentRequestLogFile [#qubIT-Fenix-8024]
 
 15.11.1 (06-08-2026)
 - Refactor: Allow zero default percentage in Treasury Exemption Type [#qubIT-Fenix-9141]

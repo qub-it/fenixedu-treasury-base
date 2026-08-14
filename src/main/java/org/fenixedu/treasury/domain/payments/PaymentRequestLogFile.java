@@ -60,6 +60,7 @@ import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
+import org.fenixedu.treasury.domain.TreasuryFile;
 import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
@@ -119,120 +120,70 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
         super.deleteDomainObject();
     }
 
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public String getFileId() {
+        return super.getFileId();
+    }
+
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public void setFileId(String fileId) {
+        super.setFileId(fileId);
+    }
+
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public TreasuryFile getTreasuryFile() {
+        return super.getTreasuryFile();
+    }
+
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public void setTreasuryFile(TreasuryFile treasuryFile) {
+        super.setTreasuryFile(treasuryFile);
+    }
+
     @Override
     public byte[] getContent() {
-        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getContent();
-        }
-
-        try {
-            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                Object file = PropertyUtils.getProperty(this, "treasuryFile");
-
-                if (file != null) {
-                    return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
-                }
-            }
-            
-            return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(getFileId());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getFileDescriptor().getContent();
     }
 
     @Override
     public long getSize() {
-        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getSize();
-        }
-
-        try {
-            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                Object file = PropertyUtils.getProperty(this, "treasuryFile");
-
-                if (file != null) {
-                    return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
-                }
-            }
-            
-            return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(getFileId());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getFileDescriptor().getSize();
     }
 
     @Override
     public String getFilename() {
-        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getName();
-        }
-
-        try {
-            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                Object file = PropertyUtils.getProperty(this, "treasuryFile");
-
-                if (file != null) {
-                    return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
-                }
-            }
-            
-            return TreasuryPlataformDependentServicesFactory.implementation().getFilename(getFileId());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getFileDescriptor().getName();
     }
 
     @Override
     public InputStream getStream() {
-        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
-
-        if (fd != null) {
-            return fd.getReadStream();
-        }
-
-        try {
-            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                Object file = PropertyUtils.getProperty(this, "treasuryFile");
-
-                if (file != null) {
-                    return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
-                }
-            }
-            
-            return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(getFileId());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getFileDescriptor().getReadStream();
     }
 
     @Override
     public String getContentType() {
-        com.qubit.terra.framework.services.fileSupport.FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getContentType();
-        }
-
-        try {
-            if (PropertyUtils.getPropertyDescriptor(this, "treasuryFile") != null) {
-                Object file = PropertyUtils.getProperty(this, "treasuryFile");
-
-                if (file != null) {
-                    return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
-                }
-            }
-            
-            return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(getFileId());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getFileDescriptor().getContentType();
     }
 
     // @formatter:off
     /*
-     * 
+     *
      * ********
      * SERVICES
      * ********
@@ -244,10 +195,6 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
     }
 
     private com.qubit.terra.framework.services.fileSupport.FileDescriptor getFileDescriptor() {
-        if (StringUtils.isNotBlank(getFileDescriptorId())) {
-            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
-        }
-
-        return null;
+        return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
     }
 }
