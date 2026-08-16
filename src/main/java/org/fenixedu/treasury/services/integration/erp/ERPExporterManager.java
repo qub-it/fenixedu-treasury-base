@@ -324,46 +324,6 @@ public class ERPExporterManager {
         // One reason to remove the code of this method is, the scheduled task might run even before this current transaction
         // is closed, making no effect.
         // The other reason for the removal is the use of the Bennu Scheduler system
-        FinantialInstitution finantialInstitution = finantialDocument.getDebtAccount().getFinantialInstitution();
-
-        if (finantialInstitution.getErpIntegrationConfiguration() == null) {
-            return;
-        }
-
-        if (StringUtils.isEmpty(finantialInstitution.getErpIntegrationConfiguration().getImplementationClassName())) {
-            return;
-        }
-
-        IERPExporter erpExporter =
-                finantialInstitution.getErpIntegrationConfiguration().getERPExternalServiceImplementation().getERPExporter();
-
-        if (erpExporter == null) {
-            return;
-        }
-
-        final List<FinantialDocument> documentsToExport =
-                erpExporter.filterDocumentsToExport(Collections.singletonList(finantialDocument).stream());
-
-        if (documentsToExport.isEmpty()) {
-            return;
-        }
-
-        final String externalId = documentsToExport.iterator().next().getExternalId();
-
-        new Thread() {
-
-            @Override
-            @Atomic
-            public void run() {
-                try {
-                    Thread.sleep(WAIT_TRANSACTION_TO_FINISH_MS);
-                } catch (InterruptedException e) {
-                }
-
-                SchedulerSystem.queue(new TaskRunner(new ERPExportSingleDocumentsTask(externalId)));
-            };
-
-        }.start();
     }
 
     @Atomic(mode = TxMode.WRITE)
