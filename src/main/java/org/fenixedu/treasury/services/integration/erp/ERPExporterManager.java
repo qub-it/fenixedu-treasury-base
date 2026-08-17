@@ -321,9 +321,7 @@ public class ERPExporterManager {
         // 2026-08-14 (#qubIT-Fenix-7868)
         //
         // To understand this comment better, look at the version control history.
-        // One reason to remove the code of this method is, the scheduled task might run even before this current transaction
-        // is closed, making no effect.
-        // The other reason for the removal is the use of the Bennu Scheduler system
+        // One reason for the removal is the use of the Bennu Scheduler system
     }
 
     @Atomic(mode = TxMode.WRITE)
