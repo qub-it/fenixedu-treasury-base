@@ -57,6 +57,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Set;
 
+import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.Customer;
 import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.Vat;
@@ -119,7 +120,7 @@ public class SettlementCreditEntryBean implements ISettlementInvoiceEntryBean, I
             return null;
         }
 
-        return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
+        return Currency.getValueWithScale(creditAmount);
     }
 
     @Deprecated
@@ -128,7 +129,7 @@ public class SettlementCreditEntryBean implements ISettlementInvoiceEntryBean, I
             return null;
         }
 
-        return creditEntry.getDebtAccount().getFinantialInstitution().getCurrency().getValueWithScale(creditAmount);
+        return Currency.getValueWithScale(creditAmount);
     }
 
     @Deprecated

@@ -741,6 +741,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
 
                 // TODO 2026-07-31 (#qubIT-Fenix-9179)
                 // Should change to creditEntryBean.getSettledAmount()
+                //
+                // UPDATE 2026-08-14: The difference between #getSettledAmount() and #getCreditAmountWithVat()
+                // in regarding the rounding is made in #getCreditAmountWithVat but not in #getSettledAmount
                 sum = sum.subtract(creditEntryBean.getCreditAmount());
             }
         }
@@ -764,6 +767,9 @@ public class SettlementNoteBean implements ITreasuryBean, Serializable {
             if (creditEntryBean.isIncluded()) {
                 // TODO 2026-07-31 (#qubIT-Fenix-9179)
                 // Should change to creditEntryBean.getSettledAmount()
+                //
+                // UPDATE 2026-08-14: The difference between #getSettledAmount() and #getCreditAmountWithVat()
+                // in regarding the rounding is made in #getCreditAmountWithVat but not in #getSettledAmount
                 sum = sum.subtract(creditEntryBean.getCreditAmountWithVat());
             }
         }
