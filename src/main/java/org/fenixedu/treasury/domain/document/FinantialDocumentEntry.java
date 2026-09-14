@@ -119,7 +119,7 @@ public abstract class FinantialDocumentEntry extends FinantialDocumentEntry_Base
         super.setFinantialDocument(finantialDocument);
     }
 
-    protected void checkRules() {
+    public void checkRules() {
         if (getFinantialEntity() == null) {
             throw new TreasuryDomainException("error.FinantialDocumentEntry.finantialEntity.required");
         }

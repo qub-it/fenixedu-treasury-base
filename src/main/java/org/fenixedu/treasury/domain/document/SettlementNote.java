@@ -180,9 +180,9 @@ public class SettlementNote extends SettlementNote_Base {
             throw new TreasuryDomainException("error.SettlementNote.invalid.payment.date.after.document.date");
         }
 
-        if (!getDocumentNumberSeries().getFinantialDocumentType().getType().equals(FinantialDocumentTypeEnum.SETTLEMENT_NOTE)
-                && !getDocumentNumberSeries().getFinantialDocumentType().getType()
-                        .equals(FinantialDocumentTypeEnum.REIMBURSEMENT_NOTE)) {
+        if (!getDocumentNumberSeries().getFinantialDocumentType().getType()
+                .equals(FinantialDocumentTypeEnum.SETTLEMENT_NOTE) && !getDocumentNumberSeries().getFinantialDocumentType()
+                .getType().equals(FinantialDocumentTypeEnum.REIMBURSEMENT_NOTE)) {
             throw new TreasuryDomainException("error.FinantialDocument.finantialDocumentType.invalid");
         }
 
@@ -232,6 +232,17 @@ public class SettlementNote extends SettlementNote_Base {
                 throw new TreasuryDomainException(
                         "error.SettlementNote.settlementNote.not.reimbursement.but.has.only.credits.settled");
             }
+        }
+
+        // 2026-09-14 (#qubIT-Fenix-9231)
+        // Check financial entity consistency
+        if (getAdvancedPaymentCreditNote() != null && getAdvancedPaymentCreditNote().getFinantialEntity() != getFinantialEntity()) {
+            throw new TreasuryDomainException(
+                    "error.SettlementNote.checkRules.finantialEntity.advancedPaymentCreditNote.mismatch");
+        }
+
+        if (getExcessPaymentDebitNote() != null && getExcessPaymentDebitNote().getFinantialEntity() != getFinantialEntity()) {
+            throw new TreasuryDomainException("error.SettlementNote.checkRules.finantialEntity.excessPaymentDebitNote.mismatch");
         }
     }
 
@@ -428,8 +439,8 @@ public class SettlementNote extends SettlementNote_Base {
                 }
 
                 if (creditEntry.getFinantialDocument().isPreparing()) {
-                    if (splitCreditEntriesWithSettledAmount
-                            && TreasuryConstants.isLessThan(creditAmountWithVat, creditEntry.getOpenAmount())) {
+                    if (splitCreditEntriesWithSettledAmount && TreasuryConstants.isLessThan(creditAmountWithVat,
+                            creditEntry.getOpenAmount())) {
                         creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(creditAmountWithVat));
                     }
 
@@ -448,8 +459,9 @@ public class SettlementNote extends SettlementNote_Base {
 
         BigDecimal paymentEntriesAmount =
                 bean.getPaymentEntries().stream().map(p -> p.getPaymentAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal creditsAmount = bean.getCreditEntries().stream().filter(c -> c.isIncluded())
-                .map(c -> c.getCreditAmountWithVat()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal creditsAmount =
+                bean.getCreditEntries().stream().filter(c -> c.isIncluded()).map(c -> c.getCreditAmountWithVat())
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal restAmountToUse = paymentEntriesAmount.add(creditsAmount);
 
@@ -467,13 +479,13 @@ public class SettlementNote extends SettlementNote_Base {
 
             DebitEntry debitEntry = debitEntryBean.getDebitEntry();
 
-            if (splitDebitEntriesWithSettledAmount
-                    && (debitEntry.getFinantialDocument() == null || debitEntry.getFinantialDocument().isPreparing())
-                    && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
+            if (splitDebitEntriesWithSettledAmount && (debitEntry.getFinantialDocument() == null || debitEntry.getFinantialDocument()
+                    .isPreparing()) && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(),
+                    debitEntry.getOpenAmount())) {
                 debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()),
                         "partial payment (system)");
-            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument() != null
-                    && debitEntry.getFinantialDocument().isPreparing()) {
+            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument() != null && debitEntry.getFinantialDocument()
+                    .isPreparing()) {
                 // 2024-08-07 (#qubIT-Fenix-5710)
                 //
                 // Check if there are other debit entries, which are not being settled 
@@ -486,7 +498,8 @@ public class SettlementNote extends SettlementNote_Base {
                 Set<DebitEntry> settlingDebitEntriesTotallySet =
                         bean.getDebitEntriesByType(SettlementDebitEntryBean.class).stream() //
                                 .filter(d -> d.isIncluded()) //
-                                .filter(d -> TreasuryConstants.isEqual(d.getSettledAmount(), d.getDebitEntry().getOpenAmount())) //
+                                .filter(d -> TreasuryConstants.isEqual(d.getSettledAmount(),
+                                        d.getDebitEntry().getOpenAmount())) //
                                 .map(d -> d.getDebitEntry()) //
                                 .collect(Collectors.toSet());
 
@@ -584,11 +597,13 @@ public class SettlementNote extends SettlementNote_Base {
         }
 
         if (untiedDebitEntries.size() != 0) {
-            DocumentNumberSeries debitNoteSeries = DocumentNumberSeries
-                    .findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), bean.getFinantialEntity());
+            DocumentNumberSeries debitNoteSeries =
+                    DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(),
+                            bean.getFinantialEntity());
 
-            DebitNote debitNote = DebitNote.create(bean.getFinantialEntity(), bean.getDebtAccount(), null, debitNoteSeries,
-                    bean.getDate(), bean.getDate().toLocalDate(), null, Collections.emptyMap(), null, null);
+            DebitNote debitNote =
+                    DebitNote.create(bean.getFinantialEntity(), bean.getDebtAccount(), null, debitNoteSeries, bean.getDate(),
+                            bean.getDate().toLocalDate(), null, Collections.emptyMap(), null, null);
 
             debitNote.addDebitNoteEntries(untiedDebitEntries);
             debitNote.closeDocument();
@@ -639,8 +654,8 @@ public class SettlementNote extends SettlementNote_Base {
                 throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.advanced.payment.settled");
             }
 
-            if (getExcessPaymentDebitNote() != null
-                    && getExcessPaymentDebitNote().getCreditNoteSet().iterator().next().hasValidSettlementEntries()) {
+            if (getExcessPaymentDebitNote() != null && getExcessPaymentDebitNote().getCreditNoteSet().iterator().next()
+                    .hasValidSettlementEntries()) {
                 throw new TreasuryDomainException("error.SettlementNote.cannot.anull.settlement.due.to.advanced.payment.settled");
             }
 
@@ -668,11 +683,13 @@ public class SettlementNote extends SettlementNote_Base {
                 // Settle excess debit and credit
                 DateTime now = new DateTime();
 
-                SettlementNote excessCloseSettlementNote = create(getFinantialEntity(), getDebtAccount(),
-                        getDocumentNumberSeries(), now, now, getUiDocumentNumber(), null);
+                SettlementNote excessCloseSettlementNote =
+                        create(getFinantialEntity(), getDebtAccount(), getDocumentNumberSeries(), now, now, getUiDocumentNumber(),
+                                null);
                 DebitEntry excessDebitEntry = this.getExcessPaymentDebitNote().getDebitEntriesSet().iterator().next();
-                CreditEntry excessCreditEntry = this.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next()
-                        .getCreditEntriesSet().iterator().next();
+                CreditEntry excessCreditEntry =
+                        this.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next().getCreditEntriesSet().iterator()
+                                .next();
 
                 SettlementEntry.create(excessDebitEntry, excessDebitEntry.getTotalAmount(), excessCloseSettlementNote, now);
                 SettlementEntry.create(excessCreditEntry, excessCreditEntry.getTotalAmount(), excessCreditEntry.getDescription(),
@@ -692,8 +709,7 @@ public class SettlementNote extends SettlementNote_Base {
     @Atomic
     /*
      * This method check if there is some debt process blocking the annullment
-     */
-    public void anullDocument(String anulledReason, boolean markDocumentToExport) {
+     */ public void anullDocument(String anulledReason, boolean markDocumentToExport) {
         if (TreasuryDebtProcessMainService.isFinantialDocumentAnnullmentActionBlocked(this)) {
             throw new TreasuryDomainException("error.SettlementNote.cannot.annull.due.to.existing.active.debt.process");
         }
@@ -750,8 +766,9 @@ public class SettlementNote extends SettlementNote_Base {
         if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()) {
             // Mark this settlement note if there is at least one invoice exported in legacy
             // ERP
-            boolean atLeastOneInvoiceEntryExportedInLegacyERP = getSettlemetEntries()
-                    .filter(s -> s.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP()).count() > 0;
+            boolean atLeastOneInvoiceEntryExportedInLegacyERP =
+                    getSettlemetEntries().filter(s -> s.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP())
+                            .count() > 0;
 
             if (atLeastOneInvoiceEntryExportedInLegacyERP) {
                 if (!isExportedInLegacyERP()) {
@@ -800,8 +817,8 @@ public class SettlementNote extends SettlementNote_Base {
             throw new TreasuryDomainException("error.SettlementNote.currentReimbursementProcessStatus.invalid");
         }
 
-        if (getCurrentReimbursementProcessStatus() != null
-                && !reimbursementStatus.isAfter(getCurrentReimbursementProcessStatus())) {
+        if (getCurrentReimbursementProcessStatus() != null && !reimbursementStatus.isAfter(
+                getCurrentReimbursementProcessStatus())) {
             throw new TreasuryDomainException("error.integration.erp.invalid.reimbursementNote.next.status.invalid");
         }
 
@@ -884,13 +901,15 @@ public class SettlementNote extends SettlementNote_Base {
         DocumentNumberSeries documentNumberSeries =
                 DocumentNumberSeries.find(FinantialDocumentType.findForDebitNote(), this.getDocumentNumberSeries().getSeries());
         DateTime now = new DateTime();
-        DebitNote debitNote = DebitNote.create(getFinantialEntity(), getDebtAccount(), payorDebtAccount, documentNumberSeries,
-                now, now.toLocalDate(), originDocumentNumber, Collections.emptyMap(), null, null);
+        DebitNote debitNote =
+                DebitNote.create(getFinantialEntity(), getDebtAccount(), payorDebtAccount, documentNumberSeries, now,
+                        now.toLocalDate(), originDocumentNumber, Collections.emptyMap(), null, null);
 
         Product advancePaymentProduct = TreasurySettings.getInstance().getAdvancePaymentProduct();
         Vat vat = Vat.findActiveUnique(advancePaymentProduct.getVatType(), finantialInstitution, now).get();
-        DebitEntry debitEntry = DebitEntry.create(getFinantialEntity(), getDebtAccount(), null, vat, amount, now.toLocalDate(),
-                new HashMap<>(), advancePaymentProduct, comments, BigDecimal.ONE, null, now, false, false, debitNote);
+        DebitEntry debitEntry =
+                DebitEntry.create(getFinantialEntity(), getDebtAccount(), null, vat, amount, now.toLocalDate(), new HashMap<>(),
+                        advancePaymentProduct, comments, BigDecimal.ONE, null, now, false, false, debitNote);
 
         if (!TreasuryConstants.isEqual(debitEntry.getTotalAmount(), availableAmount)) {
             throw new RuntimeException(
@@ -924,9 +943,10 @@ public class SettlementNote extends SettlementNote_Base {
             }
         }
 
-        AdvancedPaymentCreditNote creditNote = AdvancedPaymentCreditNote.createCreditNoteForAdvancedPayment(getFinantialEntity(),
-                documentNumberSeries, this.getDebtAccount(), availableAmount, this.getDocumentDate(), comments,
-                originDocumentNumber, payorDebtAccount);
+        AdvancedPaymentCreditNote creditNote =
+                AdvancedPaymentCreditNote.createCreditNoteForAdvancedPayment(getFinantialEntity(), documentNumberSeries,
+                        this.getDebtAccount(), availableAmount, this.getDocumentDate(), comments, originDocumentNumber,
+                        payorDebtAccount);
 
         this.setAdvancedPaymentCreditNote(creditNote);
     }
@@ -1019,8 +1039,9 @@ public class SettlementNote extends SettlementNote_Base {
             }
         }
 
-        SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,
-                paymentDate, originDocumentNumber, finantialTransactionReference);
+        SettlementNote settlementNote =
+                new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate, paymentDate,
+                        originDocumentNumber, finantialTransactionReference);
 
         return settlementNote;
     }
@@ -1032,8 +1053,9 @@ public class SettlementNote extends SettlementNote_Base {
     public static SettlementNote createForImportation(FinantialEntity finantialEntity, DebtAccount debtAccount,
             DocumentNumberSeries documentNumberSeries, DateTime documentDate, DateTime paymentDate, String originDocumentNumber,
             String finantialTransactionReference) {
-        SettlementNote settlementNote = new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate,
-                paymentDate, originDocumentNumber, finantialTransactionReference);
+        SettlementNote settlementNote =
+                new SettlementNote(finantialEntity, debtAccount, documentNumberSeries, documentDate, paymentDate,
+                        originDocumentNumber, finantialTransactionReference);
 
         return settlementNote;
     }
@@ -1043,10 +1065,10 @@ public class SettlementNote extends SettlementNote_Base {
         DateTime documentDate = new DateTime();
         SettlementNoteBean copy = SettlementNoteBean.copyForSettlementNoteCreation(bean);
 
-        SettlementNote settlementNote = SettlementNote.create(copy.getFinantialEntity(), copy.getDebtAccount(),
-                copy.getDocNumSeries(), documentDate, copy.getDate(), copy.getOriginDocumentNumber(),
-                !Strings.isNullOrEmpty(copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear()
-                        + "/" + copy.getFinantialTransactionReference() : "");
+        SettlementNote settlementNote =
+                SettlementNote.create(copy.getFinantialEntity(), copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
+                        copy.getDate(), copy.getOriginDocumentNumber(), !Strings.isNullOrEmpty(
+                                copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear() + "/" + copy.getFinantialTransactionReference() : "");
 
         for (ISettlementInvoiceEntryBean virtualbean : copy.getVirtualDebitEntries()) {
             if (virtualbean.isIncluded() && virtualbean.getVirtualPaymentEntryHandler() != null) {
@@ -1060,8 +1082,8 @@ public class SettlementNote extends SettlementNote_Base {
 
         if (settlementNote.getExcessPaymentDebitNote() != null) {
             settlementNote.getExcessPaymentDebitNote().setOriginDocumentNumber(settlementNote.getUiDocumentNumber());
-            String comments = treasuryBundleI18N("label.SettlementNote.excessPayment")
-                    .getContent(TreasuryConstants.getDefaultLocale());
+            String comments =
+                    treasuryBundleI18N("label.SettlementNote.excessPayment").getContent(TreasuryConstants.getDefaultLocale());
             settlementNote.getExcessPaymentDebitNote().anullDebitNoteWithCreditNote(comments, true);
 
             CreditNote excessCreditNote = settlementNote.getExcessPaymentDebitNote().getCreditNoteSet().iterator().next();
@@ -1069,7 +1091,7 @@ public class SettlementNote extends SettlementNote_Base {
             if (excessCreditNote.isPreparing()) {
                 excessCreditNote.closeDocument();
             }
-        } else if(settlementNote.getAdvancedPaymentCreditNote() != null) {
+        } else if (settlementNote.getAdvancedPaymentCreditNote() != null) {
             // 2026-06-05 #qubIT-Fenix-8831
             settlementNote.getAdvancedPaymentCreditNote().setOriginDocumentNumber(settlementNote.getUiDocumentNumber());
         }
@@ -1154,9 +1176,9 @@ public class SettlementNote extends SettlementNote_Base {
 
         if (atLeastOneExportedInLegacyERP) {
             // Ensure all debit entries has finantial documents and exported in legacy erp
-            boolean notExportedInLegacyERP = invoiceEntryBeans.stream()
-                    .anyMatch(i -> i.getInvoiceEntry() == null || i.getInvoiceEntry().getFinantialDocument() == null
-                            || !i.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP());
+            boolean notExportedInLegacyERP = invoiceEntryBeans.stream().anyMatch(
+                    i -> i.getInvoiceEntry() == null || i.getInvoiceEntry().getFinantialDocument() == null || !i.getInvoiceEntry()
+                            .getFinantialDocument().isExportedInLegacyERP());
 
             if (notExportedInLegacyERP) {
                 throw new TreasuryDomainException("error.SettlementNote.debit.entry.mixed.exported.in.legacy.erp.not.allowed");

@@ -333,11 +333,15 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         super.checkRules();
 
         if (getFinantialDocument() != null && !(getFinantialDocument() instanceof DebitNote)) {
             throw new TreasuryDomainException("error.DebitEntry.finantialDocument.not.debit.entry.type");
+        }
+
+        if(getFinantialDocument() != null && getFinantialDocument().getFinantialEntity() != getFinantialEntity()) {
+            throw new TreasuryDomainException("error.DebitEntry.finantialEntity.finantialDocument.mismatch");
         }
 
         if (getDebtAccount() == null) {

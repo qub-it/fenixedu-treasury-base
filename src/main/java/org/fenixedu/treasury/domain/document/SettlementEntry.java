@@ -186,6 +186,16 @@ public class SettlementEntry extends SettlementEntry_Base {
             throw new TreasuryDomainException("error.SettlementEntry.finantialDocument.not.settlement.note.type");
         }
 
+        if (getInvoiceEntry() == null) {
+            throw new TreasuryDomainException("error.SettlementEntry.invoiceEntry.required");
+        }
+
+        // 2026-09-14 (#qubIT-Fenix-9231)
+        // Validate invoice entry financial entity consistency
+        if (getInvoiceEntry().getFinantialEntity() != getFinantialEntity()) {
+            throw new TreasuryDomainException("error.SettlementEntry.invoiceEntry.finantialEntity.mismatch");
+        }
+
         if (getInvoiceEntry().isCreditNoteEntry() && !TreasuryConstants.isEqual(getAmount(), getTotalAmount())) {
             throw new TreasuryDomainException("error.SettlementEntry.creditNoteEntry.total.amount.not.equal");
         }

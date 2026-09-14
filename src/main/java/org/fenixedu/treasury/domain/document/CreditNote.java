@@ -99,7 +99,7 @@ public class CreditNote extends CreditNote_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         if (!getDocumentNumberSeries().getFinantialDocumentType().getType().equals(FinantialDocumentTypeEnum.CREDIT_NOTE)) {
             throw new TreasuryDomainException("error.CreditNote.finantialDocumentType.invalid");
         }
@@ -118,6 +118,12 @@ public class CreditNote extends CreditNote_Base {
 
         if (getDebitNote() != null && getDocumentNumberSeries().getSeries().isRegulationSeries()) {
             throw new TreasuryDomainException("error.CreditNote.debit.note.cannot.be.from.regulation.series");
+        }
+
+        // 2026-09-14 (#qubIT-Fenix-9231)
+        // The financial entity must be the same
+        if(getDebitNote() != null && getDebitNote().getFinantialEntity() != getFinantialEntity()) {
+            throw new TreasuryDomainException("error.CreditNote.finantialEntity.debitNote.mismatch");
         }
 
         super.checkRules();

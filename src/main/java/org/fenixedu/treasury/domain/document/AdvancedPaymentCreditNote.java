@@ -88,7 +88,7 @@ public class AdvancedPaymentCreditNote extends AdvancedPaymentCreditNote_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         if (!getDocumentNumberSeries().getFinantialDocumentType().getType().equals(FinantialDocumentTypeEnum.CREDIT_NOTE)) {
             throw new TreasuryDomainException("error.AdvancedPaymentCreditNote.finantialDocumentType.invalid");
         }

@@ -124,7 +124,7 @@ public class CreditEntry extends CreditEntry_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         super.checkRules();
 
         if (getFinantialDocument() != null && !(getFinantialDocument() instanceof CreditNote)) {
@@ -172,6 +172,12 @@ public class CreditEntry extends CreditEntry_Base {
         if (getTreasuryExemption() != null && TreasuryConstants.isPositive(getNetExemptedAmount())) {
             throw new TreasuryDomainException(
                     "error.CreditEntry.netExemptedAmount.not.supported.with.creditEntry.with.exemption");
+        }
+
+        // 2026-09-14 (#qubIT-Fenix-9231)
+        // If this creditEntry is from a debitEntry, the financial entity of both must match
+        if (getDebitEntry() != null && getDebitEntry().getFinantialEntity() != getFinantialEntity()) {
+            throw new TreasuryDomainException("error.CreditEntry.finantialEntity.debitEntry.mismatch");
         }
     }
 

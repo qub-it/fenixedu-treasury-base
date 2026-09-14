@@ -101,7 +101,7 @@ public class DebitNote extends DebitNote_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         if (!getDocumentNumberSeries().getFinantialDocumentType().getType().equals(FinantialDocumentTypeEnum.DEBIT_NOTE)) {
             throw new TreasuryDomainException("error.DebitNote.finantialDocumentType.invalid");
         }

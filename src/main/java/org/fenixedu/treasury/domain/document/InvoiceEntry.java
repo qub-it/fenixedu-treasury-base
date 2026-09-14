@@ -211,7 +211,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         super.checkRules();
 
         if (getQuantity() == null) {
@@ -254,7 +254,7 @@ public abstract class InvoiceEntry extends InvoiceEntry_Base {
             throw new TreasuryDomainException("error.FinantialDocumentEntry.netExemptedAmount.less.than.zero");
         }
 
-        if (checkAmountValues() == false) {
+        if (!checkAmountValues()) {
             throw new TreasuryDomainException("error.InvoiceEntry.amount.invalid.consistency");
         }
     }

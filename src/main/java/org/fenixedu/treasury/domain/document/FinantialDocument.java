@@ -127,8 +127,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         setDocumentDueDate(documentDate.toLocalDate());
 
         // 2026-01-26 (#qubIT-Fenix-7963)
-        setFiscalMonth(
-            FiscalMonth.getOrCreateFiscalMonth(finantialEntity.getFinantialInstitution(), documentDate.toLocalDate()));
+        setFiscalMonth(FiscalMonth.getOrCreateFiscalMonth(finantialEntity.getFinantialInstitution(), documentDate.toLocalDate()));
 
         setCurrency(debtAccount.getFinantialInstitution().getCurrency());
         setState(FinantialDocumentStateType.PREPARING);
@@ -139,7 +138,7 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         checkRules();
     }
 
-    protected void checkRules() {
+    public void checkRules() {
 
         if (getDebtAccount() == null) {
             throw new TreasuryDomainException("error.FinantialDocument.debtAccount.required");
@@ -172,6 +171,8 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         if (getDocumentNumberSeries().getSeries().getFinantialInstitution() != getDebtAccount().getFinantialInstitution()) {
             throw new TreasuryDomainException("error.FinantialDocument.finantialinstitution.mismatch");
         }
+
+        checkFinantialEntityConsistency();
 
         if (!getDocumentNumberSeries().getSeries().getLegacy()) {
             if (getDocumentDueDate().isBefore(getDocumentDate().toLocalDate())) {
@@ -206,9 +207,25 @@ public abstract class FinantialDocument extends FinantialDocument_Base {
         // TODO 2026-01-26 (#qubIT-Fenix-7963)
         //
         // Remove the check getFiscalMonth() != null as soon as fiscal month set is confirmed
-        if(getFiscalMonth() != null && !getFiscalMonth().containsDate(getDocumentDate().toLocalDate())) {
+        if (getFiscalMonth() != null && !getFiscalMonth().containsDate(getDocumentDate().toLocalDate())) {
             throw new TreasuryDomainException("error.FinantialDocument.fiscalMonth.mismatch.with.finantialDocument");
         }
+    }
+
+    // 2026-09-14 (#qubIT-Fenix-9231)
+    // Validate consistency of financial entity with series and entries
+    private void checkFinantialEntityConsistency() {
+        if (getDocumentNumberSeries().getSeries()
+                .getFinantialEntity() != null && getFinantialEntity() != getDocumentNumberSeries().getSeries()
+                .getFinantialEntity()) {
+            throw new TreasuryDomainException("error.FinantialDocument.finantialEntity.series.mismatch");
+        }
+
+        getFinantialDocumentEntriesSet().forEach(finantialDocumentEntry -> {
+            if(finantialDocumentEntry.getFinantialEntity() != getFinantialEntity()) {
+                throw new TreasuryDomainException("error.FinantialDocument.finantialEntity.entries.mismatch");
+            }
+        });
     }
 
     protected boolean isDocumentEmpty() {

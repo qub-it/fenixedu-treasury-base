@@ -77,7 +77,7 @@ public abstract class Invoice extends Invoice_Base {
     }
 
     @Override
-    protected void checkRules() {
+    public void checkRules() {
         if (getDebtAccount() == getPayorDebtAccount()) {
             throw new TreasuryDomainException("error.Invoice.payor.same.as.debt.account");
         }
