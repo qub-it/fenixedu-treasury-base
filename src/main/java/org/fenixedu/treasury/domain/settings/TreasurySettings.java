@@ -133,7 +133,7 @@ public class TreasurySettings extends TreasurySettings_Base {
     }
 
     @Atomic(mode = Atomic.TxMode.WRITE)
-    public static TreasurySettings create() {
+    private static TreasurySettings create() {
         if(findUnique().isPresent()) {
             throw new RuntimeException("The settings instance already exists");
         }
