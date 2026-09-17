@@ -1318,8 +1318,12 @@ public class DebitEntry extends DebitEntry_Base {
         return getNetExemptedAmount().subtract(getCreditedNetExemptedAmount());
     }
 
+
     @Atomic
-    public void creditDebitEntry(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote,
+    // 2026-09-17 (#qubIT-Fenix-9414)
+    //
+    // The method has an odd name because replaces a deprecated method with proper name but this returns the CreditEntry
+    public CreditEntry creditDebitEntryWithCredit(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote,
             Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         if (isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.credit.is.already.annuled");
@@ -1384,6 +1388,18 @@ public class DebitEntry extends DebitEntry_Base {
                 openDebitEntry.closeCreditEntryIfPossible(reason, now, openCreditEntry);
             }
         }
+
+        return creditEntry;
+    }
+
+    @Atomic
+    @Deprecated
+    // TODO 2026-09-17 (#qubIT-Fenix-9414)
+    //
+    // Replace by #creditDebitEntryWithCredit in the various modules invoking this method
+    public void creditDebitEntry(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote,
+            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
+        creditDebitEntryWithCredit(netAmountForCredit, reason, closeWithOtherDebitEntriesOfDebitNote, creditExemptionsMap);
     }
 
     @Atomic
