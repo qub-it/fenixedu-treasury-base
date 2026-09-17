@@ -59,6 +59,7 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.Currency;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.Product;
+import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.payments.integration.DigitalPaymentPlatformPaymentMode;
 import org.fenixedu.treasury.domain.tariff.DueDateCalculationType;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -73,6 +74,8 @@ public class TreasurySettings extends TreasurySettings_Base {
         setDomainRoot(FenixFramework.getDomainRoot());
         setForwardPaymentOrderNumberCounter(0l);
         setGlobalFiscalNumberValidatorRegex("^[a-zA-Z0-9.\\-_ ]*$");
+
+        checkRules();
     }
 
     public Long incrementAndGetForwardPaymentOrderNumber() {
@@ -89,6 +92,18 @@ public class TreasurySettings extends TreasurySettings_Base {
         setAdvancePaymentProduct(advancePaymentProduct);
         setNumberOfPaymentPlansActivesPerStudent(numberOfPaymentPlansActivesPerStudent);
         setCanRegisterPaymentWithMultipleMethods(canRegisterPaymentWithMultipleMethods);
+
+        checkRules();
+    }
+
+    private void checkRules() {
+        if (getDomainRoot() == null) {
+            throw new TreasuryDomainException("error.TreasurySettings.domainRoot.required");
+        }
+
+        if (getDomainRoot().getTreasurySettingsSet().size() > 1) {
+            throw new TreasuryDomainException("error.TreasurySettings.treasurySet.duplicated");
+        }
     }
 
     public boolean isRestrictPaymentMixingLegacyInvoices() {
@@ -109,9 +124,21 @@ public class TreasurySettings extends TreasurySettings_Base {
         return FenixFramework.getDomainRoot().getTreasurySettingsSet().stream().findFirst();
     }
 
-    @Atomic
     public static TreasurySettings getInstance() {
-        return findUnique().orElseGet(() -> new TreasurySettings());
+        // 2026-09-17 (#qubIT-Fenix-9414)
+        //
+        // Before the fix, the method #getInstance was annotated with @Atomic. Because of that, multiple reads in a
+        // read transaction was much slower
+        return findUnique().orElseGet(TreasurySettings::create);
+    }
+
+    @Atomic(mode = Atomic.TxMode.WRITE)
+    public static TreasurySettings create() {
+        if(findUnique().isPresent()) {
+            throw new RuntimeException("The settings instance already exists");
+        }
+
+        return new TreasurySettings();
     }
 
     @Override

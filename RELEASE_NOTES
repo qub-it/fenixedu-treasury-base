@@ -1,3 +1,5 @@
+- Improvement: Remove Atomic annotation from TreasurySettings#getInstance to improve performance in multiple accesses in read transaction [#qubIT-Fenix-9414]
+
 15.11.2 (14-09-2026)
 - Refactor: Replace ITreasuryPlatformDependentServices#createFile invocation by FileManager [#qubIT-Fenix-8024]
 - Refactor: Simplify reading the file in PaymentRequestLogFile [#qubIT-Fenix-8024]
