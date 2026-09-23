@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 /**
  * Object that defines the predefined customer information.
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen",
+@jakarta.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen",
         date = "2023-08-30T20:20:13.375686+01:00[Europe/Lisbon]")
 
 @JsonIgnoreProperties(ignoreUnknown = true)

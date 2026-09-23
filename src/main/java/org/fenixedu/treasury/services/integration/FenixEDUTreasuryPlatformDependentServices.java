@@ -44,7 +44,7 @@ import pt.ist.fenixWebFramework.servlets.filters.contentRewrite.GenericChecksumR
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.DomainObject;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;

@@ -1,3 +1,4 @@
+- Refactor: Migrate from javaee to jakarta [#qubIT-Omnis-10960]
 - Refactor: Replace ITreasuryPlatformDependentServices#createFile invocation by FileManager [#qubIT-Fenix-8024]
 - Refactor: Simplify reading the file in PaymentRequestLogFile [#qubIT-Fenix-8024]
 - Refactor: Read SibsReportFile with OMNIS FileManager only [#qubIT-Fenix-8024]

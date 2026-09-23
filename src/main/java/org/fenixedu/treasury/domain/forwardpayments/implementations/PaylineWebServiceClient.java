@@ -1,6 +1,6 @@
 package org.fenixedu.treasury.domain.forwardpayments.implementations;
 
-import javax.xml.ws.BindingProvider;
+import jakarta.xml.ws.BindingProvider;
 
 import org.fenixedu.treasury.services.integration.forwardpayments.payline.WebPaymentAPI;
 import org.fenixedu.treasury.services.integration.forwardpayments.payline.WebPaymentAPI_Service;
