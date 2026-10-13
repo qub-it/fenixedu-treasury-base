@@ -1,3 +1,4 @@
+15.11.5 (13-10-2026)
 - Refactor: Override methods of IGenericFile [#qubIT-Fenix-8024]
 - Refactor: Remove references of ITreasuryPlatformDependentServices [#qubIT-Fenix-8024]
 
