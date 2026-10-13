@@ -54,43 +54,45 @@ package org.fenixedu.bennu.io.domain;
 
 import java.io.InputStream;
 
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.joda.time.DateTime;
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 
 import pt.ist.fenixframework.DomainObject;
 
 public interface IGenericFile extends DomainObject {
 
-	public boolean isAccessible(final String username);
+    public boolean isAccessible(final String username);
 
-	public void delete();
-	
-	public String getFileId();
-	
-	public void setFileId(final String id);
-	
-	default public byte[] getContent() {
-		return TreasuryPlataformDependentServicesFactory.implementation().getFileContent(this);
-	}
+    public void delete();
 
-	default public long getSize() {
-		return TreasuryPlataformDependentServicesFactory.implementation().getFileSize(this);
-	}
+    public String getFileId();
 
-	default public DateTime getCreationDate() {
-		return TreasuryPlataformDependentServicesFactory.implementation().getFileCreationDate(this);
-	}
+    public void setFileId(final String id);
 
-	default public String getFilename() {
-		return TreasuryPlataformDependentServicesFactory.implementation().getFilename(this);
-	}
+    public String getFileDescriptorId();
 
-	default public InputStream getStream() {
-		return TreasuryPlataformDependentServicesFactory.implementation().getFileStream(this);
-	}
+    default public byte[] getContent() {
+        return getFileDescriptor().getContent();
+    }
 
-	default public String getContentType() {
-		return TreasuryPlataformDependentServicesFactory.implementation().getFileContentType(this);
-	}
-	
+    default public long getSize() {
+        return getFileDescriptor().getSize();
+    }
+
+    default public String getFilename() {
+        return getFileDescriptor().getName();
+    }
+
+    default public InputStream getStream() {
+        return getFileDescriptor().getReadStream();
+    }
+
+    default public String getContentType() {
+        return getFileDescriptor().getContentType();
+    }
+
+    default public FileDescriptor getFileDescriptor() {
+        return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
+    }
 }

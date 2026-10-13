@@ -52,19 +52,15 @@
  */
 package org.fenixedu.treasury.domain.forwardpayments;
 
-import java.io.InputStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.TreasuryFile;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import com.qubit.terra.framework.services.ServiceProvider;
-import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
 import com.qubit.terra.framework.services.fileSupport.FileManager;
 
 import pt.ist.fenixframework.FenixFramework;
@@ -88,8 +84,6 @@ public class ForwardPaymentConfigurationFile extends ForwardPaymentConfiguration
 
     @Override
     public void delete() {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
         setDomainRoot(null);
 
         FileManager fileManager = ServiceProvider.getService(FileManager.class);
@@ -99,7 +93,7 @@ public class ForwardPaymentConfigurationFile extends ForwardPaymentConfiguration
         }
 
         if (getTreasuryFile() != null) {
-            services.deleteFile(this);
+            getTreasuryFile().delete();
         }
 
         super.deleteDomainObject();
@@ -147,35 +141,6 @@ public class ForwardPaymentConfigurationFile extends ForwardPaymentConfiguration
     @Deprecated
     public void setTreasuryFile(TreasuryFile treasuryFile) {
         super.setTreasuryFile(treasuryFile);
-    }
-
-    @Override
-    public byte[] getContent() {
-        return getFileDescriptor().getContent();
-    }
-
-    @Override
-    public long getSize() {
-        return getFileDescriptor().getSize();
-    }
-
-    @Override
-    public String getFilename() {
-        return getFileDescriptor().getName();
-    }
-
-    @Override
-    public InputStream getStream() {
-        return getFileDescriptor().getReadStream();
-    }
-
-    @Override
-    public String getContentType() {
-        return getFileDescriptor().getContentType();
-    }
-
-    private FileDescriptor getFileDescriptor() {
-        return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
     }
 
 }

@@ -52,7 +52,6 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Set;
@@ -65,8 +64,6 @@ import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.TreasuryFile;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibs.outgoing.SibsOutgoingPaymentFile;
 import org.joda.time.DateTime;
 
@@ -224,8 +221,6 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
     @Override
     @Atomic
     public void delete() {
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
-
         TreasuryDomainException.throwWhenDeleteBlocked(getDeletionBlockers());
 
         setFinantialInstitution(null);
@@ -239,7 +234,7 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
         }
 
         if (getTreasuryFile() != null) {
-            services.deleteFile(this);
+            getTreasuryFile().delete();
         }
 
         super.deleteDomainObject();
@@ -361,35 +356,6 @@ public class SibsOutputFile extends SibsOutputFile_Base implements IGenericFile 
     @Deprecated
     public void setTreasuryFile(TreasuryFile treasuryFile) {
         super.setTreasuryFile(treasuryFile);
-    }
-
-    @Override
-    public byte[] getContent() {
-        return getFileDescriptor().getContent();
-    }
-
-    @Override
-    public long getSize() {
-        return getFileDescriptor().getSize();
-    }
-
-    @Override
-    public String getFilename() {
-        return getFileDescriptor().getName();
-    }
-
-    @Override
-    public InputStream getStream() {
-        return getFileDescriptor().getReadStream();
-    }
-
-    @Override
-    public String getContentType() {
-        return getFileDescriptor().getContentType();
-    }
-
-    private FileDescriptor getFileDescriptor() {
-        return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
     }
 
 }

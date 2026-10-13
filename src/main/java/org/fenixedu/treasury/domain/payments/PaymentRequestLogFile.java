@@ -52,18 +52,14 @@
  */
 package org.fenixedu.treasury.domain.payments;
 
-import java.io.InputStream;
+import org.apache.commons.lang3.StringUtils;
+import org.fenixedu.bennu.io.domain.IGenericFile;
+import org.fenixedu.treasury.domain.TreasuryFile;
+import org.joda.time.DateTime;
 
 import com.qubit.terra.framework.services.ServiceProvider;
 import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
 import com.qubit.terra.framework.services.fileSupport.FileManager;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.fenixedu.bennu.io.domain.IGenericFile;
-import org.fenixedu.treasury.domain.TreasuryFile;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.FenixFramework;
 
@@ -106,7 +102,6 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
         setPaymentRequestLogForException(null);
         setPaymentRequestLogForResponse(null);
 
-        final ITreasuryPlatformDependentServices services = TreasuryPlataformDependentServicesFactory.implementation();
         FileManager fileManager = ServiceProvider.getService(FileManager.class);
 
         if (StringUtils.isNotEmpty(getFileDescriptorId())) {
@@ -114,7 +109,7 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
         }
 
         if (getTreasuryFile() != null) {
-            services.deleteFile(this);
+            getTreasuryFile().delete();
         }
 
         super.deleteDomainObject();
@@ -156,31 +151,6 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
         super.setTreasuryFile(treasuryFile);
     }
 
-    @Override
-    public byte[] getContent() {
-        return getFileDescriptor().getContent();
-    }
-
-    @Override
-    public long getSize() {
-        return getFileDescriptor().getSize();
-    }
-
-    @Override
-    public String getFilename() {
-        return getFileDescriptor().getName();
-    }
-
-    @Override
-    public InputStream getStream() {
-        return getFileDescriptor().getReadStream();
-    }
-
-    @Override
-    public String getContentType() {
-        return getFileDescriptor().getContentType();
-    }
-
     // @formatter:off
     /*
      *
@@ -192,9 +162,5 @@ public class PaymentRequestLogFile extends PaymentRequestLogFile_Base implements
 
     public static PaymentRequestLogFile create(String filename, byte[] content) {
         return new PaymentRequestLogFile(filename, content);
-    }
-
-    private com.qubit.terra.framework.services.fileSupport.FileDescriptor getFileDescriptor() {
-        return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
     }
 }
