@@ -52,9 +52,13 @@
  */
 package org.fenixedu.treasury.domain.paymentcodes;
 
-import com.qubit.terra.framework.services.ServiceProvider;
-import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
-import com.qubit.terra.framework.services.fileSupport.FileManager;
+import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.TreasuryFile;
@@ -68,23 +72,19 @@ import org.fenixedu.treasury.util.streaming.spreadsheet.ExcelSheet;
 import org.fenixedu.treasury.util.streaming.spreadsheet.Spreadsheet;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
+
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
-
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.stream.Stream;
-
-import static org.fenixedu.treasury.util.TreasuryConstants.treasuryBundle;
+import pt.ist.fenixframework.core.AbstractDomainObject;
 
 public class SibsReportFile extends SibsReportFile_Base implements IGenericFile {
 
-    public static final Comparator<SibsReportFile> COMPARATOR_BY_CREATION_DATE = (o1, o2) -> {
-        int c = o1.getCreationDate().compareTo(o2.getCreationDate());
-
-        return c != 0 ? c : o1.getExternalId().compareTo(o2.getExternalId());
-    };
+    public static final Comparator<SibsReportFile> COMPARATOR_BY_CREATION_DATE =
+            Comparator.comparing((SibsReportFile o) -> o.getCreationDate()).thenComparing(AbstractDomainObject::getExternalId);
 
     public static final String CONTENT_TYPE = "text/plain";
     public static final String FILE_EXTENSION = ".idm";

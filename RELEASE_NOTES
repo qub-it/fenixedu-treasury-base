@@ -1,3 +1,5 @@
+- Refactor: Override methods of IGenericFile [#qubIT-Fenix-8024]
+
 15.11.4 (17-09-2026)
 - Refactor: Add similar method of DebitEntry#creditDebitEntry which returns CreditEntry. This method is marked as deprecated [#qubIT-Fenix-9414]
 

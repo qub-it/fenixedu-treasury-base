@@ -56,12 +56,10 @@ import java.io.InputStream;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import com.qubit.terra.framework.services.ServiceProvider;
-import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
-import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.treasury.domain.FinantialInstitution;
+import org.fenixedu.treasury.domain.TreasuryFile;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.paymentcodes.integration.SibsPaymentCodePool;
 import org.fenixedu.treasury.services.accesscontrol.TreasuryAccessControlAPI;
@@ -70,6 +68,10 @@ import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServ
 import org.fenixedu.treasury.services.payments.sibs.SIBSPaymentsImporter;
 import org.fenixedu.treasury.services.payments.sibs.incomming.SibsIncommingPaymentFile;
 import org.joda.time.DateTime;
+
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.FenixFramework;
@@ -180,16 +182,15 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
 
             String entityReferenceCode = file.getHeader().getEntityCode();
 
-            if (!SibsPaymentCodePool.find(entityReferenceCode).findAny().isPresent()) {
+            if (SibsPaymentCodePool.find(entityReferenceCode).findAny().isEmpty()) {
                 throw new TreasuryDomainException(
                         "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile.poolNull",
                         entityReferenceCode);
             }
 
             String loggedUsername = org.fenixedu.treasury.util.TreasuryConstants.getAuthenticatedUsername();
-            SibsInputFile sibsInputFile = new SibsInputFile(whenProcessedBySibs, filename, sibsContent, loggedUsername);
 
-            return sibsInputFile;
+            return new SibsInputFile(whenProcessedBySibs, filename, sibsContent, loggedUsername);
         } catch (RuntimeException ex) {
             throw new TreasuryDomainException(
                     "label.error.administration.payments.sibs.managesibsinputfile.error.in.sibs.inputfile",
@@ -202,63 +203,69 @@ public class SibsInputFile extends SibsInputFile_Base implements IGenericFile {
         return FenixFramework.getDomainRoot().getSibsInputFilesSet().stream();
     }
 
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public String getFileId() {
+        return super.getFileId();
+    }
+
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public void setFileId(String fileId) {
+        super.setFileId(fileId);
+    }
+
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public TreasuryFile getTreasuryFile() {
+        return super.getTreasuryFile();
+    }
+
+    // 2026-08-12 (#qubIT-Fenix-8024)
+    //
+    // The property fileDescriptorId is used to get the file id
+    @Override
+    @Deprecated
+    public void setTreasuryFile(TreasuryFile treasuryFile) {
+        super.setTreasuryFile(treasuryFile);
+    }
+
     @Override
     public byte[] getContent() {
-        FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getContent();
-        }
-
-        return IGenericFile.super.getContent();
+        return getFileDescriptor().getContent();
     }
 
     @Override
     public long getSize() {
-        FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getSize();
-        }
-
-        return IGenericFile.super.getSize();
+        return getFileDescriptor().getSize();
     }
 
     @Override
     public String getFilename() {
-        FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getName();
-        }
-
-        return IGenericFile.super.getFilename();
-    }
-
-    @Override
-    public String getContentType() {
-        FileDescriptor fd = getFileDescriptor();
-        if (fd != null) {
-            return fd.getContentType();
-        }
-
-        return IGenericFile.super.getContentType();
+        return getFileDescriptor().getName();
     }
 
     @Override
     public InputStream getStream() {
-        FileDescriptor fd = getFileDescriptor();
+        return getFileDescriptor().getReadStream();
+    }
 
-        if (fd != null) {
-            return fd.getReadStream();
-        }
-
-        return IGenericFile.super.getStream();
+    @Override
+    public String getContentType() {
+        return getFileDescriptor().getContentType();
     }
 
     private FileDescriptor getFileDescriptor() {
-        if (StringUtils.isNotBlank(getFileDescriptorId())) {
-            return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
-        }
-
-        return null;
+        return ServiceProvider.getService(FileManager.class).getFileDescriptor(getFileDescriptorId());
     }
 
 }
