@@ -56,7 +56,7 @@ import com.google.gson.JsonObject;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.treasury.util.TreasuryConstants;
 
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Collection;
 import java.util.stream.Collectors;
 

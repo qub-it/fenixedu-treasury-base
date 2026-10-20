@@ -63,7 +63,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.google.common.base.Strings;
 import org.apache.commons.validator.routines.EmailValidator;
