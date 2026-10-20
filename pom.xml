@@ -10,7 +10,7 @@
 
 	<groupId>org.fenixedu</groupId>
 	<artifactId>fenixedu-treasury-base</artifactId>
-	<version>15.11.5</version>
+	<version>16.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>Treasury</name>
@@ -24,7 +24,7 @@
 			<dependency>
 				<groupId>com.qubit.solution.fenixedu</groupId>
 				<artifactId>fenixedu-oss-dependency-management</artifactId>
-				<version>784</version>
+				<version>785</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
