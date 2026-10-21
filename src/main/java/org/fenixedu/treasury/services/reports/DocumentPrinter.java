@@ -60,6 +60,7 @@ import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.DebitNote;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
 
+@Deprecated
 public class DocumentPrinter {
     private static DocumentPrinterInterface SINGLETON;
 
@@ -76,7 +77,7 @@ public class DocumentPrinter {
     }
 
     public static byte[] printDebtAccountPaymentPlan(DebtAccount debtAccount, String outputMimeType) {
-        return apply(dp -> dp.printDebtAccountPaymentPlan(debtAccount,outputMimeType));
+        return apply(dp -> dp.printDebtAccountPaymentPlan(debtAccount, outputMimeType));
     }
 
     public static byte[] printDebitNotesPaymentPlan(DebtAccount debtAccount, List<DebitNote> documents, String outputMimeType) {
