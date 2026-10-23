@@ -57,19 +57,18 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import com.qubit.terra.framework.services.ServiceProvider;
-import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
-import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.FiscalMonth;
 import org.fenixedu.treasury.domain.FiscalYear;
 import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
+
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 
 import pt.ist.fenixframework.FenixFramework;
 

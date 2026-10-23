@@ -63,9 +63,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.servlet.http.HttpSession;
-
-import com.google.common.base.Strings;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.onlinepaymentsgateway.api.DigitalPlatformResultBean;
@@ -90,17 +87,26 @@ import org.fenixedu.treasury.dto.InstallmentPaymenPlanBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.forwardpayments.ForwardPaymentStatusBean;
 import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
-import org.fenixedu.treasury.services.integration.forwardpayments.payline.*;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.Address;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.Buyer;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.Details;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.DoWebPaymentRequest;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.DoWebPaymentResponse;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.GetWebPaymentDetailsRequest;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.GetWebPaymentDetailsResponse;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.Order;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.OrderDetail;
+import org.fenixedu.treasury.services.integration.forwardpayments.payline.Payment;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
-
-import com.google.common.collect.Lists;
-
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+
+import jakarta.servlet.http.HttpSession;
 import pt.ist.fenixWebFramework.servlets.filters.contentRewrite.GenericChecksumRewriter;
 import pt.ist.fenixframework.Atomic;
 
@@ -497,8 +503,8 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
             // the parsed date does not have timezone information, but the parsed time must be in the
             // UTC timezone, because the original date in text is in UTC, make the result of parseDateTime as UTC,
             // but without changing the time
-            DateTime authorizationDate = DATE_TIME_PATTERN.parseDateTime(response.getAuthorization().getDate())
-                    .withZoneRetainFields(DateTimeZone.UTC);
+            DateTime authorizationDate =
+                    DATE_TIME_PATTERN.parseDateTime(response.getAuthorization().getDate()).withZoneRetainFields(DateTimeZone.UTC);
             result.setAuthorizationDate(authorizationDate);
         }
 
@@ -516,8 +522,8 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
             // the parsed date does not have timezone information, but the parsed time must be in the
             // UTC timezone, because the original date in text is in UTC, make the result of parseDateTime as UTC,
             // but without changing the time
-            DateTime transactionDate = DATE_TIME_PATTERN.parseDateTime(response.getTransaction().getDate())
-                    .withZoneRetainFields(DateTimeZone.UTC);
+            DateTime transactionDate =
+                    DATE_TIME_PATTERN.parseDateTime(response.getTransaction().getDate()).withZoneRetainFields(DateTimeZone.UTC);
             result.setTransactionDate(transactionDate);
         }
 

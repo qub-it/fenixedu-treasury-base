@@ -62,10 +62,9 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.PaymentMethod;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 
 import org.fenixedu.treasury.util.TreasuryConstants;
+
 import pt.ist.fenixframework.FenixFramework;
 
 public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPaymentMode_Base {
@@ -89,8 +88,8 @@ public class DigitalPaymentPlatformPaymentMode extends DigitalPaymentPlatformPay
         setPaymentMethod(paymentMethod);
         setActive(true);
 
-        setPaymentModeOrder(!orderedPaymentModesList.isEmpty() ? orderedPaymentModesList.get(orderedPaymentModesList.size() - 1)
-                .getPaymentModeOrder() + 1 : 1);
+        setPaymentModeOrder(!orderedPaymentModesList.isEmpty() ?
+                orderedPaymentModesList.get(orderedPaymentModesList.size() - 1).getPaymentModeOrder() + 1 : 1);
 
         getDigitalPaymentPlatform().orderPaymentModes();
 

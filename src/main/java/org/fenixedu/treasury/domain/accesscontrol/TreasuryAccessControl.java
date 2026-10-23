@@ -59,12 +59,10 @@ import org.fenixedu.treasury.domain.FinantialEntity;
 import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.services.accesscontrol.spi.ITreasuryAccessControlExtension;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
+import org.fenixedu.treasury.util.TreasuryConstants;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.fenixedu.treasury.util.TreasuryConstants;
 
 public class TreasuryAccessControl {
 

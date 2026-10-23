@@ -90,7 +90,6 @@ import org.fenixedu.treasury.dto.SettlementCreditEntryBean;
 import org.fenixedu.treasury.dto.SettlementDebitEntryBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean;
 import org.fenixedu.treasury.dto.SettlementNoteBean.PaymentEntryBean;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
 import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
@@ -180,9 +179,9 @@ public class SettlementNote extends SettlementNote_Base {
             throw new TreasuryDomainException("error.SettlementNote.invalid.payment.date.after.document.date");
         }
 
-        if (!getDocumentNumberSeries().getFinantialDocumentType().getType()
-                .equals(FinantialDocumentTypeEnum.SETTLEMENT_NOTE) && !getDocumentNumberSeries().getFinantialDocumentType()
-                .getType().equals(FinantialDocumentTypeEnum.REIMBURSEMENT_NOTE)) {
+        if (!getDocumentNumberSeries().getFinantialDocumentType().getType().equals(FinantialDocumentTypeEnum.SETTLEMENT_NOTE)
+                && !getDocumentNumberSeries().getFinantialDocumentType().getType()
+                .equals(FinantialDocumentTypeEnum.REIMBURSEMENT_NOTE)) {
             throw new TreasuryDomainException("error.FinantialDocument.finantialDocumentType.invalid");
         }
 
@@ -236,7 +235,8 @@ public class SettlementNote extends SettlementNote_Base {
 
         // 2026-09-14 (#qubIT-Fenix-9231)
         // Check financial entity consistency
-        if (getAdvancedPaymentCreditNote() != null && getAdvancedPaymentCreditNote().getFinantialEntity() != getFinantialEntity()) {
+        if (getAdvancedPaymentCreditNote() != null
+                && getAdvancedPaymentCreditNote().getFinantialEntity() != getFinantialEntity()) {
             throw new TreasuryDomainException(
                     "error.SettlementNote.checkRules.finantialEntity.advancedPaymentCreditNote.mismatch");
         }
@@ -479,13 +479,13 @@ public class SettlementNote extends SettlementNote_Base {
 
             DebitEntry debitEntry = debitEntryBean.getDebitEntry();
 
-            if (splitDebitEntriesWithSettledAmount && (debitEntry.getFinantialDocument() == null || debitEntry.getFinantialDocument()
-                    .isPreparing()) && TreasuryConstants.isLessThan(debitEntryBean.getSettledAmount(),
-                    debitEntry.getOpenAmount())) {
+            if (splitDebitEntriesWithSettledAmount && (debitEntry.getFinantialDocument() == null
+                    || debitEntry.getFinantialDocument().isPreparing()) && TreasuryConstants.isLessThan(
+                    debitEntryBean.getSettledAmount(), debitEntry.getOpenAmount())) {
                 debitEntry.splitDebitEntry(debitEntry.getOpenAmount().subtract(debitEntryBean.getSettledAmount()),
                         "partial payment (system)");
-            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument() != null && debitEntry.getFinantialDocument()
-                    .isPreparing()) {
+            } else if (splitDebitEntriesWithSettledAmount && debitEntry.getFinantialDocument() != null
+                    && debitEntry.getFinantialDocument().isPreparing()) {
                 // 2024-08-07 (#qubIT-Fenix-5710)
                 //
                 // Check if there are other debit entries, which are not being settled 
@@ -767,8 +767,8 @@ public class SettlementNote extends SettlementNote_Base {
             // Mark this settlement note if there is at least one invoice exported in legacy
             // ERP
             boolean atLeastOneInvoiceEntryExportedInLegacyERP =
-                    getSettlemetEntries().filter(s -> s.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP())
-                            .count() > 0;
+                    getSettlemetEntries().filter(s -> s.getInvoiceEntry().getFinantialDocument().isExportedInLegacyERP()).count()
+                            > 0;
 
             if (atLeastOneInvoiceEntryExportedInLegacyERP) {
                 if (!isExportedInLegacyERP()) {
@@ -881,8 +881,8 @@ public class SettlementNote extends SettlementNote_Base {
         if (!getReferencedCustomers().isEmpty()) {
             final Customer payorCustomer = getReferencedCustomers().iterator().next();
             if (DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer).isPresent()) {
-                if (DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer)
-                        .get() != getDebtAccount()) {
+                if (DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer).get()
+                        != getDebtAccount()) {
                     payorDebtAccount =
                             DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer).get();
                 }
@@ -891,11 +891,11 @@ public class SettlementNote extends SettlementNote_Base {
 
         // TODO: Resolve the issue of converting the VAT
         // Find the highest vat amount settled
-//        InvoiceEntry invoiceEntry = getSettlemetEntries().map(se -> se.getInvoiceEntry())
-//                .sorted((v1, v2) -> -1 * v1.getVat().getTaxRate().compareTo(v2.getVat().getTaxRate())).findFirst().get();
-//
-//        BigDecimal amount = Currency
-//                .getValueWithScale(TreasuryConstants.divide(availableAmount, BigDecimal.ONE.add(rationalVatRate(invoiceEntry))));
+        //        InvoiceEntry invoiceEntry = getSettlemetEntries().map(se -> se.getInvoiceEntry())
+        //                .sorted((v1, v2) -> -1 * v1.getVat().getTaxRate().compareTo(v2.getVat().getTaxRate())).findFirst().get();
+        //
+        //        BigDecimal amount = Currency
+        //                .getValueWithScale(TreasuryConstants.divide(availableAmount, BigDecimal.ONE.add(rationalVatRate(invoiceEntry))));
         BigDecimal amount = availableAmount;
 
         DocumentNumberSeries documentNumberSeries =
@@ -935,8 +935,8 @@ public class SettlementNote extends SettlementNote_Base {
         if (!getReferencedCustomers().isEmpty()) {
             final Customer payorCustomer = getReferencedCustomers().iterator().next();
             if (DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer).isPresent()) {
-                if (DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer)
-                        .get() != getDebtAccount()) {
+                if (DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer).get()
+                        != getDebtAccount()) {
                     payorDebtAccount =
                             DebtAccount.findUnique(this.getDebtAccount().getFinantialInstitution(), payorCustomer).get();
                 }
@@ -1067,8 +1067,9 @@ public class SettlementNote extends SettlementNote_Base {
 
         SettlementNote settlementNote =
                 SettlementNote.create(copy.getFinantialEntity(), copy.getDebtAccount(), copy.getDocNumSeries(), documentDate,
-                        copy.getDate(), copy.getOriginDocumentNumber(), !Strings.isNullOrEmpty(
-                                copy.getFinantialTransactionReference()) ? copy.getFinantialTransactionReferenceYear() + "/" + copy.getFinantialTransactionReference() : "");
+                        copy.getDate(), copy.getOriginDocumentNumber(),
+                        !Strings.isNullOrEmpty(copy.getFinantialTransactionReference()) ?
+                                copy.getFinantialTransactionReferenceYear() + "/" + copy.getFinantialTransactionReference() : "");
 
         for (ISettlementInvoiceEntryBean virtualbean : copy.getVirtualDebitEntries()) {
             if (virtualbean.isIncluded() && virtualbean.getVirtualPaymentEntryHandler() != null) {

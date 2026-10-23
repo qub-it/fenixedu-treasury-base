@@ -52,70 +52,17 @@
  */
 package org.fenixedu.treasury.services.integration;
 
-import java.io.InputStream;
-import java.util.Locale;
 import java.util.Set;
 
-import jakarta.servlet.http.HttpSession;
-
-import org.fenixedu.bennu.io.domain.IGenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.treasury.domain.Customer;
-import org.fenixedu.treasury.domain.FinantialEntity;
-import org.fenixedu.treasury.domain.FinantialInstitution;
 import org.fenixedu.treasury.domain.Product;
 import org.fenixedu.treasury.domain.document.FinantialDocument;
-import org.fenixedu.treasury.domain.document.SettlementNote;
-import org.fenixedu.treasury.domain.forwardpayments.ForwardPaymentRequest;
-import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineConfiguration;
-import org.fenixedu.treasury.domain.forwardpayments.payline.PaylineWebServiceResponse;
 import org.fenixedu.treasury.domain.integration.ERPConfiguration;
-import org.fenixedu.treasury.services.integration.erp.IERPExternalService;
 import org.fenixedu.treasury.services.integration.erp.ISaftExporterConfiguration;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.Partial;
 
-import pt.ist.fenixframework.DomainObject;
-
 public interface ITreasuryPlatformDependentServices {
-
-
-    /* File */
-
-    byte[] getFileContent(IGenericFile genericFile);
-
-    long getFileSize(IGenericFile genericFile);
-
-    String getFilename(IGenericFile genericFile);
-
-    InputStream getFileStream(IGenericFile genericFile);
-
-    DateTime getFileCreationDate(IGenericFile genericFile);
-
-    String getFileContentType(IGenericFile iGenericFile);
-
-    void createFile(final IGenericFile genericFile, final String fileName, final String contentType, final byte[] content);
-
-    void deleteFile(final IGenericFile genericFile);
-
-    /* File */
-
-    byte[] getFileContent(String fileId);
-
-    long getFileSize(String fileId);
-
-    String getFilename(String fileId);
-
-    InputStream getFileStream(String fileId);
-
-    DateTime getFileCreationDate(String fileId);
-
-    String getFileContentType(String fileId);
-
-    String createFile(String fileName, String contentType, byte[] content);
-
-    void deleteFile(String fileId);
 
     /* Bundles */
 

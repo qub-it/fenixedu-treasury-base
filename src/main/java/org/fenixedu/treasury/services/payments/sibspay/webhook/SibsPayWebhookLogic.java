@@ -1,5 +1,22 @@
 package org.fenixedu.treasury.services.payments.sibspay.webhook;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.core.domain.User;
@@ -13,8 +30,6 @@ import org.fenixedu.treasury.domain.payments.PaymentTransaction;
 import org.fenixedu.treasury.domain.sibspay.MbwayMandate;
 import org.fenixedu.treasury.domain.sibspay.SibsPayPlatform;
 import org.fenixedu.treasury.domain.sibspaymentsgateway.MbwayRequest;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.payments.sibspay.SibsPayAPIService;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotification;
 import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotificationResponse;
@@ -22,26 +37,11 @@ import org.fenixedu.treasury.services.payments.sibspay.model.SibsPayWebhookNotif
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.FenixFramework;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.FenixFramework;
 
 public class SibsPayWebhookLogic {
     private static final String PROVIDER_NAME = "BC";
@@ -282,8 +282,8 @@ public class SibsPayWebhookLogic {
                 // Mark this notification as duplicate and skip processing
                 FenixFramework.atomic(() -> this.log.markAsDuplicatedTransaction());
 
-                logger.debug(
-                        "The transaction is duplicate. Nothing to do, return: " + this.webhookNotificationWrapper.getTransactionId());
+                logger.debug("The transaction is duplicate. Nothing to do, return: "
+                        + this.webhookNotificationWrapper.getTransactionId());
 
                 return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
             }
@@ -301,7 +301,8 @@ public class SibsPayWebhookLogic {
             // Another case is a different payment made by the customer, with the same reference code.
             //
             // In this case the payment must be allowed to be processed
-            if (!(paymentRequest instanceof SibsPaymentRequest) && !paymentRequest.isInCreatedState() && !paymentRequest.isInRequestedState()) {
+            if (!(paymentRequest instanceof SibsPaymentRequest) && !paymentRequest.isInCreatedState()
+                    && !paymentRequest.isInRequestedState()) {
                 throw new RuntimeException(
                         "The notification is a successful payment but the paymentRequest is already processed or annuled. Please check");
             }
@@ -314,8 +315,8 @@ public class SibsPayWebhookLogic {
 
         if (this.webhookNotificationWrapper.isPending()) {
             // Transaction is pending, ignore by returnig 200
-            logger.debug(
-                    "The notification is pending status. Nothing to do, return...: " + this.webhookNotificationWrapper.getTransactionId());
+            logger.debug("The notification is pending status. Nothing to do, return...: "
+                    + this.webhookNotificationWrapper.getTransactionId());
 
             return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         } else if (this.webhookNotificationWrapper.isPaid()) {
@@ -334,8 +335,8 @@ public class SibsPayWebhookLogic {
 
             throw new RuntimeException("unknown payment request type");
         } else if (this.webhookNotificationWrapper.isExpired() || this.webhookNotificationWrapper.isDeclined()) {
-            logger.debug(
-                    "The notification is expired or declined. Reject payment request...: " + webhookNotificationWrapper.getTransactionId());
+            logger.debug("The notification is expired or declined. Reject payment request...: "
+                    + webhookNotificationWrapper.getTransactionId());
 
             FenixFramework.atomic(
                     () -> this.configurationToUse.rejectRequest(paymentRequest, this.log, this.webhookNotificationWrapper));
@@ -343,8 +344,8 @@ public class SibsPayWebhookLogic {
             return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
         }
 
-        logger.info(
-                "Unknown state, nothing to do, return with successful response: " + webhookNotificationWrapper.getTransactionId());
+        logger.info("Unknown state, nothing to do, return with successful response: "
+                + webhookNotificationWrapper.getTransactionId());
 
         return Response.ok(response(this.webhookNotificationWrapper), MediaType.APPLICATION_JSON).build();
     }
@@ -384,7 +385,8 @@ public class SibsPayWebhookLogic {
     }
 
     private boolean isMandateActionStatusRefusedOrRejected() {
-        return this.webhookNotificationWrapper.isMandateActionStatusRejected() || this.webhookNotificationWrapper.isMandateActionStatusRefused();
+        return this.webhookNotificationWrapper.isMandateActionStatusRejected()
+                || this.webhookNotificationWrapper.isMandateActionStatusRefused();
     }
 
     private boolean isIsMandateActionStatusSuccess() {

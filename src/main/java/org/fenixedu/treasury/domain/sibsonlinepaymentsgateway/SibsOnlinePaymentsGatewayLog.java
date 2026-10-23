@@ -57,19 +57,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.qubit.terra.framework.services.ServiceProvider;
-import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
-import com.qubit.terra.framework.services.fileSupport.FileManager;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fenixedu.treasury.domain.debt.DebtAccount;
 import org.fenixedu.treasury.domain.document.SettlementNote;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.domain.payments.PaymentRequestLog;
-import org.fenixedu.treasury.services.integration.ITreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
+import com.qubit.terra.framework.services.ServiceProvider;
+import com.qubit.terra.framework.services.fileSupport.FileDescriptor;
+import com.qubit.terra.framework.services.fileSupport.FileManager;
 
 import pt.ist.fenixframework.FenixFramework;
 
@@ -158,7 +156,8 @@ public class SibsOnlinePaymentsGatewayLog extends SibsOnlinePaymentsGatewayLog_B
         if (requestPayload != null) {
             String fileName = String.format("sibsOnlinePaymentsGatewayLog-requestPayload-%s.txt", getExternalId());
             byte[] content = requestPayload.getBytes();
-            FileDescriptor fileDescriptor = fileManager.createFile(fileName, content.length, PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, content);
+            FileDescriptor fileDescriptor =
+                    fileManager.createFile(fileName, content.length, PaymentRequestLog.OCTECT_STREAM_CONTENT_TYPE, content);
 
             setRequestPayloadFileId(fileDescriptor.getId());
         }
