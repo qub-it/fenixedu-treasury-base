@@ -1,3 +1,4 @@
+16.1.1 (26-10-2026)
 16.1.0 (23-10-2026)
 - Refactor: Mark DocumentPrinter as deprecated [#qubIT-Fenix-9572]
 - Refactor: Remove methods related to files management in ITreasuryPlatformDependentServices [#qubIT-Fenix-8024]
