@@ -107,7 +107,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import jakarta.servlet.http.HttpSession;
-import pt.ist.fenixWebFramework.servlets.filters.contentRewrite.GenericChecksumRewriter;
 import pt.ist.fenixframework.Atomic;
 
 public class PaylineConfiguration extends PaylineConfiguration_Base implements IForwardPaymentPlatformService {
@@ -278,15 +277,6 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
                 forwardPayment.getReturnForwardPaymentUrlChecksum());
     }
 
-    private void saveReturnUrlChecksum(ForwardPaymentRequest forwardPayment, String returnControllerURL, HttpSession session) {
-        final String returnUrlToChecksum =
-                String.format("%s%s/%s", TreasurySettings.getInstance().getForwardPaymentReturnDefaultURL(), returnControllerURL,
-                        forwardPayment.getExternalId());
-
-        String urlChecksum = GenericChecksumRewriter.calculateChecksum(returnUrlToChecksum, session);
-        forwardPayment.setReturnForwardPaymentUrlChecksum(urlChecksum);
-    }
-
     public static String getCancelURL(final ForwardPaymentRequest forwardPayment, final String returnControllerURL) {
         return String.format("%s%s/%s/%s/%s", TreasurySettings.getInstance().getForwardPaymentReturnDefaultURL(),
                 returnControllerURL, forwardPayment.getExternalId(), ACTION_CANCEL_URL,
@@ -312,16 +302,9 @@ public class PaylineConfiguration extends PaylineConfiguration_Base implements I
 
         // The return url can be different between Spring and OMNIS, 
         // and session is needed and not needed respectively
-        if (session != null) {
-            // Spring
-            saveReturnUrlChecksum(forwardPayment, returnControllerURL, session);
-            returnUrl = PaylineConfiguration.getReturnURL(forwardPayment, returnControllerURL);
-            cancelUrl = PaylineConfiguration.getCancelURL(forwardPayment, returnControllerURL);
-        } else {
-            // OMNIS
-            returnUrl = forwardPayment.getForwardPaymentSuccessUrl();
-            cancelUrl = forwardPayment.getForwardPaymentInsuccessUrl();
-        }
+        // OMNIS
+        returnUrl = forwardPayment.getForwardPaymentSuccessUrl();
+        cancelUrl = forwardPayment.getForwardPaymentInsuccessUrl();
 
         PaylineWebServiceResponse response = paylineDoWebPayment(forwardPayment, returnUrl, cancelUrl);
 
