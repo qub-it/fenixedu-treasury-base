@@ -103,6 +103,9 @@ public class TreasuryBootstrapper {
         initializeProductGroup();
         initializeVatType();
         initializeVatExemption(countryCode);
+
+        associateProductGroupWithVatTypes();
+
         initializePaymentMethod();
         initializeCurrency();
         initializeFinantialDocumentType();
@@ -114,6 +117,14 @@ public class TreasuryBootstrapper {
 
         // On create of finantialInstitution will be called TreasuryBootstrap.bootstrapFinantialInstitution(FinantialInstitution finantialInstitution)
         initializeFinantialInstituition(institutionName, institutionInitials, countryCode);
+    }
+
+    private static void associateProductGroupWithVatTypes() {
+        ProductGroup.findByCode("EMOLUMENT").addVatTypes(VatType.findByCode("ISE"));
+        ProductGroup.findByCode("OTHER").addVatTypes(VatType.findByCode("RED"));
+        ProductGroup.findByCode("OTHER").addVatTypes(VatType.findByCode("INT"));
+        ProductGroup.findByCode("OTHER").addVatTypes(VatType.findByCode("NOR"));
+        ProductGroup.findByCode("OTHER").addVatTypes(VatType.findByCode("ISE"));
     }
 
     private static void initializeFiscalYear(FinantialInstitution finantialInstitution) {
@@ -136,9 +147,10 @@ public class TreasuryBootstrapper {
         LocalizedString installmentDescriptionFormat =
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.paymentPlan.DESCRIPTION");
 
-        PaymentPlanConfigurator configurator = new PaymentPlanConfigurator(paymentPlanConfiguratorName,
-                installmentDescriptionFormat, Boolean.FALSE, AddictionsCalculeTypeEnum.AFTER_DEBIT_ENTRY, null,
-                Product.findUniqueByCode("PAYMENT_PLAN_EMOL").get(), numberGenerator, true);
+        PaymentPlanConfigurator configurator =
+                new PaymentPlanConfigurator(paymentPlanConfiguratorName, installmentDescriptionFormat, Boolean.FALSE,
+                        AddictionsCalculeTypeEnum.AFTER_DEBIT_ENTRY, null, Product.findUniqueByCode("PAYMENT_PLAN_EMOL").get(),
+                        numberGenerator, true);
         configurator.setApplyDebitEntryInterest(Boolean.TRUE);
         configurator.setCanIncreaseInterestAmount(Boolean.FALSE);
         configurator.setActive(Boolean.TRUE);
@@ -179,8 +191,9 @@ public class TreasuryBootstrapper {
 
     private static void initializeVatExemption(String countryCode) {
         if (COUNTRY_PT.equals(countryCode)) {
-            String[] codes = new String[] { "M01", "M02", "M04", "M05", "M06", "M07", "M09", "M10", "M11", "M12", "M13", "M14",
-                    "M15", "M16", "M19", "M20", "M21", "M25", "M30", "M31", "M32", "M33", "M40", "M41", "M42", "M43", "M99" };
+            String[] codes =
+                    new String[] { "M01", "M02", "M04", "M05", "M06", "M07", "M09", "M10", "M11", "M12", "M13", "M14", "M15",
+                            "M16", "M19", "M20", "M21", "M25", "M30", "M31", "M32", "M33", "M40", "M41", "M42", "M43", "M99" };
 
             for (String code : codes) {
                 if (code.equals("M01")) {
@@ -326,8 +339,8 @@ public class TreasuryBootstrapper {
 
     private static void initializeGlobalInterestRate() {
         if (!GlobalInterestRateType.findUnique().isPresent()) {
-            GlobalInterestRateType globalInterestRateType = GlobalInterestRateType
-                    .create(TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
+            GlobalInterestRateType globalInterestRateType = GlobalInterestRateType.create(
+                    TreasuryConstants.treasuryBundleI18N("label.GlobalInterestRateType.default.description"));
             globalInterestRateType.activate();
             globalInterestRateType.makeDefault();
         }
@@ -335,8 +348,8 @@ public class TreasuryBootstrapper {
         GlobalInterestRateType globalInterestRateType = GlobalInterestRateType.findUnique().get();
 
         if (!FixedAmountInterestRateType.findUnique().isPresent()) {
-            FixedAmountInterestRateType fixedAmountInterestRateType = FixedAmountInterestRateType
-                    .create(TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description"));
+            FixedAmountInterestRateType fixedAmountInterestRateType = FixedAmountInterestRateType.create(
+                    TreasuryConstants.treasuryBundleI18N("label.FixedAmountInterestRateType.default.description"));
             fixedAmountInterestRateType.activate();
         }
 
@@ -365,18 +378,15 @@ public class TreasuryBootstrapper {
     private static void initializeReimbursementProcessStatusType() {
         ReimbursementProcessStatusType.create("PENDING",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.PENDING")
-                        .getContent(Locale.getDefault()),
-                1, true, false, false);
+                        .getContent(Locale.getDefault()), 1, true, false, false);
 
         ReimbursementProcessStatusType.create("ANNULED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.ANNULED")
-                        .getContent(Locale.getDefault()),
-                2, false, true, true);
+                        .getContent(Locale.getDefault()), 2, false, true, true);
 
         ReimbursementProcessStatusType.create("CONCLUDED",
                 TreasuryConstants.treasuryBundleI18N("TreasuryBootstrapper.ReimbursementProcessStatusType.CONCLUDED")
-                        .getContent(Locale.getDefault()),
-                3, false, true, false);
+                        .getContent(Locale.getDefault()), 3, false, true, false);
     }
 
     private static FinantialInstitution initializeFinantialInstituition(String institutionName, String institutionInitials,
@@ -395,8 +405,9 @@ public class TreasuryBootstrapper {
         String locality = null;
         String zipCode = null;
 
-        FinantialInstitution institution = FinantialInstitution.create(fiscalCountryRegion, currency, code, fiscalNumber,
-                companyId, name, companyName, address, country, district, municipality, locality, zipCode);
+        FinantialInstitution institution =
+                FinantialInstitution.create(fiscalCountryRegion, currency, code, fiscalNumber, companyId, name, companyName,
+                        address, country, district, municipality, locality, zipCode);
 
         institution.setSplitCreditEntriesWithSettledAmount(true);
         institution.setSplitDebitEntriesWithSettledAmount(false);
