@@ -1,5 +1,6 @@
 - Refactor: Initialize ProductGroup with proper VatType [#qubIT-Fenix-9889]
 - Refactor: Unit tests for method DebitNote#anullAndCopyDebitNote [#qubIT-Fenix-9892]
+- Refactor: Add method to create a copy of DebitEntry [#qubIT-Fenix-9892]
 
 16.1.2 (04-11-2026)
 - Refactor: Remove references of GenericChecksumRewriter [#qubIT-Fenix-9499]

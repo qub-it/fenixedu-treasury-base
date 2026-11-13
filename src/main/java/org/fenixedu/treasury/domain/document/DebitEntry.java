@@ -54,7 +54,18 @@ package org.fenixedu.treasury.domain.document;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -86,7 +97,6 @@ import org.fenixedu.treasury.domain.settings.TreasurySettings;
 import org.fenixedu.treasury.domain.tariff.InterestRate;
 import org.fenixedu.treasury.domain.treasurydebtprocess.TreasuryDebtProcessMainService;
 import org.fenixedu.treasury.dto.InterestRateBean;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.services.integration.erp.sap.SAPExporter;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -146,8 +156,8 @@ public class DebitEntry extends DebitEntry_Base {
         boolean m2IsEmolument = m2.getEmolumentPaymentPlan() != null && m2.getEmolumentPaymentPlan().getState().isOpen();
 
         if (m1IsInterest && m2IsInterest) {
-            return (m1.getDebitEntry().getDueDate().compareTo(m2.getDebitEntry().getDueDate()) * 100) + (m1.getDueDate()
-                    .compareTo(m2.getDueDate()) * 10) + m1.getExternalId().compareTo(m2.getExternalId());
+            return (m1.getDebitEntry().getDueDate().compareTo(m2.getDebitEntry().getDueDate()) * 100) + (
+                    m1.getDueDate().compareTo(m2.getDueDate()) * 10) + m1.getExternalId().compareTo(m2.getExternalId());
         }
         if (m1IsInterest && !m2IsInterest) {
             return -1;
@@ -164,8 +174,8 @@ public class DebitEntry extends DebitEntry_Base {
         if (m2IsInterest || m2IsEmolument) {
             return 1;
         }
-        return (m1.getDueDate().compareTo(m2.getDueDate()) * 100) + (m1.getDescription()
-                .compareTo(m2.getDescription()) * 10) + m1.getExternalId().compareTo(m2.getExternalId());
+        return (m1.getDueDate().compareTo(m2.getDueDate()) * 100) + (m1.getDescription().compareTo(m2.getDescription()) * 10)
+                + m1.getExternalId().compareTo(m2.getExternalId());
     };
 
     public static Comparator<DebitEntry> COMPARE_BY_EXTERNAL_ID = (o1, o2) -> o1.getExternalId().compareTo(o2.getExternalId());
@@ -340,7 +350,7 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.finantialDocument.not.debit.entry.type");
         }
 
-        if(getFinantialDocument() != null && getFinantialDocument().getFinantialEntity() != getFinantialEntity()) {
+        if (getFinantialDocument() != null && getFinantialDocument().getFinantialEntity() != getFinantialEntity()) {
             throw new TreasuryDomainException("error.DebitEntry.finantialEntity.finantialDocument.mismatch");
         }
 
@@ -432,8 +442,9 @@ public class DebitEntry extends DebitEntry_Base {
 
         LocalDate oldDueDate = getDueDate();
 
-        if(!dueDate.isEqual(oldDueDate)) {
-            DebitEntryChangeAmountsLog.log(this, "edit", TreasuryConstants.treasuryBundle("label.DebitEntry.edit.change.due.date"));
+        if (!dueDate.isEqual(oldDueDate)) {
+            DebitEntryChangeAmountsLog.log(this, "edit",
+                    TreasuryConstants.treasuryBundle("label.DebitEntry.edit.change.due.date"));
         }
 
         this.setDescription(description);
@@ -442,7 +453,6 @@ public class DebitEntry extends DebitEntry_Base {
 
         this.setAcademicalActBlockingSuspension(academicalActBlockingSuspension);
         this.setBlockAcademicActsOnDebt(blockAcademicActsOnDebt);
-
 
         checkRules();
     }
@@ -695,8 +705,8 @@ public class DebitEntry extends DebitEntry_Base {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.creditEntry.is.annulled");
         }
 
-        if (!isInvoiceRegistrationByTreasuryCertification && !creditEntry.getFinantialDocument()
-                .isPreparing() && !isToCloseCreditNoteWhenCreated) {
+        if (!isInvoiceRegistrationByTreasuryCertification && !creditEntry.getFinantialDocument().isPreparing()
+                && !isToCloseCreditNoteWhenCreated) {
             return;
         }
 
@@ -710,8 +720,8 @@ public class DebitEntry extends DebitEntry_Base {
             return;
         }
 
-        if (splitCreditEntriesWithSettledAmount && TreasuryConstants.isLessThan(minimumOpenAmount,
-                creditEntry.getOpenAmount()) && creditEntry.getFinantialDocument().isPreparing()) {
+        if (splitCreditEntriesWithSettledAmount && TreasuryConstants.isLessThan(minimumOpenAmount, creditEntry.getOpenAmount())
+                && creditEntry.getFinantialDocument().isPreparing()) {
             // split credit entry
             creditEntry.splitCreditEntry(creditEntry.getOpenAmount().subtract(minimumOpenAmount));
         }
@@ -745,18 +755,18 @@ public class DebitEntry extends DebitEntry_Base {
 
         InstallmentSettlementEntry.settleInstallmentEntriesOfDebitEntry(debitSettlementEntry);
 
-        if (TreasurySettings.getInstance()
-                .isRestrictPaymentMixingLegacyInvoices() && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument()
-                .isExportedInLegacyERP()) {
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
+                && getFinantialDocument().isExportedInLegacyERP() != creditEntry.getFinantialDocument().isExportedInLegacyERP()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.exportedInLegacyERP.not.same");
         }
 
-        if (((Invoice) getFinantialDocument()).getPayorDebtAccount() != ((Invoice) getFinantialDocument()).getPayorDebtAccount()) {
+        if (((Invoice) getFinantialDocument()).getPayorDebtAccount()
+                != ((Invoice) getFinantialDocument()).getPayorDebtAccount()) {
             throw new TreasuryDomainException("error.DebitEntry.closeCreditEntryIfPossible.payorDebtAccount.not.same");
         }
 
-        if (TreasurySettings.getInstance()
-                .isRestrictPaymentMixingLegacyInvoices() && getFinantialDocument().isExportedInLegacyERP()) {
+        if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
+                && getFinantialDocument().isExportedInLegacyERP()) {
             settlementNote.setExportedInLegacyERP(true);
             settlementNote.setCloseDate(SAPExporter.ERP_INTEGRATION_START_DATE.minusSeconds(1));
         }
@@ -765,8 +775,8 @@ public class DebitEntry extends DebitEntry_Base {
     }
 
     public boolean isExportedInERPAndInRestrictedPaymentMixingLegacyInvoices() {
-        return TreasurySettings.getInstance()
-                .isRestrictPaymentMixingLegacyInvoices() && getFinantialDocument() != null && getFinantialDocument().isExportedInLegacyERP();
+        return TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices() && getFinantialDocument() != null
+                && getFinantialDocument().isExportedInLegacyERP();
     }
 
     public BigDecimal getAmountInDebt(final LocalDate paymentDate) {
@@ -1095,7 +1105,8 @@ public class DebitEntry extends DebitEntry_Base {
         String degreeCode = getDegreeCode();
         String executionYear = getExecutionYearName();
 
-        return "{\"" + TreasuryEventKeys.DEGREE_CODE + "\":\"" + degreeCode + "\",\"" + TreasuryEventKeys.EXECUTION_YEAR + "\":\"" + executionYear + "\"}";
+        return "{\"" + TreasuryEventKeys.DEGREE_CODE + "\":\"" + degreeCode + "\",\"" + TreasuryEventKeys.EXECUTION_YEAR + "\":\""
+                + executionYear + "\"}";
     }
 
     public String getExecutionYearName() {
@@ -1318,13 +1329,12 @@ public class DebitEntry extends DebitEntry_Base {
         return getNetExemptedAmount().subtract(getCreditedNetExemptedAmount());
     }
 
-
     @Atomic
     // 2026-09-17 (#qubIT-Fenix-9414)
     //
     // The method has an odd name because replaces a deprecated method with proper name but this returns the CreditEntry
-    public CreditEntry creditDebitEntryWithCredit(BigDecimal netAmountForCredit, String reason, boolean closeWithOtherDebitEntriesOfDebitNote,
-            Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
+    public CreditEntry creditDebitEntryWithCredit(BigDecimal netAmountForCredit, String reason,
+            boolean closeWithOtherDebitEntriesOfDebitNote, Map<TreasuryExemption, BigDecimal> creditExemptionsMap) {
         if (isAnnulled()) {
             throw new TreasuryDomainException("error.DebitEntry.cannot.credit.is.already.annuled");
         }
@@ -1473,7 +1483,8 @@ public class DebitEntry extends DebitEntry_Base {
         return getPaymentRequestsSet().stream() //
                 .filter(p -> p instanceof SibsPaymentRequest) //
                 .map(SibsPaymentRequest.class::cast) //
-                .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED || p.getState() == PaymentReferenceCodeStateType.USED) //
+                .filter(p -> p.getState() == PaymentReferenceCodeStateType.UNUSED
+                        || p.getState() == PaymentReferenceCodeStateType.USED) //
                 .filter(p -> p.getExpiresDate() == null || !p.getExpiresDate().isBeforeNow()) //
                 .collect(Collectors.toSet());
     }
@@ -1762,6 +1773,25 @@ public class DebitEntry extends DebitEntry_Base {
                 .findFirst().map(DebitEntryChangeAmountsLog::getResponsible).orElse(null);
     }
 
+    public DebitEntry createCopy(DebitNote debitNoteToAssociate) {
+        if (debitNoteToAssociate != null && !debitNoteToAssociate.isPreparing()) {
+            throw new IllegalArgumentException("error.DebitEntry.createCopy.debitNoteToAssociate.is.not.preparing");
+        }
+
+        DebitEntry newDebitEntry = DebitEntry.create(getFinantialEntity(), getDebtAccount(), getTreasuryEvent(), getVat(),
+                getAmount().add(getNetExemptedAmount()), getDueDate(), getPropertiesMap(), getProduct(), getDescription(),
+                getQuantity(), getInterestRate(), getEntryDateTime(), isAcademicalActBlockingSuspension(),
+                isBlockAcademicActsOnDebt(), debitNoteToAssociate);
+
+        DebitEntry.applyAdditionalRelationConnectionsOfDebitEntry(this, newDebitEntry);
+
+        getTreasuryExemptionsSet().forEach(
+                treasuryExemption -> TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(),
+                        treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry));
+
+        return newDebitEntry;
+    }
+
     // @formatter:off
     /* ********
      * SERVICES
@@ -1825,19 +1855,19 @@ public class DebitEntry extends DebitEntry_Base {
         return findActive(treasuryEvent).map(d -> d.getOpenAmount()).reduce((x, y) -> x.add(y)).orElse(BigDecimal.ZERO);
     }
 
-//    @Deprecated
-//    // TODO 2023-12-28: Replace with the extended version of this method
-//    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
-//            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
-//            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
-//
-//        if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
-//            throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
-//        }
-//
-//        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
-//                interestRate, entryDateTime, false, false, Optional.empty());
-//    }
+    //    @Deprecated
+    //    // TODO 2023-12-28: Replace with the extended version of this method
+    //    public static DebitEntry create(Optional<DebitNote> debitNote, DebtAccount debtAccount, TreasuryEvent treasuryEvent, Vat vat,
+    //            BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,
+    //            BigDecimal quantity, InterestRate interestRate, DateTime entryDateTime) {
+    //
+    //        if (!isDebitEntryCreationAllowed(debtAccount, debitNote, product)) {
+    //            throw new TreasuryDomainException("error.DebitEntry.customer.not.active");
+    //        }
+    //
+    //        return _create(debitNote, debtAccount, treasuryEvent, vat, amount, dueDate, propertiesMap, product, description, quantity,
+    //                interestRate, entryDateTime, false, false, Optional.empty());
+    //    }
 
     public static DebitEntry create(FinantialEntity finantialEntity, DebtAccount debtAccount, TreasuryEvent treasuryEvent,
             Vat vat, BigDecimal amount, LocalDate dueDate, Map<String, String> propertiesMap, Product product, String description,

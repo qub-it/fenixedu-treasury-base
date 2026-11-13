@@ -199,19 +199,19 @@ public class DebitNote extends DebitNote_Base {
         // VAT RECALCULATION
         //
         // TODO 2022-11-18: For now comment the following code, until we have a decision about this
-//        if (getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
-//            // Recalculate the vat rates for all debit entries
-//            // This is done to avoid the case where a debit note
-//            // is closed after some time of being created
-//            // and in the meantime the VAT rate changes
-//            getDebitEntriesSet().forEach(de -> {
-//                de.setVat(
-//                        Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime())
-//                                .get());
-//                de.setVatRate(null);
-//                de.recalculateAmountValues();
-//            });
-//        }
+        //        if (getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification()) {
+        //            // Recalculate the vat rates for all debit entries
+        //            // This is done to avoid the case where a debit note
+        //            // is closed after some time of being created
+        //            // and in the meantime the VAT rate changes
+        //            getDebitEntriesSet().forEach(de -> {
+        //                de.setVat(
+        //                        Vat.findActiveUnique(de.getVat().getVatType(), getDebtAccount().getFinantialInstitution(), new DateTime())
+        //                                .get());
+        //                de.setVatRate(null);
+        //                de.recalculateAmountValues();
+        //            });
+        //        }
 
         super.closeDocument(markDocumentToExport);
 
@@ -219,9 +219,9 @@ public class DebitNote extends DebitNote_Base {
     }
 
     public boolean isManuallyIssuedDocument() {
-        return Boolean.TRUE.equals(
-                getCertificationCopyFromCertifiedDocument()) && getCertificationOriginalDocumentInvoiceSourceBillingType() == InvoiceSourceBillingType.M && Boolean.TRUE.equals(
-                getCertificationOriginalDocumentManual());
+        return Boolean.TRUE.equals(getCertificationCopyFromCertifiedDocument())
+                && getCertificationOriginalDocumentInvoiceSourceBillingType() == InvoiceSourceBillingType.M
+                && Boolean.TRUE.equals(getCertificationOriginalDocumentManual());
     }
 
     private LocalDate maxDebitEntryDueDate() {
@@ -609,8 +609,8 @@ public class DebitNote extends DebitNote_Base {
 
                 interestsCreditEntry.setInternalComments(reason);
 
-                if (TreasurySettings.getInstance()
-                        .isRestrictPaymentMixingLegacyInvoices() && interestEntry.getFinantialDocument() != null && interestEntry.getFinantialDocument()
+                if (TreasurySettings.getInstance().isRestrictPaymentMixingLegacyInvoices()
+                        && interestEntry.getFinantialDocument() != null && interestEntry.getFinantialDocument()
                         .isExportedInLegacyERP()) {
                     interestsCreditEntry.getFinantialDocument().setExportedInLegacyERP(true);
                     interestsCreditEntry.getFinantialDocument()
@@ -680,7 +680,8 @@ public class DebitNote extends DebitNote_Base {
         boolean isInvoiceRegistrationByTreasuryCertification =
                 getDebtAccount().getFinantialInstitution().isInvoiceRegistrationByTreasuryCertification();
 
-        if (!creditNoteWithCreditedNetAmountOnDebitEntries.isDocumentEmpty() && isInvoiceRegistrationByTreasuryCertification && isToCloseCreditNoteWhenCreated) {
+        if (!creditNoteWithCreditedNetAmountOnDebitEntries.isDocumentEmpty() && isInvoiceRegistrationByTreasuryCertification
+                && isToCloseCreditNoteWhenCreated) {
             creditNoteWithCreditedNetAmountOnDebitEntries.closeDocument();
         }
 
@@ -871,23 +872,7 @@ public class DebitNote extends DebitNote_Base {
                         new LocalDate(), getOriginDocumentNumber(), Collections.emptyMap(), null, null);
 
         newDebitNote.setOriginDocumentNumber(getOriginDocumentNumber());
-        for (final FinantialDocumentEntry finantialDocumentEntry : getFinantialDocumentEntriesSet()) {
-            final DebitEntry debitEntry = (DebitEntry) finantialDocumentEntry;
-
-            DebitEntry newDebitEntry =
-                    DebitEntry.create(debitEntry.getFinantialEntity(), debitEntry.getDebtAccount(), debitEntry.getTreasuryEvent(),
-                            debitEntry.getVat(), debitEntry.getAmount().add(debitEntry.getNetExemptedAmount()),
-                            debitEntry.getDueDate(), debitEntry.getPropertiesMap(), debitEntry.getProduct(),
-                            debitEntry.getDescription(), debitEntry.getQuantity(), debitEntry.getInterestRate(),
-                            debitEntry.getEntryDateTime(), debitEntry.isAcademicalActBlockingSuspension(),
-                            debitEntry.isBlockAcademicActsOnDebt(), newDebitNote);
-
-            DebitEntry.applyAdditionalRelationConnectionsOfDebitEntry(debitEntry, newDebitEntry);
-
-            debitEntry.getTreasuryExemptionsSet().forEach(
-                    treasuryExemption -> TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(),
-                            treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry));
-        }
+        getDebitEntriesSet().forEach(de -> de.createCopy(newDebitNote));
 
         anullDebitNoteWithCreditNote(reason, false);
 
