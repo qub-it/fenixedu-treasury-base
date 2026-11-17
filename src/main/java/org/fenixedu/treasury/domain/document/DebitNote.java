@@ -909,12 +909,6 @@ public class DebitNote extends DebitNote_Base {
         return newDebitNote;
     }
 
-    private BigDecimal netAmountExemptedByCredits(final DebitEntry de) {
-        return de.getTreasuryExemptionsSet().stream().filter(TreasuryExemption::isExemptionByCreditEntry)
-                .filter(te -> !te.getCreditEntry().isAnnulled()).map(TreasuryExemption::getNetExemptedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
     @Atomic
     public void updateAllDueDates(LocalDate newDueDate) {
 
