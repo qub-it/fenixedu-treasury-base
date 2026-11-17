@@ -1,8 +1,8 @@
 package org.fenixedu.treasury.finantialdocuments.debitnote;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,6 +30,7 @@ import org.fenixedu.treasury.domain.document.DocumentNumberSeries;
 import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.document.FinantialDocumentType;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
+import org.fenixedu.treasury.domain.exemption.TreasuryExemption;
 import org.fenixedu.treasury.domain.exemption.TreasuryExemptionType;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
@@ -90,6 +91,8 @@ public class DebitNote_anullAndCopyDebitNote_Test {
                 copiedDebitNote.getPayorDebtAccount());
         assertSame("The copied debit note should belong to the same debt account", debitNote.getDebtAccount(),
                 copiedDebitNote.getDebtAccount());
+        assertEquals("The copied debit note should the same number of items", debitNote.getFinantialDocumentEntriesSet().size(),
+                copiedDebitNote.getFinantialDocumentEntriesSet().size());
     }
 
     @Test
@@ -118,11 +121,13 @@ public class DebitNote_anullAndCopyDebitNote_Test {
         DebitNote copiedDebitNote = debitNote.updatePayorDebtAccount(createPayorDebtAccount());
 
         Set<? extends DebitEntry> copiedEntries = copiedDebitNote.getDebitEntriesSet();
-        assertEquals("The copied debit note should have a copy of each debit entry", originalEntries.size(), copiedEntries.size());
+        assertEquals("The copied debit note should have a copy of each debit entry", originalEntries.size(),
+                copiedEntries.size());
 
         for (DebitEntry originalEntry : originalEntries) {
-            DebitEntry copiedEntry = copiedEntries.stream()
-                    .filter(e -> e.getDescription().equals(originalEntry.getDescription())).findFirst().orElse(null);
+            DebitEntry copiedEntry =
+                    copiedEntries.stream().filter(e -> e.getDescription().equals(originalEntry.getDescription())).findFirst()
+                            .orElse(null);
 
             assertNotNull("Debit entry " + originalEntry.getDescription() + " was not copied", copiedEntry);
             assertNotSame("The debit entry should be copied and not shared", originalEntry, copiedEntry);
@@ -175,7 +180,8 @@ public class DebitNote_anullAndCopyDebitNote_Test {
                 updatedDebitNote.getPayorDebtAccount());
         assertEquals("No extra debit note should be created", debitNotesBefore,
                 DebitNote.find(debitNote.getDebtAccount()).count());
-        assertEquals("The debit entries should be kept in the updated debit note", 1, updatedDebitNote.getDebitEntriesSet().size());
+        assertEquals("The debit entries should be kept in the updated debit note", 1,
+                updatedDebitNote.getDebitEntriesSet().size());
     }
 
     // ###################################################################################
@@ -213,6 +219,42 @@ public class DebitNote_anullAndCopyDebitNote_Test {
         assertEquals("error.DebitNote.updatePayorDebtAccount.payor.not.changed", exception.getKey());
     }
 
+    @Test
+    public void givenClosedDebitNoteWithExemptedDebitEntry_whenUpdatePayorDebtAccount_thenCopyKeepsTheTotalAmount() {
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+        DebitNote debitNote = createDebitNoteWithEntries(finantialEntity, "debt description");
+
+        DebitEntry debitEntry = debitNote.getDebitEntriesSet().iterator().next();
+        TreasuryExemptionType exemptionType = TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get();
+        TreasuryExemption.create(exemptionType, "exemption reason", new BigDecimal("100"), debitEntry);
+
+        debitNote.closeDocument();
+
+        BigDecimal originalTotalAmount = debitNote.getTotalAmount();
+
+        DebitNote copiedDebitNote = debitNote.updatePayorDebtAccount(createPayorDebtAccount());
+
+        assertAmountEquals("The copied debit note should keep the total amount of the original debit note", originalTotalAmount,
+                copiedDebitNote.getTotalAmount());
+    }
+
+    @Test
+    public void givenClosedDebitNoteWithExemptionCreatedAfterClosing_whenUpdatePayorDebtAccount_thenThrowsDueToExemptionByCreditEntry() {
+        FinantialEntity finantialEntity = FinantialEntity.findAll().iterator().next();
+        DebitNote debitNote = createDebitNoteWithEntries(finantialEntity, "debt description 1", "debt description 2");
+        debitNote.closeDocument();
+
+        DebitEntry debitEntry =
+                debitNote.getDebitEntriesSet().stream().filter(e -> e.getDescription().equals("debt description 1")).findFirst()
+                        .get();
+
+        TreasuryExemptionType exemptionType = TreasuryExemptionType.findByCode("TreasuryExemptionType").findFirst().get();
+        BigDecimal exemptionAmount = new BigDecimal("100");
+        TreasuryExemption.create(exemptionType, "exemption reason", exemptionAmount, debitEntry);
+
+        assertThrows(TreasuryDomainException.class, () -> debitNote.updatePayorDebtAccount(createPayorDebtAccount()));
+    }
+
     // ###################################################################################
     // Auxiliary methods
     // ###################################################################################
@@ -223,12 +265,13 @@ public class DebitNote_anullAndCopyDebitNote_Test {
 
         DocumentNumberSeries documentNumberSeries =
                 DocumentNumberSeries.findUniqueDefaultSeries(FinantialDocumentType.findForDebitNote(), finantialEntity);
-        DebitNote debitNote = DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date,
-                date.toLocalDate(), null, Collections.emptyMap(), null, null);
+        DebitNote debitNote =
+                DebitNote.create(finantialEntity, getDebtAccount(), null, documentNumberSeries, date, date.toLocalDate(), null,
+                        Collections.emptyMap(), null, null);
 
         for (int i = 0; i < descriptions.length; i++) {
-            createDebitEntry(finantialEntity, dueDate, date, debitNote, new BigDecimal(1000).add(new BigDecimal(500).multiply(
-                    new BigDecimal(i))), descriptions[i]);
+            createDebitEntry(finantialEntity, dueDate, date, debitNote,
+                    new BigDecimal(1000).add(new BigDecimal(500).multiply(new BigDecimal(i))), descriptions[i]);
         }
 
         return debitNote;

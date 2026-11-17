@@ -1773,18 +1773,23 @@ public class DebitEntry extends DebitEntry_Base {
                 .findFirst().map(DebitEntryChangeAmountsLog::getResponsible).orElse(null);
     }
 
+    // 2026-11-17 (#qubIT-Fenix-9892)
     public DebitEntry createCopy(DebitNote debitNoteToAssociate) {
         if (debitNoteToAssociate != null && !debitNoteToAssociate.isPreparing()) {
             throw new IllegalArgumentException("error.DebitEntry.createCopy.debitNoteToAssociate.is.not.preparing");
         }
 
-        DebitEntry newDebitEntry = DebitEntry.create(getFinantialEntity(), getDebtAccount(), getTreasuryEvent(), getVat(),
-                getAmount().add(getNetExemptedAmount()), getDueDate(), getPropertiesMap(), getProduct(), getDescription(),
-                getQuantity(), getInterestRate(), getEntryDateTime(), isAcademicalActBlockingSuspension(),
-                isBlockAcademicActsOnDebt(), debitNoteToAssociate);
+        DebitEntry newDebitEntry =
+                DebitEntry.create(getFinantialEntity(), getDebtAccount(), getTreasuryEvent(), getVat(), getAmount(), getDueDate(),
+                        getPropertiesMap(), getProduct(), getDescription(), getQuantity(), getInterestRate(), getEntryDateTime(),
+                        isAcademicalActBlockingSuspension(), isBlockAcademicActsOnDebt(), debitNoteToAssociate);
 
         DebitEntry.applyAdditionalRelationConnectionsOfDebitEntry(this, newDebitEntry);
 
+        // 2026-11-17 (#qubIT-Fenix-9892)
+        //
+        // Exemptions by created, or created after debit note is closed, will also take into calculation
+        // of the copied debit entry final amount
         getTreasuryExemptionsSet().forEach(
                 treasuryExemption -> TreasuryExemption.create(treasuryExemption.getTreasuryExemptionType(),
                         treasuryExemption.getReason(), treasuryExemption.getNetAmountToExempt(), newDebitEntry));

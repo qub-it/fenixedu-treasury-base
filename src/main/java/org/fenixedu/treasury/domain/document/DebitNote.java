@@ -809,7 +809,7 @@ public class DebitNote extends DebitNote_Base {
             throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.payor.same.as.debt.account");
         }
 
-        if (getDebitEntriesSet().stream().anyMatch(entry -> entry.isInOpenPaymentPlan())) {
+        if (getDebitEntriesSet().stream().anyMatch(DebitEntry::isInOpenPaymentPlan)) {
             throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.debitEntry.in.active.paymentPlan");
         }
 
@@ -820,7 +820,13 @@ public class DebitNote extends DebitNote_Base {
 
         // Check if debit entries has settlement entries
         for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
-            if (debitEntry.getSettlementEntriesSet().stream().filter(s -> !s.isAnnulled()).count() > 0) {
+            if (debitEntry.getTreasuryExemptionsSet().stream()
+                    .anyMatch(te -> te.isExemptionByCreditEntry() && !te.getCreditEntry().isAnnulled())) {
+                throw new TreasuryDomainException(
+                        "error.DebitNote.updatePayorDebtAccount.debit.entries.has.exemptions.by.creditEntry");
+            }
+
+            if (debitEntry.getSettlementEntriesSet().stream().anyMatch(s -> !s.isAnnulled())) {
                 throw new TreasuryDomainException("error.DebitNote.updatePayorDebtAccount.debit.entries.has.settlements");
             }
         }
@@ -844,7 +850,7 @@ public class DebitNote extends DebitNote_Base {
     }
 
     public boolean isAbleToUpdatePayorDebtAccount() {
-        if (getDebitEntriesSet().stream().anyMatch(entry -> entry.isInOpenPaymentPlan())) {
+        if (getDebitEntriesSet().stream().anyMatch(DebitEntry::isInOpenPaymentPlan)) {
             return false;
         }
 
@@ -854,7 +860,12 @@ public class DebitNote extends DebitNote_Base {
 
         // Check if debit entries has settlement entries
         for (final DebitEntry debitEntry : this.getDebitEntriesSet()) {
-            if (debitEntry.getSettlementEntriesSet().stream().filter(s -> !s.isAnnulled()).count() > 0) {
+            if (debitEntry.getTreasuryExemptionsSet().stream()
+                    .anyMatch(te -> te.isExemptionByCreditEntry() && !te.getCreditEntry().isAnnulled())) {
+                return false;
+            }
+
+            if (debitEntry.getSettlementEntriesSet().stream().anyMatch(s -> !s.isAnnulled())) {
                 return false;
             }
         }
@@ -867,6 +878,11 @@ public class DebitNote extends DebitNote_Base {
             throw new TreasuryDomainException("error.DebitNote.anullAndCopyDebitNote.copy.only.on.closed.debit.note");
         }
 
+        // The total amount and the number of entries of the original debit note are captured before the annulment,
+        // because the annulment must not be taken into account to check if the copy is faithful
+        final int entriesCount = getFinantialDocumentEntriesSet().size();
+        final BigDecimal oldTotalAmount = getTotalAmount();
+
         final DebitNote newDebitNote =
                 DebitNote.create(getFinantialEntity(), getDebtAccount(), null, getDocumentNumberSeries(), new DateTime(),
                         new LocalDate(), getOriginDocumentNumber(), Collections.emptyMap(), null, null);
@@ -876,7 +892,27 @@ public class DebitNote extends DebitNote_Base {
 
         anullDebitNoteWithCreditNote(reason, false);
 
+        if (entriesCount != newDebitNote.getFinantialDocumentEntriesSet().size()) {
+            throw new IllegalStateException(String.format(
+                    "The copy of the debit note [%s] has %d entries, but the original debit note [%s] has %d entries",
+                    newDebitNote.getExternalId(), newDebitNote.getFinantialDocumentEntriesSet().size(), getExternalId(),
+                    entriesCount));
+        }
+
+        final BigDecimal newtTotalAmount = newDebitNote.getTotalAmount();
+
+        if (!TreasuryConstants.isEqual(oldTotalAmount, newtTotalAmount)) {
+            throw new IllegalStateException(
+                    "The copy of the debit note [%s] has a different amount".formatted(newDebitNote.getExternalId()));
+        }
+
         return newDebitNote;
+    }
+
+    private BigDecimal netAmountExemptedByCredits(final DebitEntry de) {
+        return de.getTreasuryExemptionsSet().stream().filter(TreasuryExemption::isExemptionByCreditEntry)
+                .filter(te -> !te.getCreditEntry().isAnnulled()).map(TreasuryExemption::getNetExemptedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Atomic

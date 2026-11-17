@@ -1,6 +1,8 @@
 - Refactor: Initialize ProductGroup with proper VatType [#qubIT-Fenix-9889]
 - Refactor: Unit tests for method DebitNote#anullAndCopyDebitNote [#qubIT-Fenix-9892]
 - Refactor: Add method to create a copy of DebitEntry [#qubIT-Fenix-9892]
+- Refactor: When updating payor entity with debit note, check if there are debit entries with exemptions by credit entry [#qubIT-Fenix-9892]
+- Bug Fix: Fix debit entry copy with exemtions [#qubIT-Fenix-9892]
 
 16.1.2 (04-11-2026)
 - Refactor: Remove references of GenericChecksumRewriter [#qubIT-Fenix-9499]

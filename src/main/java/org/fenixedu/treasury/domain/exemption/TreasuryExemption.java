@@ -65,7 +65,6 @@ import org.fenixedu.treasury.domain.document.FinantialDocumentStateType;
 import org.fenixedu.treasury.domain.event.TreasuryEvent;
 import org.fenixedu.treasury.domain.exceptions.TreasuryDomainException;
 import org.fenixedu.treasury.services.integration.FenixEDUTreasuryPlatformDependentServices;
-import org.fenixedu.treasury.services.integration.TreasuryPlataformDependentServicesFactory;
 import org.fenixedu.treasury.util.TreasuryConstants;
 import org.joda.time.DateTime;
 
@@ -172,6 +171,10 @@ public class TreasuryExemption extends TreasuryExemption_Base {
         return super.getExemptByPercentage();
     }
 
+    public boolean isExemptionByCreditEntry() {
+        return getCreditEntry() != null;
+    }
+
     @Deprecated
     // TODO: Remove this method when all references are cleaned
     public BigDecimal getExemptedAmount() {
@@ -187,11 +190,11 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     public boolean isDeletable() {
-        boolean creditNoteIsPreparing = getCreditEntry() != null
-                && (getCreditEntry().getFinantialDocument() == null || getCreditEntry().getFinantialDocument().isPreparing());
+        boolean creditNoteIsPreparing = getCreditEntry() != null && (getCreditEntry().getFinantialDocument() == null
+                || getCreditEntry().getFinantialDocument().isPreparing());
 
-        boolean debitNoteIsPreparing = getCreditEntry() == null
-                && (getDebitEntry().getFinantialDocument() == null || getDebitEntry().getFinantialDocument().isPreparing());
+        boolean debitNoteIsPreparing = getCreditEntry() == null && (getDebitEntry().getFinantialDocument() == null
+                || getDebitEntry().getFinantialDocument().isPreparing());
 
         return getDebitEntry().isAnnulled() || creditNoteIsPreparing || debitNoteIsPreparing;
     }
@@ -290,11 +293,11 @@ public class TreasuryExemption extends TreasuryExemption_Base {
     }
 
     // @formatter: off
+
     /************
      * SERVICES *
      ************/
     // @formatter: on
-
     public static Stream<TreasuryExemption> findAll() {
         return FenixFramework.getDomainRoot().getTreasuryExemptionsSet().stream();
     }
