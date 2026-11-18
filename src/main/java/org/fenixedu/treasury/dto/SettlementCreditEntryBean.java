@@ -110,8 +110,8 @@ public class SettlementCreditEntryBean implements ISettlementInvoiceEntryBean, I
 
     @Deprecated
     public LocalDate getDocumentDueDate() {
-        return creditEntry.getFinantialDocument() != null ? creditEntry.getFinantialDocument().getDocumentDueDate() : creditEntry
-                .getEntryDateTime().toLocalDate();
+        return creditEntry.getFinantialDocument() != null ? creditEntry.getFinantialDocument()
+                .getDocumentDueDate() : creditEntry.getEntryDateTime().toLocalDate();
     }
 
     @Deprecated
@@ -154,7 +154,7 @@ public class SettlementCreditEntryBean implements ISettlementInvoiceEntryBean, I
 
     @Override
     public BigDecimal getEntryAmount() {
-        return creditEntry.getAmount();
+        return creditEntry.getTotalAmount();
     }
 
     @Override
@@ -211,8 +211,8 @@ public class SettlementCreditEntryBean implements ISettlementInvoiceEntryBean, I
     public Set<Customer> getPaymentCustomer() {
         return creditEntry.getFinantialDocument() != null
                 && ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
-                        ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
-                                .singleton(creditEntry.getDebtAccount().getCustomer());
+                ((Invoice) creditEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections.singleton(
+                creditEntry.getDebtAccount().getCustomer());
     }
 
     /*

@@ -152,7 +152,7 @@ public class SettlementDebitEntryBean implements ISettlementInvoiceEntryBean, IT
 
     @Override
     public BigDecimal getEntryAmount() {
-        return debitEntry.getAmount();
+        return debitEntry.getTotalAmount();
     }
 
     @Override
@@ -209,8 +209,8 @@ public class SettlementDebitEntryBean implements ISettlementInvoiceEntryBean, IT
     public Set<Customer> getPaymentCustomer() {
         return debitEntry.getFinantialDocument() != null
                 && ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount() != null ? Collections.singleton(
-                        ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections
-                                .singleton(debitEntry.getDebtAccount().getCustomer());
+                ((Invoice) debitEntry.getFinantialDocument()).getPayorDebtAccount().getCustomer()) : Collections.singleton(
+                debitEntry.getDebtAccount().getCustomer());
     }
 
     /*
