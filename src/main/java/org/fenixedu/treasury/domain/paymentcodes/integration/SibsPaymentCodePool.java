@@ -86,6 +86,7 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.FenixFramework;
 
 public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISibsPaymentCodePoolService {
 
@@ -364,8 +365,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
             throw new RuntimeException("payment code pool not active");
         }
 
-        if (SibsPaymentRequest.findRequestedByDebitEntriesSet(debitEntries)
-                .count() > 0 || SibsPaymentRequest.findCreatedByDebitEntriesSet(debitEntries).count() > 0) {
+        if (SibsPaymentRequest.findRequestedByDebitEntriesSet(debitEntries).count() > 0
+                || SibsPaymentRequest.findCreatedByDebitEntriesSet(debitEntries).count() > 0) {
             throw new TreasuryDomainException("error.SibsPaymentCodePool.paymentCode.already.exists.for.selected.debit.entries");
         }
 
@@ -384,9 +385,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         for (DebitEntry debitEntry : debitEntries) {
             long numActiveSibsPaymentRequests =
                     debitEntry.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                            .map(SibsPaymentRequest.class::cast)
-                            .filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED || r.getState() == PaymentReferenceCodeStateType.USED)
-                            .count();
+                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
+                                    || r.getState() == PaymentReferenceCodeStateType.USED).count();
 
             if (numActiveSibsPaymentRequests >= 2) {
                 throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
@@ -396,9 +396,8 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
         for (Installment installment : installments) {
             long numActiveSibsPaymentRequests =
                     installment.getPaymentRequestsSet().stream().filter(r -> r instanceof SibsPaymentRequest)
-                            .map(SibsPaymentRequest.class::cast)
-                            .filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED || r.getState() == PaymentReferenceCodeStateType.USED)
-                            .count();
+                            .map(SibsPaymentRequest.class::cast).filter(r -> r.getState() == PaymentReferenceCodeStateType.UNUSED
+                                    || r.getState() == PaymentReferenceCodeStateType.USED).count();
 
             if (numActiveSibsPaymentRequests >= 2) {
                 throw new TreasuryDomainException("error.MultipleEntriesPaymentCode.debit.entry.with.active.payment.code",
@@ -730,7 +729,7 @@ public class SibsPaymentCodePool extends SibsPaymentCodePool_Base implements ISi
 
     @Override
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
-        sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
+        FenixFramework.atomic(() -> sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null));
         return true;
     }
 
