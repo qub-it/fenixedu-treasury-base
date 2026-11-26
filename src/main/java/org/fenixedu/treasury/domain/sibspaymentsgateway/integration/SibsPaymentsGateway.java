@@ -430,7 +430,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
         }
 
         if (paid) {
-            if (operationResultType != SibsResultCodeType.SUCCESSFUL_TRANSACTION && operationResultType != SibsResultCodeType.SUCESSFUL_PROCESSED_TRANSACTION_FOR_REVIEW) {
+            if (operationResultType != SibsResultCodeType.SUCCESSFUL_TRANSACTION
+                    && operationResultType != SibsResultCodeType.SUCESSFUL_PROCESSED_TRANSACTION_FOR_REVIEW) {
                 throw new TreasuryDomainException(
                         "error.SibsOnlinePaymentsGatewayForwardImplementation.payment.appears.paid.but.inconsistent.with.result.code");
             }
@@ -992,8 +993,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             if (e instanceof TreasuryDomainException) {
                 throw (TreasuryDomainException) e;
             } else {
-                final String message =
-                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
+                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                 throw new TreasuryDomainException(e, message);
             }
@@ -1089,8 +1090,8 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
             if (e instanceof TreasuryDomainException) {
                 throw (TreasuryDomainException) e;
             } else {
-                final String message =
-                        "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor." + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
+                final String message = "error.SibsOnlinePaymentsGatewayPaymentCodeGenerator.generateNewCodeFor."
+                        + (isOnlinePaymentsGatewayException ? "gateway.communication" : "unknown");
 
                 throw new TreasuryDomainException(e, message);
             }
@@ -1372,7 +1373,7 @@ public class SibsPaymentsGateway extends SibsPaymentsGateway_Base
 
     @Override
     public boolean annulPaymentRequestInPlatform(SibsPaymentRequest sibsPaymentRequest) {
-        sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null);
+        FenixFramework.atomic(() -> sibsPaymentRequest.clearPendingAnnulmentInDigitalPaymentPlatform(null));
         return true;
     }
 
